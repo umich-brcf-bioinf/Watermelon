@@ -1,0 +1,9 @@
+samples:
+    Sample_01: A
+    Sample_02: B
+gtf:
+    /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Annotation/Genes/genes.gtf
+bowtie2_index:
+    /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/bowtie2/genome
+transcriptome_index:
+    mm10/mm10_transcriptome

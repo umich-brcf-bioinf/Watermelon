@@ -1,9 +1,20 @@
 samples:
-    Sample_01: A
-    Sample_02: B
+    Sample_01: Wt
+    Sample_02: Mut1
+    Sample_03: Mut2
+    Sample_04: Mut2
+genome:
+    mm10
 gtf:
-    /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Annotation/Genes/genes.gtf
+    reference_annotations/mm10_genes.gtf
 bowtie2_index:
-    /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/bowtie2/genome
+    reference_annotations/mm10_bowtie2/genome
+fasta:
+    reference_annotations/mm10_genome.fa
 transcriptome_index:
     mm10/mm10_transcriptome
+comparisons:
+    Mut1_Mut2_Wt: Mut1_Mut2_Wt
+    Mut1_Mut2: Mut1_Mut2
+fold_change:
+    1.5

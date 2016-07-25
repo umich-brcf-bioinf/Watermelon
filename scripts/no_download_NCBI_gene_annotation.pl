@@ -25,7 +25,7 @@ my $inDir = $ARGV[0];
 my $runInfoDir = $ARGV[1];
 my $genome = $ARGV[2];
 my $gtfFile = $ARGV[3];
-my $annotDir = $ARGV[4];
+#my $annotDir = $ARGV[4];
 
 #unless (-e $runInfoDir || mkdir ($runInfoDir, 0775)) {
 #	die "Unable to create $runInfoDir \n";
@@ -45,12 +45,13 @@ my $unmapped_DEGcount = 0;
 my $isoform_count = 0;
 #my $unannotatedGenome = 0;
 #my $geneCountFile = $runInfoDir . "/DE_counts.txt";
-my $geneCountFile;
-if ($ARGV[5]) {
-	$geneCountFile =  $ARGV[5];
-} else {
- 	$geneCountFile = glob($runInfoDir . "/*_runinfo.txt");
-}
+
+my $geneCountFile = $runInfoDir . "/gene_annot_runinfo.txt";
+# if ($ARGV[5]) {
+# 	$geneCountFile =  $ARGV[5];
+# } else {
+#  	$geneCountFile = glob($runInfoDir . "/*_runinfo.txt");
+# }
 if ($genome =~ /^hg/ || $genome =~ /^GRCh/) { ## human
 	$taxId = 9606; 
 } elsif ($genome =~ /^mm/ || $genome =~ /^GRCm/) { ## mouse
@@ -95,50 +96,57 @@ my $gene2GOFile = "/nfs/med-bfx-common/pipelines/RNASeq/references/Annotation/${
 #	die "Unable to create $annotDir \n";
 #}
 my $cwd = cwd(); ## current working dir
-chdir($annotDir) or die "Cannot change dir to $annotDir $!";
-my $cmd;
+#chdir($annotDir) or die "Cannot change dir to $annotDir $!";
+#my $cmd;
 my @NCBI_resources = ("gene2refseq", "gene_info", "gene2go");
 my $updatedAnnot = 0;
 
-foreach my $file (@NCBI_resources) {
-	my $resource = "$annotDir/NCBI_${file}_" . DATE;
-	unless (-e $resource) {
-		print "Downloading NCBI $file...\n"; 
-		$cmd = "wget ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/${file}.gz";
-		#print "\$cmd is $cmd\n";
-		system ($cmd);
-		my $zipFile = "${file}.gz";
-		print "Extracting $zipFile.....doesn't it?\n";
-		my $archive = Archive::Extract->new(archive => $zipFile);
-		my $ok = $archive->extract or die $archive->error;
-		rename ("$annotDir/$file", "$annotDir/NCBI_${file}_" . DATE);
-		$updatedAnnot = 1;
-	} #else { print "$resource exists!\n"; }	 
-}
-if ($updatedAnnot) {print "Downloaded latest annotation from NCBI ftp site on " . DATE . "\n";}
-foreach my $file (@NCBI_resources) {
-	my $resource = "$annotDir/NCBI_${file}_" . DATE;
-	if ($file =~ /gene2refseq/ ) {
-		if (-e $resource && $gene2RefseqFile ne $resource) { 
-			$gene2RefseqFile = $resource;
-			print "NCBI $file updated on " . DATE . "\n";
-		} else { print "Using NCBI $file updated on " . $lastUpdate . "\n"; }
-	}
-	elsif ($file =~ /gene_info/) {
-		if ( -e $resource && $geneInfoFile ne $resource) { 
-			$geneInfoFile = $resource;
-			print "NCBI $file updated on " . DATE . "\n";
-		} else { print "Using NCBI $file updated on " . $lastUpdate . "\n"; }
-	}
-	elsif ($file =~ /gene2go/ ) {
-		if ( -e $resource && $gene2GOFile ne $resource) { 
-			$gene2GOFile = $resource;
-			print "NCBI $file updated on " . DATE . "\n";
-		} else { print "Using NCBI $file updated on " . $lastUpdate . "\n"; }
-	}
-}
-unlink glob "$annotDir/*.gz";	
-chdir ($cwd) or die "Cannot change dir to $cwd $!"; ## back in $cwd
+# foreach my $file (@NCBI_resources) {
+# 
+# 	# my $resource = "$annotDir/NCBI_${file}_" . DATE;
+# 	my $resource = "$annotDir/${file}.gz";
+# 	print "$resource: This is the NCBI annotation file!!!\n";
+# 	unless (-e $resource) {
+# 		print "Downloading NCBI $file...\n"; 
+# 		$cmd = "wget ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/${file}.gz";
+# 		#print "\$cmd is $cmd\n";
+# 		system ($cmd);
+# 		# my $zipFile = "$annotDir/${file}.gz";
+# 		my $zipFile = "${file}.gz";
+# 		print "Extracting $zipFile.....\n";
+# 		my $archive = Archive::Extract->new( archive => $zipFile);
+# 		my $ok = $archive->extract or die $archive->error;
+# 		# rename ("$annotDir/$file", "$annotDir/NCBI_${file}_" . DATE);
+# 		$updatedAnnot = 1;
+# 	} #else { print "$resource exists!\n"; }	 
+#     
+# }
+
+# if ($updatedAnnot) {print "Downloaded latest annotation from NCBI ftp site on " . DATE . "\n";}
+# foreach my $file (@NCBI_resources) {
+# #	my $resource = "$annotDir/NCBI_${file}_" . DATE;
+#     my $resource = "$annotDir/NCBI_annotation";
+# 	if ($file =~ /gene2refseq/ ) {
+# 		if (-e $resource && $gene2RefseqFile ne $resource) { 
+# 			$gene2RefseqFile = $resource;
+# 			print "NCBI $file updated on " . DATE . "\n";
+# 		} else { print "Using NCBI $file updated on " . $lastUpdate . "\n"; }
+# 	}
+# 	elsif ($file =~ /gene_info/) {
+# 		if ( -e $resource && $geneInfoFile ne $resource) { 
+# 			$geneInfoFile = $resource;
+# 			print "NCBI $file updated on " . DATE . "\n";
+# 		} else { print "Using NCBI $file updated on " . $lastUpdate . "\n"; }
+# 	}
+# 	elsif ($file =~ /gene2go/ ) {
+# 		if ( -e $resource && $gene2GOFile ne $resource) { 
+# 			$gene2GOFile = $resource;
+# 			print "NCBI $file updated on " . DATE . "\n";
+# 		} else { print "Using NCBI $file updated on " . $lastUpdate . "\n"; }
+# 	}
+# }
+#unlink glob "$annotDir/*.gz";	
+#chdir ($cwd) or die "Cannot change dir to $cwd $!"; ## back in $cwd
 
 #######################################################################################################################################
 #=pod
@@ -247,7 +255,8 @@ print "Total gene names mapped to transcript ids in the gtf file: " . scalar (ke
 	
 #####################################################################################################################################
 #=pod
-my @tmp = split("/", $inDir);
+my @tmp = split("/", $inDir); #get the name of the comparison
+
 open (COUNTINFILE, "<".$geneCountFile) or die "Can not read $geneCountFile $!";
 my $DECountHeader = 0;
 while (<COUNTINFILE>) 
@@ -265,11 +274,11 @@ if (!$DECountHeader)
 }
 my $comp = $tmp[$#tmp];
 
-my $DEGIdFile = $inDir . "/" . $comp . "_DEG_ids.txt";
+my $DEGIdFile = $runInfoDir . "/" . $comp . "_DEG_ids.txt";
 open (DEGFILE1, ">".$DEGIdFile) or die "Can not write to $DEGIdFile $!";
 print DEGFILE1 "#Gene_id\n";
 
-my $DEGNameFile = $inDir . "/" . $comp . "_DEG_names.txt";
+my $DEGNameFile = $runInfoDir . "/" . $comp . "_DEG_names.txt";
 open (DEGFILE2, ">".$DEGNameFile) or die "Can not write to $DEGNameFile $!";
 print DEGFILE2 "#Gene_name\tFC\n";
 
@@ -282,11 +291,12 @@ print DEGFILE2 "#Gene_name\tFC\n";
 my @DEFiles = glob($inDir. "/*{gene,isoform}.foldchange*.txt");
 #print Dumper @DEFiles;
 print "Annotating CuffDiff output...\n";
+print "$inDir". "/*{gene,isoform}.foldchange*.txt ". "********** $#DEFiles *********\n";
 for my $f (0..$#DEFiles) 
 { 
-	#print "$f\n";
+	print "$f\n&&&&&&&&&&&&&&&&&&&&\n";
 	unless ($DEFiles[$f] =~ /_annotated.txt$/) {
-		#print "$f\n";
+		print "$f\nTHIS IS WHERE I AM!!\n";
 		$outFile = $DEFiles[$f];
 		$outFile =~ s/.txt$/_annotated.txt/;
 		open (OUTFILE, ">$outFile") || die "Can not open $outFile for writing $!\n";
@@ -313,7 +323,7 @@ for my $f (0..$#DEFiles)
 			my $refseqId = "";
 			my $geneName = "";
 			my $GO_annot = "";
-			
+#			print "IN HERE!!!!\n";
 			if (!$header) {
 				if ($_ =~ /^test_id/ ) {
 					chomp $_;
@@ -403,6 +413,7 @@ for my $f (0..$#DEFiles)
 					#}						
 					elsif ($genes) {
 						$gene_count++;			
+						print "$geneName\t$FC\n";
 						print DEGFILE2 "$geneName\t$FC\n";
 						if ($geneMatrix[$count][1]) {
 							#print "This is a DE gene: $geneMatrix[$count][2]\n";
@@ -459,7 +470,7 @@ for my $f (0..$#DEFiles)
 		}
 		#print Dumper @unmapped;
 		if (scalar @unmapped && $genes) {
-			open (UNMAPPED, ">$inDir/${comp}_unmapped_ids.txt") or die "Can not write to $inDir/${comp}_unmapped_ids.txt $!";
+			open (UNMAPPED, ">$runInfoDir/${comp}_unmapped_ids.txt") or die "Can not write to $runInfoDir/${comp}_unmapped_ids.txt $!";
 			print UNMAPPED "Following genes did not map to NCBI gene ids:\n";
 			foreach my $id (@unmapped) { print UNMAPPED "$id\n"; }
 			close UNMAPPED;

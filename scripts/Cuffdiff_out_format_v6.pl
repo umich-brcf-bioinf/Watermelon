@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-#
+#   07/1/2016: abhasi(added output dir as command line param)
 #  Maintainers: Rich McEachin <mceachin@umich.edu>; Ashwini Bhasi <abhasi@umich.edu>
 #  Date: 8 Feb 2012
 #  Version: 6
@@ -20,11 +20,10 @@ use warnings;
 #  Import from the command line: cuffdiff output file ($infile1), the text (no spaces) you'd like to start the filename with ($text), 
 #  and the threshold for defining differential expression ($threshold)
 #  Command: perl Cuffdiff_out_format_v5.pl $infile $text $threhsold
-#  For example: "perl Cuffdiff_out_format_v5.pl gene_exp.diff goldstrohm_puf 2.0"
+#  For example: "perl Cuffdiff_out_format_v5.pl gene_exp.diff goldstrohm_puf 2.0 OutDir"
 #
 
-my ($infile, $text, $threshold) = @ARGV;
-my $outfile;
+my ($infile, $text, $threshold, $outDir) = @ARGV;
 
 if (($infile eq "") or ($threshold eq "") ){
 	print "\nWARNING! Please enter input parameters in the following order:\n\n";
@@ -32,16 +31,18 @@ if (($infile eq "") or ($threshold eq "") ){
 	exit;
 }
 
+my $outFile=$outDir."/".$text.".foldchange.$threshold.txt";
+print $outFile."\n";
 #Open in and out files
 open IN1, "$infile" or die "Cannot open $infile $!\n";
-open OUT, ">$text.foldchange.$threshold.txt" or die "Cannot open $outfile $!\n";
+open OUT, ">$outFile" or die "Cannot open $outFile $!\n";
 
 #Set up header for out file
-print OUT "Select Differentially Expressed Transcripts Based on Three Criteria\n";
-print OUT "Test Status OK\n";
-print OUT "FDR (q-value) <= 0.05\n";
-print OUT "Fold Change >= Threshold or <= 1/Threshold, where Threshold = $threshold \n\n";
-print OUT "test_id\t gene_id\t gene\t locus\t sample_1\t sample_2\t status\t value_1\t value_2\t log2(fold_change)\t test_stat\t p_value\t q_value\t significant\t Fold Change\t Diff Exp\n";
+print OUT "#Select Differentially Expressed Transcripts Based on Three Criteria\n";
+print OUT "#Test Status OK\n";
+print OUT "#FDR (q-value) <= 0.05\n";
+print OUT "#Fold Change >= Threshold or <= 1/Threshold, where Threshold = $threshold \n#\n";
+print OUT "#test_id\t gene_id\t gene\t locus\t sample_1\t sample_2\t status\t value_1\t value_2\t log2(fold_change)\t test_stat\t p_value\t q_value\t significant\t Fold Change\t Diff Exp\n";
 my $i=0;
 my @AOA;
 

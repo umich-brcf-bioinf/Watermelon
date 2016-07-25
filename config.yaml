@@ -1,20 +1,27 @@
+#samples:
+#    Sample_01: Wt
+#    Sample_02: Mut1
+#    Sample_03: Mut2
+#    Sample_04: Mut2
 samples:
     Sample_01: Wt
-    Sample_02: Mut1
-    Sample_03: Mut2
-    Sample_04: Mut2
+    Sample_02: Wt
+    Sample_03: Mut
+    Sample_04: Mut
 genome:
-    mm10
+    hg19
 gtf:
-    reference_annotations/mm10_genes.gtf
+    /ccmb/BioinfCore/Projects/Manjusha/Genomes/iGenomes/Homo_sapiens_UCSC_hg19/Homo_sapiens/UCSC/hg19/Annotation/Genes/genes.gtf
 bowtie2_index:
-    reference_annotations/mm10_bowtie2/genome
+    /ccmb/BioinfCore/Projects/Manjusha/Genomes/iGenomes/Homo_sapiens_UCSC_hg19/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index/genome
 fasta:
-    reference_annotations/mm10_genome.fa
+    /ccmb/BioinfCore/Projects/Manjusha/Genomes/iGenomes/Homo_sapiens_UCSC_hg19/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa
 transcriptome_index:
-    mm10/mm10_transcriptome
+    hg19/hg19_transcriptome
 comparisons:
-    Mut1_Mut2_Wt: Mut1_Mut2_Wt
-    Mut1_Mut2: Mut1_Mut2
+#    Mut1_Mut2_Wt: Mut1_Mut2_Wt
+#    Wt_Mut2: Wt_Mut2
+#    Mut1_Mut2: Wt_Mut2
+    Wt_Mut: Wt_Mut
 fold_change:
     1.5

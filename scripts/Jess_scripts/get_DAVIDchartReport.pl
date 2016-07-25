@@ -15,7 +15,7 @@
 ### idType = DAIVID recognized id types of input ids; default: ENTREZ_GENE_ID
 ### EASEScoreThreshold = EASE score cut off for the enriched categories; default = 0.05
 ### Example: > perl get_DAVIDchartReport.pl -dir Input_geneLists -type ENTREZ_GENE_ID -thd 0.05
-### Example: > perl scripts/get_DAVIDchartReport.pl -dir /ccmb/BioinfCore/Projects/Manjusha/Rsq_test_v2/noNovelTranscripts/cuffdiff/E7.5_WT_v_E7.5_mutant -type ENTREZ_GENE_ID -thd 0.05
+### Example: > perl /ccmb/BioinfCore/Projects/Manjusha/RNA-seq_pipeline/RSQ_scripts/get_DAVIDchartReport.pl -dir /ccmb/BioinfCore/Projects/Manjusha/Rsq_test_v2/noNovelTranscripts/cuffdiff/E7.5_WT_v_E7.5_mutant -type ENTREZ_GENE_ID -thd 0.05
 ##################################################################################################################################
  
 use strict;
@@ -28,7 +28,6 @@ use Getopt::Long; ## Perl module to get command line arguments
 my $inDir      = '';
 my $idType        = 'ENTREZ_GENE_ID';
 my $thd     = 0.05;
-my $pipeline_email = "bfx-rnaseq-pipeline\@umich.edu";
 
 GetOptions ( "dir=s"            => \$inDir,
              "type=s"           => \$idType,
@@ -53,7 +52,7 @@ my $soap = SOAP::Lite
 
  #user authentication by email address
  #For new user registration, go to http://david.abcc.ncifcrf.gov/webservice/register.htm
-my $check = $soap->authenticate($pipeline_email)->result; # authenticate user by email address; return true if user has registered email with DAVID knowledge base
+my $check = $soap->authenticate('mpande@umich.edu')->result; # authenticate user by email address; return true if user has registered email with DAVID knowledge base
 print "\nUser authentication: $check\n";
 
 if (lc($check) eq "true") { 
@@ -144,8 +143,9 @@ if (lc($check) eq "true") {
 
 		my $outFile = $inFile;
 		$outFile =~ s/ids/DAVIDchartReport/;
+		open (chartReport, ">" . $inDir . "/" . $outFile . ".txt");
+
 		if (@geneIDs) { ### at least one gene id in the list
-			open (chartReport, ">" . $inDir . "/" . $outFile . ".txt");
 			print chartReport "Functional enrichment of ". scalar (@geneIDs) . " differentially expressed genes using DAVID (http://david.abcc.ncifcrf.gov)\n\n";
 			if ($n_records) { ## at least one record
 				print chartReport "#Category\tTerm\tCount\t%\tPvalue\tGenes\tList Total\tPop Hits\tPop Total\tFold Enrichment\tBonferroni\tBenjamini\tFDR\n";
@@ -187,8 +187,8 @@ if (lc($check) eq "true") {
 			else {print chartReport "No enrichment record found!!\n";}	
 			#getChartReport 
 			#print "\nchartReport.txt generated\n";
-			close chartReport;
 		}
+		close chartReport;
 	}
 } 
 print "All done!\n";

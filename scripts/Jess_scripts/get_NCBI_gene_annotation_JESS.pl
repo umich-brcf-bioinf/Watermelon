@@ -107,8 +107,9 @@ foreach my $file (@NCBI_resources) {
 		$cmd = "wget ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/${file}.gz";
 		#print "\$cmd is $cmd\n";
 		system ($cmd);
-		my $zipFile = "${file}.gz";
-		print "Extracting $zipFile.....doesn't it?\n";
+		my $zipFile = "$annotDir/${file}.gz";
+		print $zipFile,"-> zip file\n";
+		print "Extracting $zipFile.....\n";
 		my $archive = Archive::Extract->new(archive => $zipFile);
 		my $ok = $archive->extract or die $archive->error;
 		rename ("$annotDir/$file", "$annotDir/NCBI_${file}_" . DATE);

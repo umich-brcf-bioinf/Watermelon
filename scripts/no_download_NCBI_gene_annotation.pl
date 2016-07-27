@@ -44,7 +44,7 @@ my $mapped_gene_count = 0;
 my $unmapped_DEGcount = 0;
 my $isoform_count = 0;
 #my $unannotatedGenome = 0;
-#my $geneCountFile = $runInfoDir . "/DE_counts.txt";
+my $geneCountFile = $runInfoDir . "/DE_counts.txt";
 
 my $geneCountFile = $runInfoDir . "/gene_annot_runinfo.txt";
 # if ($ARGV[5]) {

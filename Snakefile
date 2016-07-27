@@ -1,12 +1,13 @@
 ## abhasi, cgates
-## 6/2016
+## 7/26/2016
 ## Watermelon: Recreate Legacy pipeline in snakemake
+
+## snakemake --snakefile <snakefile> --configfile <config.yaml> --cores
 
 from collections import defaultdict
 import csv
 import os
 
-configfile: "config.yaml"
 
 rule all:
     input:
@@ -30,16 +31,16 @@ rule all:
                 comparison=config["comparisons"]),
         expand("11-deseq/{comparison}/DESeq2_{comparison}_DE.txt",
                 comparison=config["comparisons"])
-        # expand("08-gene_annotation/{comparison}/{comparison}_DEG_ids.txt",
-        #          comparison=config["comparisons"]),
-        # expand("08-gene_annotation/{comparison}/{comparison}_DEG_names.txt",
-        #          comparison=config["comparisons"])
-#        expand("10-functional_annotation/{comparison}/{comparison}_DEG_DAVIDchartReport.txt",
-#                  comparison=config["comparisons"])
+#         # expand("08-gene_annotation/{comparison}/{comparison}_DEG_ids.txt",
+#         #          comparison=config["comparisons"]),
+#         # expand("08-gene_annotation/{comparison}/{comparison}_DEG_names.txt",
+#         #          comparison=config["comparisons"])
+# #        expand("10-functional_annotation/{comparison}/{comparison}_DEG_DAVIDchartReport.txt",
+# #                  comparison=config["comparisons"])
 
 rule concat_reads:
     input:
-        "00-multiplexed_reads/{sample}/"
+        config["input_dir"] + "/{sample}/"
     output:
         "01-raw_reads/{sample}_R1.fastq.gz"
     shell:
@@ -102,7 +103,7 @@ rule align_qc_metrics:      #Note: this is not the ideal way to do this step; re
         output_dir = "05-qc_metrics"
     shell:
         #maybe create sample_list.txt here and then delete it later.
-        "perl scripts/getQCMetrics.pl {params.align_dir} {params.sample_file} {params.output_dir}"
+        "perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/getQCMetrics.pl {params.align_dir} {params.sample_file} {params.output_dir}"
 
 rule htseq_per_sample:
     input:
@@ -122,7 +123,7 @@ rule htseq_per_sample:
         " -q {input} "
         " {params.gtf} "
         " > {output} && "
-        "perl scripts/mergeHTSeqCountFiles.pl {params.input_dir}"
+        "perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/mergeHTSeqCountFiles.pl {params.input_dir}"
 
 # unable to do this in one step; gives error: 'Not all output files of rule htseq_per_sample contain the same wildcards.'
 rule htseq_merge:
@@ -134,7 +135,7 @@ rule htseq_merge:
         output_dir = "06-htseq",
         input_dir = "06-htseq"
     shell:
-       " perl scripts/mergeHTSeqCountFiles.pl {params.input_dir} "
+       " perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/mergeHTSeqCountFiles.pl {params.input_dir} "
 
 def cuffdiff_labels(underbar_separated_comparisons):
     return underbar_separated_comparisons.replace("_", ",")
@@ -170,13 +171,14 @@ rule cuffdiff:
     shell:
         " module load rnaseq && "
         " cuffdiff -q "
-        " -L {params.labels} "  # Wt, Mut1, Mut2
+        " -L {params.labels} "
         " --max-bundle-frags 999999999 "
         " -o {params.output_dir} "
         " -b {params.fasta} "
-        " -u -N --compatible-hits-norm "
+        " -u -N "
+        " --compatible-hits-norm "
         " {params.gtf_file} "
-        " {params.samples}" #Sample_50153_accepted_hits.bam Sample_50154_accepted_hits.bam Sample_50155_accepted_hits.bam .....
+        " {params.samples}" 
 
 rule diff_exp:
     input:
@@ -192,12 +194,12 @@ rule diff_exp:
     shell:
         " module load rnaseq && "
         " mkdir -p {params.output_dir} &&"
-        " perl scripts/Cuffdiff_out_format_v6.pl "
+        " perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Cuffdiff_out_format_v6.pl "
         " {input.cuffdiff_gene_exp} "
         " {params.comparison}_gene "
         " {params.fold_change} "
         " {params.output_dir} && "
-        " perl scripts/Cuffdiff_out_format_v6.pl "
+        " perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Cuffdiff_out_format_v6.pl "
         " {input.cuffdiff_isoform_exp} "
         " {params.comparison}_isoform "
         " {params.fold_change} "
@@ -236,18 +238,19 @@ rule cummerbund:
         output_dir = "10-cummerbund/{comparison}/",
         gtf_file = config["gtf"],
         genome = config["genome"],
-#        logfile = "10-cummerbund/{comparison}/cummerbund.log"
+        logfile = "10-cummerbund/{comparison}/cummerbund.log"
     log:
          "10-cummerbund/{comparison}/cummerbund.log"
     shell:
         " module load rnaseq && "
         " mkdir -p {output} && "
-        " Rscript scripts/Run_cummeRbund_v1.R "
+        " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Run_cummeRbund_v1.R "
         " baseDir={params.output_dir} "
         " cuffDiffDir=../../{params.cuff_diff_dir} "
         " grpRepFile={input} "
         " gtfFile={params.gtf_file} "
-        " genome={params.genome} --log {log}"
+        " genome={params.genome} "
+        " 2> {log} "
 
 rule deseq2:
     input:
@@ -259,12 +262,15 @@ rule deseq2:
     params:
         output_dir = "11-deseq",
         comparison = lambda wildcards: wildcards.comparison
+    log:
+         "11-deseq/{comparison}/DESeq2_{comparison}.log"
     shell:
         " module load rnaseq && "
-        " Rscript scripts/Run_DESeq.R "
+        " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Run_DESeq.R "
         " baseDir={params.output_dir}/{params.comparison} "
         " grpRepFile={input.group_replicates} "
         " countsFile={input.counts_file} "
+        " 2> {log} "
 
 # rule gene_annotation:
 #     input:
@@ -281,7 +287,7 @@ rule deseq2:
 #         comparison = lambda wildcards: wildcards.comparison
 #     shell:
 #         "touch {params.output_dir}/{params.info_file} && "
-#         "perl scripts/Jess_scripts/get_NCBI_gene_annotation_JESS.pl {params.input_dir}/{params.comparison} {params.output_dir} {params.genome} {params.gtf_file} {params.output_dir} {params.output_dir}/{params.info_file} && "
+#         "perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Jess_scripts/get_NCBI_gene_annotation_JESS.pl {params.input_dir}/{params.comparison} {params.output_dir} {params.genome} {params.gtf_file} {params.output_dir} {params.output_dir}/{params.info_file} && "
 #         "cp {params.input_dir}/{params.comparison}/{params.comparison}_DEG* {params.output_dir} && "
 #         "touch {output.ids} {output.names}" #have to touch output because snakemake gets confused about the timestamps when an archive is extracted
 #
@@ -296,6 +302,6 @@ rule deseq2:
 #         comparison = lambda wildcards: wildcards.comparison
 #     shell:
 #         " module load rnaseq && "
-#         "perl scripts/get_DAVIDchartReport.pl -dir {params.input_dir} -type ENTREZ_GENE_ID -thd 0.05 && "
+#         "perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/get_DAVIDchartReport.pl -dir {params.input_dir} -type ENTREZ_GENE_ID -thd 0.05 && "
 #         "cp {params.input_dir}/{params.comparison}_DEG_DAVIDchartReport.txt {params.output_dir} && "
 #         "touch {output} "

@@ -3,7 +3,7 @@
 ## Watermelon: Recreate Legacy pipeline in snakemake
 
 ## snakemake --snakefile <snakefile> --configfile <config.yaml> --cores
-
+## snakemake --snakefile Snakefile --configfile tronson_config.yaml  --cores 40 -T -D >workflow_summary.xls
 from collections import defaultdict
 import csv
 import os
@@ -27,9 +27,9 @@ rule all:
         #         comparison=config["comparisons"])
         expand("10-cummerbund/{comparison}/Plots",
                 comparison=config["comparisons"]),
-        expand("11-deseq/{comparison}/DESeq2_{comparison}_DE.txt",
+        expand("11-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
                 comparison=config["comparisons"]),
-        expand("11-deseq/{comparison}/DESeq2_{comparison}_DE.txt",
+        expand("11-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
                 comparison=config["comparisons"])
 #         # expand("08-gene_annotation/{comparison}/{comparison}_DEG_ids.txt",
 #         #          comparison=config["comparisons"]),
@@ -51,9 +51,11 @@ rule fastqc_reads:
         "01-raw_reads/{sample}_R1.fastq.gz"
     output:
         "02-fastqc_reads/{sample}_R1_fastqc.html"
+    log:
+        "02-fastqc_reads/{sample}_fastqc.log"
     shell:
         " module load rnaseq && "
-        "fastqc {input} -o 02-fastqc_reads"
+        "fastqc {input} -o 02-fastqc_reads 2> {log}"
 
 rule align:
     input:
@@ -72,7 +74,7 @@ rule align:
             " --no-coverage-search "
             " --library-type fr-unstranded "
             " -I 500000 "
-            " -G {params.gtf_file} "
+#            " -G {params.gtf_file} "   #this option will lead to recreation of the index every time; once a trx index is created, don't give -G
             " --transcriptome-index={params.transcriptome_index} "
             " -T "
             " --no-novel-juncs "
@@ -257,13 +259,13 @@ rule deseq2:
         counts_file = "06-htseq/HTSeq_counts.txt",
         group_replicates = "09-group_replicates/{comparison}/group_replicates.txt"
     output:
-        "11-deseq/{comparison}/DESeq2_{comparison}_DE.txt",
-        "11-deseq/{comparison}/DESeq2_{comparison}_DESig.txt"
+        "11-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
+        "11-deseq2/{comparison}/DESeq2_{comparison}_DESig.txt"
     params:
-        output_dir = "11-deseq",
+        output_dir = "11-deseq2",
         comparison = lambda wildcards: wildcards.comparison
     log:
-         "11-deseq/{comparison}/DESeq2_{comparison}.log"
+         "11-deseq2/{comparison}/DESeq2_{comparison}.log"
     shell:
         " module load rnaseq && "
         " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Run_DESeq.R "

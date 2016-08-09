@@ -15,7 +15,7 @@ rule all:
                 sample=config["samples"]),
         expand("04-fastqc_align/{sample}_accepted_hits_fastqc.html",
                 sample=config["samples"]),
-         "05-qc_metrics/Align_summary_all.txt",
+         "05-qc_metrics/alignment_stats.txt",
 #        "06-htseq/HTSeq_counts.txt",
         expand("08-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
                 comparison=config["comparisons"],
@@ -93,19 +93,19 @@ rule fastqc_align:
         " module load rnaseq && "
         "fastqc {input} -o 04-fastqc_align"
 
-
-rule align_qc_metrics:      #Note: this is not the ideal way to do this step; requires "sample_list.txt"; should be simpler
+rule align_qc_metrics:
     input:
-        expand("03-tophat/{sample}/{sample}_align_summary.txt", sample = config["samples"])
+       "03-tophat"
     output:
-        "05-qc_metrics/Align_summary_all.txt"
-    params:
-        align_dir = "03-tophat",
-        sample_file = "sample_list.txt",
-        output_dir = "05-qc_metrics"
+        "05-qc_metrics/alignment_stats.txt"
     shell:
-        #maybe create sample_list.txt here and then delete it later.
-        "perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/getQCMetrics.pl {params.align_dir} {params.sample_file} {params.output_dir}"
+        "find {input} -name '*align_summary.txt' | "
+        "sort | xargs awk "
+        "'BEGIN {{print \"sample\tinput_reads\tmapped_reads\talignment_rate\"}} "
+        "/Reads/ {{n=split(FILENAME, fields, /\//); printf \"%s\t\",fields[n-1]}} "
+        "/Input/ {{printf \"%s\t\",$3}} "
+        "/Mapped/ {{printf \"%s\t\",$3}} "
+        "/overall/ {{print $1}}' > {output}"
 
 rule htseq_per_sample:
     input:

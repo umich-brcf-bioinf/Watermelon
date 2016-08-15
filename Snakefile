@@ -15,28 +15,19 @@ rule all:
                 sample=config["samples"]),
         expand("04-fastqc_align/{sample}_accepted_hits_fastqc.html",
                 sample=config["samples"]),
-         "05-qc_metrics/alignment_stats.txt",
-#        "06-htseq/HTSeq_counts.txt",
+        "05-qc_metrics/alignment_stats.txt",
         expand("08-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
                 comparison=config["comparisons"],
                 fold_change=config["fold_change"]),
         expand("08-diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}.txt",
                 comparison=config["comparisons"],
                 fold_change=config["fold_change"]),
-        # expand("09-group_replicates/{comparison}/group_replicates.txt",
-        #         comparison=config["comparisons"])
-        expand("10-cummerbund/{comparison}/Plots",
+        expand("10-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf",
                 comparison=config["comparisons"]),
         expand("11-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
                 comparison=config["comparisons"]),
         expand("11-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
                 comparison=config["comparisons"])
-#         # expand("08-gene_annotation/{comparison}/{comparison}_DEG_ids.txt",
-#         #          comparison=config["comparisons"]),
-#         # expand("08-gene_annotation/{comparison}/{comparison}_DEG_names.txt",
-#         #          comparison=config["comparisons"])
-# #        expand("10-functional_annotation/{comparison}/{comparison}_DEG_DAVIDchartReport.txt",
-# #                  comparison=config["comparisons"])
 
 rule concat_reads:
     input:
@@ -234,7 +225,7 @@ rule cummerbund:
     input:
         "09-group_replicates/{comparison}/group_replicates.txt"
     output:
-        "10-cummerbund/{comparison}/Plots"
+        "10-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf"
     params:
         cuff_diff_dir = "07-cuffdiff/{comparison}",
         output_dir = "10-cummerbund/{comparison}/",
@@ -245,10 +236,10 @@ rule cummerbund:
          "10-cummerbund/{comparison}/cummerbund.log"
     shell:
         " module load rnaseq && "
-        " mkdir -p {output} && "
-        " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Run_cummeRbund_v1.R "
+        " mkdir -p {params.output_dir}/Plots && "
+        " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Run_cummeRbund.R "
         " baseDir={params.output_dir} "
-        " cuffDiffDir=../../{params.cuff_diff_dir} "
+        " cuffDiffDir={params.cuff_diff_dir} "
         " grpRepFile={input} "
         " gtfFile={params.gtf_file} "
         " genome={params.genome} "

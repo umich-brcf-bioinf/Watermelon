@@ -1,13 +1,6 @@
+USAGE <- paste0("Rscript <script> baseDir=<dir> cuffDiffDir=<dir> grpRepFile=<file> gtfFile=<file.gtf> genome=<genome_id>")
 
-###  Pande, mpande@umich.edu, Jan 23, 2013, modified Apr 16, 2013
-########################################################
-### Usage: Rscript <path to the Run_cummeRbund.R file> baseDir=<dir> gtfFile=<file.gtf> genome=<genome> [grpRepFile=<grpRepFile>]
-#####################################################################################################
-### Example:
-## $ Rscript /ccmb/BioinfCore/Projects/RNA-seq_pipeline/RSQ_scripts/Run_cummeRbund_v1.R baseDir="/ccmb/home/mpande/CummeRbund/WT_v_SCA3KI" gtfFile="/ccmb/home/mpande/mm9_cuffcmp.combined.gtf" genome="mm9"
-#####################################################################################################
-
-library(cummeRbund)
+working_dir = getwd()
 args <- commandArgs(T)
 
 for (i in args) {
@@ -15,16 +8,29 @@ for (i in args) {
 	assign(arg[[1]][1],arg[[1]][2])	
 }
 
-if (!exists("baseDir") | !exists("gtfFile") | !exists("genome") | !exists("cuffDiffDir")) {
-	cat (paste ("Incorrect input.\n Usage: Rscript Run_cummeRbund.R baseDir=<dir> gtfFile=<file.gtf> genome=<genome> \n")) 
-} else {
-	#cat (paste("baseDir is ", baseDir, "\ngtfFile is ", gtfFile, "\ngenome is ", genome, "\n"))
+if (!exists("genome")) {
+  stop(paste0("Missing genome option.\nUsage: ", USAGE, "\n")) 
 }
-if (!exists("grpRepFile")) { cat (paste ("Group replicate file not specified.\n")) }
 
-if (baseDir == ".") {
-	baseDir = getwd()
+args_to_validate <- c("baseDir", "cuffDiffDir", "grpRepFile", "gtfFile", "working_dir")
+
+for (arg in args_to_validate) {
+  if (!exists(arg)) {
+    stop(paste0("Missing ", arg, "option.\nUsage: ", USAGE, "\n")) 
+  } else {
+    value <- tryCatch({
+      normalizePath(get(arg))
+    }, warning = function(w) {
+      stop(paste0(arg, " not an existing file or dir"))
+    })
+    assign(arg, value)
+  }
+  message(paste0(arg, " = ", get(arg)))
 }
+
+message("loading libraries...")
+suppressMessages(library(cummeRbund))
+
 
 setwd(baseDir) 
 outDir = "Plots"
@@ -49,7 +55,8 @@ if(load_cummeRbund == FALSE) {
 
 cuffdiff_dir = cuffDiffDir
 cuff = readCufflinks(dir=cuffdiff_dir, genome=genome, gftFile=gtfFile, rebuild=T)
-#cuff = readCufflinks(genome=genome, gftFile=gtfFile, rebuild=T)
+#cuff = readCufflinks(dir=cuffdiff_dir, genome=genome, gftFile=gtfFile)
+
 #cuff = readCufflinks()
 #cuff 
 
@@ -60,7 +67,7 @@ genes.features = annotation (genes(cuff))
 features = subset(genes.features, select = c(gene_id, gene_short_name))
 
 ## per gene raw and normalized counts
-genes.readgroup = read.table(paste(cuffdiff_dir,"genes.read_group_tracking",sep="/"), sep="\t", header=T)
+genes.readgroup = read.table(paste(cuffdiff_dir, "genes.read_group_tracking", sep="/"), sep="\t", header=T)
 reps = unique(genes.readgroup[,c("condition", "replicate")])
 repNames = c()
 for (i in 1:length(reps[,1])) { repNames = c(repNames, paste(reps[i,"condition"],reps[i,"replicate"], sep="_"))}
@@ -85,7 +92,7 @@ gene_id = rownames(genes.repCount.matrix)
 genes.repCount.matrix = cbind(gene_id, genes.repCount.matrix)
 repCountMatrix = merge(features, genes.repCount.matrix, by.x = "gene_id", by.y = "gene_id") ## gene_id, gene_short_name, per sample count
 nCountsFileName = paste(dataSetName, "repScaledCounts.txt", sep = "_")
-write.table (repCountMatrix, file=paste(nCountsFileName,  sep ="/"), sep="\t", quote = FALSE, row.names=F)
+write.table (repCountMatrix, file=paste(getwd(), nCountsFileName,  sep ="/"), sep="\t", quote = FALSE, row.names=F)
 
 # isoforms.repCount.matrix = repCountMatrix(isoforms(cuff)) ## counts per isoform
 
@@ -95,12 +102,12 @@ gene_id = rownames(genes.repFpkm.matrix)
 genes.repFpkm.matrix = cbind(gene_id, genes.repFpkm.matrix)
 repFpkmMatrix = merge(features, genes.repFpkm.matrix, by.x = "gene_id", by.y = "gene_id")
 fpkmFileName = paste(dataSetName, "repFpkms.txt", sep = "_")
-write.table (repFpkmMatrix, file=paste(fpkmFileName,  sep ="/"), sep="\t", quote = FALSE, row.names=F)
+write.table (repFpkmMatrix, file=paste(getwd(), fpkmFileName,  sep ="/"), sep="\t", quote = FALSE, row.names=F)
 
 ## get FPKMs for DE genes
 DEGFile = paste(dataSetName, "DEG_names.txt", sep = "_") ## file with gene names and FC
 if (file.exists(DEGFile)) {
-	tryCatch ({DEGs = read.table(DEGFile) ## data frame with gene names and FC
+	tryCatch ({DEGs = read.table(paste(getwd(), "../11-gene_annotation", DEGFile, sep="/")) ## data frame with gene names and FC
 		DEGs = DEGs[order(-DEGs$V2), ] ## descending order by FC
 		DEGsAll = DEGs$V1
 	
@@ -150,7 +157,7 @@ if (file.exists(DEGFile)) {
 		DEGNames = as.vector(DEGsAll) ## vector of DE gene names
 		myDEGFpkms = repFpkmMatrix[repFpkmMatrix$gene_short_name%in%DEGNames,] ### repFpkmsMatrix (data frame) for all DE genes
 		#DEGFpkmFileName = paste(dataSetName, "DEGFpkms.txt", sep = "_")
-		#write.table (myDEGFpkms, file=paste(DEGFpkmFileName,  sep ="/"), sep="\t", quote = FALSE, row.names=F)
+		#write.table (myDEGFpkms, file=paste(baseDir, DEGFpkmFileName,  sep ="/"), sep="\t", quote = FALSE, row.names=F)
 		rnames_DEG = myDEGFpkms[,1] # assign labels in column 1 to "rnames"
 		mat_DEG = data.matrix(myDEGFpkms[,3:ncol(myDEGFpkms)])  # transform column 2-5 into a matrix
 		rownames(mat_DEG) = rnames_DEG                  # assign row names 
@@ -184,25 +191,34 @@ library(lattice)
 rgb.palette <- colorRampPalette(c("blue", "yellow"), space = "rgb")
 
 count_cor = cor(data.matrix(repRawCountMatrix[,3:ncol(repRawCountMatrix)])) ## pearson correlation
-count_corFileName = paste(dataSetName, "rawCounts_correlation.txt", sep = "_")
-write(paste(c("", colnames(count_cor)),collapse="\t"), count_corFileName)
-write.table(count_cor, count_corFileName, col.names=F, quote = FALSE, sep= "\t", append=T)
 
-file = paste(dataSetName, "rawCounts_correlation.pdf", sep = "_")
-pdf(paste(outDir,file,sep="/"))
-levelplot(count_cor, main="Raw Counts Correlation Matrix", xlab="", ylab="", scales=list(x=list(rot=45)), col.regions=rgb.palette(120), cuts=100, at=seq(min(count_cor), 1, (max(count_cor) - min (count_cor))/10))
-dev.off()
+if (!any(is.na(count_cor))) {
+    count_corFileName = paste(dataSetName, "rawCounts_correlation.txt", sep = "_")
+    write(paste(c("", colnames(count_cor)),collapse="\t"), count_corFileName)
+    write.table(count_cor, paste(getwd(), count_corFileName, sep="/"), col.names=F, quote = FALSE, sep= "\t", append=T)
+
+    file = paste(dataSetName, "rawCounts_correlation.pdf", sep = "_")
+    print(paste(getwd(), outDir, file, sep="/"))
+    pdf(paste(getwd(), outDir, file, sep="/"))
+    corr_plot <- levelplot(count_cor, main="Raw Counts Correlation Matrix", xlab="", ylab="", scales=list(x=list(rot=45)), col.regions=rgb.palette(120), cuts=100, at=seq(min(count_cor), 1, (max(count_cor) - min (count_cor))/10))
+    print(corr_plot)
+    dev.off()
+}
 
 fpkm_cor = cor(repFpkmMatrix(genes(cuff)))
-fpkm_corFileName = paste(dataSetName, "fpkm_correlation.txt", sep = "_")
-write(paste(c("", colnames(fpkm_cor)),collapse="\t"), fpkm_corFileName)
-write.table(fpkm_cor, fpkm_corFileName, col.names=F, quote = FALSE, sep= "\t", append=T)
 
-#fpkm_cor = cor(repFpkmMatrix(genes(cuff)))
-file = paste(dataSetName, "fpkm_correlation.pdf", sep = "_")
-pdf(paste(outDir,file,sep="/"))
-levelplot(fpkm_cor, main="FPKM Correlation Matrix", xlab="", ylab="", scales=list(x=list(rot=45)), col.regions=rgb.palette(120), cuts=100, at=seq(min(fpkm_cor), 1, (max(fpkm_cor) - min (fpkm_cor))/10))
-dev.off()
+if (!any(is.na(fpkm_cor))) {
+    fpkm_corFileName = paste(dataSetName, "fpkm_correlation.txt", sep = "_")
+    write(paste(c("", colnames(fpkm_cor)),collapse="\t"), fpkm_corFileName)
+    write.table(fpkm_cor, paste(getwd(), fpkm_corFileName, sep="/"), col.names=F, quote = FALSE, sep= "\t", append=T)
+
+    #fpkm_cor = cor(repFpkmMatrix(genes(cuff)))
+    file = paste(dataSetName, "fpkm_correlation.pdf", sep = "_")
+    pdf(paste(getwd(), outDir, file, sep="/"))
+    corr_plot <- levelplot(fpkm_cor, main="FPKM Correlation Matrix", xlab="", ylab="", scales=list(x=list(rot=45)), col.regions=rgb.palette(120), cuts=100, at=seq(min(fpkm_cor), 1, (max(fpkm_cor) - min (fpkm_cor))/10))
+    print(corr_plot)
+    dev.off()
+}
 
 ###################################################################################################
 ## replace colnames in raw counts matrix with sample Ids
@@ -231,7 +247,7 @@ if (exists("grpRepFile") && file.exists(grpRepFile)) {
 }
 ###################################################################################################
 rawCountsFileName = paste(dataSetName, "repRawCounts.txt", sep = "_")
-write.table (repRawCountMatrix, file=paste(rawCountsFileName,  sep ="/"), sep="\t", quote = FALSE, row.names=F)
+write.table (repRawCountMatrix, file=paste(getwd(), rawCountsFileName,  sep ="/"), sep="\t", quote = FALSE, row.names=F)
 
 ### Generate cummeRbund plots 
 #cat (paste ("Generating Plots.\n")) 
@@ -241,7 +257,7 @@ cat (paste ("Dispersion Plots.\n"))
 tryCatch ({
 	disp = dispersionPlot(genes(cuff)) 	
 	file = paste(dataSetName, "disp.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/")) 
+	pdf(paste(getwd(),outDir,file,sep="/")) 
 	print (disp)	
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in Dispersion Plots.", e, "\n"))})
@@ -252,7 +268,7 @@ cat (paste ("Fpkm SCV Plots.\n"))
 tryCatch ({
 	genes.scv = fpkmSCVPlot(genes(cuff))
 	file = paste(dataSetName, "genes_scv.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
+	pdf(paste(getwd(),outDir,file,sep="/"))
 	print (genes.scv)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in genes SCV Plots.", e, "\n"))})
@@ -261,7 +277,7 @@ graphics.off()
 tryCatch ({
 	isoforms.scv = fpkmSCVPlot(isoforms(cuff))
 	file = paste(dataSetName, "isoform_scv.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
+	pdf(paste(getwd(),outDir,file,sep="/"))
 	print (isoforms.scv) 
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in isforms SCV Plots.", e, "\n"))})
@@ -272,7 +288,7 @@ cat (paste ("Density plot.\n"))
 tryCatch ({
 	dens = csDensity(genes(cuff))
 	file = paste(dataSetName, "dens.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
+	pdf(paste(getwd(),outDir,file,sep="/"))
 	print(dens)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in Density Plots.", e, "\n"))})
@@ -281,7 +297,7 @@ graphics.off()
 tryCatch ({
 	densRep = csDensity(genes(cuff), replicates=T)
 	file = paste(dataSetName, "densRep.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
+	pdf(paste(getwd(),outDir,file,sep="/"))
 	print (densRep)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in replicates Density Plots.", e, "\n"))})
@@ -292,7 +308,7 @@ cat (paste ("Box Plots.\n"))
 tryCatch ({
 	b = csBoxplot(genes(cuff))
 	file = paste(dataSetName, "boxplot.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
+	pdf(paste(getwd(),outDir,file,sep="/"))
 	print (b)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in Boxplots.", e, "\n"))})
@@ -301,7 +317,7 @@ graphics.off()
 tryCatch ({
 	brep = csBoxplot(genes(cuff), replicates=T)
 	file = paste(dataSetName, "boxplotRep.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
+	pdf(paste(getwd(),outDir,file,sep="/"))
 	print (brep)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in replicates Boxplots.", e, "\n"))})
@@ -312,7 +328,7 @@ cat (paste ("Scatter Plots.\n"))
 tryCatch ({
 	s = csScatterMatrix(genes(cuff)) 
 	file = paste(dataSetName, "scatterplots.pdf", sep = "_")
-	pdf(paste(outDir,file, sep="/"))
+	pdf(paste(getwd(),outDir,file, sep="/"))
 	print (s)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in Scatterplots.", e, "\n"))})
@@ -323,7 +339,7 @@ cat (paste ("Dendrograms.\n"))
 tryCatch ({
 	dend = csDendro(genes(cuff))
 	file = paste(dataSetName, "dend.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"), width=10, height=12) ## stretch vertically to accomodate long labels
+	pdf(paste(getwd(),outDir,file,sep="/"), width=10, height=12) ## stretch vertically to accomodate long labels
 	plot(dend)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in Dendrograms.", e, "\n"))})
@@ -332,7 +348,7 @@ graphics.off()
 tryCatch ({
 	dend.rep = csDendro(genes(cuff), replicates=T)
 	file = paste(dataSetName, "dendRep.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"), width=10, height=12) ## stretch vertically to accomodate long labels
+	pdf(paste(getwd(),outDir,file,sep="/"), width=10, height=12) ## stretch vertically to accomodate long labels
 	plot(dend.rep)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in replicates Dendrograms.", e, "\n"))})
@@ -345,7 +361,7 @@ cat (paste ("MA Plots.\n"))
 tryCatch ({
 	m = MAplot(genes(cuff), samples[1], samples[2])
 	file = paste(dataSetName, "MA.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
+	pdf(paste(getwd(),outDir,file,sep="/"))
 	print (m)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in MA plots.", e, "\n"))})
@@ -355,7 +371,7 @@ graphics.off()
 tryCatch ({
 	mCount = MAplot(genes(cuff), samples[1], samples[2], useCount=T)
 	file = paste(dataSetName, "MA_count.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
+	pdf(paste(getwd(),outDir,file,sep="/"))
 	print (mCount)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in normalized counts MA plots.", e, "\n"))})
@@ -367,7 +383,7 @@ tryCatch ({
 	v = csVolcanoMatrix(genes(cuff))
 	#abline (v = c(-1,1))
 	file = paste(dataSetName, "volcano.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
+	pdf(paste(getwd(),outDir,file,sep="/"))
 	print (v)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in Volcano plots.", e, "\n"))})
@@ -378,7 +394,7 @@ cat (paste ("PCA Plots.\n"))
 tryCatch ({
 	PCA = PCAplot(genes(cuff),"PC1","PC2")
 	file = paste(dataSetName, "PCA.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
+	pdf(paste(getwd(),outDir,file,sep="/"))
 	print (PCA)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in PCA plots.", e, "\n"))})
@@ -387,7 +403,7 @@ graphics.off()
 tryCatch ({
 	PCA.rep<-PCAplot(genes(cuff),"PC1","PC2",replicates=T)
 	file = paste(dataSetName, "PCARep.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
+	pdf(paste(getwd(),outDir,file,sep="/"))
 	print (PCA.rep)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in replicates PCA plots.", e, "\n"))})
@@ -395,20 +411,28 @@ graphics.off()
 
 ## Multi-dimensional Scaling (MDS)
 cat (paste ("MDS Plots.\n"))
-tryCatch ({
-	MDS = MDSplot(genes(cuff))
-	file = paste(dataSetName, "MDS.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
-	print (MDS)
-	dev.off()
-}, error = function(e) {cat (paste ("Error occurred in MDS plots.", e, "\n"))})
-graphics.off()
+
+num_groups <- length(samples(genes(cuff)))
+if (num_groups < 3) {
+  message(paste0("Skipping group MDS plot because num groups (", num_groups, ") < 3."))
+} else {
+  tryCatch ({
+  	MDS = MDSplot(genes(cuff),replicates=FALSE)
+  	file = paste(dataSetName, "MDS.pdf", sep = "_")
+  	pdf(paste(getwd(),outDir,file,sep="/"))
+  	print (MDS)
+  	dev.off()
+  }, error = function(e) {cat (paste ("Error occurred in MDS plots.", e, "\n"))})
+  graphics.off()
+}
 
 tryCatch ({
 	MDS.rep = MDSplot(genes(cuff),replicates=T)
 	file = paste(dataSetName, "MDSRep.pdf", sep = "_")
-	pdf(paste(outDir,file,sep="/"))
+	pdf(paste(getwd(),outDir,file,sep="/"))
 	print (MDS.rep)
 	dev.off()
 }, error = function(e) {cat (paste ("Error occurred in replicates MDS plots.", e, "\n"))})
 graphics.off()
+
+setwd(working_dir)

@@ -4,6 +4,7 @@
 
 ## snakemake --snakefile <snakefile> --configfile <config.yaml> --cores
 ## snakemake --snakefile Snakefile --configfile tronson_config.yaml  --cores 40 -T -D >workflow_summary.xls
+
 from collections import defaultdict
 import csv
 import os
@@ -11,18 +12,18 @@ import os
 
 rule all:
     input:
-        expand("02-fastqc_reads/{sample}_R1_fastqc.html",
+        expand("03-fastqc_reads/{sample}_trimmed_R1_fastqc.html",
                 sample=config["samples"]),
-        expand("04-fastqc_align/{sample}_accepted_hits_fastqc.html",
+        expand("05-fastqc_align/{sample}_accepted_hits_fastqc.html",
                 sample=config["samples"]),
-        "05-qc_metrics/alignment_stats.txt",
-        expand("08-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
+        "06-qc_metrics/alignment_stats.txt",
+        expand("09-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
                 comparison=config["comparisons"],
                 fold_change=config["fold_change"]),
-        expand("08-diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}.txt",
+        expand("09-diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}.txt",
                 comparison=config["comparisons"],
                 fold_change=config["fold_change"]),
-        expand("10-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf",
+        expand("11-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf",
                 comparison=config["comparisons"]),
         expand("11-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
                 comparison=config["comparisons"]),
@@ -37,23 +38,37 @@ rule concat_reads:
     shell:
         "cat {input}/* > {output}"
 
-rule fastqc_reads:
+rule cutadapt:
     input:
-        "01-raw_reads/{sample}_R1.fastq.gz"
+         "01-raw_reads/{sample}_R1.fastq.gz"
     output:
-        "02-fastqc_reads/{sample}_R1_fastqc.html"
+        "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
     log:
-        "02-fastqc_reads/{sample}_fastqc.log"
+        "02-cutadapt/{sample}_trimmed_R1.log"
     shell:
         " module load rnaseq && "
-        "fastqc {input} -o 02-fastqc_reads 2> {log}"
+        "cutadapt -q 13 -u 3 -u -0 --trim-n -m 20 "
+        " -o {output} "
+        " {input} "
+        " > {log}"
 
-rule align:
+rule fastqc_reads:
     input:
-        "01-raw_reads/{sample}_R1.fastq.gz"
+        "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
     output:
-        "03-tophat/{sample}/{sample}_accepted_hits.bam",
-        "03-tophat/{sample}/{sample}_align_summary.txt"
+        "03-fastqc_reads/{sample}_trimmed_R1_fastqc.html"
+    log:
+        "03-fastqc_reads/{sample}_trimmed_R1_fastqc.log"
+    shell:
+        " module load rnaseq && "
+        "fastqc {input} -o 03-fastqc_reads 2> {log}"
+
+rule tophat:
+    input:
+        "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
+    output:
+        "04-tophat/{sample}/{sample}_accepted_hits.bam",
+        "04-tophat/{sample}/{sample}_align_summary.txt"
     params:
         gtf_file = config["gtf"],
         transcriptome_index= config["transcriptome_index"],
@@ -65,30 +80,30 @@ rule align:
             " --no-coverage-search "
             " --library-type fr-unstranded "
             " -I 500000 "
-#            " -G {params.gtf_file} "   #this option will lead to recreation of the index every time; once a trx index is created, don't give -G
+#            " -G {params.gtf_file} "   #this option will lead to recreation of the index every time; once a transcriptome index is created, don't give -G
             " --transcriptome-index={params.transcriptome_index} "
             " -T "
             " --no-novel-juncs "
-            " -o 03-tophat/{params.sample} "
+            " -o 04-tophat/{params.sample} "
             " {params.bowtie2_index} "
             " {input} && "
-            " mv 03-tophat/{params.sample}/accepted_hits.bam 03-tophat/{params.sample}/{params.sample}_accepted_hits.bam && "
-            " mv 03-tophat/{params.sample}/align_summary.txt 03-tophat/{params.sample}/{params.sample}_align_summary.txt "
+            " mv 04-tophat/{params.sample}/accepted_hits.bam 04-tophat/{params.sample}/{params.sample}_accepted_hits.bam && "
+            " mv 04-tophat/{params.sample}/align_summary.txt 04-tophat/{params.sample}/{params.sample}_align_summary.txt "
 
 rule fastqc_align:
     input:
-        "03-tophat/{sample}/{sample}_accepted_hits.bam"
+        "04-tophat/{sample}/{sample}_accepted_hits.bam"
     output:
-        "04-fastqc_align/{sample}_accepted_hits_fastqc.html"
+        "05-fastqc_align/{sample}_accepted_hits_fastqc.html"
     shell:
         " module load rnaseq && "
-        "fastqc {input} -o 04-fastqc_align"
+        "fastqc {input} -o 05-fastqc_align"
 
 rule align_qc_metrics:
     input:
-       "03-tophat"
+       "04-tophat"
     output:
-        "05-qc_metrics/alignment_stats.txt"
+        "06-qc_metrics/alignment_stats.txt"
     shell:
         "find {input} -name '*align_summary.txt' | "
         "sort | xargs awk "
@@ -100,12 +115,12 @@ rule align_qc_metrics:
 
 rule htseq_per_sample:
     input:
-        "03-tophat/{sample}/{sample}_accepted_hits.bam"
+        "04-tophat/{sample}/{sample}_accepted_hits.bam"
     output:
-        "06-htseq/{sample}_counts.txt",
+        "07-htseq/{sample}_counts.txt",
     params:
         gtf = config["gtf"],
-        input_dir = "06-htseq",
+        input_dir = "07-htseq",
     shell:
         " module load rnaseq &&"
         " python -m HTSeq.scripts.count "
@@ -121,12 +136,12 @@ rule htseq_per_sample:
 # unable to do this in one step; gives error: 'Not all output files of rule htseq_per_sample contain the same wildcards.'
 rule htseq_merge:
     input:
-        expand("06-htseq/{sample}_counts.txt", sample=config["samples"])
+        expand("07-htseq/{sample}_counts.txt", sample=config["samples"])
     output:
-        "06-htseq/HTSeq_counts.txt"
+        "07-htseq/HTSeq_counts.txt"
     params:
-        output_dir = "06-htseq",
-        input_dir = "06-htseq"
+        output_dir = "07-htseq",
+        input_dir = "07-htseq"
     shell:
        " perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/mergeHTSeqCountFiles.pl {params.input_dir} "
 
@@ -148,17 +163,17 @@ def cuffdiff_samples(underbar_separated_comparisons,
 
 rule cuffdiff:
     input:
-        expand("03-tophat/{sample}/{sample}_accepted_hits.bam", sample=config["samples"])
+        expand("04-tophat/{sample}/{sample}_accepted_hits.bam", sample=config["samples"])
     output:
-        "07-cuffdiff/{comparison}/gene_exp.diff",
-        "07-cuffdiff/{comparison}/isoform_exp.diff",
-        "07-cuffdiff/{comparison}/read_groups.info"
+        "08-cuffdiff/{comparison}/gene_exp.diff",
+        "08-cuffdiff/{comparison}/isoform_exp.diff",
+        "08-cuffdiff/{comparison}/read_groups.info"
     params:
-        output_dir = "07-cuffdiff/{comparison}",
+        output_dir = "08-cuffdiff/{comparison}",
         labels = lambda wildcards : cuffdiff_labels(wildcards.comparison),
         samples = lambda wildcards : cuffdiff_samples(wildcards.comparison,
                                                       config["samples"],
-                                                      "03-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
+                                                      "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
         fasta = config["fasta"],
         gtf_file = config["gtf"],
     shell:
@@ -175,13 +190,13 @@ rule cuffdiff:
 
 rule diff_exp:
     input:
-        cuffdiff_gene_exp="07-cuffdiff/{comparison}/gene_exp.diff",
-        cuffdiff_isoform_exp="07-cuffdiff/{comparison}/isoform_exp.diff"
+        cuffdiff_gene_exp="08-cuffdiff/{comparison}/gene_exp.diff",
+        cuffdiff_isoform_exp="08-cuffdiff/{comparison}/isoform_exp.diff"
     output:
-        "08-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
-        "08-diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}.txt"
+        "09-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
+        "09-diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}.txt"
     params:
-        output_dir = "08-diff_expression/{comparison}",
+        output_dir = "09-diff_expression/{comparison}",
         fold_change = config["fold_change"],
         comparison = lambda wildcards: wildcards.comparison
     shell:
@@ -200,9 +215,9 @@ rule diff_exp:
 
 rule deseq_build_group_replicates:
     input:
-        "07-cuffdiff/{comparison}/read_groups.info"
+        "08-cuffdiff/{comparison}/read_groups.info"
     output:
-        "09-group_replicates/{comparison}/group_replicates.txt"
+        "10-group_replicates/{comparison}/group_replicates.txt"
     params:
         comparison = lambda wildcards: wildcards.comparison
     run:
@@ -223,17 +238,17 @@ rule deseq_build_group_replicates:
 
 rule cummerbund:
     input:
-        "09-group_replicates/{comparison}/group_replicates.txt"
+        "10-group_replicates/{comparison}/group_replicates.txt"
     output:
-        "10-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf"
+        "11-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf"
     params:
-        cuff_diff_dir = "07-cuffdiff/{comparison}",
-        output_dir = "10-cummerbund/{comparison}/",
+        cuff_diff_dir = "08-cuffdiff/{comparison}",
+        output_dir = "11-cummerbund/{comparison}/",
         gtf_file = config["gtf"],
         genome = config["genome"],
-        logfile = "10-cummerbund/{comparison}/cummerbund.log"
+        logfile = "11-cummerbund/{comparison}/cummerbund.log"
     log:
-         "10-cummerbund/{comparison}/cummerbund.log"
+         "11-cummerbund/{comparison}/cummerbund.log"
     shell:
         " module load rnaseq && "
         " mkdir -p {params.output_dir}/Plots && "
@@ -247,8 +262,8 @@ rule cummerbund:
 
 rule deseq2:
     input:
-        counts_file = "06-htseq/HTSeq_counts.txt",
-        group_replicates = "09-group_replicates/{comparison}/group_replicates.txt"
+        counts_file = "07-htseq/HTSeq_counts.txt",
+        group_replicates = "10-group_replicates/{comparison}/group_replicates.txt"
     output:
         "11-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
         "11-deseq2/{comparison}/DESeq2_{comparison}_DESig.txt"
@@ -264,37 +279,3 @@ rule deseq2:
         " grpRepFile={input.group_replicates} "
         " countsFile={input.counts_file} "
         " 2> {log} "
-
-# rule gene_annotation:
-#     input:
-#         "07-cuffdiff/{comparison}/isoform_exp.diff"
-#     output:
-#         ids = "08-gene_annotation/{comparison}_DEG_ids.txt",
-#         names = "08-gene_annotation/{comparison}_DEG_names.txt"
-#     params:
-#         output_dir = "08-gene_annotation",
-#         input_dir = "07-cuffdiff",
-#         genome = "hg19",
-#         gtf_file = config["gtf"],
-#         info_file = "info.txt",
-#         comparison = lambda wildcards: wildcards.comparison
-#     shell:
-#         "touch {params.output_dir}/{params.info_file} && "
-#         "perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Jess_scripts/get_NCBI_gene_annotation_JESS.pl {params.input_dir}/{params.comparison} {params.output_dir} {params.genome} {params.gtf_file} {params.output_dir} {params.output_dir}/{params.info_file} && "
-#         "cp {params.input_dir}/{params.comparison}/{params.comparison}_DEG* {params.output_dir} && "
-#         "touch {output.ids} {output.names}" #have to touch output because snakemake gets confused about the timestamps when an archive is extracted
-#
-# rule functional_annotation:
-#     input:
-#         "09-gene_annotation/{comparison}/{comparison}_DEG_ids.txt"
-#     output:
-#         report = "10-functional_annotation/{comparison}/{comparison}_DEG_DAVIDchartReport.txt"
-#     params:
-#         input_dir = "09-gene_annotation/{comparison}",
-#         output_dir = "10-functional_annotation",
-#         comparison = lambda wildcards: wildcards.comparison
-#     shell:
-#         " module load rnaseq && "
-#         "perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/get_DAVIDchartReport.pl -dir {params.input_dir} -type ENTREZ_GENE_ID -thd 0.05 && "
-#         "cp {params.input_dir}/{params.comparison}_DEG_DAVIDchartReport.txt {params.output_dir} && "
-#         "touch {output} "

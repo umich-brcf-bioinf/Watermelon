@@ -25,6 +25,10 @@ samples:
     Sample_61504: LLF
     Sample_61505: LLF
     Sample_61506: LLF
+trimming_options:
+    base_quality_5prime_3prime: 0,0
+    trim_length_5prime: 0
+    trim_length_3prime: 0
 genome:
     mm10
 bowtie2_index:

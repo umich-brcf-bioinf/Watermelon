@@ -25,9 +25,9 @@ rule all:
                 fold_change=config["fold_change"]),
         expand("11-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf",
                 comparison=config["comparisons"]),
-        expand("11-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
+        expand("12-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
                 comparison=config["comparisons"]),
-        expand("11-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
+        expand("12-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
                 comparison=config["comparisons"])
 
 rule concat_reads:
@@ -43,11 +43,18 @@ rule cutadapt:
          "01-raw_reads/{sample}_R1.fastq.gz"
     output:
         "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
+    params:
+        base_quality_5prime_3prime = config["trimming_options"]["base_quality_5prime_3prime"],
+        trim_length_5prime = config["trimming_options"]["trim_length_5prime"],
+        trim_length_3prime = config["trimming_options"]["trim_length_3prime"]
     log:
         "02-cutadapt/{sample}_trimmed_R1.log"
     shell:
         " module load rnaseq && "
-        "cutadapt -q 13 -u 3 -u -0 --trim-n -m 20 "
+        "cutadapt -q {params.base_quality_5prime_3prime} "
+        " -u {params.trim_length_5prime} "
+        " -u -{params.trim_length_3prime} "
+        " --trim-n -m 20 "
         " -o {output} "
         " {input} "
         " > {log}"
@@ -101,11 +108,11 @@ rule fastqc_align:
 
 rule align_qc_metrics:
     input:
-       "04-tophat"
+        expand("04-tophat/{sample}/{sample}_align_summary.txt", sample=config["samples"])
     output:
         "06-qc_metrics/alignment_stats.txt"
     shell:
-        "find {input} -name '*align_summary.txt' | "
+        "find 04-tophat -name '*align_summary.txt' | "
         "sort | xargs awk "
         "'BEGIN {{print \"sample\tinput_reads\tmapped_reads\talignment_rate\"}} "
         "/Reads/ {{n=split(FILENAME, fields, /\//); printf \"%s\t\",fields[n-1]}} "
@@ -265,13 +272,13 @@ rule deseq2:
         counts_file = "07-htseq/HTSeq_counts.txt",
         group_replicates = "10-group_replicates/{comparison}/group_replicates.txt"
     output:
-        "11-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
-        "11-deseq2/{comparison}/DESeq2_{comparison}_DESig.txt"
+        "12-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
+        "12-deseq2/{comparison}/DESeq2_{comparison}_DESig.txt"
     params:
-        output_dir = "11-deseq2",
+        output_dir = "12-deseq2",
         comparison = lambda wildcards: wildcards.comparison
     log:
-         "11-deseq2/{comparison}/DESeq2_{comparison}.log"
+         "12-deseq2/{comparison}/DESeq2_{comparison}.log"
     shell:
         " module load rnaseq && "
         " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Run_DESeq.R "

@@ -57,7 +57,7 @@ rule cutadapt:
         " --trim-n -m 20 "
         " -o {output} "
         " {input} "
-        " > {log}"
+        " 2>&1 | tee {log}"
 
 rule fastqc_reads:
     input:
@@ -68,7 +68,15 @@ rule fastqc_reads:
         "03-fastqc_reads/{sample}_trimmed_R1_fastqc.log"
     shell:
         " module load rnaseq && "
-        "fastqc {input} -o 03-fastqc_reads 2> {log}"
+        "fastqc {input} -o 03-fastqc_reads 2>&1 | tee {log}"
+
+def tophat_options(alignment_options):
+    options = ''
+    if not isinstance(alignment_options['transcriptome_only'], bool):
+        raise ValueError("config alignment_options:transcriptome_only must be boolean")
+    if alignment_options['transcriptome_only']:
+        options += ' --transcriptome-only '
+    return options
 
 rule tophat:
     input:
@@ -80,16 +88,17 @@ rule tophat:
         gtf_file = config["gtf"],
         transcriptome_index= config["transcriptome_index"],
         bowtie2_index = config["bowtie2_index"],
-        sample = lambda wildcards: wildcards.sample
+        sample = lambda wildcards: wildcards.sample,
+        tophat_options = lambda wildcards: tophat_options(config["alignment_options"])
     shell: " module load rnaseq && "
-            "tophat -p 8 "
+            "tophat {params.tophat_options} "
+            " -p 8 "
             " --b2-very-sensitive "
             " --no-coverage-search "
             " --library-type fr-unstranded "
             " -I 500000 "
 #            " -G {params.gtf_file} "   #this option will lead to recreation of the index every time; once a transcriptome index is created, don't give -G
             " --transcriptome-index={params.transcriptome_index} "
-            " -T "
             " --no-novel-juncs "
             " -o 04-tophat/{params.sample} "
             " {params.bowtie2_index} "

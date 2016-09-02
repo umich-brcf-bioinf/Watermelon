@@ -1,0 +1,56 @@
+input_dir:
+    "/ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1/data/outputs/Tronson_full_data/inputs/00-multiplexed_reads"
+samples:
+    Sample_61483: VVM
+    Sample_61484: VVM
+    Sample_61485: VVM
+    Sample_61486: VLM
+    Sample_61487: VLM
+    Sample_61488: VLM
+    Sample_61489: LVM
+    Sample_61490: LVM
+    Sample_61491: LVM
+    Sample_61492: LLM
+    Sample_61493: LLM
+    Sample_61494: LLM
+    Sample_61495: VVF
+    Sample_61496: VVF
+    Sample_61497: VVF
+    Sample_61498: VLF
+    Sample_61499: VLF
+    Sample_61500: VLF
+    Sample_61501: LVF
+    Sample_61502: LVF
+    Sample_61503: LVF
+    Sample_61504: LLF
+    Sample_61505: LLF
+    Sample_61506: LLF
+
+trimming_options:
+    base_quality_5prime_3prime: 0,13
+    trim_length_5prime: 3
+    trim_length_3prime: 0
+
+alignment_options:
+    transcriptome_only: False
+
+genome:
+    mm10
+bowtie2_index:
+     /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/bowtie2/genome
+fasta:
+    /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/bowtie2/genome.fa
+gtf:
+    /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Annotation/Genes/genes.gtf
+transcriptome_index:
+    /ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1/data/outputs/Tronson_full_data/inputs/mm10_transcriptome_index/mm10_transcriptome
+
+comparisons:
+    LVF_LLF: LVF_LLF
+    VVF_VLF: VVF_VLF
+    VVM_VVF: VVM_VVF
+    VVM_VLM_LVM_LLM_VVF_VLF_LVF_LLF: VVM_VLM_LVM_LLM_VVF_VLF_LVF_LLF
+#    LVF_LLF_VVF_VLF_VVM: LVF_LLF_VVF_VLF_VVM
+
+fold_change:
+    1.5

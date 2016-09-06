@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys
+import os
 import csv
 import datetime
 import time
@@ -18,27 +19,27 @@ def log(message):
 gene_info = sys.argv[1]         #'NCBI_annotation_2016_06_09/NCBI_gene_info_2016_07_12'
 gene_expr = sys.argv[2]         #'gene_diffexp.txt' #C.Plus_v_Six.Plus_gene.foldchange.1.5.txt'
 tax_id = sys.argv[3]            #'9606'
-outfile = gene_expr.replace('.txt', '_annot.txt') # instead of writing to a file write to stdout
+outfile_tag = os.path.basename(gene_expr.replace('.txt', '_annot.txt')) # instead of writing to a file write to stdout
+outfile_name = os.path.abspath(outfile_tag)
 
 log('reading gene info')
 gene_details = defaultdict(list)
 with open(gene_info,'r') as f:
-    next(f) # skip headings
+    next(f) # skip header
     reader=csv.reader(f,delimiter='\t')
     for row in reader:
-        #row_tax_id = row[0]
-        #row_gene_symbol = 
+        geneinfo_tax_id = row[0]
+        geneinfo_gene_id =row[1]
+        geneinfo_gene_symbol = row[2]
         if row[0] == tax_id:
             gene_details[row[2]].append(row[1]) 
             gene_details[row[2]].append(row[8])
 
-#fh = open(outfile, 'w') # ?? create excel output file
-
 header_line=[]
-with open(gene_expr, 'r') as x, open(outfile, 'w') as fh: 
-    reader=csv.reader(x,delimiter='\t')     #how to add header names 'Gene ID\tGene Description\t'
+with open(gene_expr, 'r') as x, open(outfile_name, 'w') as fh: 
+    reader=csv.reader(x,delimiter='\t')
 
-    for row in reader:                  # ?? what is an easy way to remove space from every 'row' with strip()?
+    for row in reader:
         row = [col.strip() for col in row]
         if row[0] == '#test_id':
             row[1] = 'gene_symbol'
@@ -48,15 +49,12 @@ with open(gene_expr, 'r') as x, open(outfile, 'w') as fh:
         elif row[0].startswith('#'):
             print('\t'.join(row), file=fh)
         else:
-#             gene_id_symbol = ['.', '.']
             left = row[0:2]
             right = row[3:]
             gene_name = row[1]
-#             if gene_name in gene_details:
-#                 gene_id_symbol = gene_details[gene_name]
-            gene_id_symbol = gene_details.get(gene_name, ['.','.'])
+            gene_id_symbol = gene_details.get(gene_name, ['.','.']) # If key is not available then returns default value 
 
-            outline = "\t".join(left + gene_id_symbol + right) # + "\t" + "\t".join(mid)  + "\t" + "\t".join(right)  #?? add URL for gene ID 
+            outline = "\t".join(left + gene_id_symbol + right)  
             print(outline, file=fh)
     
 #fh.close()

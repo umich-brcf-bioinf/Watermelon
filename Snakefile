@@ -42,9 +42,7 @@ run_trimming_options = 0
 for option, value in config["trimming_options"].items():
     if not isinstance(value, int):
         raise ValueError("config trimming_options:", value ,"must be integer")
-    run_trimming_rule += value
-    print(option, value)
-
+    run_trimming_options += value
 
 if run_trimming_options > 0:
     print('RUNNING CUTADAPT....')

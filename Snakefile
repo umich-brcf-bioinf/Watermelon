@@ -38,26 +38,49 @@ rule concat_reads:
     shell:
         "cat {input}/* > {output}"
 
-rule cutadapt:
-    input:
-         "01-raw_reads/{sample}_R1.fastq.gz"
-    output:
-        "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
-    params:
-        base_quality_5prime_3prime = config["trimming_options"]["base_quality_5prime_3prime"],
-        trim_length_5prime = config["trimming_options"]["trim_length_5prime"],
-        trim_length_3prime = config["trimming_options"]["trim_length_3prime"]
-    log:
-        "02-cutadapt/{sample}_trimmed_R1.log"
-    shell:
-        " module load rnaseq && "
-        "cutadapt -q {params.base_quality_5prime_3prime} "
-        " -u {params.trim_length_5prime} "
-        " -u -{params.trim_length_3prime} "
-        " --trim-n -m 20 "
-        " -o {output} "
-        " {input} "
-        " 2>&1 | tee {log}"
+run_trimming_options = 0
+for option, value in config["trimming_options"].items():
+    if not isinstance(value, int):
+        raise ValueError("config trimming_options:", value ,"must be integer")
+    run_trimming_rule += value
+    print(option, value)
+
+
+if run_trimming_options > 0:
+    print('RUNNING CUTADAPT....')
+    rule cutadapt:
+        input:
+             "01-raw_reads/{sample}_R1.fastq.gz"
+        output:
+            "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
+        params:
+            base_quality_5prime = config["trimming_options"]["base_quality_5prime"],
+            base_quality_3prime = config["trimming_options"]["base_quality_3prime"],
+            trim_length_5prime = config["trimming_options"]["trim_length_5prime"],
+            trim_length_3prime = config["trimming_options"]["trim_length_3prime"],
+        log:
+            "02-cutadapt/{sample}_trimmed_R1.log"
+        shell:
+            " module load rnaseq && "
+            "cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} "
+            " -u {params.trim_length_5prime} "
+            " -u -{params.trim_length_3prime} "
+            " --trim-n -m 20 "
+            " -o {output} "
+            " {input} "
+            " 2>&1 | tee {log}"
+else:
+    print('SKIPPING CUTADAPT...')
+    rule no_cutadapt:
+        input:
+             "01-raw_reads/{sample}_R1.fastq.gz"
+        output:
+            "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
+        log:
+            "02-cutadapt/{sample}_trimmed_R1.log"
+        shell:
+            "cp -r {input} {output}"
+            " 2>&1 | tee {log}"
 
 rule fastqc_reads:
     input:
@@ -202,7 +225,7 @@ rule cuffdiff:
         " -u -N "
         " --compatible-hits-norm "
         " {params.gtf_file} "
-        " {params.samples}" 
+        " {params.samples}"
 
 rule diff_exp:
     input:

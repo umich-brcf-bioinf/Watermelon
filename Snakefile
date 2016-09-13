@@ -1,8 +1,8 @@
 ## abhasi, cgates
 ## 7/26/2016
-## Watermelon: Recreate Legacy pipeline in snakemake
+## Watermelon 1.0 : Recreate Legacy pipeline in snakemake
 
-## snakemake --snakefile <snakefile> --configfile <config.yaml> --cores
+## snakemake --snakefile <snakefile> --configfile <config.yaml> --cores 40 -T
 ## snakemake --snakefile Snakefile --configfile tronson_config.yaml  --cores 40 -T -D >workflow_summary.xls
 
 from collections import defaultdict
@@ -38,47 +38,52 @@ rule concat_reads:
     shell:
         "cat {input}/* > {output}"
 
-run_trimming_options = 0
-for option, value in config["trimming_options"].items():
-    if not isinstance(value, int):
-        raise ValueError("config trimming_options:", value ,"must be integer")
-    run_trimming_options += value
+def cutadapt_options(trim_params):
+    run_trimming_options = 0
+    for option, value in trim_params.items():
+        if not isinstance(value, int):
+            raise ValueError("config trimming_options:", value ,"must be integer")
+        run_trimming_options += value
+        print(run_trimming_options)
+    return run_trimming_options
 
-if run_trimming_options > 0:
-    print('RUNNING CUTADAPT....')
-    rule cutadapt:
-        input:
-             "01-raw_reads/{sample}_R1.fastq.gz"
-        output:
-            "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
-        params:
-            base_quality_5prime = config["trimming_options"]["base_quality_5prime"],
-            base_quality_3prime = config["trimming_options"]["base_quality_3prime"],
-            trim_length_5prime = config["trimming_options"]["trim_length_5prime"],
-            trim_length_3prime = config["trimming_options"]["trim_length_3prime"],
-        log:
-            "02-cutadapt/{sample}_trimmed_R1.log"
-        shell:
-            " module load rnaseq && "
-            "cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} "
-            " -u {params.trim_length_5prime} "
-            " -u -{params.trim_length_3prime} "
-            " --trim-n -m 20 "
-            " -o {output} "
-            " {input} "
-            " 2>&1 | tee {log}"
-else:
-    print('SKIPPING CUTADAPT...')
-    rule no_cutadapt:
-        input:
-             "01-raw_reads/{sample}_R1.fastq.gz"
-        output:
-            "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
-        log:
-            "02-cutadapt/{sample}_trimmed_R1.log"
-        shell:
-            "cp -r {input} {output}"
-            " 2>&1 | tee {log}"
+def get_working_dir():
+    return os.getcwd()
+
+rule cutadapt:
+    input:
+         "01-raw_reads/{sample}_R1.fastq.gz"
+    output:
+        "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
+    params:
+        base_quality_5prime = config["trimming_options"]["base_quality_5prime"],
+        base_quality_3prime = config["trimming_options"]["base_quality_3prime"],
+        trim_length_5prime = config["trimming_options"]["trim_length_5prime"],
+        trim_length_3prime = config["trimming_options"]["trim_length_3prime"],
+        output_dir = "02-cutadapt",
+        working_dir = get_working_dir(),
+        trimming_options = cutadapt_options(config["trimming_options"])
+    # run:
+    #     get_dir = os.getcwd()
+    #     print("hello")
+    log:
+        "02-cutadapt/{sample}_trimmed_R1.log"
+    shell:
+        "module load rnaseq && "
+#        "print {get_dir} "
+        "if [[ {params.trimming_options} > 0 ]]; then "
+        "cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} "
+        " -u {params.trim_length_5prime} "
+        " -u -{params.trim_length_3prime} "
+        " --trim-n -m 20 "
+        " -o {output} "
+        " {input} "
+        " 2>&1 | tee {log}; "
+        " else "
+        " mkdir -p {params.output_dir}; "
+        " ln -sf {params.working_dir}/{input} {output}; "
+        " echo \"No trimming done\" > {log}; " 
+        " fi"
 
 rule fastqc_reads:
     input:
@@ -126,6 +131,8 @@ rule tophat:
             " {input} && "
             " mv 04-tophat/{params.sample}/accepted_hits.bam 04-tophat/{params.sample}/{params.sample}_accepted_hits.bam && "
             " mv 04-tophat/{params.sample}/align_summary.txt 04-tophat/{params.sample}/{params.sample}_align_summary.txt "
+
+
 
 rule fastqc_align:
     input:
@@ -277,7 +284,7 @@ rule cummerbund:
     input:
         "10-group_replicates/{comparison}/group_replicates.txt"
     output:
-        "11-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf"
+        "11-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf" #should we list out all outputs here?
     params:
         cuff_diff_dir = "08-cuffdiff/{comparison}",
         output_dir = "11-cummerbund/{comparison}/",

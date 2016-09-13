@@ -1,5 +1,5 @@
 input_dir:
-    "/ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1/data/inputs/00-multiplexed_reads"
+    "/ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1_tests/test_data/inputs/00-multiplexed_reads"
 samples:
     Sample_61483: VVM
     Sample_61484: VVM
@@ -28,8 +28,8 @@ samples:
 
 trimming_options:
     base_quality_5prime: 0
-    base_quality_3prime: 10
-    trim_length_5prime: 3
+    base_quality_3prime: 0
+    trim_length_5prime: 0
     trim_length_3prime: 0
 
 alignment_options:
@@ -42,13 +42,13 @@ bowtie2_index:
 fasta:
     /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/bowtie2/genome.fa
 gtf:
-    /ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1/data/inputs/references/mm10_tronson/genes.gtf
+    /ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1_tests/test_data/inputs/references/mm10_tronson/genes.gtf
 transcriptome_index:
-    /ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1/data/inputs/references/mm10_tronson/genes
+    /ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1_tests/test_data/inputs/references/mm10_tronson/genes
 comparisons:
     LVF_LLF: LVF_LLF
     VVF_VLF: VVF_VLF
     VVM_VVF: VVM_VVF
-#    LVF_LLF_VVF_VLF_VVM: LVF_LLF_VVF_VLF_VVM
+    LVF_LLF_VVF_VLF_VVM: LVF_LLF_VVF_VLF_VVM
 fold_change:
     1.5

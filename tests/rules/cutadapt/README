@@ -1,0 +1,5 @@
+# Samples were transmogrified from Tronson_RS1 excerpts
+# abhasi/cgates 9/13/2016
+ 
+# zcat Sample_61500_R1.fastq.gz | head -1000 | gzip -c > Sample_0_R1.fastq.gz
+# zcat Sample_61501_R1.fastq.gz | head -1000 | gzip -c > Sample_1_R1.fastq.gz

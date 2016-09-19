@@ -6,9 +6,9 @@
 ## snakemake --snakefile Snakefile --configfile tronson_config.yaml  --cores 40 -T -D >workflow_summary.xls
 
 from collections import defaultdict
+from itertools import combinations
 import csv
 import os
-
 
 rule all:
     input:
@@ -27,7 +27,7 @@ rule all:
                 comparison=config["comparisons"]),
         expand("12-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
                 comparison=config["comparisons"]),
-        expand("12-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
+        expand("12-deseq2/{comparison}/DESeq2_{comparison}_DESig.txt",
                 comparison=config["comparisons"])
 
 rule concat_reads:
@@ -44,11 +44,7 @@ def cutadapt_options(trim_params):
         if not isinstance(value, int):
             raise ValueError("config trimming_options:", value ,"must be integer")
         run_trimming_options += value
-        print(run_trimming_options)
     return run_trimming_options
-
-def get_working_dir():
-    return os.getcwd()
 
 rule cutadapt:
     input:
@@ -61,16 +57,12 @@ rule cutadapt:
         trim_length_5prime = config["trimming_options"]["trim_length_5prime"],
         trim_length_3prime = config["trimming_options"]["trim_length_3prime"],
         output_dir = "02-cutadapt",
-        working_dir = get_working_dir(),
+        output_file = "{sample}_trimmed_R1.fastq.gz",
         trimming_options = cutadapt_options(config["trimming_options"])
-    # run:
-    #     get_dir = os.getcwd()
-    #     print("hello")
     log:
         "02-cutadapt/{sample}_trimmed_R1.log"
     shell:
         "module load rnaseq && "
-#        "print {get_dir} "
         "if [[ {params.trimming_options} > 0 ]]; then "
         "cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} "
         " -u {params.trim_length_5prime} "
@@ -80,9 +72,10 @@ rule cutadapt:
         " {input} "
         " 2>&1 | tee {log}; "
         " else "
-        " mkdir -p {params.output_dir}; "
-        " ln -sf {params.working_dir}/{input} {output}; "
-        " echo \"No trimming done\" > {log}; " 
+        "cd {params.output_dir}; "
+        " ln -sf ../{input} {params.output_file}; "
+        " cd ..;"
+        " echo \"No trimming done\" > {log}; "
         " fi"
 
 rule fastqc_reads:
@@ -131,8 +124,6 @@ rule tophat:
             " {input} && "
             " mv 04-tophat/{params.sample}/accepted_hits.bam 04-tophat/{params.sample}/{params.sample}_accepted_hits.bam && "
             " mv 04-tophat/{params.sample}/align_summary.txt 04-tophat/{params.sample}/{params.sample}_align_summary.txt "
-
-
 
 rule fastqc_align:
     input:
@@ -304,6 +295,48 @@ rule cummerbund:
         " genome={params.genome} "
         " 2> {log} "
 
+def deseq_sample_comparisons(sample_details,comparisons):
+    with open("sample_conditions.txt", "w") as sample_file:
+        for sample, comparison in sample_details.items():
+            sample_file.write('%s\t%s\n' % (sample,comparison))
+
+    comparison_groups = set()
+    for key in comparisons.keys():
+        group_names= key.split("_")
+        for name in group_names:
+            comparison_groups.add(name)
+            
+    with open("comparison_groups.txt", "w") as group_file:
+        for group in combinations(comparison_groups, 2):
+             print("\t".join(group), file=group_file)
+    return
+
+rule build_deseq2_input_files:
+    input:
+       expand("07-htseq/{sample}_counts.txt", sample=config["samples"])  #run this rule only if count files are present
+    output:
+       "12-deseq_setup/sample_conditions.txt",  
+       "12-deseq_setup/comparison_groups.txt"
+    run:
+        sample_details = config["samples"]
+        comparisons = config["comparisons"]
+        print(sample_details)
+
+        with open("sample_conditions.txt", "w") as sample_file:
+            for sample, comparison in sample_details.items():
+                count_file = "".join("Sample_", sample,"_counts.txt")
+                sample_file.write("{}\t{}\t{}\n".format(sample,count_file,comparison))
+
+        comparison_groups = set()
+        for key in comparisons.keys():
+            group_names= key.split("_")
+            for name in group_names:
+                comparison_groups.add(name)
+
+        with open("comparison_groups.txt", "w") as group_file:
+                for group in combinations(comparison_groups, 2):
+                      print("\t".join(group), file=group_file)
+
 rule deseq2:
     input:
         counts_file = "07-htseq/HTSeq_counts.txt",
@@ -311,9 +344,11 @@ rule deseq2:
     output:
         "12-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
         "12-deseq2/{comparison}/DESeq2_{comparison}_DESig.txt"
+
     params:
         output_dir = "12-deseq2",
-        comparison = lambda wildcards: wildcards.comparison
+        comparison = lambda wildcards: wildcards.comparison,
+        null = deseq_sample_comparisons(config["samples"],config["comparisons"])
     log:
          "12-deseq2/{comparison}/DESeq2_{comparison}.log"
     shell:

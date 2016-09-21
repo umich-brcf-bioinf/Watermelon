@@ -25,10 +25,12 @@ rule all:
                 fold_change=config["fold_change"]),
         expand("11-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf",
                 comparison=config["comparisons"]),
-        expand("12-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
-                comparison=config["comparisons"]),
-        expand("12-deseq2/{comparison}/DESeq2_{comparison}_DESig.txt",
-                comparison=config["comparisons"])
+        "12-deseq_setup/sample_conditions.txt",
+        "12-deseq_setup/comparison_groups.txt"
+#         expand("12-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
+#                 comparison=config["comparisons"]),
+#         expand("12-deseq2/{comparison}/DESeq2_{comparison}_DESig.txt",
+#                 comparison=config["comparisons"])
 
 rule concat_reads:
     input:
@@ -295,66 +297,53 @@ rule cummerbund:
         " genome={params.genome} "
         " 2> {log} "
 
-def deseq_sample_comparisons(sample_details,comparisons):
-    with open("sample_conditions.txt", "w") as sample_file:
+def deseq_sample_comparisons(sample_file, comparison_file, sample_details,comparisons):
+    with open(sample_file, "w") as sample_file:
+        sample_file.write("sample\tfile_name\tcondition\n")
         for sample, comparison in sample_details.items():
-            sample_file.write('%s\t%s\n' % (sample,comparison))
-
+            count_file_name = sample + "_counts.txt"
+            sample_file.write("{}\t{}\t{}\n".format(sample, count_file_name, comparison))
+            
     comparison_groups = set()
     for key in comparisons.keys():
         group_names= key.split("_")
         for name in group_names:
             comparison_groups.add(name)
             
-    with open("comparison_groups.txt", "w") as group_file:
+    with open(comparison_file, "w") as group_file:
+        print("condition_1\tcondition_2", file=group_file)
         for group in combinations(comparison_groups, 2):
              print("\t".join(group), file=group_file)
-    return
 
 rule build_deseq2_input_files:
     input:
        expand("07-htseq/{sample}_counts.txt", sample=config["samples"])  #run this rule only if count files are present
     output:
-       "12-deseq_setup/sample_conditions.txt",  
-       "12-deseq_setup/comparison_groups.txt"
+       sample_file = "12-deseq_setup/sample_conditions.txt",  
+       comparison_file = "12-deseq_setup/comparison_groups.txt"
     run:
         sample_details = config["samples"]
         comparisons = config["comparisons"]
-        print(sample_details)
+        deseq_sample_comparisons(output.sample_file, output.comparison_file,sample_details, comparisons)
 
-        with open("sample_conditions.txt", "w") as sample_file:
-            for sample, comparison in sample_details.items():
-                count_file = "".join("Sample_", sample,"_counts.txt")
-                sample_file.write("{}\t{}\t{}\n".format(sample,count_file,comparison))
-
-        comparison_groups = set()
-        for key in comparisons.keys():
-            group_names= key.split("_")
-            for name in group_names:
-                comparison_groups.add(name)
-
-        with open("comparison_groups.txt", "w") as group_file:
-                for group in combinations(comparison_groups, 2):
-                      print("\t".join(group), file=group_file)
-
-rule deseq2:
-    input:
-        counts_file = "07-htseq/HTSeq_counts.txt",
-        group_replicates = "10-group_replicates/{comparison}/group_replicates.txt"
-    output:
-        "12-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
-        "12-deseq2/{comparison}/DESeq2_{comparison}_DESig.txt"
-
-    params:
-        output_dir = "12-deseq2",
-        comparison = lambda wildcards: wildcards.comparison,
-        null = deseq_sample_comparisons(config["samples"],config["comparisons"])
-    log:
-         "12-deseq2/{comparison}/DESeq2_{comparison}.log"
-    shell:
-        " module load rnaseq && "
-        " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Run_DESeq.R "
-        " baseDir={params.output_dir}/{params.comparison} "
-        " grpRepFile={input.group_replicates} "
-        " countsFile={input.counts_file} "
-        " 2> {log} "
+# rule deseq2:
+#     input:
+#         counts_file = "07-htseq/HTSeq_counts.txt",
+#         group_replicates = "10-group_replicates/{comparison}/group_replicates.txt"
+#     output:
+#         "12-deseq2/{comparison}/DESeq2_{comparison}_DE.txt",
+#         "12-deseq2/{comparison}/DESeq2_{comparison}_DESig.txt"
+# 
+#     params:
+#         output_dir = "12-deseq2",
+#         comparison = lambda wildcards: wildcards.comparison,
+#         null = deseq_sample_comparisons(config["samples"],config["comparisons"])
+#     log:
+#          "12-deseq2/{comparison}/DESeq2_{comparison}.log"
+#     shell:
+#         " module load rnaseq && "
+#         " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Run_DESeq.R "
+#         " baseDir={params.output_dir}/{params.comparison} "
+#         " grpRepFile={input.group_replicates} "
+#         " countsFile={input.counts_file} "
+#         " 2> {log} "

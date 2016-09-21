@@ -1,3 +1,5 @@
+## cgates; abhasi
+
 args <- commandArgs(T)
 USAGE <- "Rscript <script> outDir=<dir> htseqDir=<dir> sampleConditionsFileName=<file> comparisonsFileName=<file>"
 for (i in args) {

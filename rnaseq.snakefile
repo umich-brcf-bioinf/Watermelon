@@ -33,6 +33,7 @@ rule all:
                 comparison=cuffdiff_conditions(config["samples"], config["comparisons"])),
         "12-deseq_setup/sample_conditions.txt",
         "12-deseq_setup/compare_conditions.txt",
+        expand("13-deseq2/{comparison}_DESeq2.txt", comparison=config["comparisons"]),
         expand("14-deseq_legacy/{comparison}/DESeq2_{comparison}_DE.txt",
                 comparison=config["comparisons"]),
         expand("14-deseq_legacy/{comparison}/DESeq2_{comparison}_DESig.txt",
@@ -168,13 +169,12 @@ rule htseq_per_sample:
         " module load rnaseq &&"
         " python -m HTSeq.scripts.count "
         " -f bam "
-        " -s yes "
+        " -s no "
         " -m "
         " intersection-nonempty "
         " -q {input} "
         " {params.gtf} "
-        " > {output} && "
-        "perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/mergeHTSeqCountFiles.pl {params.input_dir}"
+        " > {output} "
 
 # unable to do this in one step; gives error: 'Not all output files of rule htseq_per_sample contain the same wildcards.'
 rule htseq_merge:

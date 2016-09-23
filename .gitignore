@@ -1,6 +1,9 @@
 # Snakemake
 .snakemake
 
+# genome reference annotations and seqs
+genome_annotations/
+
 ## Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

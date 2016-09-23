@@ -29,8 +29,8 @@ samples:
 trimming_options:
     base_quality_5prime: 0
     base_quality_3prime: 0
-    trim_length_5prime: 0
-    trim_length_3prime: 0
+    trim_length_5prime: 3
+    trim_length_3prime: 10
 
 alignment_options:
     transcriptome_only: True
@@ -49,6 +49,8 @@ comparisons:
     LVF_LLF: LVF_LLF
     VVF_VLF: VVF_VLF
     VVM_VVF: VVM_VVF
-    LVF_LLF_VVF_VLF_VVM: LVF_LLF_VVF_VLF_VVM
+    VVF_VLM: VVF_VLM
+##(CANNOT RUN THIS ONE) # MODIFY CUFFDIFF INPUT RULE TO RUN "ALL COMBINATIONS"
+#    LVF_LLF_VVF_VLF_VVM: LVF_LLF_VVF_VLF_VVM 
 fold_change:
     1.5

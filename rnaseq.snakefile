@@ -329,17 +329,17 @@ rule build_deseq2_input_files:
 rule deseq2:
     input:
         sample_file = "12-deseq_setup/sample_conditions.txt",  
-        comparison_file = "12-deseq_setup/compare_conditions.txt",
-        htseq_counts_dir = "07-htseq"
+        comparison_file = "12-deseq_setup/compare_conditions.txt"
     output:
         expand("13-deseq2/{comparison}_DESeq2.txt", comparison=config["comparisons"])
     params:
+        input_dir = "07-htseq",
         output_dir = "13-deseq2"
     shell:
         " module load rnaseq && "
         " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/run_deseq2_contrasts.R "
         " outDir={params.output_dir}"
-        " htseqDir={input.htseq_counts_dir} "
+        " htseqDir={params.input_dir} "
         " sampleConditionsFileName={input.sample_file} "
         " comparisonsFileName={input.comparison_file} "
 

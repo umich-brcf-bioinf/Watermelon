@@ -1,6 +1,7 @@
 input_dir:
-    ""
+    "./00-multiplexed_reads"
 samples:
+    sampleA: sampleA
 
 trimming_options:
     base_quality_5prime: 0
@@ -15,3 +16,6 @@ gtf:
 transcriptome_index:
 comparisons:
 fold_change:
+
+comparisons:
+    1_2: 1_2

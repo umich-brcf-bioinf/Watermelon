@@ -5,6 +5,7 @@ import os
 import csv
 import datetime
 import time
+import argparse
 from collections import defaultdict
 
 def time_stamp():
@@ -15,12 +16,33 @@ def time_stamp():
 def log(message):
     print('{}|{}'.format(time_stamp(), message), file=sys.stderr)
 
-#?? add code to validate the command line argument; error handling
-gene_info = sys.argv[1]         #'NCBI_annotation_2016_06_09/NCBI_gene_info_2016_07_12'
-gene_expr = sys.argv[2]         #'gene_diffexp.txt' #C.Plus_v_Six.Plus_gene.foldchange.1.5.txt'
-tax_id = sys.argv[3]            #'9606'
+def parse_command_line_args():
+    parser = argparse.ArgumentParser(
+        description='Script adds NCBI gene_info annotations to cuffdiff output')
+
+    parser.add_argument(
+        '-g', '--geneinfo', type=str, help='path to input NCBI gene_info file', required=True)
+    parser.add_argument(
+        '-e', '--diffexp', type=str, help='path to input differential_expression_file', required=True)
+    parser.add_argument(
+        '-t', '--taxid', type=str, help='organism taxonomy ID', required=True)
+    parser.add_argument(
+        '-o', '--outdir', type=str, help='output directory name', required=True)
+    # Array for all arguments passed to script
+    args = parser.parse_args()
+    # Assign args to variables
+    gene_info = args.geneinfo
+    diffexp =  args.diffexp
+    tax_id= args.taxid
+    output_dir = args.outdir
+    return gene_info, diffexp, tax_id, output_dir
+    
+gene_info, gene_expr , tax_id, outdir  = parse_command_line_args()
+print(gene_info + ', ' + gene_expr + ', ' + tax_id+ ', ' + outdir)
+
 outfile_tag = os.path.basename(gene_expr.replace('.txt', '_annot.txt')) # instead of writing to a file write to stdout
-outfile_name = os.path.abspath(outfile_tag)
+outfile_name = os.path.join(outdir, outfile_tag)
+print(outfile_name)
 
 log('reading gene info')
 gene_details = defaultdict(list)

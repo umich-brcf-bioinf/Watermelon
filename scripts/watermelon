@@ -1,0 +1,32 @@
+#!/bin/bash
+# Launches snakemake
+# 9/27/2016 abhasi/cgates
+
+
+set -e #script will fail on any error
+
+SCRIPT_NAME=`basename $0`
+EXPECTED_ARGS=1
+
+if [[ $# -ne $EXPECTED_ARGS ]]; then
+    echo "Usage: ${SCRIPT_NAME} {config_file}"
+    echo "Example ${SCRIPT_NAME} ~/my_config.yaml" 
+    exit 1
+fi
+
+CONFIG_FILE=$1
+
+if [[ ! -f $CONFIG_FILE ]]; then
+    echo "ERROR: config file [${CONFIG_FILE}] cannot be read"
+    echo "Usage: ${SCRIPT_NAME} {config_file}"
+    echo "Example ${SCRIPT_NAME} ~/my_config.yaml" 
+    exit 1
+fi 
+
+
+mkdir -p logs
+
+#snakemake
+
+touch logs/watermelon.log
+

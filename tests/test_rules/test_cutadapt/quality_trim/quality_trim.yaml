@@ -1,0 +1,21 @@
+input_dir:
+    ""
+samples:
+    sampleA: sampleA
+
+trimming_options:
+    base_quality_5prime: 20
+    base_quality_3prime: 20
+    trim_length_5prime: 0 
+    trim_length_3prime: 0
+
+genome:
+bowtie2_index:
+fasta:
+gtf:
+transcriptome_index:
+comparisons:
+fold_change:
+
+comparisons:
+    1_2: 1_2

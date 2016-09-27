@@ -27,13 +27,10 @@ def gunzip(source_file_pattern):
 
 class CutadaptTest(unittest.TestCase):
     #TODO: use a string constant for "02-cutadapt"
-    def test_end_trim(self):
+    def _snakemake(self, configfile_path, source_expected_dir, source_working_dir):
         anomalies = []
-        configfile_path = os.path.join(TEST_DIR, 'end_trim_test', 'end_trim.yaml')
-        source_working_dir = os.path.join(TEST_DIR, 'end_trim_test', 'working_dir')
-        source_expected_dir = os.path.join(TEST_DIR, 'end_trim_test', 'expected')
         with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
+            temp_dir_path = temp_dir.path  # '/tmp/foo'
             tmp_expected_dir = os.path.join(temp_dir_path, 'expected')
             shutil.copytree(source_expected_dir, tmp_expected_dir)
             tmp_actual_dir = os.path.join(temp_dir_path, 'actual')
@@ -45,6 +42,7 @@ class CutadaptTest(unittest.TestCase):
      --configfile {1} \
      --force 02-cutadapt/Sample_0_trimmed_R1.fastq.gz 02-cutadapt/Sample_1_trimmed_R1.fastq.gz
 '''.format(SNAKEFILE_PATH, configfile_path)
+            print(command)
             subprocess.check_output(command, shell=True)
 
             gunzip(tmp_expected_dir + '/02-cutadapt/*.gz')
@@ -59,5 +57,27 @@ class CutadaptTest(unittest.TestCase):
                         anomalies.append(basename + ": different than expected")
                 except FileNotFoundError:
                     anomalies.append(basename + ": missing")
+        return anomalies
 
+
+    def test_end_trim(self):
+        configfile_path = os.path.join(TEST_DIR, 'end_trim', 'end_trim.yaml')
+        source_working_dir = os.path.join(TEST_DIR, 'end_trim', 'working_dir')
+        source_expected_dir = os.path.join(TEST_DIR, 'end_trim', 'expected')
+        anomalies =  self._snakemake(configfile_path, source_expected_dir, source_working_dir)
         self.assertEqual([], anomalies, 'some files did not match')
+
+    def test_no_trim(self):
+        configfile_path = os.path.join(TEST_DIR, 'no_trim', 'no_trim.yaml')
+        source_working_dir = os.path.join(TEST_DIR, 'no_trim', 'working_dir')
+        source_expected_dir = os.path.join(TEST_DIR, 'no_trim', 'expected')
+        anomalies =  self._snakemake(configfile_path, source_expected_dir, source_working_dir)
+        self.assertEqual([], anomalies, 'some files did not match')
+
+    def test_quality_trim(self):
+        configfile_path = os.path.join(TEST_DIR, 'quality_trim', 'quality_trim.yaml')
+        source_working_dir = os.path.join(TEST_DIR, 'quality_trim', 'working_dir')
+        source_expected_dir = os.path.join(TEST_DIR, 'quality_trim', 'expected')
+        anomalies =  self._snakemake(configfile_path, source_expected_dir, source_working_dir)
+        self.assertEqual([], anomalies, 'some files did not match')
+

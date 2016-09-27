@@ -31,13 +31,17 @@ def parse_command_line_args():
     # Array for all arguments passed to script
     args = parser.parse_args()
     # Assign args to variables
-    gene_info = args.geneinfo
-    diffexp =  args.diffexp
-    tax_id= args.taxid
-    output_dir = args.outdir
-    return gene_info, diffexp, tax_id, output_dir
+   #  gene_info = args.geneinfo
+#     diffexp =  args.diffexp
+#     tax_id= args.taxid
+#     output_dir = args.outdir
+    return args #gene_info, diffexp, tax_id, output_dir
     
-gene_info, gene_expr , tax_id, outdir  = parse_command_line_args()
+args = parse_command_line_args()
+gene_info = args.geneinfo
+gene_expr = args.diffexp
+tax_id = args.taxid
+outdir = args.outdir
 print(gene_info + ', ' + gene_expr + ', ' + tax_id+ ', ' + outdir)
 
 outfile_tag = os.path.basename(gene_expr.replace('.txt', '_annot.txt')) # instead of writing to a file write to stdout

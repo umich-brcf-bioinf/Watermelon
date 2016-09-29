@@ -129,6 +129,9 @@ Bowtie2 related options:
     --b2-D                         <int>       [ default: 15               ]
     --b2-R                         <int>       [ default: 2                ]
 
+  Other options
+    --b2-seed                      <int>       [ default: 42               ]
+
 Fusion related options:
     --fusion-search
     --fusion-anchor-length         <int>       [ default: 20               ]
@@ -166,7 +169,7 @@ class Usage(Exception):
         self.msg = msg
 
 output_dir = "./tophat_out/"
-logging_dir = output_dir + "logs/"
+logging_dir = output_dir + "logs/"  
 run_log = None
 tophat_log = None  #main log file handle
 tophat_logger = None # main logging object
@@ -580,6 +583,8 @@ class TopHatParams:
             self.D = 15
             self.R = 2
 
+            self.seed = 42
+
         def parse_options(self, opts):
             for option, value in opts:
                 if option == "--b2-very-fast":
@@ -617,6 +622,9 @@ class TopHatParams:
                     self.D = int(value)
                 if option == "--b2-R":
                     self.R = int(value)
+
+                if option == "--b2-seed":
+                    self.seed = int(value)
 
         def check(self):
             more_than_once = False
@@ -2342,6 +2350,9 @@ def bowtie(params,
 
         if params.bowtie2:
             bowtie_cmd += ["-x"]
+
+        if params.bowtie2:
+            bowtie_cmd += ["--seed", str(params.bowtie2_params.seed)]
 
         bowtie_cmd += [ bwt_idx_prefix ]
         bowtie_proc=None

@@ -3,11 +3,17 @@
 # 9/27/2016 abhasi/cgates
 
 
-set -e #script will fail on any error
-
 export SCRIPT_NAME=`basename $0 .sh`
 export LOG_DIR=logs
 export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
+
+SNAKEMAKE_VERSION=$(snakemake --version 2>/dev/null)
+if ! [[ $SNAKEMAKE_VERSION ]]; then
+  echo "snakemake not found; is the python3 module loaded correctly? (contact bfxcore support for assistance)."
+  exit 1
+fi
+
+set -e #script will fail on any error
 
 EXPECTED_ARGS=1
 

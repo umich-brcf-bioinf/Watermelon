@@ -85,6 +85,15 @@ class SnakeFileTest(unittest.TestCase):
 
         self.assertRegexpMatches(actual_log, r'ERROR.*contact bfxcore support')
 
+    def test_watermelon_command_fails_gracefully_if_no_snakemake(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = self.setup_tmp_dir(temp_dir)
+            command = 'module purge; ./watermelon'
+            exit_code, actual_output = self.execute(command)
+            self.assertNotEqual(0, exit_code)
+            self.assertRegexpMatches(actual_output, r'snakemake not found')
+
+
     def test_watermelon_command_showsUsageWhenConfigOmitted(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = self.setup_tmp_dir(temp_dir)

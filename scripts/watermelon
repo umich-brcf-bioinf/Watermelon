@@ -5,7 +5,10 @@
 
 set -e #script will fail on any error
 
-SCRIPT_NAME=`basename $0`
+export SCRIPT_NAME=`basename $0 .sh`
+export LOG_DIR=logs
+export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
+
 EXPECTED_ARGS=1
 
 if [[ $# -ne $EXPECTED_ARGS ]]; then
@@ -14,7 +17,7 @@ if [[ $# -ne $EXPECTED_ARGS ]]; then
     exit 1
 fi
 
-CONFIG_FILE=$1
+export CONFIG_FILE=$1
 
 if [[ ! -f $CONFIG_FILE ]]; then
     echo "ERROR: config file [${CONFIG_FILE}] cannot be read"
@@ -24,9 +27,20 @@ if [[ ! -f $CONFIG_FILE ]]; then
 fi 
 
 
-mkdir -p logs
+mkdir -p ${LOG_DIR}
+echo Logging to ${LOG_FILE}
+(
+echo 0 > .watermelon.exitcode
+set +e
 
-#snakemake
+snakemake --snakefile rnaseq.snakefile --configfile ${CONFIG_FILE} --cores 40 -T
 
-touch logs/watermelon.log
+SNAKEMAKE_EXIT=$?
+if [[ $SNAKEMAKE_EXIT != 0 ]]; then
+    echo 'ERROR: Snakemake encountered an unexpected error. Review config and contact bfxcore support.'
+    echo $SNAKEMAKE_EXIT > .watermelon.exitcode
+fi
+) 2>&1 | tee $LOG_FILE
 
+EXIT_CODE=$(cat .watermelon.exitcode)
+exit ${EXIT_CODE}

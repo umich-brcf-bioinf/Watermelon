@@ -28,7 +28,7 @@ class SnakeFileTest(unittest.TestCase):
         return exit_code, str(actual_output)
 
     def setup_tmp_dir(self, temp_dir):
-        temp_dir_path = temp_dir.path  # '/tmp/foo'
+        temp_dir_path = temp_dir.path  #'/tmp/foo' #
         os.chdir(temp_dir_path)
         WATERMELON_SCRIPT = os.path.join(SCRIPTS_DIR, 'watermelon')
         shutil.copy(WATERMELON_SCRIPT, temp_dir_path)
@@ -39,19 +39,57 @@ class SnakeFileTest(unittest.TestCase):
             temp_dir_path = self.setup_tmp_dir(temp_dir)
             CONFIG_FILE=os.path.join(TEST_DIR, 'config.yaml')
             shutil.copy(CONFIG_FILE, temp_dir_path)
+            SNAKEMAKE_FILE_SOURCE=os.path.join(TEST_DIR, 'test.snakefile')
+            SNAKEMAKE_FILE_DEST=os.path.join(temp_dir_path, 'rnaseq.snakefile')
+            shutil.copy(SNAKEMAKE_FILE_SOURCE, SNAKEMAKE_FILE_DEST)
 
-            command = './watermelon {}'.format(CONFIG_FILE)  #snakemake --snakefile rnaseq.snakefile --configfile config.yaml --cores 40 -T 2>&1 | tee logs/watermelon.log
+            command = './watermelon {}'.format('config.yaml')
             exit_code, actual_output = self.execute(command)
 
             self.assertEqual(0, exit_code)
-            log_file = os.path.join(temp_dir_path, 'logs', 'watermelon.log')
-            self.assertTrue(os.path.exists(log_file))
+
+            log_file_name = os.path.join(temp_dir_path, 'logs', 'watermelon.log')
+            self.assertTrue(os.path.exists(log_file_name))
+            with open(log_file_name) as log_file:
+                actual_log = "".join(log_file.readlines())
+
+            with open('sample_A.txt') as output_file:
+                actual_output_A = output_file.readlines()
+            with open('sample_B.txt') as output_file:
+                actual_output_B = output_file.readlines()
+
+
+        self.assertEqual(['lineA\n'], actual_output_A)
+        self.assertEqual(['lineB\n'], actual_output_B)
+        self.assertRegexpMatches(actual_log, r'Provided cores: 40')
+        self.assertRegexpMatches(actual_log, r'3 of 3 steps \(100%\) done')
+
+    def test_watermelon_command_fails_when_invalid_config(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = self.setup_tmp_dir(temp_dir)
+            with open('invalid_config.yaml', 'w') as config_file:
+                print('an invalid config file', file=config_file)
+            SNAKEMAKE_FILE_SOURCE=os.path.join(TEST_DIR, 'test.snakefile')
+            SNAKEMAKE_FILE_DEST=os.path.join(temp_dir_path, 'rnaseq.snakefile')
+            shutil.copy(SNAKEMAKE_FILE_SOURCE, SNAKEMAKE_FILE_DEST)
+
+            command = './watermelon {}'.format('invalid_config.yaml')
+            exit_code, actual_output = self.execute(command)
+
+            self.assertEqual(1, exit_code)
+
+            log_file_name = os.path.join(temp_dir_path, 'logs', 'watermelon.log')
+            self.assertTrue(os.path.exists(log_file_name))
+            with open(log_file_name) as log_file:
+                actual_log = "".join(log_file.readlines())
+
+        self.assertRegexpMatches(actual_log, r'ERROR.*contact bfxcore support')
 
     def test_watermelon_command_showsUsageWhenConfigOmitted(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = self.setup_tmp_dir(temp_dir)
 
-            command = './watermelon'  
+            command = './watermelon'
             exit_code, actual_output = self.execute(command)
 
             self.assertEqual(1, exit_code)
@@ -77,7 +115,7 @@ class SnakeFileTest(unittest.TestCase):
             self.assertEqual(1, exit_code)
             self.assertRegexpMatches(actual_output, 'config file .* cannot be read')
 
-    def test_watermelon_command_showsUsageWhenIsDir(self):
+    def test_watermelon_command_showsUsageWhenConfigIsDir(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = self.setup_tmp_dir(temp_dir)
             CONFIG_DIR=os.path.join(temp_dir_path, 'config_dir')

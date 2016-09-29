@@ -1005,7 +1005,8 @@ class TopHatParams:
                                          "b2-rfg=",
                                          "b2-score-min=",
                                          "b2-D=",
-                                         "b2-R="])
+                                         "b2-R=",
+                                         "b2-seed=",])
         except getopt.error, msg:
             raise Usage(msg)
 
@@ -2277,6 +2278,9 @@ def bowtie(params,
            num_mismatches = 3
 
         if params.bowtie2:
+            bowtie_cmd += ["--seed", str(params.bowtie2_params.seed)]
+
+        if params.bowtie2:
             if seg_mapping or multihits_out != None:
                 # since bowtie2 does not suppress reads that map to too many places,
                 # we suppress those in segment_juncs and long_spanning_reads.
@@ -2350,9 +2354,6 @@ def bowtie(params,
 
         if params.bowtie2:
             bowtie_cmd += ["-x"]
-
-        if params.bowtie2:
-            bowtie_cmd += ["--seed", str(params.bowtie2_params.seed)]
 
         bowtie_cmd += [ bwt_idx_prefix ]
         bowtie_proc=None

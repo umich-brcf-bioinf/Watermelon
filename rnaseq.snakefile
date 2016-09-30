@@ -127,7 +127,7 @@ rule tophat:
             " -I 500000 "
 #            " -G {params.gtf_file} "   #this option will lead to recreation of the index every time; once a transcriptome index is created, don't give -G
             " --transcriptome-index={params.transcriptome_index} "
-            " --no-novel-juncs "
+            " --no-novel-juncs "     #used in Legacy when doing transcriptome + genome alignment
             " -o 04-tophat/{params.sample} "
             " {params.bowtie2_index} "
             " {input} && "

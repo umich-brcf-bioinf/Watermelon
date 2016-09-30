@@ -30,11 +30,6 @@ def parse_command_line_args():
         '-o', '--outdir', type=str, help='output directory name', required=True)
     # Array for all arguments passed to script
     args = parser.parse_args()
-    # Assign args to variables
-   #  gene_info = args.geneinfo
-#     diffexp =  args.diffexp
-#     tax_id= args.taxid
-#     output_dir = args.outdir
     return args #gene_info, diffexp, tax_id, output_dir
     
 args = parse_command_line_args()

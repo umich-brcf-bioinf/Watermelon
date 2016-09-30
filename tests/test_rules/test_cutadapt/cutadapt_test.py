@@ -42,7 +42,6 @@ class CutadaptTest(unittest.TestCase):
      --configfile {1} \
      --force 02-cutadapt/Sample_0_trimmed_R1.fastq.gz 02-cutadapt/Sample_1_trimmed_R1.fastq.gz
 '''.format(SNAKEFILE_PATH, configfile_path)
-            print(command)
             subprocess.check_output(command, shell=True)
 
             gunzip(tmp_expected_dir + '/02-cutadapt/*.gz')

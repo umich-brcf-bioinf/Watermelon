@@ -6,10 +6,11 @@
 export SCRIPT_NAME=`basename $0 .sh`
 export LOG_DIR=logs
 export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
+export SNAKEFILE=rnaseq.snakefile
 
 SNAKEMAKE_VERSION=$(snakemake --version 2>/dev/null)
 if ! [[ $SNAKEMAKE_VERSION ]]; then
-  echo "snakemake not found; is the python3 module loaded correctly? (contact bfxcore support for assistance)."
+  echo "ERROR: snakemake not found; is the python3 module loaded correctly? (contact bfxcore support for assistance)"
   exit 1
 fi
 
@@ -32,6 +33,10 @@ if [[ ! -f $CONFIG_FILE ]]; then
     exit 1
 fi 
 
+if [[ ! -f $SNAKEFILE ]]; then
+    echo "ERROR: snakefile file [${SNAKEFILE}] cannot be read (contact bfxcore support for assistance)"
+    exit 1
+fi 
 
 mkdir -p ${LOG_DIR}
 echo Logging to ${LOG_FILE}
@@ -39,7 +44,7 @@ echo Logging to ${LOG_FILE}
 echo 0 > .watermelon.exitcode
 set +e
 
-snakemake --snakefile rnaseq.snakefile --configfile ${CONFIG_FILE} --cores 40 -T
+snakemake --snakefile ${SNAKEFILE} --configfile ${CONFIG_FILE} --cores 40 -T
 
 SNAKEMAKE_EXIT=$?
 if [[ $SNAKEMAKE_EXIT != 0 ]]; then

@@ -35,13 +35,46 @@ def _add_columns(input_df, linear_fold_change):
     df['diff_exp'] = df.apply(diff_exp, axis=1)
     return df
 
-def _validate_inputs(input_df, args):
+def _validate_required_fields(input_df, args):
     required_fields = set(['log2(fold_change)', 'qvalue', 'status'])
     actual_fields = set(input_df.columns.values.tolist())
     missing_fields = sorted(required_fields - actual_fields)
     if missing_fields:
-        msg = 'Input file [{}] is missing required field(s) [{}].'
-        raise ValueError(msg.format(args.input_file, ','.join(missing_fields)))
+        msg_fmt = 'Input file [{}] is missing required field(s) [{}].'
+        msg = msg_fmt.format(args.input_file, ','.join(missing_fields))
+        raise ValueError(msg)
+
+def _validate_log2fc_numeric(input_df, args):
+    def is_not_float(x):
+        is_float = True
+        try:
+            float(x)
+        except:
+            is_float = False
+        return not is_float
+    non_numeric_index = input_df['log2(fold_change)'].apply(is_not_float)
+    non_numeric_log2fc = input_df[non_numeric_index]['log2(fold_change)']
+    non_numeric_excerpt = [(str(value) + ':' + str(line + 2)) for line, value in non_numeric_log2fc.head(n=5).to_dict().items()]
+    if len(non_numeric_log2fc):
+        msg_fmt = ('Input file [{}]: {} log2(fold_change) value(s) '
+                   'are not numeric: [{}]')
+        msg = msg_fmt.format(args.input_file,
+                             len(non_numeric_log2fc),
+                             ','.join(non_numeric_excerpt))
+        raise ValueError(msg)
+
+def _validate_fold_change_threshold(input_df, args):
+    if args.foldchange < 1:
+        msg_fmt = 'Specified foldchange cutoff [{}] must be >= 1'
+        msg = msg_fmt.format(args.foldchange)
+        raise ValueError(msg)
+
+def _validate_inputs(input_df, args):
+    validations = [_validate_required_fields,
+                   _validate_log2fc_numeric,
+                   _validate_fold_change_threshold,]
+    for validation in validations:
+        validation(input_df, args)
 
 def main(sys_argv):
     args = _parse_command_line_args(sys_argv)

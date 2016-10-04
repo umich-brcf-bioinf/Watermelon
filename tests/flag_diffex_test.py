@@ -68,7 +68,9 @@ value-2|-2|1|OK
 value-1|-1|1|OK
 value0|0|1|OK
 value1|1|1|OK
-value2|2|1|OK''')
+value2|2|1|OK
+valueInf|Inf|1|OK
+valueNegInf|-Inf|1|OK''')
         df = pd.read_csv(df_contents, sep='|')
         actual_df = flag_diffex._add_columns(df, linear_fold_change=4)
 
@@ -81,6 +83,10 @@ value2|2|1|OK''')
         self.assertEqual(1.0, log_to_linear[0])
         self.assertEqual(2.0, log_to_linear[1])
         self.assertEqual(4.0, log_to_linear[2])
+        pos_inf = float("inf")
+        neg_inf = float("-inf")
+        self.assertEqual(pos_inf, log_to_linear[pos_inf])
+        self.assertEqual(0, log_to_linear[neg_inf])
 
     def test_add_columns_addsDiffExpYes(self):
         df_contents = StringIO(\
@@ -89,6 +95,8 @@ underExpressed-boundary|OK|0.05|-2
 overExpressed-boundary|OK|0.05|2
 underExpressed-betterFC|OK|0.05|-3
 overExpressed-betterFC|OK|0.05|3
+overExpressed-infFC|OK|0.05|Inf
+underExpressed-infFC|OK|0.05|-Inf
 underExpressed-betterFDR|OK|0.04|-2''')
         df = pd.read_csv(df_contents, sep='|')
         actual_df = flag_diffex._add_columns(df, linear_fold_change=4)
@@ -99,6 +107,8 @@ underExpressed-betterFDR|OK|0.04|-2''')
         self.assertEqual('Yes', actual_diff_exp['overExpressed-boundary'])
         self.assertEqual('Yes', actual_diff_exp['underExpressed-betterFC'])
         self.assertEqual('Yes', actual_diff_exp['overExpressed-betterFC'])
+        self.assertEqual('Yes', actual_diff_exp['underExpressed-infFC'])
+        self.assertEqual('Yes', actual_diff_exp['overExpressed-infFC'])
         self.assertEqual('Yes', actual_diff_exp['underExpressed-betterFDR'])
 
     def test_add_columns_addsDiffExpNo(self):
@@ -107,6 +117,7 @@ underExpressed-betterFDR|OK|0.04|-2''')
 underExpressed-badStatus|NotOK|0.05|-2
 overExpressed-badStatus|NotOK|0.05|2
 underExpressed-badFDR|OK|0.06|-2
+underExpressed-infFDR|OK|Inf|-2
 underExpressed-badFC|OK|0.05|-1
 overExpressed-badFC|OK|0.05|1''')
         df = pd.read_csv(df_contents, sep='|')
@@ -117,11 +128,12 @@ overExpressed-badFC|OK|0.05|1''')
         self.assertEqual('No', actual_diff_exp['underExpressed-badStatus'])
         self.assertEqual('No', actual_diff_exp['overExpressed-badStatus'])
         self.assertEqual('No', actual_diff_exp['underExpressed-badFDR'])
+        self.assertEqual('No', actual_diff_exp['underExpressed-infFDR'])
         self.assertEqual('No', actual_diff_exp['overExpressed-badFC'])
         self.assertEqual('No', actual_diff_exp['underExpressed-badFC'])
 
     def test_raisesValueErrorIfMissingRequiredColumns(self):
-        args = Namespace(input_file = 'input.txt')
+        args = Namespace(input_file='input.txt', foldchange=1)
         df_contents = StringIO('field1\n')
         df = pd.read_csv(df_contents)
         self.assertRaisesRegexp(ValueError,
@@ -132,7 +144,31 @@ overExpressed-badFC|OK|0.05|1''')
                                  args)
 
     def test_failsIfFoldchangeNotFloat(self):
-        pass
+        args = Namespace(input_file='input.txt', foldchange=1)
+        df_contents = StringIO(\
+'''field1|status|qvalue|log2(fold_change)
+A|OK|1|Hello
+B|OK|1|5
+C|OK|1|World
+D|OK|1|10
+E|OK|1|Inf''')
+        df = pd.read_csv(df_contents, sep='|')
+        self.assertRaisesRegexp(ValueError,
+                                (r'Input file \[input.txt\]: 2 log2\(fold_change\) '
+                                 r'value\(s\) are not numeric: \[Hello:2,World:4\]'),
+                                flag_diffex._validate_inputs,
+                                df,
+                                args)
 
-    def test_failsIfLogFoldchangeNegative(self):
-        pass
+    def test_failsIfFoldchangeThresholdLessThan1(self):
+        args = Namespace(input_file='input.txt', foldchange=0.75)
+        df_contents = StringIO(\
+'''field1|status|qvalue|log2(fold_change)
+A|OK|1|5''')
+        df = pd.read_csv(df_contents, sep='|')
+        self.assertRaisesRegexp(ValueError,
+                                r'Specified foldchange cutoff \[0.75\] must be >= 1',
+                                flag_diffex._validate_inputs,
+                                df,
+                                args)
+

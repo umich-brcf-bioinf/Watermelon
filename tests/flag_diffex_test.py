@@ -1,11 +1,19 @@
 #pylint: disable=too-many-public-methods, invalid-name, no-self-use
 from __future__ import print_function, absolute_import, division
 
+from argparse import Namespace
 import os
 import subprocess
 import unittest
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
+import pandas as pd
 from testfixtures.tempdirectory import TempDirectory
+
+import scripts.flag_diffex as flag_diffex
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SCRIPTS_DIR = os.path.join(os.path.dirname(TEST_DIR), 'scripts')
@@ -20,7 +28,7 @@ class FlagDiffexTest(unittest.TestCase):
             actual_output = e.output
         return exit_code, str(actual_output)
 
-    def test_basecase(self):
+    def test_commandReturnsCorrectRowAndColumnCount(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
 
@@ -30,12 +38,9 @@ class FlagDiffexTest(unittest.TestCase):
             output_filename = os.path.join(temp_dir_path, 'output.txt')
 
             input_file_contents = \
-'''field1|log2(fold_change)
-value-2|-2
-value-1|-1
-value0|0
-value1|1
-value2|2'''.replace('|', '\t')
+'''field1|log2(fold_change)|qvalue|status
+value-2|1|1|OK
+value-1|1|1|OK'''.replace('|', '\t')
 
             with open(input_filename, 'w') as input_file:
                 input_file.write(input_file_contents)
@@ -47,33 +52,84 @@ value2|2'''.replace('|', '\t')
             exit_code, command_output = self.execute(command)
 
             self.assertEqual(0, exit_code)
-            with open(output_filename) as output_file:
-                actual_output = output_file.readlines()
+            actual_df = pd.read_csv(output_filename, sep='\t')
+        actual_rows, actual_columns = actual_df.shape
+        input_row_count = len(input_file_contents.split('\n'))
+        self.assertEqual(input_row_count,
+                         actual_rows + 1)
+        input_columns = len(input_file_contents.split('\n')[0].split('\t'))
+        self.assertEqual(input_columns + 2,
+                         actual_columns)
 
-        self.assertEqual(len(input_file_contents.split('\n')), len(actual_output))
+    def test_add_columns_addsLinearFoldChange(self):
+        df_contents = StringIO(\
+'''field1|log2(fold_change)|qvalue|status
+value-2|-2|1|OK
+value-1|-1|1|OK
+value0|0|1|OK
+value1|1|1|OK
+value2|2|1|OK''')
+        df = pd.read_csv(df_contents, sep='|')
+        actual_df = flag_diffex._add_columns(df, linear_fold_change=4)
 
-        header_fields = actual_output[0].strip().split('\t')
-        expected_fields = ['field1', 'log2(fold_change)', 'significant', 'linear_fold_change', 'diff_exp']
-        self.assertEqual(expected_fields, header_fields)
+        self.assertIn('linear_fold_change',
+                      actual_df.columns.values.tolist())
 
-        row_fields = actual_output[1].strip().split('\t')
-        self.assertEqual(['value-2', '-2', '1', '0.25', '1'], row_fields)
+        log_to_linear = actual_df.set_index('log2(fold_change)')['linear_fold_change'].to_dict()
+        self.assertEqual(0.25, log_to_linear[-2])
+        self.assertEqual(0.5, log_to_linear[-1])
+        self.assertEqual(1.0, log_to_linear[0])
+        self.assertEqual(2.0, log_to_linear[1])
+        self.assertEqual(4.0, log_to_linear[2])
 
-        row_fields = actual_output[2].strip().split('\t')
-        self.assertEqual(['value-1', '-1', '1', '0.5', '1'], row_fields)
+    def test_add_columns_addsDiffExpYes(self):
+        df_contents = StringIO(\
+'''test|status|qvalue|log2(fold_change)
+underExpressed-boundary|OK|0.05|-2
+overExpressed-boundary|OK|0.05|2
+underExpressed-betterFC|OK|0.05|-3
+overExpressed-betterFC|OK|0.05|3
+underExpressed-betterFDR|OK|0.04|-2''')
+        df = pd.read_csv(df_contents, sep='|')
+        actual_df = flag_diffex._add_columns(df, linear_fold_change=4)
+        self.assertIn('diff_exp',
+                      actual_df.columns.values.tolist())
+        actual_diff_exp = actual_df.set_index('test')['diff_exp'].to_dict()
+        self.assertEqual('Yes', actual_diff_exp['underExpressed-boundary'])
+        self.assertEqual('Yes', actual_diff_exp['overExpressed-boundary'])
+        self.assertEqual('Yes', actual_diff_exp['underExpressed-betterFC'])
+        self.assertEqual('Yes', actual_diff_exp['overExpressed-betterFC'])
+        self.assertEqual('Yes', actual_diff_exp['underExpressed-betterFDR'])
 
-        row_fields = actual_output[3].strip().split('\t')
-        self.assertEqual(['value0', '0', '1', '1.0', '1'], row_fields)
+    def test_add_columns_addsDiffExpNo(self):
+        df_contents = StringIO(\
+'''test|status|qvalue|log2(fold_change)
+underExpressed-badStatus|NotOK|0.05|-2
+overExpressed-badStatus|NotOK|0.05|2
+underExpressed-badFDR|OK|0.06|-2
+underExpressed-badFC|OK|0.05|-1
+overExpressed-badFC|OK|0.05|1''')
+        df = pd.read_csv(df_contents, sep='|')
+        actual_df = flag_diffex._add_columns(df, linear_fold_change = 4)
+        self.assertIn('diff_exp',
+                      actual_df.columns.values.tolist())
+        actual_diff_exp = actual_df.set_index('test')['diff_exp'].to_dict()
+        self.assertEqual('No', actual_diff_exp['underExpressed-badStatus'])
+        self.assertEqual('No', actual_diff_exp['overExpressed-badStatus'])
+        self.assertEqual('No', actual_diff_exp['underExpressed-badFDR'])
+        self.assertEqual('No', actual_diff_exp['overExpressed-badFC'])
+        self.assertEqual('No', actual_diff_exp['underExpressed-badFC'])
 
-        row_fields = actual_output[4].strip().split('\t')
-        self.assertEqual(['value1', '1', '1', '2.0', '1'], row_fields)
-
-        row_fields = actual_output[5].strip().split('\t')
-        self.assertEqual(['value2', '2', '1', '4.0', '1'], row_fields)
-
-        
-    def test_failsIfMissingRequiredColumns(self):
-        pass
+    def test_raisesValueErrorIfMissingRequiredColumns(self):
+        args = Namespace(input_file = 'input.txt')
+        df_contents = StringIO('field1\n')
+        df = pd.read_csv(df_contents)
+        self.assertRaisesRegexp(ValueError,
+                                (r'Input file \[input.txt\] is missing required '
+                                 r'field\(s\) \[log2\(fold_change\),qvalue,status\].'),
+                                 flag_diffex._validate_inputs,
+                                 df,
+                                 args)
 
     def test_failsIfFoldchangeNotFloat(self):
         pass

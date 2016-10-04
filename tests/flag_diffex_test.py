@@ -38,7 +38,7 @@ class FlagDiffexTest(unittest.TestCase):
             output_filename = os.path.join(temp_dir_path, 'output.txt')
 
             input_file_contents = \
-'''field1|log2(fold_change)|qvalue|status
+'''field1|log2(fold_change)|q_value|status
 value-2|1|1|OK
 value-1|1|1|OK'''.replace('|', '\t')
 
@@ -63,7 +63,7 @@ value-1|1|1|OK'''.replace('|', '\t')
 
     def test_add_columns_addsLinearFoldChange(self):
         df_contents = StringIO(\
-'''field1|log2(fold_change)|qvalue|status
+'''field1|log2(fold_change)|q_value|status
 value-2|-2|1|OK
 value-1|-1|1|OK
 value0|0|1|OK
@@ -90,7 +90,7 @@ valueNegInf|-Inf|1|OK''')
 
     def test_add_columns_addsDiffExpYes(self):
         df_contents = StringIO(\
-'''test|status|qvalue|log2(fold_change)
+'''test|status|q_value|log2(fold_change)
 underExpressed-boundary|OK|0.05|-2
 overExpressed-boundary|OK|0.05|2
 underExpressed-betterFC|OK|0.05|-3
@@ -113,7 +113,7 @@ underExpressed-betterFDR|OK|0.04|-2''')
 
     def test_add_columns_addsDiffExpNo(self):
         df_contents = StringIO(\
-'''test|status|qvalue|log2(fold_change)
+'''test|status|q_value|log2(fold_change)
 underExpressed-badStatus|NotOK|0.05|-2
 overExpressed-badStatus|NotOK|0.05|2
 underExpressed-badFDR|OK|0.06|-2
@@ -138,7 +138,7 @@ overExpressed-badFC|OK|0.05|1''')
         df = pd.read_csv(df_contents)
         self.assertRaisesRegexp(ValueError,
                                 (r'Input file \[input.txt\] is missing required '
-                                 r'field\(s\) \[log2\(fold_change\),qvalue,status\].'),
+                                 r'field\(s\) \[log2\(fold_change\),q_value,status\].'),
                                  flag_diffex._validate_inputs,
                                  df,
                                  args)
@@ -146,7 +146,7 @@ overExpressed-badFC|OK|0.05|1''')
     def test_failsIfFoldchangeNotFloat(self):
         args = Namespace(input_file='input.txt', foldchange=1)
         df_contents = StringIO(\
-'''field1|status|qvalue|log2(fold_change)
+'''field1|status|q_value|log2(fold_change)
 A|OK|1|Hello
 B|OK|1|5
 C|OK|1|World
@@ -163,7 +163,7 @@ E|OK|1|Inf''')
     def test_failsIfFoldchangeThresholdLessThan1(self):
         args = Namespace(input_file='input.txt', foldchange=0.75)
         df_contents = StringIO(\
-'''field1|status|qvalue|log2(fold_change)
+'''field1|status|q_value|log2(fold_change)
 A|OK|1|5''')
         df = pd.read_csv(df_contents, sep='|')
         self.assertRaisesRegexp(ValueError,

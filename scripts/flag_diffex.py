@@ -30,12 +30,12 @@ def _parse_command_line_args(sys_argv):
     return args 
 
 def _add_columns(input_df, linear_fold_change):
-    log_fold_change = math.log2(linear_fold_change)
+    log2_fold_change = math.log2(linear_fold_change)
     df = input_df.copy()
     df[LINEAR_FC] = np.exp2(df[LOG2_FC])
     status_ok = lambda r: r[STATUS] == STATUS_OK
     significant = lambda r: r[Q_VALUE] <= FDR_CUTOFF
-    effect_size_ok = lambda r: abs(r[LOG2_FC]) >= log_fold_change
+    effect_size_ok = lambda r: abs(r[LOG2_FC]) >= log2_fold_change
     yes_no = lambda x: 'Yes' if x else 'No'
     diff_exp = lambda r: yes_no(status_ok(r) and significant(r) and effect_size_ok(r))
     df[DIFF_EXP] = df.apply(diff_exp, axis=1)

@@ -10,11 +10,13 @@ from itertools import combinations
 import csv
 import os
 
-def cuffdiff_conditions(sample_conditions, explicit_comparisons):
-    conditions = list(explicit_comparisons)
-    all_conditions = set(sample_conditions.values())
-    conditions.append("_".join(sorted(all_conditions)))
-    return conditions
+def cuffdiff_conditions(explicit_comparisons):
+    unique_conditions = set()
+    for comparison in explicit_comparisons:
+        unique_conditions.update(comparison.split("_"))
+    multi_condition_comparison = "_".join(sorted(unique_conditions))
+    return(multi_condition_comparison)
+
 
 rule all:
     input:
@@ -23,21 +25,18 @@ rule all:
         expand("05-fastqc_align/{sample}_accepted_hits_fastqc.html",
                 sample=config["samples"]),
         "06-qc_metrics/alignment_stats.txt",
-        expand("09-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
-                comparison=cuffdiff_conditions(config["samples"], config["comparisons"]),
+        expand("08-cuffdiff/{multi_group_comparison}/gene_exp.diff",
+                multi_group_comparison=cuffdiff_conditions(config["comparisons"])) ,
+        expand("09-diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.foldchange.{fold_change}.txt",
+               multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
                 fold_change=config["fold_change"]),
-        expand("09-diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}.txt",
-                comparison=cuffdiff_conditions(config["samples"], config["comparisons"]),
+        expand("09-diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.foldchange.{fold_change}.txt",
+                multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
                 fold_change=config["fold_change"]),
-        expand("11-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf",
-                comparison=cuffdiff_conditions(config["samples"], config["comparisons"])),
-        "12-deseq_setup/sample_conditions.txt",
-        "12-deseq_setup/compare_conditions.txt",
-        expand("13-deseq2/{comparison}_DESeq2.txt", comparison=config["comparisons"]),
-        expand("14-deseq_legacy/{comparison}/DESeq2_{comparison}_DE.txt",
-                comparison=config["comparisons"]),
-        expand("14-deseq_legacy/{comparison}/DESeq2_{comparison}_DESig.txt",
-                comparison=config["comparisons"])
+        expand("11-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
+                multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
+        expand("13-deseq2/{comparison}_DESeq2.txt", comparison=config["comparisons"])
+
 
 rule concat_reads:
     input:
@@ -87,7 +86,7 @@ rule cutadapt:
         " echo \"No trimming done\" > {log}; "
         " fi"
 
-rule fastqc_reads:
+rule fastqc_trimmed_cutadapt_reads:
     input:
         "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
     output:
@@ -98,43 +97,65 @@ rule fastqc_reads:
         " module load rnaseq && "
         "fastqc {input} -o 03-fastqc_reads 2>&1 | tee {log}"
 
+rule create_transcriptome_index:
+    input: 
+        config["gtf"]
+    output:
+        "04-tophat/transcriptome_index/transcriptome.fa"
+    params:
+        gtf = config["gtf"],
+        bowtie2_index = config["bowtie2_index"],
+        transcriptome_dir = "transcriptome_index",
+        temp_dir =  "04-tophat/.tmp",
+        output_dir = "04-tophat"
+    shell:
+        "mkdir -p {params.temp_dir} && "
+        " module load rnaseq && "
+        " tophat -G {params.gtf} "
+        " --transcriptome-index={params.temp_dir}/transcriptome_index/transcriptome "
+        " {params.bowtie2_index} && "
+        " mv {params.temp_dir}/{params.transcriptome_dir} {params.output_dir} && "
+        " touch {params.output_dir}/transcriptome_index/* "
+
 def tophat_options(alignment_options):
     options = ''
     if not isinstance(alignment_options['transcriptome_only'], bool):
         raise ValueError("config alignment_options:transcriptome_only must be boolean")
     if alignment_options['transcriptome_only']:
         options += ' --transcriptome-only '
+    else:
+        options += ' --no-novel-juncs '  # used in Legacy for transcriptome + genome alignment
     return options
 
 rule tophat:
     input:
-        "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
+        fastq = "02-cutadapt/{sample}_trimmed_R1.fastq.gz",
+        transcriptome_fasta = "04-tophat/transcriptome_index/transcriptome.fa"
     output:
         "04-tophat/{sample}/{sample}_accepted_hits.bam",
         "04-tophat/{sample}/{sample}_align_summary.txt"
     params:
         gtf_file = config["gtf"],
-        transcriptome_index= config["transcriptome_index"],
+        transcriptome_index= "04-tophat/transcriptome_index/transcriptome",
         bowtie2_index = config["bowtie2_index"],
         sample = lambda wildcards: wildcards.sample,
         tophat_options = lambda wildcards: tophat_options(config["alignment_options"])
-    shell: " module load rnaseq && "
-            "tophat {params.tophat_options} "
-            " -p 8 "
+    shell: 
+            " module load rnaseq && "
+            " tophat -p 8 "
             " --b2-very-sensitive "
             " --no-coverage-search "
             " --library-type fr-unstranded "
             " -I 500000 "
-#            " -G {params.gtf_file} "   #this option will lead to recreation of the index every time; once a transcriptome index is created, don't give -G
             " --transcriptome-index={params.transcriptome_index} "
-            " --no-novel-juncs "     #used in Legacy when doing transcriptome + genome alignment
+            " {params.tophat_options} "
             " -o 04-tophat/{params.sample} "
             " {params.bowtie2_index} "
-            " {input} && "
+            " {input.fastq} && "
             " mv 04-tophat/{params.sample}/accepted_hits.bam 04-tophat/{params.sample}/{params.sample}_accepted_hits.bam && "
             " mv 04-tophat/{params.sample}/align_summary.txt 04-tophat/{params.sample}/{params.sample}_align_summary.txt "
 
-rule fastqc_align:
+rule fastqc_tophat_align:
     input:
         "04-tophat/{sample}/{sample}_accepted_hits.bam"
     output:
@@ -204,21 +225,27 @@ def cuffdiff_samples(underbar_separated_comparisons,
 
     return ' '.join(params)
 
+def build_labels(param1):
+    return cuffdiff_labels(param1.multi_group_comparison)
+
 rule cuffdiff:
     input:
         expand("04-tophat/{sample}/{sample}_accepted_hits.bam", sample=config["samples"])
     output:
-        "08-cuffdiff/{comparison}/gene_exp.diff",
-        "08-cuffdiff/{comparison}/isoform_exp.diff",
-        "08-cuffdiff/{comparison}/read_groups.info"
+        "08-cuffdiff/{multi_group_comparison}/gene_exp.diff",
+        "08-cuffdiff/{multi_group_comparison}/isoform_exp.diff",
+        "08-cuffdiff/{multi_group_comparison}/read_groups.info"
     params:
-        output_dir = "08-cuffdiff/{comparison}",
-        labels = lambda wildcards : cuffdiff_labels(wildcards.comparison),
-        samples = lambda wildcards : cuffdiff_samples(wildcards.comparison,
+        output_dir = "08-cuffdiff/{multi_group_comparison}",
+        labels = build_labels,
+#        labels = lambda wildcards : cuffdiff_labels(wildcards.multi_group_comparison),
+        samples = lambda wildcards : cuffdiff_samples(wildcards.multi_group_comparison,
                                                       config["samples"],
                                                       "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
         fasta = config["fasta"],
         gtf_file = config["gtf"],
+        check_labels = lambda wildcards: cuffdiff_conditions(config["comparisons"]),
+
     shell:
         " module load rnaseq && "
         " cuffdiff -q "
@@ -303,7 +330,7 @@ rule cummerbund:
         " genome={params.genome} "
         " 2> {log} "
 
-def deseq_sample_comparisons(sample_file, comparison_file, sample_details,comparisons):
+def deseq_sample_comparisons(sample_file, comparison_file, sample_details, comparisons):
     with open(sample_file, "w") as sample_file:
         sample_file.write("sample\tfile_name\tcondition\n")
         for sample, comparison in sample_details.items():

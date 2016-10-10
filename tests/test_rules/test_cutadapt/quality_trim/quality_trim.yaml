@@ -13,9 +13,10 @@ genome:
 bowtie2_index:
 fasta:
 gtf:
+    foo.gtf
 transcriptome_index:
 comparisons:
 fold_change:
 
 comparisons:
-    1_2: 1_2
+    A_B: A_B

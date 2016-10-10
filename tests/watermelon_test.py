@@ -115,16 +115,6 @@ class SnakeFileTest(unittest.TestCase):
             self.assertEqual(1, exit_code)
             self.assertRegexpMatches(actual_output, 'Usage')
 
-    def test_watermelon_showsUsageWhenExtraArgs(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = self.setup_tmp_dir(temp_dir)
-
-            command = './watermelon foo bar'  
-            exit_code, actual_output = self.execute(command)
-
-            self.assertEqual(1, exit_code)
-            self.assertRegexpMatches(actual_output, 'Usage')
-
     def test_watermelon_showsUsageWhenFileNotFound(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = self.setup_tmp_dir(temp_dir)
@@ -146,3 +136,28 @@ class SnakeFileTest(unittest.TestCase):
 
             self.assertEqual(1, exit_code)
             self.assertRegexpMatches(actual_output, 'config file .* cannot be read')
+
+    def test_watermelon_passthroughExtraArguments(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = self.setup_tmp_dir(temp_dir)
+            CONFIG_FILE=os.path.join(TEST_DIR, 'config.yaml')
+            shutil.copy(CONFIG_FILE, temp_dir_path)
+            SNAKEMAKE_FILE_SOURCE=os.path.join(TEST_DIR, 'test.snakefile')
+            SNAKEMAKE_FILE_DEST=os.path.join(temp_dir_path, 'rnaseq.snakefile')
+            shutil.copy(SNAKEMAKE_FILE_SOURCE, SNAKEMAKE_FILE_DEST)
+
+            snakemake_executable_path = os.path.join(temp_dir_path, 'snakemake')
+            with open(snakemake_executable_path, 'w') as snakemake_command:
+                snakemake_command_contents = '#!/bin/bash\necho $@'''
+                print(snakemake_command_contents, file=snakemake_command)
+            command = ('chmod u+x snakemake; '
+                       'PATH=.:$PATH; '
+                       './watermelon {} 1 2 3 baz froody'.format('config.yaml'))
+            exit_code, actual_output = self.execute(command)
+            self.assertEqual(0, exit_code)
+            self.assertRegexpMatches(actual_output,
+                                     (r'--snakefile rnaseq.snakefile '
+                                      r'--configfile config.yaml '
+                                      r'--cores 40 '
+                                      r'-T '
+                                      r'1 2 3 baz froody'))

@@ -2,6 +2,11 @@
 # Launches snakemake
 # 9/27/2016 abhasi/cgates
 
+# config file is required; snakefile is assumed to be rnaseq.snakefile in working dir
+# any extra arguments are passed through
+
+
+# TODO (cgates): allow snakefile or cores to be overridden
 
 export SCRIPT_NAME=`basename $0 .sh`
 export LOG_DIR=logs
@@ -15,21 +20,27 @@ if ! [[ $SNAKEMAKE_VERSION ]]; then
 fi
 
 set -e #script will fail on any error
+set -u #script will fail on any undefined bash variable
 
-EXPECTED_ARGS=1
 
-if [[ $# -ne $EXPECTED_ARGS ]]; then
-    echo "Usage: ${SCRIPT_NAME} {config_file}"
-    echo "Example ${SCRIPT_NAME} ~/my_config.yaml" 
+function show_usage {
+    echo Usage: ${SCRIPT_NAME} {config_file}
+    echo Example ${SCRIPT_NAME} ~/my_config.yaml
+}
+
+REQUIRED_ARGS=1
+
+if [[ $# -lt $REQUIRED_ARGS ]]; then
+    show_usage
     exit 1
 fi
 
 export CONFIG_FILE=$1
+shift
 
 if [[ ! -f $CONFIG_FILE ]]; then
     echo "ERROR: config file [${CONFIG_FILE}] cannot be read"
-    echo "Usage: ${SCRIPT_NAME} {config_file}"
-    echo "Example ${SCRIPT_NAME} ~/my_config.yaml" 
+    show_usage
     exit 1
 fi 
 
@@ -38,13 +49,17 @@ if [[ ! -f $SNAKEFILE ]]; then
     exit 1
 fi 
 
+export EXTRA_ARGUMENTS=$@
+
 mkdir -p ${LOG_DIR}
 echo Logging to ${LOG_FILE}
 (
 echo 0 > .watermelon.exitcode
 set +e
 
-snakemake --snakefile ${SNAKEFILE} --configfile ${CONFIG_FILE} --cores 40 -T
+snakemake_command="snakemake --snakefile ${SNAKEFILE} --configfile ${CONFIG_FILE} --cores 40 -T ${EXTRA_ARGUMENTS}"
+echo $snakemake_command
+eval $snakemake_command
 
 SNAKEMAKE_EXIT=$?
 if [[ $SNAKEMAKE_EXIT != 0 ]]; then

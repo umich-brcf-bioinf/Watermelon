@@ -1,3 +1,6 @@
+# watermelon tmp exitcode
+.watermelon.exitcode
+
 # Snakemake
 .snakemake
 

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function, absolute_import, division 
 import sys
 import os
 import csv
@@ -7,6 +8,9 @@ import datetime
 import time
 import argparse
 from collections import defaultdict
+
+WARNING_PERCENTAGE_ANNOTATED_CUTOFF = 1
+
 
 def time_stamp():
     ts = time.time()
@@ -18,32 +22,60 @@ def log(message):
 
 def parse_command_line_args():
     parser = argparse.ArgumentParser(
-        description='Script adds NCBI gene_info annotations to cuffdiff output')
+        description='Adds NCBI gene_info annotations to cuffdiff output')
 
     parser.add_argument(
-        '-g', '--geneinfo', type=str, help='path to input NCBI gene_info file', required=True)
+        '-i', '--geneinfo', type=str, help='path to input NCBI gene_info file', required=True)
     parser.add_argument(
         '-e', '--diffexp', type=str, help='path to input differential_expression_file', required=True)
     parser.add_argument(
-        '-t', '--taxid', type=str, help='organism taxonomy ID', required=True)
+        '-g', '--genome', type=str, help='organism taxonomy ID', required=True)  # hg=9606; mm=10090
     parser.add_argument(
         '-o', '--outdir', type=str, help='output directory name', required=True)
-    # Array for all arguments passed to script
     args = parser.parse_args()
-    return args #gene_info, diffexp, tax_id, output_dir
-    
+    return args
+
+
+def check_geneinfo_matches(all_lines,
+                           matching_lines,
+                           warning_percent_annotated_cutoff=WARNING_PERCENTAGE_ANNOTATED_CUTOFF):
+    percentage_matches = int((matching_lines/all_lines)*100)
+    msg_format = 'Annotations added for {} ({}%) of rows in diffexp file'
+    msg = msg_format.format(matching_lines, percentage_matches)
+    log(msg)
+    if percentage_matches < warning_percent_annotated_cutoff:
+        msg_format = 'WARNING: Low number of annotations! (percent annotated < {})'
+        msg = msg_format.format(warning_percent_annotated_cutoff)
+        log(msg)
+
+
 args = parse_command_line_args()
 gene_info = args.geneinfo
 gene_expr = args.diffexp
-tax_id = args.taxid
 outdir = args.outdir
-print(gene_info + ', ' + gene_expr + ', ' + tax_id+ ', ' + outdir)
 
-outfile_tag = os.path.basename(gene_expr.replace('.txt', '_annot.txt')) # instead of writing to a file write to stdout
+taxonomy = { 'mm10': '10090', 'hg19': '9606' }
+
+def get_taxid(genome):
+    if genome in taxonomy:
+        return taxonomy.get(genome)
+    else:
+        msg_fmt = 'ERROR: Taxonomy id not found for -g/--genome:[{}]. Available taxonomy-genome mappings are: {}'
+        msg = msg_fmt.format(genome, taxonomy)
+        print(msg, file=sys.stderr)
+        sys.exit()
+
+tax_id = get_taxid(args.genome)
+
+outfile_tag = os.path.basename(gene_expr.replace('.txt', '_annot.txt'))
 outfile_name = os.path.join(outdir, outfile_tag)
-print(outfile_name)
 
-log('reading gene info')
+log('reading entrez gene info')
+
+
+
+#### def get_geneinfo_lines():
+    
 gene_details = defaultdict(list)
 with open(gene_info,'r') as geneinfo_file:
     next(geneinfo_file) # skip header
@@ -54,10 +86,14 @@ with open(gene_info,'r') as geneinfo_file:
             gene_details[geneinfo_gene_symbol].append(geneinfo_gene_id)
             gene_details[geneinfo_gene_symbol].append(geneinfo_gene_description)
 
+
+#### def add_annotation(args.diffexp, outfile_name):
+all_lines = 0
+matching_gene_symbol_count = 0
 with open(gene_expr, 'r') as file_to_annotate, open(outfile_name, 'w') as annotated_file: 
     reader=csv.reader(file_to_annotate,delimiter='\t')
-
     for row in reader:
+        all_lines += 1
         row = [col.strip() for col in row]
         if row[0] == '#test_id':
             row[1] = 'gene_symbol'
@@ -70,8 +106,13 @@ with open(gene_expr, 'r') as file_to_annotate, open(outfile_name, 'w') as annota
             left = row[0:2]
             right = row[3:]
             gene_name = row[1]
-            gene_id_symbol = gene_details.get(gene_name, ['.','.']) # If key is not available then return default value ('.') 
+            if gene_name in gene_details:
+                gene_id_symbol = gene_details[gene_name]
+                matching_gene_symbol_count += 1
+            else:
+                gene_id_symbol = ['.','.']
             outline = "\t".join(left + gene_id_symbol + right)  
             print(outline, file=annotated_file)
 
+check_geneinfo_matches(all_lines, matching_gene_symbol_count)
 log('done')

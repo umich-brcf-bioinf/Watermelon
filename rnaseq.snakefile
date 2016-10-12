@@ -31,25 +31,35 @@ rule all:
         expand("10-annotated_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.foldchange.{fold_change}_annot.txt",
                multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
                fold_change=config["fold_change"]),
-#         expand("10-annotated_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.foldchange.{fold_change}_annot.txt",
-#                 multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
-#                 fold_change=config["fold_change"]),
+        expand("10-annotated_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.foldchange.{fold_change}_annot.txt",
+                multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
+                fold_change=config["fold_change"]),
         expand("12-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
         expand("14-deseq2/{comparison}_DESeq2.txt", comparison=config["comparisons"])
 
+def symlinks(link_name, link_path):
+    if not os.path.exists(link_path):
+        msg_fmt = 'ERROR: specified config reference files/dirs [{}:{}] cannot be read'
+        msg = msg_fmt.format(link_name, link_path)
+        raise ValueError(msg)
+    os.symlink(link_path, link_name)
 
 rule create_references:
     output:
-        expand("references/{link_name}", link_name=config["references"])
+        expand("references/{link_name}", link_name=config["references"]),
+        "references/genome.fai"
     run:
         os.chdir("references")
         for link_name, link_path in config["references"].items():
-            if not os.path.exists(link_path):
-                msg_fmt = 'ERROR: specified config reference files/dirs [{}:{}] cannot be read'
-                msg = msg_fmt.format(link_name, link_path)
-                raise ValueError(msg)
-            os.symlink(link_path, link_name)
+            if link_name == "fasta":
+                link_name += "_index"
+                link_path += ".fai"
+#                     fasta_index = config["references"]["fasta"] + ".fai"
+#                     os.symlink(fasta_index, "fasta.fai")
+            symlinks(link_name, link_path)
+            
+            
         os.chdir("..")
 
 rule concat_reads:
@@ -115,11 +125,11 @@ rule fastqc_trimmed_cutadapt_reads:
 
 rule create_transcriptome_index:
     input: 
-        gtf = config["gtf"]
+        gtf = "references/gtf"
     output:
         "04-tophat/transcriptome_index/transcriptome.fa"
     params:
-        bowtie2_index = config["bowtie2_index"],
+        bowtie2_index = "references/bowtie2_index/genome",
         transcriptome_dir = "transcriptome_index",
         temp_dir =  "04-tophat/.tmp",
         output_dir = "04-tophat"
@@ -130,7 +140,8 @@ rule create_transcriptome_index:
         " --transcriptome-index={params.temp_dir}/transcriptome_index/transcriptome "
         " {params.bowtie2_index} && "
         " mv {params.temp_dir}/{params.transcriptome_dir} {params.output_dir} && "
-        " touch {params.output_dir}/transcriptome_index/* "
+        " touch {params.output_dir}/transcriptome_index/* && "
+        " mv tophat_out {params.output_dir}/transcriptome_index/"
 
 def tophat_options(alignment_options):
     options = ''
@@ -150,9 +161,9 @@ rule tophat:
         "04-tophat/{sample}/{sample}_accepted_hits.bam",
         "04-tophat/{sample}/{sample}_align_summary.txt"
     params:
-        gtf_file = config["gtf"],
+        gtf_file = "references/gtf",
         transcriptome_index= "04-tophat/transcriptome_index/transcriptome",
-        bowtie2_index = config["bowtie2_index"],
+        bowtie2_index = "references/bowtie2_index/genome",
         sample = lambda wildcards: wildcards.sample,
         tophat_options = lambda wildcards: tophat_options(config["alignment_options"])
     threads: 8
@@ -200,7 +211,7 @@ rule htseq_per_sample:
     output:
         "07-htseq/{sample}_counts.txt",
     params:
-        gtf = config["gtf"],
+        gtf = "references/gtf",
         input_dir = "07-htseq",
     shell:
         " module load rnaseq &&"
@@ -258,9 +269,9 @@ rule cuffdiff:
         samples = lambda wildcards : cuffdiff_samples(wildcards.multi_group_comparison,
                                                       config["samples"],
                                                       "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
-        fasta = config["fasta"],
-        gtf_file = config["gtf"],
-        check_labels = lambda wildcards: cuffdiff_conditions(config["comparisons"]),
+        fasta = "references/fasta",
+        gtf_file = "references/gtf",
+        check_labels = lambda wildcards: cuffdiff_conditions(config["comparisons"])
 
     shell:
         " module load rnaseq && "
@@ -309,7 +320,7 @@ rule annotate:
     params:
         output_dir = "10-annotated_diff_expression/{comparison}",
         genome = config["genome"],
-        entrez_gene_info = config["entrez_gene_info"]
+        entrez_gene_info = "references/entrez_gene_info"
     shell:
         "python /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/get_entrez_gene_info.py "
         " -i {params.entrez_gene_info} "
@@ -355,7 +366,7 @@ rule cummerbund:
     params:
         cuff_diff_dir = "08-cuffdiff/{comparison}",
         output_dir = "12-cummerbund/{comparison}/",
-        gtf_file = config["gtf"],
+        gtf_file = "references/gtf",
         genome = config["genome"],
         logfile = "12-cummerbund/{comparison}/cummerbund.log"
     log:

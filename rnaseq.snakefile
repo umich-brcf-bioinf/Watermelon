@@ -38,28 +38,19 @@ rule all:
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
         expand("14-deseq2/{comparison}_DESeq2.txt", comparison=config["comparisons"])
 
-def symlinks(link_name, link_path):
-    if not os.path.exists(link_path):
-        msg_fmt = 'ERROR: specified config reference files/dirs [{}:{}] cannot be read'
-        msg = msg_fmt.format(link_name, link_path)
-        raise ValueError(msg)
-    os.symlink(link_path, link_name)
 
 rule create_references:
     output:
-        expand("references/{link_name}", link_name=config["references"]),
-        "references/genome.fai"
+        expand("references/{link_name}", link_name=config["references"])
     run:
         os.chdir("references")
         for link_name, link_path in config["references"].items():
-            if link_name == "fasta":
-                link_name += "_index"
-                link_path += ".fai"
-#                     fasta_index = config["references"]["fasta"] + ".fai"
-#                     os.symlink(fasta_index, "fasta.fai")
-            symlinks(link_name, link_path)
-            
-            
+            if not os.path.exists(link_path):
+                msg_fmt = 'ERROR: specified config reference files/dirs [{}:{}] cannot be read'
+                msg = msg_fmt.format(link_name, link_path)
+                raise ValueError(msg)
+                print(link_path, link_name)
+            os.symlink(link_path, link_name)
         os.chdir("..")
 
 rule concat_reads:
@@ -139,18 +130,20 @@ rule create_transcriptome_index:
         " tophat -G {input.gtf} "
         " --transcriptome-index={params.temp_dir}/transcriptome_index/transcriptome "
         " {params.bowtie2_index} && "
+        " rm -rf {params.output_dir}/{params.transcriptome_dir} && "
         " mv {params.temp_dir}/{params.transcriptome_dir} {params.output_dir} && "
-        " touch {params.output_dir}/transcriptome_index/* && "
-        " mv tophat_out {params.output_dir}/transcriptome_index/"
+        " mv tophat_out {params.output_dir}/transcriptome_index/ && "
+        " touch {params.output_dir}/transcriptome_index/* "
+
 
 def tophat_options(alignment_options):
-    options = ''
-    if not isinstance(alignment_options['transcriptome_only'], bool):
+    options = ""
+    if not isinstance(alignment_options["transcriptome_only"], bool):
         raise ValueError("config alignment_options:transcriptome_only must be boolean")
-    if alignment_options['transcriptome_only']:
-        options += ' --transcriptome-only '
+    if alignment_options["transcriptome_only"]:
+        options += " --transcriptome-only "
     else:
-        options += ' --no-novel-juncs '  # used in Legacy for transcriptome + genome alignment
+        options += " --no-novel-juncs "  # used in Legacy for transcriptome + genome alignment
     return options
 
 rule tophat:
@@ -252,8 +245,9 @@ def cuffdiff_samples(underbar_separated_comparisons,
 
     return ' '.join(params)
 
-def build_labels(param1):
-    return cuffdiff_labels(param1.multi_group_comparison)
+### this is a demo of how wildcards work; remove this.
+# def build_labels(param1): 
+#     return cuffdiff_labels(param1.multi_group_comparison)
 
 rule cuffdiff:
     input:
@@ -264,12 +258,12 @@ rule cuffdiff:
         "08-cuffdiff/{multi_group_comparison}/read_groups.info"
     params:
         output_dir = "08-cuffdiff/{multi_group_comparison}",
-        labels = build_labels,
-#        labels = lambda wildcards : cuffdiff_labels(wildcards.multi_group_comparison),
+#        labels = build_labels,  this is a demo of how wildcards work; remove this.
+        labels = lambda wildcards : cuffdiff_labels(wildcards.multi_group_comparison),
         samples = lambda wildcards : cuffdiff_samples(wildcards.multi_group_comparison,
                                                       config["samples"],
                                                       "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
-        fasta = "references/fasta",
+        fasta = "references/bowtie2_index/genome.fa",
         gtf_file = "references/gtf",
         check_labels = lambda wildcards: cuffdiff_conditions(config["comparisons"])
 

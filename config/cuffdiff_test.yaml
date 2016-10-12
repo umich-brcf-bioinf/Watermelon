@@ -1,30 +1,30 @@
 input_dir:
     "/ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1_tests/test_data/inputs/00-multiplexed_reads"
 samples:
-    Sample_61483: VVM
-#    Sample_61484: VVM
-#    Sample_61485: VVM
-    Sample_61486: VLM
-#    Sample_61487: VLM
-#    Sample_61488: VLM
-#    Sample_61489: LVM
-#    Sample_61490: LVM
-#    Sample_61491: LVM
-#    Sample_61492: LLM
-#    Sample_61493: LLM
-    Sample_61494: LLM
-#    Sample_61495: VVF
-#    Sample_61496: VVF
-#    Sample_61497: VVF
-#    Sample_61498: VLF
-#    Sample_61499: VLF
-    Sample_61500: VLF
-#    Sample_61501: LVF
-#    Sample_61502: LVF
-#    Sample_61503: LVF
-#    Sample_61504: LLF
-#    Sample_61505: LLF
-    Sample_61506: LLF
+   Sample_61483: VVM
+   Sample_61484: VVM
+   Sample_61485: VVM
+   Sample_61486: VLM
+   Sample_61487: VLM
+   Sample_61488: VLM
+   Sample_61489: LVM
+   Sample_61490: LVM
+   Sample_61491: LVM
+   Sample_61492: LLM
+   Sample_61493: LLM
+   Sample_61494: LLM
+   Sample_61495: VVF
+   Sample_61496: VVF
+   Sample_61497: VVF
+   Sample_61498: VLF
+   Sample_61499: VLF
+   Sample_61500: VLF
+   Sample_61501: LVF
+   Sample_61502: LVF
+   Sample_61503: LVF
+   Sample_61504: LLF
+   Sample_61505: LLF
+   Sample_61506: LLF
 
 trimming_options:
     base_quality_5prime: 0
@@ -43,13 +43,23 @@ references:
     gtf: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1_tests/test_data/inputs/references/mm10_tronson/genes.gtf
 # path to dir with bowtie index
     bowtie2_index: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/bowtie2
-# path to dir with genome fasta and fasta.fai files
-    fasta: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/bowtie2/genome.fa
 # path to entrez gene info file
     entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info
 
 comparisons:
-    VVM_VLM: VVM_VLM
-    VVM_LLF: VVM_LLF
+    VVF_LVF: VVF_LVF
+    VVF_VLF: VVF_VLF
+    VVF_LLF: VVF_LLF
+    VVF_VVM: VVF_VVM
+    LVF_VLF: LVF_VLF
+    LVF_LLF: LVF_LLF
+    LVF_VVM: LVF_VVM
+    VLF_LLF: VLF_LLF
+    VLF_VVM: VLF_VVM
+    LLF_VVM: LLF_VVM
+    VVM_VVF: VVM_VVF
+    VLM_VVF: VLM_VVF
+    LVM_LVF: LVM_LVF
+    LLM_LVF: LLM_LVF
 fold_change:
     1.5

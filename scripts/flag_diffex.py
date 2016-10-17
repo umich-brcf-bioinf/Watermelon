@@ -30,7 +30,7 @@ def _parse_command_line_args(sys_argv):
     return args 
 
 def _add_columns(input_df, linear_fold_change):
-    log2_fold_change = math.log2(linear_fold_change)
+    log2_fold_change = math.log(linear_fold_change, 2)
     df = input_df.copy()
     df[LINEAR_FC] = np.exp2(df[LOG2_FC])
     status_ok = lambda r: r[STATUS] == STATUS_OK
@@ -85,6 +85,7 @@ def _validate_inputs(input_df, args):
 def main(sys_argv):
     args = _parse_command_line_args(sys_argv)
     df = pd.read_csv(args.input_filepath, sep='\t')
+    _validate_inputs(df, args)
     df = _add_columns(df, args.foldchange)
     df.to_csv(args.output_filepath, index=False, sep='\t')
 

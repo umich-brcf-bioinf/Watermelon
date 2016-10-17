@@ -45,13 +45,13 @@ value-1|1|1|OK'''.replace('|', '\t')
             with open(input_filename, 'w') as input_file:
                 input_file.write(input_file_contents)
 
-            command = '{} --foldchange {} {} {}'.format(script_name,
+            command = 'python {} --foldchange {} {} {}'.format(script_name,
                                         linear_fold_change_threshold,
                                         input_filename,
                                         output_filename)
             exit_code, command_output = self.execute(command)
 
-            self.assertEqual(0, exit_code)
+            self.assertEqual(0, exit_code, command_output)
             actual_df = pd.read_csv(output_filename, sep='\t')
         actual_rows, actual_columns = actual_df.shape
         input_row_count = len(input_file_contents.split('\n'))

@@ -20,6 +20,7 @@ def cuffdiff_conditions(explicit_comparisons):
 
 rule all:
     input:
+        expand("references/{link_name}", link_name=config["references"]),
         expand("03-fastqc_reads/{sample}_trimmed_R1_fastqc.html",
                 sample=config["samples"]),
         expand("05-fastqc_align/{sample}_accepted_hits_fastqc.html",
@@ -27,16 +28,30 @@ rule all:
         "06-qc_metrics/alignment_stats.txt",
         expand("08-cuffdiff/{multi_group_comparison}/gene_exp.diff",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"])) ,
-        expand("09-diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.foldchange.{fold_change}.txt",
+        expand("10-annotated_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.foldchange.{fold_change}_annot.txt",
                multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
-                fold_change=config["fold_change"]),
-        expand("09-diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.foldchange.{fold_change}.txt",
+               fold_change=config["fold_change"]),
+        expand("10-annotated_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.foldchange.{fold_change}_annot.txt",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
                 fold_change=config["fold_change"]),
-        expand("11-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
+        expand("12-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
-        expand("13-deseq2/{comparison}_DESeq2.txt", comparison=config["comparisons"])
+        expand("14-deseq2/{comparison}_DESeq2.txt", comparison=config["comparisons"])
 
+
+rule create_references:
+    output:
+        expand("references/{link_name}", link_name=config["references"])
+    run:
+        os.chdir("references")
+        for link_name, link_path in config["references"].items():
+            if not os.path.exists(link_path):
+                msg_fmt = 'ERROR: specified config reference files/dirs [{}:{}] cannot be read'
+                msg = msg_fmt.format(link_name, link_path)
+                raise ValueError(msg)
+                print(link_path, link_name)
+            os.symlink(link_path, link_name)
+        os.chdir("..")
 
 rule concat_reads:
     input:
@@ -50,7 +65,9 @@ def cutadapt_options(trim_params):
     run_trimming_options = 0
     for option, value in trim_params.items():
         if not isinstance(value, int):
-            raise ValueError("config trimming_options:", value ,"must be integer")
+            msg_format = "ERROR: Config trimming_options '{}' must be integer"
+            msg = msg_format.format(value)
+            raise ValueError(msg)
         run_trimming_options += value
     return run_trimming_options
 
@@ -99,32 +116,34 @@ rule fastqc_trimmed_cutadapt_reads:
 
 rule create_transcriptome_index:
     input: 
-        config["gtf"]
+        gtf = "references/gtf"
     output:
         "04-tophat/transcriptome_index/transcriptome.fa"
     params:
-        gtf = config["gtf"],
-        bowtie2_index = config["bowtie2_index"],
+        bowtie2_index = "references/bowtie2_index/genome",
         transcriptome_dir = "transcriptome_index",
         temp_dir =  "04-tophat/.tmp",
         output_dir = "04-tophat"
     shell:
         "mkdir -p {params.temp_dir} && "
         " module load rnaseq && "
-        " tophat -G {params.gtf} "
+        " tophat -G {input.gtf} "
         " --transcriptome-index={params.temp_dir}/transcriptome_index/transcriptome "
         " {params.bowtie2_index} && "
+        " rm -rf {params.output_dir}/{params.transcriptome_dir} && "
         " mv {params.temp_dir}/{params.transcriptome_dir} {params.output_dir} && "
+        " mv tophat_out {params.output_dir}/transcriptome_index/ && "
         " touch {params.output_dir}/transcriptome_index/* "
 
+
 def tophat_options(alignment_options):
-    options = ''
-    if not isinstance(alignment_options['transcriptome_only'], bool):
+    options = ""
+    if not isinstance(alignment_options["transcriptome_only"], bool):
         raise ValueError("config alignment_options:transcriptome_only must be boolean")
-    if alignment_options['transcriptome_only']:
-        options += ' --transcriptome-only '
+    if alignment_options["transcriptome_only"]:
+        options += " --transcriptome-only "
     else:
-        options += ' --no-novel-juncs '  # used in Legacy for transcriptome + genome alignment
+        options += " --no-novel-juncs "  # used in Legacy for transcriptome + genome alignment
     return options
 
 rule tophat:
@@ -135,14 +154,15 @@ rule tophat:
         "04-tophat/{sample}/{sample}_accepted_hits.bam",
         "04-tophat/{sample}/{sample}_align_summary.txt"
     params:
-        gtf_file = config["gtf"],
+        gtf_file = "references/gtf",
         transcriptome_index= "04-tophat/transcriptome_index/transcriptome",
-        bowtie2_index = config["bowtie2_index"],
+        bowtie2_index = "references/bowtie2_index/genome",
         sample = lambda wildcards: wildcards.sample,
         tophat_options = lambda wildcards: tophat_options(config["alignment_options"])
+    threads: 8
     shell: 
             " module load rnaseq && "
-            " tophat -p 8 "
+            " tophat -p {threads} "
             " --b2-very-sensitive "
             " --no-coverage-search "
             " --library-type fr-unstranded "
@@ -184,7 +204,7 @@ rule htseq_per_sample:
     output:
         "07-htseq/{sample}_counts.txt",
     params:
-        gtf = config["gtf"],
+        gtf = "references/gtf",
         input_dir = "07-htseq",
     shell:
         " module load rnaseq &&"
@@ -225,8 +245,9 @@ def cuffdiff_samples(underbar_separated_comparisons,
 
     return ' '.join(params)
 
-def build_labels(param1):
-    return cuffdiff_labels(param1.multi_group_comparison)
+### this is a demo of how wildcards work; remove this.
+# def build_labels(param1): 
+#     return cuffdiff_labels(param1.multi_group_comparison)
 
 rule cuffdiff:
     input:
@@ -237,14 +258,14 @@ rule cuffdiff:
         "08-cuffdiff/{multi_group_comparison}/read_groups.info"
     params:
         output_dir = "08-cuffdiff/{multi_group_comparison}",
-        labels = build_labels,
-#        labels = lambda wildcards : cuffdiff_labels(wildcards.multi_group_comparison),
+#        labels = build_labels,  this is a demo of how wildcards work; remove this.
+        labels = lambda wildcards : cuffdiff_labels(wildcards.multi_group_comparison),
         samples = lambda wildcards : cuffdiff_samples(wildcards.multi_group_comparison,
                                                       config["samples"],
                                                       "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
-        fasta = config["fasta"],
-        gtf_file = config["gtf"],
-        check_labels = lambda wildcards: cuffdiff_conditions(config["comparisons"]),
+        fasta = "references/bowtie2_index/genome.fa",
+        gtf_file = "references/gtf",
+        check_labels = lambda wildcards: cuffdiff_conditions(config["comparisons"])
 
     shell:
         " module load rnaseq && "
@@ -283,11 +304,36 @@ rule diff_exp:
         " {params.fold_change} "
         " {params.output_dir} "
 
+rule annotate:
+    input:
+        gene_diff_exp = "09-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
+        isoform_diff_exp = "09-diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}.txt"
+    output:
+        gene_annot = "10-annotated_diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}_annot.txt",
+        isoform_annot = "10-annotated_diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}_annot.txt"
+    params:
+        output_dir = "10-annotated_diff_expression/{comparison}",
+        genome = config["genome"],
+        entrez_gene_info = "references/entrez_gene_info"
+    shell:
+        "python /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/get_entrez_gene_info.py "
+        " -i {params.entrez_gene_info} "
+        " -e {input.gene_diff_exp} "
+        " -g {params.genome} "
+        " -o {params.output_dir} && "
+        
+        " python /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/get_entrez_gene_info.py "
+        " -i {params.entrez_gene_info} "
+        " -e {input.isoform_diff_exp} "
+        " -g {params.genome} "
+        " -o {params.output_dir} "
+
+
 rule deseq_build_group_replicates:
     input:
         "08-cuffdiff/{comparison}/read_groups.info"
     output:
-        "10-group_replicates/{comparison}/group_replicates.txt"
+        "11-group_replicates/{comparison}/group_replicates.txt"
     params:
         comparison = lambda wildcards: wildcards.comparison
     run:
@@ -308,17 +354,17 @@ rule deseq_build_group_replicates:
 
 rule cummerbund:
     input:
-        "10-group_replicates/{comparison}/group_replicates.txt"
+        "11-group_replicates/{comparison}/group_replicates.txt"
     output:
-        "11-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf" #should we list out all outputs here?
+        "12-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf" #should we list out all outputs here?
     params:
         cuff_diff_dir = "08-cuffdiff/{comparison}",
-        output_dir = "11-cummerbund/{comparison}/",
-        gtf_file = config["gtf"],
+        output_dir = "12-cummerbund/{comparison}/",
+        gtf_file = "references/gtf",
         genome = config["genome"],
-        logfile = "11-cummerbund/{comparison}/cummerbund.log"
+        logfile = "12-cummerbund/{comparison}/cummerbund.log"
     log:
-         "11-cummerbund/{comparison}/cummerbund.log"
+         "12-cummerbund/{comparison}/cummerbund.log"
     shell:
         " module load rnaseq && "
         " mkdir -p {params.output_dir}/Plots && "
@@ -346,8 +392,8 @@ rule build_deseq2_input_files:
     input:
        expand("07-htseq/{sample}_counts.txt", sample=config["samples"]) #run this rule only if count files are present
     output:
-       sample_file = "12-deseq_setup/sample_conditions.txt",  
-       comparison_file = "12-deseq_setup/compare_conditions.txt"
+       sample_file = "13-deseq2_setup/sample_conditions.txt",  
+       comparison_file = "13-deseq2_setup/compare_conditions.txt"
     run:
         sample_details = config["samples"]
         comparisons = config["comparisons"]
@@ -355,13 +401,13 @@ rule build_deseq2_input_files:
 
 rule deseq2:
     input:
-        sample_file = "12-deseq_setup/sample_conditions.txt",  
-        comparison_file = "12-deseq_setup/compare_conditions.txt"
+        sample_file = "13-deseq2_setup/sample_conditions.txt",  
+        comparison_file = "13-deseq2_setup/compare_conditions.txt"
     output:
-        expand("13-deseq2/{comparison}_DESeq2.txt", comparison=config["comparisons"])
+        expand("14-deseq2/{comparison}_DESeq2.txt", comparison=config["comparisons"])
     params:
         input_dir = "07-htseq",
-        output_dir = "13-deseq2"
+        output_dir = "14-deseq2"
     shell:
         " module load rnaseq && "
         " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/run_deseq2_contrasts.R "
@@ -373,15 +419,15 @@ rule deseq2:
 rule deseq_legacy:
     input:
         counts_file = "07-htseq/HTSeq_counts.txt",
-        group_replicates = "10-group_replicates/{comparison}/group_replicates.txt"
+        group_replicates = "11-group_replicates/{comparison}/group_replicates.txt"
     output:
-        "14-deseq_legacy/{comparison}/DESeq2_{comparison}_DE.txt",
-        "14-deseq_legacy/{comparison}/DESeq2_{comparison}_DESig.txt"
+        "15-deseq_legacy/{comparison}/DESeq2_{comparison}_DE.txt",
+        "15-deseq_legacy/{comparison}/DESeq2_{comparison}_DESig.txt"
     params:
         output_dir = "14-deseq_legacy",
         comparison = lambda wildcards: wildcards.comparison
     log:
-         "14-deseq_legacy/{comparison}/DESeq2_{comparison}.log"
+         "15-deseq_legacy/{comparison}/DESeq2_{comparison}.log"
     shell:
         " module load rnaseq && "
         " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Run_DESeq.R "

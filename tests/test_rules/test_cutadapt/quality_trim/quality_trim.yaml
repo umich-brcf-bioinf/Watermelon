@@ -9,6 +9,8 @@ trimming_options:
     trim_length_5prime: 0 
     trim_length_3prime: 0
 
+entrez_gene_info:
+    foo.txt
 genome:
 bowtie2_index:
 fasta:

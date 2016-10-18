@@ -9,7 +9,7 @@ import time
 import argparse
 from collections import defaultdict
 
-WARNING_PERCENTAGE_ANNOTATED_CUTOFF = 1
+WARNING_PERCENTAGE_ANNOTATED_CUTOFF = 50
 
 
 def time_stamp():
@@ -44,7 +44,7 @@ def check_geneinfo_matches(all_lines,
     msg = msg_format.format(matching_lines, percentage_matches)
     log(msg)
     if percentage_matches < warning_percent_annotated_cutoff:
-        msg_format = 'WARNING: Low number of annotations! (percent annotated < {})'
+        msg_format = 'WARNING: Low number of annotations! (< {}% of genes were annotated)'
         msg = msg_format.format(warning_percent_annotated_cutoff)
         log(msg)
 

@@ -9,6 +9,9 @@ from collections import defaultdict
 from itertools import combinations
 import csv
 import os
+import timeit
+
+start = timeit.default_timer()
 
 def cuffdiff_conditions(explicit_comparisons):
     unique_conditions = set()
@@ -20,14 +23,18 @@ def cuffdiff_conditions(explicit_comparisons):
 
 rule all:
     input:
-        expand("references/{link_name}", link_name=config["references"]),
+        "references/",
         expand("03-fastqc_reads/{sample}_trimmed_R1_fastqc.html",
                 sample=config["samples"]),
         expand("05-fastqc_align/{sample}_accepted_hits_fastqc.html",
                 sample=config["samples"]),
         "06-qc_metrics/alignment_stats.txt",
         expand("08-cuffdiff/{multi_group_comparison}/gene_exp.diff",
-                multi_group_comparison=cuffdiff_conditions(config["comparisons"])) ,
+                multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
+        expand("09-flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.txt",
+                multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
+        expand("09-flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.txt",
+                multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
         expand("10-annotated_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.foldchange.{fold_change}_annot.txt",
                multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
                fold_change=config["fold_change"]),
@@ -41,16 +48,27 @@ rule all:
 
 rule create_references:
     output:
-        expand("references/{link_name}", link_name=config["references"])
+        "references/"
     run:
+        def existing_link_target_is_different(link_name, link_path):
+            original_abs_path = os.path.realpath(link_name)
+            new_abs_path = os.path.realpath(link_path)
+            return original_abs_path != new_abs_path
+        if not os.path.exists("references"):
+            os.mkdir("references")
         os.chdir("references")
         for link_name, link_path in config["references"].items():
             if not os.path.exists(link_path):
                 msg_fmt = 'ERROR: specified config reference files/dirs [{}:{}] cannot be read'
                 msg = msg_fmt.format(link_name, link_path)
                 raise ValueError(msg)
-                print(link_path, link_name)
-            os.symlink(link_path, link_name)
+            elif not os.path.exists(link_name):
+                os.symlink(link_path, link_name)
+            elif existing_link_target_is_different(link_name, link_path):
+                os.remove(link_name)
+                os.symlink(link_path, link_name)
+            else:
+                pass #link matches existing link
         os.chdir("..")
 
 rule concat_reads:
@@ -89,13 +107,13 @@ rule cutadapt:
     shell:
         "module load rnaseq && "
         "if [[ {params.trimming_options} > 0 ]]; then "
-        "cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} "
+        "(cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} "
         " -u {params.trim_length_5prime} "
         " -u -{params.trim_length_3prime} "
         " --trim-n -m 20 "
-        " -o {output} "
-        " {input} "
-        " 2>&1 | tee {log}; "
+        " -o {output}.tmp.gz "
+        " {input} && "
+        " mv {output}.tmp.gz {output}) 2>&1 | tee {log}; "
         " else "
         "cd {params.output_dir}; "
         " ln -sf ../{input} {params.output_file}; "
@@ -116,20 +134,21 @@ rule fastqc_trimmed_cutadapt_reads:
 
 rule create_transcriptome_index:
     input: 
-        gtf = "references/gtf"
+        gtf = "references/gtf",
+        bowtie2_index_dir = "references/bowtie2_index"
     output:
         "04-tophat/transcriptome_index/transcriptome.fa"
     params:
-        bowtie2_index = "references/bowtie2_index/genome",
         transcriptome_dir = "transcriptome_index",
         temp_dir =  "04-tophat/.tmp",
         output_dir = "04-tophat"
     shell:
         "mkdir -p {params.temp_dir} && "
+        " rm -rf {params.temp_dir}/* && "
         " module load rnaseq && "
         " tophat -G {input.gtf} "
         " --transcriptome-index={params.temp_dir}/transcriptome_index/transcriptome "
-        " {params.bowtie2_index} && "
+        " {input.bowtie2_index_dir}/genome && "
         " rm -rf {params.output_dir}/{params.transcriptome_dir} && "
         " mv {params.temp_dir}/{params.transcriptome_dir} {params.output_dir} && "
         " mv tophat_out {params.output_dir}/transcriptome_index/ && "
@@ -217,7 +236,7 @@ rule htseq_per_sample:
         " {params.gtf} "
         " > {output} "
 
-# unable to do this in one step; gives error: 'Not all output files of rule htseq_per_sample contain the same wildcards.'
+# should add this rule to htseq_per_sample rule
 rule htseq_merge:
     input:
         expand("07-htseq/{sample}_counts.txt", sample=config["samples"])
@@ -303,7 +322,32 @@ rule diff_exp:
         " {params.comparison}_isoform "
         " {params.fold_change} "
         " {params.output_dir} "
+        
+rule flag_diff_exp:
+    input:
+        cuffdiff_gene_exp="08-cuffdiff/{comparison}/gene_exp.diff",
+        cuffdiff_isoform_exp="08-cuffdiff/{comparison}/isoform_exp.diff"
+    output:
+        gene_flagged = "09-flag_diff_expression/{comparison}/{comparison}_gene.flagged.txt",
+        isoform_flagged = "09-flag_diff_expression/{comparison}/{comparison}_isoform.flagged.txt"
+    params:
+        fold_change = config["fold_change"]
+    shell: 
+        #flag_diffex.py [-h] -f FOLDCHANGE input_filepath output_filepath
+        " module purge && "
+        " module load python/3.4.3 && "
+        
+        " python /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/flag_diffex.py "
+        " -f {params.fold_change} "
+        " {input.cuffdiff_gene_exp} "
+        " {output.gene_flagged} && "
+        
+        " python /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/flag_diffex.py "
+        " -f {params.fold_change} "
+        " {input.cuffdiff_isoform_exp} "
+        " {output.isoform_flagged} "
 
+    
 rule annotate:
     input:
         gene_diff_exp = "09-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
@@ -329,13 +373,13 @@ rule annotate:
         " -o {params.output_dir} "
 
 
-rule deseq_build_group_replicates:
+rule build_group_replicates:
     input:
         "08-cuffdiff/{comparison}/read_groups.info"
     output:
         "11-group_replicates/{comparison}/group_replicates.txt"
-    params:
-        comparison = lambda wildcards: wildcards.comparison
+#    params:
+#        comparison = lambda wildcards: wildcards.comparison
     run:
         input_file_name = input[0]
         output_file_name = output[0]

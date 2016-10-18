@@ -1,4 +1,5 @@
-#!/bin/env python
+'''Creates checksum files that represent the top-level keys of a Snakemake snakefile.
+'''
 from __future__ import print_function, absolute_import, division
 
 import collections
@@ -10,8 +11,8 @@ from os.path import isfile
 
 
 FILE_EXTENSION = '.watermelon.md5'
-'''Appended to all checksum filenames; should be *very* distinctive as this util will
-*remove* checksums not found in the config.'''
+'''Appended to all checksum filenames; must be very distinctive to ensure the module can
+unambiguously identify and safely remove extraneous checksums.'''
 
 def _mkdir(newdir):
     """works the way a good mkdir should :)
@@ -48,21 +49,32 @@ def _reset_checksum_file(checksum_filepath, new_checksum):
         file.write(new_checksum)
 
 def _remove_extra_checksum_files(checksum_dir, valid_checksum_files):
+    '''Removes extraneous checksum files (checking for proper name and checksum prefix).'''
     wildcard = join(checksum_dir, '*{}'.format(FILE_EXTENSION))
     all_checksum_files = set(glob.glob(wildcard))
     extra_checksum_files = all_checksum_files - valid_checksum_files
     for filename in extra_checksum_files:
         with open(filename, 'r') as file:
-            first_line = file.readline()
-        if first_line.startswith(FILE_EXTENSION):
+            lines = file.readlines()
+        if len(lines) == 1 and lines[0].startswith(FILE_EXTENSION):
             os.remove(filename)
 
 def _build_checksum(value):
+    '''Creates a checksum based on the supplied value. Typically just the md5 of the
+    str representation, but if the value is itself a dict will create a str representation
+    of an ordered dict. (This extra step avoids non-deterministic behavior around how
+    dicts are ordered between/within python2/3, but the naive implementation assumes that
+    the config will only be two dicts deep at most.)
+    '''
     if isinstance(value, dict):
         value = collections.OrderedDict(sorted(value.items()))
     return FILE_EXTENSION + ':' + hashlib.md5(str(value).encode('utf-8')).hexdigest()
 
 def reset_checksums(checksum_dir, config):
+    '''Create, examine, or update a file for each top-level key in the config dict.
+    Each value yields a checksum which is compared with the checksum stored in the file.
+    If the file is absent, or the checksum doesn't match a new checksum file is created.
+    Checksum files which are not found in the config keys are removed.'''
     _mkdir(checksum_dir)
     checksum_files = set()
     for key, value in config.items():

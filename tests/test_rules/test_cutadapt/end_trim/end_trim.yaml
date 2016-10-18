@@ -12,13 +12,9 @@ trimming_options:
 entrez_gene_info:
     foo.txt
 genome:
-bowtie2_index:
-fasta:
-gtf:
-    foo.gtf
-transcriptome_index:
 comparisons:
 fold_change:
+references:
 
 comparisons:
     A_B: A_B

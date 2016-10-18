@@ -113,8 +113,8 @@ class ConfigurationTest(unittest.TestCase):
 
             checksum.reset_checksums(config_dir, config)
 
-            self.assertChecksumFile(config_dir, 'samples.watermelon.md5', '.watermelon.md5:e5d9b97e41027279dfaeb684410f7ee9')
-            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5', '.watermelon.md5:3e6deabae1d38c8b93620f36c6ceb5b1')
+            self.assertChecksumFile(config_dir, 'samples.watermelon.md5', '.watermelon.md5:94a5e110e7244bc21d27fc4e563346f4')
+            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5', '.watermelon.md5:540157f53ef390438a880625b6d5beb4')
 
             config = {'samples' : {'s1':'1',
                                    's2':'2',
@@ -124,8 +124,8 @@ class ConfigurationTest(unittest.TestCase):
                       }
             checksum.reset_checksums(config_dir, config)
 
-            self.assertChecksumFile(config_dir, 'samples.watermelon.md5', '.watermelon.md5:e5d9b97e41027279dfaeb684410f7ee9')
-            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5', '.watermelon.md5:3e6deabae1d38c8b93620f36c6ceb5b1')
+            self.assertChecksumFile(config_dir, 'samples.watermelon.md5', '.watermelon.md5:94a5e110e7244bc21d27fc4e563346f4')
+            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5', '.watermelon.md5:540157f53ef390438a880625b6d5beb4')
 
     def test_reset_checksums_distinctObjectsResetsChecksum(self):
         with TempDirectory() as temp_dir:
@@ -140,8 +140,8 @@ class ConfigurationTest(unittest.TestCase):
 
             checksum.reset_checksums(config_dir, config)
 
-            self.assertChecksumFile(config_dir, 'samples.watermelon.md5', '.watermelon.md5:e5d9b97e41027279dfaeb684410f7ee9')
-            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5', '.watermelon.md5:3e6deabae1d38c8b93620f36c6ceb5b1')
+            self.assertChecksumFile(config_dir, 'samples.watermelon.md5', '.watermelon.md5:94a5e110e7244bc21d27fc4e563346f4')
+            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5', '.watermelon.md5:540157f53ef390438a880625b6d5beb4')
 
             config = {'samples' : {'s1':'1',
                                    's2':'2'},
@@ -149,8 +149,8 @@ class ConfigurationTest(unittest.TestCase):
                       }
             checksum.reset_checksums(config_dir, config)
 
-            self.assertChecksumFile(config_dir, 'samples.watermelon.md5', '.watermelon.md5:15a085c072befbaeb49c9ab38e8b1b10')
-            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5', '.watermelon.md5:304332f77180a28e27f7aa6d38ee012a')
+            self.assertChecksumFile(config_dir, 'samples.watermelon.md5', '.watermelon.md5:1c9f24c825613d5fd1cdc2df726d5bb8')
+            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5', '.watermelon.md5:18a615d74c5db4f9edc688955a8c7516')
 
     def test_reset_checksums_createsChecksumDir(self):
         with TempDirectory() as temp_dir:

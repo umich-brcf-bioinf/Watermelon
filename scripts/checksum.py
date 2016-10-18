@@ -1,6 +1,7 @@
 #!/bin/env python
 from __future__ import print_function, absolute_import, division
 
+import collections
 import glob
 import hashlib
 import os
@@ -56,12 +57,17 @@ def _remove_extra_checksum_files(checksum_dir, valid_checksum_files):
         if first_line.startswith(FILE_EXTENSION):
             os.remove(filename)
 
+def _build_checksum(value):
+    if isinstance(value, dict):
+        value = collections.OrderedDict(sorted(value.items()))
+    return FILE_EXTENSION + ':' + hashlib.md5(str(value).encode('utf-8')).hexdigest()
+
 def reset_checksums(checksum_dir, config):
     _mkdir(checksum_dir)
     checksum_files = set()
-    for key, value in config.iteritems():
+    for key, value in config.items():
         checksum_filepath = _checksum_filepath(checksum_dir, key)
-        new_checksum = FILE_EXTENSION + ':' + hashlib.md5(str(value)).hexdigest()
+        new_checksum = _build_checksum(value)
         if not _checksum_matches(checksum_filepath, new_checksum):
             _reset_checksum_file(checksum_filepath, new_checksum)
         checksum_files.add(checksum_filepath)

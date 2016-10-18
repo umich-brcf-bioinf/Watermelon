@@ -12,10 +12,7 @@ trimming_options:
 entrez_gene_info:
     foo.txt
 genome:
-bowtie2_index:
-fasta:
-gtf:
-    foo.gtf
+references:
 transcriptome_index:
 comparisons:
 fold_change:

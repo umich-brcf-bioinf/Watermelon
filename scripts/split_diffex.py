@@ -16,6 +16,7 @@ REQUIRED_FIELDS = argparse.Namespace(
     diff_exp='diff_exp',
 )
 
+
 class _GroupHandler(object):
     def __init__(self, target_dir, suffix):
         self._target_dir = target_dir
@@ -25,7 +26,6 @@ class _GroupHandler(object):
         output_filename = '{}{}'.format(group_name, self._suffix)
         output_filepath = os.path.join(self._target_dir, output_filename)
         group_df.to_csv(output_filepath, index=False, sep='\t')
-
 
 
 def _log(msg):
@@ -72,31 +72,6 @@ def _split_groups_by_sample(df, group_handler, log):
                    (df[REQUIRED_FIELDS.sample_2] == group[REQUIRED_FIELDS.sample_2])
         group_df = df[in_group]
         group_handler(group_name, group_df)
-
-'''
-df = pd.read_csv("genes_significantFALSE_minlogFC0_minFPKM0.txt", sep='\t')
-
-unique_groups_df = df[['sample_1', 'sample_2']].drop_duplicates()
-output_dir = 'output'
-filename_fmt = "{sample1}_{sample2}.txt"
-total_groups = len(unique_groups_df)
-group_count = 0
-for index, group in unique_groups_df.iterrows():
-    group_count += 1
-    sample1 = group['sample_1']
-    sample2 = group['sample_2']
-    filename = filename_fmt.format(sample1=sample1, sample2=sample2)
-    print('processing [{}] ({}/{})'.format(filename, group_count, total_groups), file=sys.stderr)
-    in_group = (df['sample_1'] == sample1) & (df['sample_2'] == sample2)
-    group_df = df[in_group]
-    output_filepath = os.path.join(output_dir, filename)
-    group_df.to_csv(output_filepath, index=False, sep='\t')
-
-#total rows written should = total input rows + headers (= num files - 1 )
-#sample_1 and sample_2 must be present
-#basecase
-#all column should be written
-'''
 
 def _sort(input_df):
     df = pd.DataFrame(input_df)

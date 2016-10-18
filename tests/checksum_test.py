@@ -1,0 +1,178 @@
+#pylint: disable=too-many-public-methods, invalid-name, no-self-use
+from __future__ import print_function, absolute_import, division
+
+import glob
+import os
+import time
+import unittest
+
+from testfixtures.tempdirectory import TempDirectory
+
+import scripts.checksum as checksum
+
+class ConfigurationTest(unittest.TestCase):
+    def assertChecksumFile(self, config_dir, config_filename, expected_checksum=None):
+        config_path = os.path.join(config_dir, config_filename)
+        self.assertTrue(os.path.exists(config_path))
+        with open(config_path, 'r') as file:
+            lines = file.readlines()
+        self.assertEqual(1, len(lines))
+        if expected_checksum:
+            self.assertEqual(expected_checksum, lines[0])
+
+    def test_reset_checksums_initializesConfig(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_dir = temp_dir_path
+            config = {'A' : 'foo',
+                      'B' : 'bar',
+                      'C' : 'baz'}
+
+            checksum.reset_checksums(config_dir, config)
+
+            self.assertChecksumFile(config_dir, 'A.watermelon.md5', '.watermelon.md5:acbd18db4cc2f85cedef654fccc4a4d8')
+            self.assertChecksumFile(config_dir, 'B.watermelon.md5', '.watermelon.md5:37b51d194a7513e45b56f6524f2d51f2')
+            self.assertChecksumFile(config_dir, 'C.watermelon.md5', '.watermelon.md5:73feffa4b7f6bb68e44cf984c85f6e88')
+
+    def test_reset_checksums_doesNotOverwriteUnchangedKeys(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_dir = temp_dir_path
+            config = {'A' : 'foo',
+                      'B' : 'bar',
+                      'C' : 'baz'}
+
+            checksum.reset_checksums(config_dir, config)
+
+            def mod_time(filename):
+                return os.path.getmtime(os.path.join(config_dir, filename))
+
+            checksum_A1_timestamp = mod_time('A.watermelon.md5')
+            checksum_B1_timestamp = mod_time('B.watermelon.md5')
+            checksum_C1_timestamp = mod_time('C.watermelon.md5')
+
+            time.sleep(2)
+
+            config = {'A' : 'foo2',
+                      'B' : 'bar',
+                      'C' : 'baz2'}
+
+            checksum.reset_checksums(config_dir, config)
+
+            checksum_A2_timestamp = mod_time('A.watermelon.md5')
+            checksum_B2_timestamp = mod_time('B.watermelon.md5')
+            checksum_C2_timestamp = mod_time('C.watermelon.md5')
+
+    def test_reset_checksums_addsNewFilesForNewKeys(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_dir = temp_dir_path
+            config = {'A' : 'foo',
+                      'B' : 'bar'}
+
+            checksum.reset_checksums(config_dir, config)
+
+            config = {'A' : 'foo',
+                      'B' : 'bar',
+                      'C' : 'baz'}
+
+            checksum.reset_checksums(config_dir, config)
+
+            self.assertChecksumFile(config_dir, 'A.watermelon.md5', '.watermelon.md5:acbd18db4cc2f85cedef654fccc4a4d8')
+            self.assertChecksumFile(config_dir, 'B.watermelon.md5', '.watermelon.md5:37b51d194a7513e45b56f6524f2d51f2')
+            self.assertChecksumFile(config_dir, 'C.watermelon.md5', '.watermelon.md5:73feffa4b7f6bb68e44cf984c85f6e88')
+
+    def test_reset_checksums_removesChecksumFilesForMissingKeys(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_dir = temp_dir_path
+            config = {'A' : 'foo',
+                      'B' : 'bar',
+                      'C' : 'baz'}
+
+            checksum.reset_checksums(config_dir, config)
+
+            config = {'A' : 'foo',
+                      'C' : 'baz'}
+
+            checksum.reset_checksums(config_dir, config)
+
+            actual_files = sorted([f for f in os.listdir(config_dir) if os.path.isfile(os.path.join(config_dir, f))])
+            self.assertEqual(['A.watermelon.md5', 'C.watermelon.md5'], actual_files)
+
+    def test_reset_checksums_equivalentObjectsDoNotResetChecksum(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_dir = temp_dir_path
+            config = {'samples' : {'s1':'1',
+                                   's2':'2',
+                                   's3':'3'},
+                      'comparisons' : {'a_b':'a vs b',
+                                       'c_d':'c vs d'}
+                      }
+
+            checksum.reset_checksums(config_dir, config)
+
+            self.assertChecksumFile(config_dir, 'samples.watermelon.md5', '.watermelon.md5:e5d9b97e41027279dfaeb684410f7ee9')
+            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5', '.watermelon.md5:3e6deabae1d38c8b93620f36c6ceb5b1')
+
+            config = {'samples' : {'s1':'1',
+                                   's2':'2',
+                                   's3':'3'},
+                      'comparisons' : {'a_b':'a vs b',
+                                       'c_d':'c vs d'}
+                      }
+            checksum.reset_checksums(config_dir, config)
+
+            self.assertChecksumFile(config_dir, 'samples.watermelon.md5', '.watermelon.md5:e5d9b97e41027279dfaeb684410f7ee9')
+            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5', '.watermelon.md5:3e6deabae1d38c8b93620f36c6ceb5b1')
+
+    def test_reset_checksums_distinctObjectsResetsChecksum(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_dir = temp_dir_path
+            config = {'samples' : {'s1':'1',
+                                   's2':'2',
+                                   's3':'3'},
+                      'comparisons' : {'a_b':'a vs b',
+                                       'c_d':'c vs d'}
+                      }
+
+            checksum.reset_checksums(config_dir, config)
+
+            self.assertChecksumFile(config_dir, 'samples.watermelon.md5', '.watermelon.md5:e5d9b97e41027279dfaeb684410f7ee9')
+            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5', '.watermelon.md5:3e6deabae1d38c8b93620f36c6ceb5b1')
+
+            config = {'samples' : {'s1':'1',
+                                   's2':'2'},
+                      'comparisons' : {'a_b':'a vs b'}
+                      }
+            checksum.reset_checksums(config_dir, config)
+
+            self.assertChecksumFile(config_dir, 'samples.watermelon.md5', '.watermelon.md5:15a085c072befbaeb49c9ab38e8b1b10')
+            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5', '.watermelon.md5:304332f77180a28e27f7aa6d38ee012a')
+
+    def test_reset_checksums_createsChecksumDir(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_dir = os.path.join(temp_dir_path, 'parent', 'child', 'config_checksums')
+            config = {'samples' : {'s1':'1',
+                                   's2':'2'},
+                      'comparisons' : {'a_b':'a vs b',
+                                       'c_d':'c vs d'}
+                      }
+
+            checksum.reset_checksums(config_dir, config)
+
+            self.assertChecksumFile(config_dir, 'samples.watermelon.md5')
+            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5')
+
+            config = {'samples' : {'s1':'1',
+                                   's2':'2'},
+                      'comparisons' : {'a_b':'a vs b'},
+                      'references' : 'A'}
+            checksum.reset_checksums(config_dir, config)
+
+            self.assertChecksumFile(config_dir, 'samples.watermelon.md5')
+            self.assertChecksumFile(config_dir, 'comparisons.watermelon.md5')
+            self.assertChecksumFile(config_dir, 'references.watermelon.md5')

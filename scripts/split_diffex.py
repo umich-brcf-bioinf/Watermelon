@@ -102,7 +102,7 @@ def _validate_included_comparisons_present(input_df, args):
     included_comparisons = set(args.included_comparisons.split(','))
     unique_comparison_df = _get_unique_comparison_df(GROUP_BY_COLUMNS, input_df)
     found_comparisons = set(unique_comparison_df[COMPARISON_NAME_COLUMN])
-    missing_comparisons = included_comparisons - found_comparisons
+    missing_comparisons = sorted(included_comparisons - found_comparisons)
     if missing_comparisons:
         msg_fmt = 'Input file [{}] is missing requested comparison(s) [{}].'
         msg = msg_fmt.format(args.input_file, ','.join(missing_comparisons))

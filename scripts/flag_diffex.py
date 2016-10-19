@@ -47,7 +47,7 @@ def _validate_required_fields(input_df, args):
     missing_fields = sorted(required_fields - actual_fields)
     if missing_fields:
         msg_fmt = 'Input file [{}] is missing required field(s) [{}].'
-        msg = msg_fmt.format(args.input_file, ','.join(missing_fields))
+        msg = msg_fmt.format(args.input_filepath, ','.join(missing_fields))
         raise ValueError(msg)
 
 def _validate_log2fc_numeric(input_df, args):
@@ -64,7 +64,7 @@ def _validate_log2fc_numeric(input_df, args):
     if len(non_numeric_log2fc):
         msg_fmt = ('Input file [{}]: {} log2(fold_change) value(s) '
                    'are not numeric: [{}]')
-        msg = msg_fmt.format(args.input_file,
+        msg = msg_fmt.format(args.input_filepath,
                              len(non_numeric_log2fc),
                              ','.join(non_numeric_excerpt))
         raise ValueError(msg)

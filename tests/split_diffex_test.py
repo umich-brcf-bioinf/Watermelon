@@ -16,29 +16,18 @@ from testfixtures.tempdirectory import TempDirectory
 
 import scripts.split_diffex as split_diffex
 
-class MockGroupHandler(object):
+class MockHandler(object):
     def __init__(self):
-        self._groups = {}
+        self._comparisons = {}
 
-    def handle(self, group_name, group_df):
-        self._groups[group_name] = group_df
+    def handle(self, comparison_name, comparison_df):
+        self._comparisons[comparison_name] = comparison_df
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SCRIPTS_DIR = os.path.join(os.path.dirname(TEST_DIR), 'scripts')
 class SplitDiffexTest(unittest.TestCase):
-    def setUp(self):
-        unittest.TestCase.setUp(self)
-        self.stderr = StringIO()
-        self._saved_stderr = sys.stderr
-        sys.stderr = self.stderr
-
-    def tearDown(self):
-        self.stderr.close()
-        sys.stderr = self._saved_stderr
-        unittest.TestCase.tearDown(self)
-
     def test_raisesValueErrorIfMissingRequiredColumns(self):
-        args = Namespace(input_file='input.txt', foldchange=1)
+        args = Namespace(input_file='input.txt')
         df_contents = StringIO('field1\n')
         df = pd.read_csv(df_contents)
         self.assertRaisesRegexp(ValueError,
@@ -107,7 +96,7 @@ class SplitDiffexTest(unittest.TestCase):
         assertLessThan(base, lesser_significant)
         assertLessThan(base, lesser_status)
 
-    def test_split_groups_by_sample_callsHandleForEachDistinctSetOfValues(self):
+    def test_split_comparisons_callsHandleForEachDistinctSetOfValues(self):
         df_contents = StringIO(\
 '''sample_1|sample_2|foo|bar
 E|F|1|2
@@ -119,16 +108,57 @@ C|D|1|2
 E|F|1|2''')
         df = pd.read_csv(df_contents, sep='|')
     
-        mock_handler = MockGroupHandler()
+        mock_handler = MockHandler()
         mock_logger = lambda x: None
-        split_diffex._split_groups_by_sample(df, mock_handler.handle, mock_logger)
+        group_by_cols = ['sample_1', 'sample_2']
+        split_diffex._split_comparisons(df, group_by_cols, mock_handler.handle, mock_logger)
 
-        self.assertEqual(3, len(mock_handler._groups))
-        self.assertEqual((1,4), mock_handler._groups['A_B'].shape)
-        self.assertEqual((2,4), mock_handler._groups['C_D'].shape)
-        self.assertEqual((4,4), mock_handler._groups['E_F'].shape)
+        self.assertEqual(3, len(mock_handler._comparisons))
+        self.assertEqual((1,4), mock_handler._comparisons['A_B'].shape)
+        self.assertEqual((2,4), mock_handler._comparisons['C_D'].shape)
+        self.assertEqual((4,4), mock_handler._comparisons['E_F'].shape)
 
-    def test_handler_createsNewFileForEachGroup(self):
+    def test_validate_included_comparisons_present_raisesExceptionIfRequestedComparisonMissing(self ):
+        args = Namespace(input_file='input.txt', included_comparisons='A_B,E_F,C_D')
+        df_contents = StringIO(\
+'''sample_1|sample_2
+A|B''')
+        df = pd.read_csv(df_contents, sep='|')
+        self.assertRaisesRegexp(ValueError,
+                                (r'Input file \[input.txt\] is missing requested '
+                                 r'comparison\(s\) \[C_D,E_F\].'),
+                                 split_diffex._validate_included_comparisons_present,
+                                 df,
+                                 args)
+
+class FilteringHandlerTest(unittest.TestCase):
+    def test_handle_passthroughIncludedComparisons(self):
+        df = 'data_frame'
+        base_handler = MockHandler()
+        mock_log = []
+        handler = split_diffex._FilteringHandler(['A_B'], base_handler, mock_log.append)
+
+        handler.handle('A_B', df)
+
+        self.assertEqual(1, len(base_handler._comparisons))
+        self.assertEqual(df, base_handler._comparisons['A_B'])
+        self.assertEqual(0, len(mock_log))
+
+    def test_handle_ignoreNonIncludedComparisons(self):
+        df = pd.DataFrame()
+        base_handler = MockHandler()
+        mock_log = []
+        handler = split_diffex._FilteringHandler(['A_B'], base_handler, mock_log.append)
+
+        handler.handle('C_D', df)
+
+        self.assertEqual(0, len(base_handler._comparisons))
+        self.assertEqual(1, len(mock_log))
+        self.assertEqual('skipped comparison [C_D]', mock_log[0])
+
+
+class ComparisonHandlerTest(unittest.TestCase):
+    def test_handle_createsNewFile(self):
         df_contents = StringIO(\
 '''sample_1|sample_2|foo|bar
 A|B|1|2
@@ -138,11 +168,11 @@ A|B|3|4''')
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             group_name = 'foo'
-            suffix = '.csv'
-            handler = split_diffex._GroupHandler(temp_dir_path, suffix)
+            suffix = '.txt'
+            handler = split_diffex._ComparisonHandler(temp_dir_path, suffix)
             handler.handle(group_name, df)
 
-            expected_filename = os.path.join(temp_dir_path, 'foo.csv')
+            expected_filename = os.path.join(temp_dir_path, 'foo.txt')
             with open(expected_filename, 'r') as input_file:
                 actual_file_data=input_file.readlines()
 
@@ -151,6 +181,7 @@ A|B|3|4''')
         self.assertEqual('A\tB\t1\t2\n', actual_file_data[1])
         self.assertEqual('A\tB\t3\t4\n', actual_file_data[2])
 
+class SplitDiffexFunctoinalTest(unittest.TestCase):
     def execute(self, command):
         exit_code = 0
         try:
@@ -180,15 +211,17 @@ E|F|OK|yes|yes|2'''.replace('|', '\t')
             with open(input_filename, 'w') as input_file:
                 input_file.write(input_file_contents)
 
-            command = 'python {} {} {}'.format(script_name,
-                                               input_filename,
-                                               output_dir)
+            included_comparisons = 'C_D,E_F'
+            command = 'python {} {} {} {}'.format(script_name,
+                                                  input_filename,
+                                                  output_dir,
+                                                  included_comparisons)
             exit_code, command_output = self.execute(command)
 
             self.assertEqual(0, exit_code, command_output)
-            actual_AB_df = pd.read_csv(os.path.join(output_dir, 'A_B.csv'), sep='\t')
-            actual_CD_df = pd.read_csv(os.path.join(output_dir, 'C_D.csv'), sep='\t')
-            actual_EF_df = pd.read_csv(os.path.join(output_dir, 'E_F.csv'), sep='\t')
-        self.assertEqual((1,6), actual_AB_df.shape)
+            actual_files = sorted(os.listdir(output_dir))
+            actual_CD_df = pd.read_csv(os.path.join(output_dir, 'C_D.txt'), sep='\t')
+            actual_EF_df = pd.read_csv(os.path.join(output_dir, 'E_F.txt'), sep='\t')
+        self.assertEquals(['C_D.txt', 'E_F.txt', 'input.txt'], actual_files)
         self.assertEqual((2,6), actual_CD_df.shape)
         self.assertEqual((4,6), actual_EF_df.shape)

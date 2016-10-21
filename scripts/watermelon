@@ -8,8 +8,11 @@
 
 # TODO (cgates): allow snakefile or cores to be overridden
 
+export WATERMELON_VERSION=0.1
+
 export SCRIPT_NAME=`basename $0 .sh`
-export LOG_DIR=logs
+export RUN_TIME=`date +"%Y%m%d_%H%M%S"`
+export LOG_DIR=logs/${RUN_TIME}
 export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
 export SNAKEFILE=rnaseq.snakefile
 
@@ -21,7 +24,6 @@ fi
 
 set -e #script will fail on any error
 set -u #script will fail on any undefined bash variable
-
 
 function show_usage {
     echo Usage: ${SCRIPT_NAME} {config_file}
@@ -52,21 +54,32 @@ fi
 export EXTRA_ARGUMENTS=$@
 
 mkdir -p ${LOG_DIR}
+cp -a ${SNAKEFILE} ${LOG_DIR}/${SNAKEFILE}.${RUN_TIME}
+cp -a ${CONFIG_FILE} ${LOG_DIR}/${CONFIG_FILE}.${RUN_TIME}
 echo Logging to ${LOG_FILE}
 (
 echo 0 > .watermelon.exitcode
+echo "watermelon (v${WATERMELON_VERSION}) begins"
 set +e
 
 snakemake_command="snakemake --snakefile ${SNAKEFILE} --configfile ${CONFIG_FILE} --cores 40 -T ${EXTRA_ARGUMENTS}"
 echo $snakemake_command
 eval $snakemake_command
-
 SNAKEMAKE_EXIT=$?
+
+snakemake --snakefile ${SNAKEFILE} --configfile ${CONFIG_FILE} -D > ${LOG_DIR}/watermelon.detailed_summary
+
+printf 'elapsed seconds: %d\n' ${SECONDS}
+printf 'elapsed time: %dh:%dm:%ds\n' $((${SECONDS}/3600)) $((${SECONDS}%3600/60)) $((${SECONDS}%60))
+
 if [[ $SNAKEMAKE_EXIT != 0 ]]; then
     echo 'ERROR: Snakemake encountered an unexpected error. Review config and contact bfxcore support.'
-    echo $SNAKEMAKE_EXIT > .watermelon.exitcode
+    echo ${SNAKEMAKE_EXIT} > .watermelon.exitcode
+else
+    echo 'watermelon done'
 fi
-) 2>&1 | tee $LOG_FILE
+
+) 2>&1 | tee ${LOG_FILE}
 
 EXIT_CODE=$(cat .watermelon.exitcode)
 exit ${EXIT_CODE}

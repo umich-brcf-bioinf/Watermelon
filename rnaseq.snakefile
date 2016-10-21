@@ -65,9 +65,15 @@ rule all:
         expand("10-annotated_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.foldchange.{fold_change}_annot.txt",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
                 fold_change=config["fold_change"]),
+        expand("10-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
+                multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
+                fold_change=config["fold_change"]),
+        expand("10-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
+                multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
+                fold_change=config["fold_change"]),
+
         expand("12-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"]))
-#         expand("14-deseq2/{comparison}_DESeq2.txt", comparison=config["comparisons"])
 
 
 rule concat_reads:
@@ -220,11 +226,12 @@ rule align_qc_metrics:
 
 rule htseq_per_sample:
     input:
-        "04-tophat/{sample}/{sample}_accepted_hits.bam"
+        reference_checksum = "references.watermelon.md5",
+        bams = "04-tophat/{sample}/{sample}_accepted_hits.bam",
+        gtf = "references/gtf"
     output:
         "07-htseq/{sample}_counts.txt"
     params:
-        gtf = "references/gtf",
         input_dir = "07-htseq",
     shell:
         " module load rnaseq &&"
@@ -233,8 +240,8 @@ rule htseq_per_sample:
         " -s no "
         " -m "
         " intersection-nonempty "
-        " -q {input} "
-        " {params.gtf} "
+        " -q {input.bams} "
+        " {input.gtf} "
         " > {output} "
 
 rule htseq_merge:
@@ -247,7 +254,7 @@ rule htseq_merge:
         output_dir = "07-htseq",
         input_dir = "07-htseq"
     shell:
-       " perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/mergeHTSeqCountFiles.pl {params.input_dir} "
+       " perl scripts/mergeHTSeqCountFiles.pl {params.input_dir} "
 
 def cuffdiff_labels(underbar_separated_comparisons):
     return underbar_separated_comparisons.replace("_", ",")
@@ -312,18 +319,44 @@ rule diffex:
         " module load rnaseq && "
         " mkdir -p {params.output_dir} &&"
         
-        " perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Cuffdiff_out_format_v6.pl "
+        " perl scripts/Cuffdiff_out_format_v6.pl "
         " {input.cuffdiff_gene_exp} "
         " {params.comparison}_gene "
         " {params.fold_change} "
         " {params.output_dir} && "
         
-        " perl /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Cuffdiff_out_format_v6.pl "
+        " perl scripts/Cuffdiff_out_format_v6.pl "
         " {input.cuffdiff_isoform_exp} "
         " {params.comparison}_isoform "
         " {params.fold_change} "
         " {params.output_dir} "
+
+rule annotate:
+    input:
+        genome_checksum = "config_checksums/genome.watermelon.md5",
+        gene_diff_exp = "09-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
+        isoform_diff_exp = "09-diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}.txt",
+        entrez_gene_info = "references/entrez_gene_info"
+    output:
+        gene_annot = "10-annotated_diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}_annot.txt",
+        isoform_annot = "10-annotated_diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}_annot.txt"
+    params:
+        output_dir = "10-annotated_diff_expression/{comparison}",
+        genome = config["genome"]
+    shell:
+        "python scripts/get_entrez_gene_info.py "
+        " -i {input.entrez_gene_info} "
+        " -e {input.gene_diff_exp} "
+        " -g {params.genome} "
+        " -o {params.output_dir} && "
         
+        " python scripts/get_entrez_gene_info.py "
+        " -i {input.entrez_gene_info} "
+        " -e {input.isoform_diff_exp} "
+        " -g {params.genome} "
+        " -o {params.output_dir} "
+
+
 rule flag_diffex:
     input:
         fold_change_checksum = "config_checksums/fold_change.watermelon.md5",
@@ -338,42 +371,42 @@ rule flag_diffex:
         " module purge && "
         " module load python/3.4.3 && "
         
-        " python /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/flag_diffex.py "
+        " python scripts/flag_diffex.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_gene_exp} "
         " {output.gene_flagged} && "
         
-        " python /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/flag_diffex.py "
+        " python scripts/flag_diffex.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_isoform_exp} "
         " {output.isoform_flagged} "
 
-    
-rule annotate:
+
+rule annotate_flag_diffex:
     input:
         genome_checksum = "config_checksums/genome.watermelon.md5",
-        gene_diff_exp = "09-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
-        isoform_diff_exp = "09-diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}.txt",
+        gene_diff_exp = "09-flag_diff_expression/{comparison}/{comparison}_gene.flagged.txt",
+        isoform_diff_exp = "09-flag_diff_expression/{comparison}/{comparison}_isoform.flagged.txt",
         entrez_gene_info = "references/entrez_gene_info"
     output:
-        gene_annot = "10-annotated_diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}_annot.txt",
-        isoform_annot = "10-annotated_diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}_annot.txt"
+        gene_annot = "10-annotated_flag_diff_expression/{comparison}/{comparison}_gene.flagged.annot.txt",
+        isoform_annot = "10-annotated_flag_diff_expression/{comparison}/{comparison}_isoform.flagged.annot.txt"
     params:
-        output_dir = "10-annotated_diff_expression/{comparison}",
+        output_dir = "10-annotated_flag_diff_expression/{comparison}",
         genome = config["genome"]
     shell:
-        "python /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/get_entrez_gene_info.py "
+        "python scripts/annotate_entrez_gene_info.py "
         " -i {input.entrez_gene_info} "
         " -e {input.gene_diff_exp} "
         " -g {params.genome} "
         " -o {params.output_dir} && "
         
-        " python /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/get_entrez_gene_info.py "
+        " python scripts/annotate_entrez_gene_info.py "
         " -i {input.entrez_gene_info} "
         " -e {input.isoform_diff_exp} "
         " -g {params.genome} "
         " -o {params.output_dir} "
-
+    
 
 rule build_group_replicates:
     input:
@@ -415,72 +448,10 @@ rule cummerbund:
     shell:
         " module load rnaseq && "
         " mkdir -p {params.output_dir}/Plots && "
-        " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Run_cummeRbund.R "
+        " Rscript scripts/Run_cummeRbund.R "
         " baseDir={params.output_dir} "
         " cuffDiffDir={params.cuff_diff_dir} "
         " grpRepFile={input.group_replicates} "
         " gtfFile={input.gtf_file} "
         " genome={params.genome} "
         " 2> {log} "
-
-# --- DESeq rules ---
-# 
-# def deseq_sample_comparisons(sample_file, comparison_file, sample_details, comparisons):
-#     with open(sample_file, "w") as sample_file:
-#         sample_file.write("sample\tfile_name\tcondition\n")
-#         for sample, comparison in sample_details.items():
-#             count_file_name = sample + "_counts.txt"
-#             sample_file.write("{}\t{}\t{}\n".format(sample, count_file_name, comparison))
-# 
-#     with open(comparison_file, "w") as group_file:
-#         print("condition_1\tcondition_2", file=group_file)
-#         for key in comparisons.keys():
-#             print(key.replace("_","\t"), file=group_file)
-# 
-# rule build_deseq2_input_files:
-#     input:
-#        expand("07-htseq/{sample}_counts.txt", sample=config["samples"]) #run this rule only if count files are present
-#     output:
-#        sample_file = "13-deseq2_setup/sample_conditions.txt",  
-#        comparison_file = "13-deseq2_setup/compare_conditions.txt"
-#     run:
-#         sample_details = config["samples"]
-#         comparisons = config["comparisons"]
-#         deseq_sample_comparisons(output.sample_file, output.comparison_file,sample_details, comparisons)
-# 
-# rule deseq2:
-#     input:
-#         sample_file = "13-deseq2_setup/sample_conditions.txt",  
-#         comparison_file = "13-deseq2_setup/compare_conditions.txt"
-#     output:
-#         expand("14-deseq2/{comparison}_DESeq2.txt", comparison=config["comparisons"])
-#     params:
-#         input_dir = "07-htseq",
-#         output_dir = "14-deseq2"
-#     shell:
-#         " module load rnaseq && "
-#         " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/run_deseq2_contrasts.R "
-#         " outDir={params.output_dir}"
-#         " htseqDir={params.input_dir} "
-#         " sampleConditionsFileName={input.sample_file} "
-#         " comparisonsFileName={input.comparison_file} "
-# 
-# rule deseq_legacy:
-#     input:
-#         counts_file = "07-htseq/HTSeq_counts.txt",
-#         group_replicates = "11-group_replicates/{comparison}/group_replicates.txt"
-#     output:
-#         "15-deseq_legacy/{comparison}/DESeq2_{comparison}_DE.txt",
-#         "15-deseq_legacy/{comparison}/DESeq2_{comparison}_DESig.txt"
-#     params:
-#         output_dir = "14-deseq_legacy",
-#         comparison = lambda wildcards: wildcards.comparison
-#     log:
-#          "15-deseq_legacy/{comparison}/DESeq2_{comparison}.log"
-#     shell:
-#         " module load rnaseq && "
-#         " Rscript /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/Run_DESeq.R "
-#         " baseDir={params.output_dir}/{params.comparison} "
-#         " grpRepFile={input.group_replicates} "
-#         " countsFile={input.counts_file} "
-#         " 2> {log} "

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# adds annotations to output of scripts/Cuffdiff_out_format_v6.pl
+# adds annotations to output of: scripts/flag_diffex.py
 
 from __future__ import print_function, absolute_import, division 
 import sys
@@ -31,7 +31,7 @@ def parse_command_line_args():
     parser.add_argument(
         '-e', '--diffexp', type=str, help='path to input differential_expression_file', required=True)
     parser.add_argument(
-        '-g', '--genome', type=str, help='organism taxonomy ID', required=True)  # hg=9606; mm=10090
+        '-g', '--genome', type=str, help='organism taxonomy ID', required=True)  
     parser.add_argument(
         '-o', '--outdir', type=str, help='output directory name', required=True)
     args = parser.parse_args()
@@ -69,7 +69,7 @@ def get_taxid(genome):
 
 tax_id = get_taxid(args.genome)
 
-outfile_tag = os.path.basename(gene_expr.replace('.txt', '_annot.txt'))
+outfile_tag = os.path.basename(gene_expr.replace('.txt', '.annot.txt'))
 outfile_name = os.path.join(outdir, outfile_tag)
 
 log('reading entrez gene info')
@@ -97,12 +97,11 @@ with open(gene_expr, 'r') as file_to_annotate, open(outfile_name, 'w') as annota
     for row in reader:
         all_lines += 1
         row = [col.strip() for col in row]
-        if row[0] == '#test_id':
+        if row[0] == 'test_id':
+            print(row[0])
             row[1] = 'gene_symbol'
             row[2] = 'gene_id'
             row.insert(3, 'gene_desc')
-            print('\t'.join(row), file=annotated_file)
-        elif row[0].startswith('#'):
             print('\t'.join(row), file=annotated_file)
         else:
             left = row[0:2]

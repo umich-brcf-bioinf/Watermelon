@@ -95,7 +95,7 @@ def _validate_required_fields(input_df, args):
     missing_fields = sorted(required_field_set - actual_fields)
     if missing_fields:
         msg_fmt = 'Input file [{}] is missing required field(s) [{}].'
-        msg = msg_fmt.format(args.input_file, ','.join(missing_fields))
+        msg = msg_fmt.format(args.input_filepath, ','.join(missing_fields))
         raise ValueError(msg)
 
 def _validate_included_comparisons_present(input_df, args):
@@ -105,7 +105,7 @@ def _validate_included_comparisons_present(input_df, args):
     missing_comparisons = included_comparisons - found_comparisons
     if missing_comparisons:
         msg_fmt = 'Input file [{}] is missing requested comparison(s) [{}].'
-        msg = msg_fmt.format(args.input_file, ','.join(missing_comparisons))
+        msg = msg_fmt.format(args.input_filepath, ','.join(missing_comparisons))
         raise ValueError(msg)
 
 def _validate_inputs(input_df, args):

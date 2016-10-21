@@ -27,7 +27,7 @@ TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SCRIPTS_DIR = os.path.join(os.path.dirname(TEST_DIR), 'scripts')
 class SplitDiffexTest(unittest.TestCase):
     def test_raisesValueErrorIfMissingRequiredColumns(self):
-        args = Namespace(input_file='input.txt')
+        args = Namespace(input_filepath='input.txt')
         df_contents = StringIO('field1\n')
         df = pd.read_csv(df_contents)
         self.assertRaisesRegexp(ValueError,
@@ -119,7 +119,7 @@ E|F|1|2''')
         self.assertEqual((4,4), mock_handler._comparisons['E_F'].shape)
 
     def test_validate_included_comparisons_present_raisesExceptionIfRequestedComparisonMissing(self ):
-        args = Namespace(input_file='input.txt', included_comparisons='A_B,E_F,C_D')
+        args = Namespace(input_filepath='input.txt', included_comparisons='A_B,E_F,C_D')
         df_contents = StringIO(\
 '''sample_1|sample_2
 A|B''')

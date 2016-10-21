@@ -73,7 +73,7 @@ def _build_checksum(value):
 def reset_checksums(checksum_dir, config):
     '''Create, examine, or update a file for each top-level key in the config dict.
     Each value yields a checksum which is compared with the checksum stored in the file.
-    If the file is absent, or the checksum doesn't match a new checksum file is created.
+    If the file is absent, or the checksum doesn't match, a new checksum file is created.
     Checksum files which are not found in the config keys are removed.'''
     _mkdir(checksum_dir)
     checksum_files = set()

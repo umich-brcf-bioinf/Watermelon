@@ -133,7 +133,7 @@ overExpressed-badFC|OK|0.05|1''')
         self.assertEqual('No', actual_diff_exp['underExpressed-badFC'])
 
     def test_raisesValueErrorIfMissingRequiredColumns(self):
-        args = Namespace(input_file='input.txt', foldchange=1)
+        args = Namespace(input_filepath='input.txt', foldchange=1)
         df_contents = StringIO('field1\n')
         df = pd.read_csv(df_contents)
         self.assertRaisesRegexp(ValueError,
@@ -144,7 +144,7 @@ overExpressed-badFC|OK|0.05|1''')
                                  args)
 
     def test_failsIfFoldchangeNotFloat(self):
-        args = Namespace(input_file='input.txt', foldchange=1)
+        args = Namespace(input_filepath='input.txt', foldchange=1)
         df_contents = StringIO(\
 '''field1|status|q_value|log2(fold_change)
 A|OK|1|Hello

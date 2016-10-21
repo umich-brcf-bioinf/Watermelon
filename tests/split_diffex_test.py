@@ -23,6 +23,9 @@ class MockHandler(object):
     def handle(self, comparison_name, comparison_df):
         self._comparisons[comparison_name] = comparison_df
 
+    def end(self):
+        pass
+
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SCRIPTS_DIR = os.path.join(os.path.dirname(TEST_DIR), 'scripts')
 class SplitDiffexTest(unittest.TestCase):
@@ -111,7 +114,7 @@ E|F|1|2''')
         mock_handler = MockHandler()
         mock_logger = lambda x: None
         group_by_cols = ['sample_1', 'sample_2']
-        split_diffex._split_comparisons(df, group_by_cols, mock_handler.handle, mock_logger)
+        split_diffex._split_comparisons(df, group_by_cols, mock_handler, mock_logger)
 
         self.assertEqual(3, len(mock_handler._comparisons))
         self.assertEqual((1,4), mock_handler._comparisons['A_B'].shape)
@@ -142,7 +145,8 @@ class FilteringHandlerTest(unittest.TestCase):
 
         self.assertEqual(1, len(base_handler._comparisons))
         self.assertEqual(df, base_handler._comparisons['A_B'])
-        self.assertEqual(0, len(mock_log))
+        self.assertEqual(1, len(mock_log))
+        self.assertEqual('split comparison [A_B]', mock_log[0])
 
     def test_handle_ignoreNonIncludedComparisons(self):
         df = pd.DataFrame()

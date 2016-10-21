@@ -2,6 +2,7 @@
 from __future__ import print_function, absolute_import, division
 
 import argparse
+from collections import defaultdict
 import os
 import sys
 
@@ -22,17 +23,47 @@ GROUP_BY_COLUMNS= [REQUIRED_FIELDS.sample_1, REQUIRED_FIELDS.sample_2]
 
 COMPARISON_NAME_COLUMN = '_comparison_name'
 
+def _mkdir(newdir):
+    """works the way a good mkdir should :)
+        - already exists, silently complete
+        - regular file in the way, raise an exception
+        - parent directory(ies) does not exist, make them as well
+    """
+    if os.path.isdir(newdir):
+        pass
+    elif os.path.isfile(newdir):
+        raise OSError("a file with the same name as the desired " \
+                      "dir, '%s', already exists." % newdir)
+    else:
+        head, tail = os.path.split(newdir)
+        if head and not os.path.isdir(head):
+            _mkdir(head)
+        if tail:
+            os.mkdir(newdir)
+
 class _FilteringHandler(object):
     def __init__(self, included_comparisons, handler, log):
         self._included_comparisons = included_comparisons
         self._base_handler = handler
         self._log = log
+        self._stats = defaultdict(int)
+        self._processed_count = 0
 
     def handle(self, comparison_name, comparison_df):
         if comparison_name in self._included_comparisons:
+            self._stats['split'] += 1
+            self._log('split comparison [{}]'.format(comparison_name))
             self._base_handler.handle(comparison_name, comparison_df)
         else:
+            self._stats['skipped'] += 1
             self._log('skipped comparison [{}]'.format(comparison_name))
+
+    def end(self):
+        self._base_handler.end()
+        total_count = sum([x for x in self._stats.values()])
+        self._log('total comparisons: {}'.format(total_count))
+        for stat_name, stat_count in self._stats.items():
+            self._log('{} comparisons: {}'.format(stat_name, stat_count))
 
 class _ComparisonHandler(object):
     def __init__(self, target_dir, suffix):
@@ -44,6 +75,8 @@ class _ComparisonHandler(object):
         output_filepath = os.path.join(self._target_dir, output_filename)
         comparison_df.to_csv(output_filepath, index=False, sep='\t')
 
+    def end(self):
+        pass
 
 def _log(msg):
     print(msg, file=sys.stderr)
@@ -75,13 +108,13 @@ def _split_comparisons(df, group_by_columns, comparison_handler, log):
     for index, comparison in unique_comparison_df.iterrows():
         comparison_name = comparison[COMPARISON_NAME_COLUMN]
         comparison_count += 1
-        log('processing [{}] ({}/{})'.format(comparison_name, comparison_count, total_comparisons))
+#        log('processing [{}] ({}/{})'.format(comparison_name, comparison_count, total_comparisons))
         comparison_df = df.copy()
         for cols in group_by_columns:
             in_comparison = comparison_df[cols] == comparison[cols]
             comparison_df = comparison_df[in_comparison]
-        comparison_handler(comparison_name, comparison_df)
-
+        comparison_handler.handle(comparison_name, comparison_df)
+    comparison_handler.end()
 def _sort(input_df):
     df = pd.DataFrame(input_df)
     df['_sort_value'] = input_df.apply(_get_sort_value, axis=1)
@@ -142,7 +175,8 @@ def main(sys_argv):
     filtering_handler = _FilteringHandler(included_comparison_list,
                                           comparison_handler,
                                           _log)
-    _split_comparisons(df, GROUP_BY_COLUMNS, filtering_handler.handle, _log)
+    _mkdir(args.output_dir)
+    _split_comparisons(df, GROUP_BY_COLUMNS, filtering_handler, _log)
     _log('done')
 
 if __name__ == '__main__':

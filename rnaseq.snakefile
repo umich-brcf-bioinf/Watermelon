@@ -46,6 +46,29 @@ def cuffdiff_conditions(explicit_comparisons):
     multi_condition_comparison = "_".join(sorted(unique_conditions))
     return(multi_condition_comparison)
 
+
+def check_strand_option(library_type,strand_option):
+
+    tuxedo_library_type = { 0 : "fr-unstranded", 1 : "fr-firststrand", 2 : "fr-secondstrand"}
+    htseq_library_type = { 0 : "no", 1 : "yes", 2 : "reverse"}
+    options = range(0,3)
+
+    if not strand_option in options:
+        msg_format = "ERROR: [alignment_options:library_type] in config file is '{}'. Valid library_type (strand) options are: 0 (un-stranded), 1 (first-strand), or 2 (second-strand)."
+        msg = msg_format.format(strand_option)
+        raise ValueError(msg)
+
+    if library_type == "tuxedo":
+        return tuxedo_library_type[strand_option]
+    elif library_type == "htseq":
+        return htseq_library_type[strand_option]
+    else:
+        msg_format = "ERROR: Unknown library_type {}."
+        msg = msg_format.format(library_type)
+        raise ValueError(msg)
+    print(strand_option)
+
+
 rule all:
     input:
         expand("03-fastqc_reads/{sample}_trimmed_R1_fastqc.html",
@@ -71,9 +94,9 @@ rule all:
         expand("10-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
                 fold_change=config["fold_change"]),
-
         expand("12-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
-                multi_group_comparison=cuffdiff_conditions(config["comparisons"]))
+                multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
+#        "07-htseq/HTSeq_counts.txt"
 
 
 rule concat_reads:
@@ -147,12 +170,14 @@ rule create_transcriptome_index:
     params:
         transcriptome_dir = "transcriptome_index",
         temp_dir =  "04-tophat/.tmp",
-        output_dir = "04-tophat"
+        output_dir = "04-tophat",
+        strand = check_strand_option("tuxedo", config["alignment_options"]["library_type"]) 
     shell:
         "mkdir -p {params.temp_dir} && "
         " rm -rf {params.temp_dir}/* && "
         " module load rnaseq && "
         " tophat -G {input.gtf} "
+        " --library-type {params.strand} "
         " --transcriptome-index={params.temp_dir}/transcriptome_index/transcriptome "
         " {input.bowtie2_index_dir}/genome && "
         " rm -rf {params.output_dir}/{params.transcriptome_dir} && "
@@ -183,14 +208,15 @@ rule tophat:
     params:
         transcriptome_index = "04-tophat/transcriptome_index/transcriptome",
         sample = lambda wildcards: wildcards.sample,
-        tophat_options = lambda wildcards: tophat_options(config["alignment_options"])
+        tophat_options = lambda wildcards: tophat_options(config["alignment_options"]),
+        strand = check_strand_option("tuxedo", config["alignment_options"]["library_type"]) 
     threads: 8
     shell: 
             " module load rnaseq && "
             " tophat -p {threads} "
             " --b2-very-sensitive "
             " --no-coverage-search "
-            " --library-type fr-unstranded "
+            " --library-type {params.strand} "
             " -I 500000 "
             " --transcriptome-index={params.transcriptome_index} "
             " {params.tophat_options} "
@@ -233,11 +259,12 @@ rule htseq_per_sample:
         "07-htseq/{sample}_counts.txt"
     params:
         input_dir = "07-htseq",
+        strand = check_strand_option("htseq", config["alignment_options"]["library_type"]) 
     shell:
         " module load rnaseq &&"
         " python -m HTSeq.scripts.count "
         " -f bam "
-        " -s no "
+        " -s {params.strand} "
         " -m "
         " intersection-nonempty "
         " -q {input.bams} "
@@ -290,12 +317,14 @@ rule cuffdiff:
         samples = lambda wildcards : cuffdiff_samples(wildcards.multi_group_comparison,
                                                       config["samples"],
                                                       "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
-        check_labels = lambda wildcards: cuffdiff_conditions(config["comparisons"])
+        check_labels = lambda wildcards: cuffdiff_conditions(config["comparisons"]),
+        strand = check_strand_option("tuxedo", config["alignment_options"]["library_type"])
     shell:
         " module load rnaseq && "
         " cuffdiff -q "
         " -L {params.labels} "
         " --max-bundle-frags 999999999 "
+        " --library-type {params.strand} "
         " -o {params.output_dir} "
         " -b {input.fasta_file} "
         " -u -N "

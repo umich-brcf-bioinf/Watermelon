@@ -98,7 +98,6 @@ with open(gene_expr, 'r') as file_to_annotate, open(outfile_name, 'w') as annota
         all_lines += 1
         row = [col.strip() for col in row]
         if row[0] == 'test_id':
-            print(row[0])
             row[1] = 'gene_symbol'
             row[2] = 'gene_id'
             row.insert(3, 'gene_desc')

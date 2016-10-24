@@ -23,11 +23,14 @@ class MockHandler(object):
     def handle(self, comparison_name, comparison_df):
         self._comparisons[comparison_name] = comparison_df
 
+    def end(self):
+        pass
+
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SCRIPTS_DIR = os.path.join(os.path.dirname(TEST_DIR), 'scripts')
 class SplitDiffexTest(unittest.TestCase):
     def test_raisesValueErrorIfMissingRequiredColumns(self):
-        args = Namespace(input_file='input.txt')
+        args = Namespace(input_filepath='input.txt')
         df_contents = StringIO('field1\n')
         df = pd.read_csv(df_contents)
         self.assertRaisesRegexp(ValueError,
@@ -111,7 +114,7 @@ E|F|1|2''')
         mock_handler = MockHandler()
         mock_logger = lambda x: None
         group_by_cols = ['sample_1', 'sample_2']
-        split_diffex._split_comparisons(df, group_by_cols, mock_handler.handle, mock_logger)
+        split_diffex._split_comparisons(df, group_by_cols, mock_handler, mock_logger)
 
         self.assertEqual(3, len(mock_handler._comparisons))
         self.assertEqual((1,4), mock_handler._comparisons['A_B'].shape)
@@ -119,7 +122,7 @@ E|F|1|2''')
         self.assertEqual((4,4), mock_handler._comparisons['E_F'].shape)
 
     def test_validate_included_comparisons_present_raisesExceptionIfRequestedComparisonMissing(self ):
-        args = Namespace(input_file='input.txt', included_comparisons='A_B,E_F,C_D')
+        args = Namespace(input_filepath='input.txt', included_comparisons='A_B,E_F,C_D')
         df_contents = StringIO(\
 '''sample_1|sample_2
 A|B''')
@@ -142,7 +145,8 @@ class FilteringHandlerTest(unittest.TestCase):
 
         self.assertEqual(1, len(base_handler._comparisons))
         self.assertEqual(df, base_handler._comparisons['A_B'])
-        self.assertEqual(0, len(mock_log))
+        self.assertEqual(1, len(mock_log))
+        self.assertEqual('split comparison [A_B]', mock_log[0])
 
     def test_handle_ignoreNonIncludedComparisons(self):
         df = pd.DataFrame()

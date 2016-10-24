@@ -1,6 +1,7 @@
 #pylint: disable=too-many-public-methods, invalid-name, no-self-use
 from __future__ import print_function, absolute_import, division
 
+import glob
 import os
 import shutil
 import subprocess
@@ -48,11 +49,6 @@ class SnakeFileTest(unittest.TestCase):
 
             self.assertEqual(0, exit_code)
 
-            log_file_name = os.path.join(temp_dir_path, 'logs', 'watermelon.log')
-            self.assertTrue(os.path.exists(log_file_name))
-            with open(log_file_name) as log_file:
-                actual_log = "".join(log_file.readlines())
-
             with open('sample_A.txt') as output_file:
                 actual_output_A = output_file.readlines()
             with open('sample_B.txt') as output_file:
@@ -61,8 +57,85 @@ class SnakeFileTest(unittest.TestCase):
 
         self.assertEqual(['lineA\n'], actual_output_A)
         self.assertEqual(['lineB\n'], actual_output_B)
+
+
+    def test_watermelon_logsResults(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = self.setup_tmp_dir(temp_dir)
+            CONFIG_FILE=os.path.join(TEST_DIR, 'config.yaml')
+            shutil.copy(CONFIG_FILE, temp_dir_path)
+            SNAKEMAKE_FILE_SOURCE=os.path.join(TEST_DIR, 'test.snakefile')
+            SNAKEMAKE_FILE_DEST=os.path.join(temp_dir_path, 'rnaseq.snakefile')
+            shutil.copy(SNAKEMAKE_FILE_SOURCE, SNAKEMAKE_FILE_DEST)
+
+            command = './watermelon {}'.format('config.yaml')
+            exit_code, actual_output = self.execute(command)
+
+            self.assertEqual(0, exit_code)
+
+            log_dirs = glob.glob("logs/*")
+            self.assertEquals(1, len(log_dirs))
+            log_dir = log_dirs[0]
+            log_file_name = os.path.join(log_dir, 'watermelon.log')
+            self.assertTrue(os.path.exists(log_file_name))
+            with open(log_file_name) as log_file:
+                actual_log = "".join(log_file.readlines())
+
         self.assertRegexpMatches(actual_log, r'Provided cores: 40')
         self.assertRegexpMatches(actual_log, r'3 of 3 steps \(100%\) done')
+        self.assertRegexpMatches(actual_log, r'elapsed seconds: \d+')
+        self.assertRegexpMatches(actual_log, r'elapsed time: 0h:0m:\d+s')
+        self.assertRegexpMatches(actual_log, r'watermelon done')
+
+    def test_watermelon_copiesConfigAndSnakefileToLogDir(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = self.setup_tmp_dir(temp_dir)
+            CONFIG_FILE=os.path.join(TEST_DIR, 'config.yaml')
+            shutil.copy(CONFIG_FILE, temp_dir_path)
+            SNAKEMAKE_FILE_SOURCE=os.path.join(TEST_DIR, 'test.snakefile')
+            SNAKEMAKE_FILE_DEST=os.path.join(temp_dir_path, 'rnaseq.snakefile')
+            shutil.copy(SNAKEMAKE_FILE_SOURCE, SNAKEMAKE_FILE_DEST)
+
+            command = './watermelon {}'.format('config.yaml')
+            exit_code, actual_output = self.execute(command)
+
+            self.assertEqual(0, exit_code)
+
+            log_dirs = glob.glob("logs/*")
+            self.assertEquals(1, len(log_dirs))
+            log_dir = log_dirs[0]
+            run_time = os.path.basename(log_dir)
+            config_filename = os.path.join(log_dir, 'config.yaml.' + run_time)
+            snakefile_filename = os.path.join(log_dir, 'rnaseq.snakefile.' + run_time)
+            self.assertTrue(os.path.exists(config_filename), config_filename)
+            self.assertTrue(os.path.exists(snakefile_filename), snakefile_filename)
+
+    def test_watermelon_runsDetailedSummary(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = self.setup_tmp_dir(temp_dir)
+            CONFIG_FILE=os.path.join(TEST_DIR, 'config.yaml')
+            shutil.copy(CONFIG_FILE, temp_dir_path)
+            SNAKEMAKE_FILE_SOURCE=os.path.join(TEST_DIR, 'test.snakefile')
+            SNAKEMAKE_FILE_DEST=os.path.join(temp_dir_path, 'rnaseq.snakefile')
+            shutil.copy(SNAKEMAKE_FILE_SOURCE, SNAKEMAKE_FILE_DEST)
+
+            command = './watermelon {}'.format('config.yaml')
+            exit_code, actual_output = self.execute(command)
+
+            self.assertEqual(0, exit_code)
+
+            log_dirs = glob.glob("logs/*")
+            self.assertEquals(1, len(log_dirs))
+            log_dir = log_dirs[0]
+            run_time = os.path.basename(log_dir)
+            detailed_summary_filename = os.path.join(log_dir,
+                                                     'watermelon.detailed_summary')
+            self.assertTrue(os.path.exists(detailed_summary_filename),
+                            detailed_summary_filename)
+            with open(detailed_summary_filename) as detailed_summary_file:
+                actual_detailed_summary = "".join(detailed_summary_file.readlines())
+
+        self.assertRegexpMatches(actual_detailed_summary, r'output_file\tdate\trule')
 
     def test_watermelon_failsWhenInvalidConfig(self):
         with TempDirectory() as temp_dir:
@@ -78,7 +151,10 @@ class SnakeFileTest(unittest.TestCase):
 
             self.assertEqual(1, exit_code)
 
-            log_file_name = os.path.join(temp_dir_path, 'logs', 'watermelon.log')
+            log_dirs = glob.glob("logs/*")
+            self.assertEquals(1, len(log_dirs))
+            log_dir = log_dirs[0]
+            log_file_name = os.path.join(log_dir, 'watermelon.log')
             self.assertTrue(os.path.exists(log_file_name))
             with open(log_file_name) as log_file:
                 actual_log = "".join(log_file.readlines())

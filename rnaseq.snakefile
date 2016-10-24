@@ -23,7 +23,8 @@ def init_references():
     if not os.path.exists("references"):
         os.mkdir("references")
     os.chdir("references")
-    for link_name, link_path in config["references"].items():
+    references = config["references"] if config["references"] else {}
+    for link_name, link_path in references.items():
         if not os.path.exists(link_path):
             msg_fmt = 'ERROR: specified config reference files/dirs [{}:{}] cannot be read'
             msg = msg_fmt.format(link_name, link_path)

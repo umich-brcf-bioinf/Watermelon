@@ -15,6 +15,5 @@ genome:
 comparisons:
 fold_change:
 references:
-
 comparisons:
     A_B: A_B

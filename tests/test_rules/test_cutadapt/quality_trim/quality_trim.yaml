@@ -13,6 +13,8 @@ entrez_gene_info:
     foo.txt
 genome:
 references:
+alignment_options:
+    library_type: 0
 transcriptome_index:
 comparisons:
 fold_change:

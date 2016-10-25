@@ -53,9 +53,17 @@ def check_strand_option(library_type,strand_option):
     tuxedo_library_type = { 0 : "fr-unstranded", 1 : "fr-firststrand", 2 : "fr-secondstrand"}
     htseq_library_type = { 0 : "no", 1 : "yes", 2 : "reverse"}
     options = range(0,3)
+# 
+#     TUXEDO = 'tuxedo'
+#     strand_config_param = { 0 : {'tuxedo': 'fr-unstranded', 'htseq': 'no'}, }
+# 
+#     try:
+#         param_value = strand_config_param[config_param][library_type]
+#     except KeyError:
+#         raise KeyError('whatup with yout config')
 
     if not strand_option in options:
-        msg_format = "ERROR: [alignment_options:library_type] in config file is '{}'. Valid library_type (strand) options are: 0 (un-stranded), 1 (first-strand), or 2 (second-strand)."
+        msg_format = "ERROR: 'alignment_options:library_type' in config file is '{}'. Valid library_type options are: 0 (un-stranded), 1 (first-strand), or 2 (second-strand)."
         msg = msg_format.format(strand_option)
         raise ValueError(msg)
 
@@ -67,7 +75,6 @@ def check_strand_option(library_type,strand_option):
         msg_format = "ERROR: Unknown library_type {}."
         msg = msg_format.format(library_type)
         raise ValueError(msg)
-    print(strand_option)
 
 
 rule all:
@@ -163,7 +170,8 @@ rule fastqc_trimmed_cutadapt_reads:
         "fastqc {input} -o 03-fastqc_reads 2>&1 | tee {log}"
 
 rule create_transcriptome_index:
-    input: 
+    input:
+        alignment_options_checksum = "config_checksums/alignment_options.watermelon.md5",
         gtf = "references/gtf",
         bowtie2_index_dir = "references/bowtie2_index"
     output:

@@ -16,6 +16,7 @@ references:
 transcriptome_index:
 comparisons:
 fold_change:
-
+alignment_options:
+    library_type: 0
 comparisons:
     A_B: A_B

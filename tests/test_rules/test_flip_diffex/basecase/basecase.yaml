@@ -1,0 +1,23 @@
+input_dir:
+    ""
+samples:
+    sampleA: sampleA
+
+trimming_options:
+    base_quality_5prime: 0
+    base_quality_3prime: 0
+    trim_length_5prime: 0
+    trim_length_3prime: 0
+
+entrez_gene_info:
+    foo.txt
+genome:
+references:
+alignment_options:
+    library_type: 0
+transcriptome_index:
+comparisons:
+fold_change:
+
+comparisons:
+    A_B: A_B

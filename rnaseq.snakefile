@@ -104,7 +104,7 @@ rule all:
                 fold_change=config["fold_change"]),
         expand("12-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
-#        "07-htseq/HTSeq_counts.txt"
+        "07-htseq/HTSeq_counts.txt"
 
 
 rule concat_reads:
@@ -140,7 +140,7 @@ rule cutadapt:
         output_file = "{sample}_trimmed_R1.fastq.gz",
         trimming_options = cutadapt_options(config["trimming_options"])
     log:
-        "02-cutadapt/{sample}_trimmed_R1.log"
+        "02-cutadapt/{sample}_cutadapt.log"
     shell:
         "module load rnaseq && "
         "if [[ {params.trimming_options} > 0 ]]; then "
@@ -155,16 +155,16 @@ rule cutadapt:
         "cd {params.output_dir}; "
         " ln -sf ../{input.raw_fastq} {params.output_file}; "
         " cd ..;"
-        " echo \"No trimming done\" > {log}; "
+        " echo \"No trimming done\" 2>&1 |tee {log}; "
         " fi"
 
-rule fastqc_trimmed_cutadapt_reads:
+rule fastqc_trimmed_reads:
     input:
         "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
     output:
         "03-fastqc_reads/{sample}_trimmed_R1_fastqc.html"
     log:
-        "03-fastqc_reads/{sample}_trimmed_R1_fastqc.log"
+        "03-fastqc_reads/{sample}_fastqc_trimmed_reads.log"
     shell:
         " module load rnaseq && "
         "fastqc {input} -o 03-fastqc_reads 2>&1 | tee {log}"
@@ -172,6 +172,7 @@ rule fastqc_trimmed_cutadapt_reads:
 rule create_transcriptome_index:
     input:
         alignment_options_checksum = "config_checksums/alignment_options.watermelon.md5",
+        reference_checksum = "config_checksums/references.watermelon.md5",
         gtf = "references/gtf",
         bowtie2_index_dir = "references/bowtie2_index"
     output:
@@ -181,6 +182,8 @@ rule create_transcriptome_index:
         temp_dir =  "04-tophat/.tmp",
         output_dir = "04-tophat",
         strand = check_strand_option("tuxedo", config["alignment_options"]["library_type"]) 
+    log: 
+        "04-tophat/create_transcriptome_index.log"
     shell:
         "mkdir -p {params.temp_dir} && "
         " rm -rf {params.temp_dir}/* && "
@@ -188,7 +191,7 @@ rule create_transcriptome_index:
         " tophat -G {input.gtf} "
         " --library-type {params.strand} "
         " --transcriptome-index={params.temp_dir}/transcriptome_index/transcriptome "
-        " {input.bowtie2_index_dir}/genome && "
+        " {input.bowtie2_index_dir}/genome  2>&1 | tee {log} && "
         " rm -rf {params.output_dir}/{params.transcriptome_dir} && "
         " mv {params.temp_dir}/{params.transcriptome_dir} {params.output_dir} && "
         " mv tophat_out {params.output_dir}/transcriptome_index/ && "
@@ -208,6 +211,7 @@ def tophat_options(alignment_options):
 rule tophat:
     input:
         alignment_options_checksum = "config_checksums/alignment_options.watermelon.md5",
+        reference_checksum = "config_checksums/references.watermelon.md5",
         transcriptome_fasta = "04-tophat/transcriptome_index/transcriptome.fa",
         bowtie2_index_dir = "references/bowtie2_index",
         fastq = "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
@@ -218,7 +222,9 @@ rule tophat:
         transcriptome_index = "04-tophat/transcriptome_index/transcriptome",
         sample = lambda wildcards: wildcards.sample,
         tophat_options = lambda wildcards: tophat_options(config["alignment_options"]),
-        strand = check_strand_option("tuxedo", config["alignment_options"]["library_type"]) 
+        strand = check_strand_option("tuxedo", config["alignment_options"]["library_type"])
+    log:
+        "04-tophat/{sample}/{sample}_tophat.log"
     threads: 8
     shell: 
             " module load rnaseq && "
@@ -231,7 +237,8 @@ rule tophat:
             " {params.tophat_options} "
             " -o 04-tophat/{params.sample} "
             " {input.bowtie2_index_dir}/genome "
-            " {input.fastq} && "
+            " {input.fastq} "
+            " 2>&1 | tee {log} && "
             " mv 04-tophat/{params.sample}/accepted_hits.bam 04-tophat/{params.sample}/{params.sample}_accepted_hits.bam && "
             " mv 04-tophat/{params.sample}/align_summary.txt 04-tophat/{params.sample}/{params.sample}_align_summary.txt "
 
@@ -240,9 +247,11 @@ rule fastqc_tophat_align:
         "04-tophat/{sample}/{sample}_accepted_hits.bam"
     output:
         "05-fastqc_align/{sample}_accepted_hits_fastqc.html"
+    log:
+        "05-fastqc_align/{sample}_fastqc_tophat_align.log"
     shell:
         " module load rnaseq && "
-        "fastqc {input} -o 05-fastqc_align"
+        "fastqc {input} -o 05-fastqc_align 2>&1 | tee {log} "
 
 rule align_qc_metrics:
     input:
@@ -261,14 +270,16 @@ rule align_qc_metrics:
 
 rule htseq_per_sample:
     input:
-        reference_checksum = "references.watermelon.md5",
+        reference_checksum = "config_checksums/references.watermelon.md5",
         bams = "04-tophat/{sample}/{sample}_accepted_hits.bam",
         gtf = "references/gtf"
     output:
         "07-htseq/{sample}_counts.txt"
     params:
         input_dir = "07-htseq",
-        strand = check_strand_option("htseq", config["alignment_options"]["library_type"]) 
+        strand = check_strand_option("htseq", config["alignment_options"]["library_type"])
+    log:
+        "07-htseq/{sample}_htseq_per_sample.log"
     shell:
         " module load rnaseq &&"
         " python -m HTSeq.scripts.count "
@@ -279,6 +290,7 @@ rule htseq_per_sample:
         " -q {input.bams} "
         " {input.gtf} "
         " > {output} "
+        " 2> {log} "
 
 rule htseq_merge:
     input:
@@ -313,6 +325,7 @@ rule cuffdiff:
     input:
         sample_checksum = "config_checksums/samples.watermelon.md5",
         comparison_checksum = "config_checksums/comparisons.watermelon.md5",
+        reference_checksum = "config_checksums/references.watermelon.md5",
         fasta_file = "references/bowtie2_index/genome.fa",
         gtf_file = "references/gtf",
         bam_files = expand("04-tophat/{sample}/{sample}_accepted_hits.bam", sample=config["samples"])
@@ -326,8 +339,9 @@ rule cuffdiff:
         samples = lambda wildcards : cuffdiff_samples(wildcards.multi_group_comparison,
                                                       config["samples"],
                                                       "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
-        check_labels = lambda wildcards: cuffdiff_conditions(config["comparisons"]),
         strand = check_strand_option("tuxedo", config["alignment_options"]["library_type"])
+    log:
+        "08-cuffdiff/{multi_group_comparison}/{multi_group_comparison}_cuffdiff.log"
     shell:
         " module load rnaseq && "
         " cuffdiff -q "
@@ -339,7 +353,29 @@ rule cuffdiff:
         " -u -N "
         " --compatible-hits-norm "
         " {input.gtf_file} "
-        " {params.samples}"
+        " {params.samples} "
+        " 2>&1 | tee {log} "
+
+rule flip_diffex:
+    input:
+        gene_cuffdiff = "08-cuffdiff/{multi_group_comparison}/gene_exp.diff",
+        isoform_cuffdiff = "08-cuffdiff/{multi_group_comparison}/isoform_exp.diff"
+    output:
+        gene_flip = "09-flip_diffex/{multi_group_comparison}/gene_exp.flip.diff",
+        isoform_flip = "09-flip_diffex/{multi_group_comparison}/isoform_exp.flip.diff"
+    params:
+        comparisons = ",".join(config["comparisons"].values())
+    shell:
+        "python scripts/flip_diffex.py "
+        " {input.gene_cuffdiff} "
+        " {output.gene_flip} "
+        " {params.comparisons} && "
+        
+        "python scripts/flip_diffex.py "
+        " {input.isoform_cuffdiff} "
+        " {output.isoform_flip} "
+        " {params.comparisons} "
+
 
 rule diffex:
     input:
@@ -353,6 +389,8 @@ rule diffex:
         output_dir = "09-diff_expression/{comparison}",
         comparison = lambda wildcards: wildcards.comparison,
         fold_change = config["fold_change"]
+    log:
+        "09-diff_expression/{comparison}/{comparison}_diffex.log"
     shell:
         " module load rnaseq && "
         " mkdir -p {params.output_dir} &&"
@@ -361,17 +399,20 @@ rule diffex:
         " {input.cuffdiff_gene_exp} "
         " {params.comparison}_gene "
         " {params.fold_change} "
-        " {params.output_dir} && "
+        " {params.output_dir} "
+        " 2>&1 | tee {log} && "
         
         " perl scripts/Cuffdiff_out_format_v6.pl "
         " {input.cuffdiff_isoform_exp} "
         " {params.comparison}_isoform "
         " {params.fold_change} "
         " {params.output_dir} "
+        " 2>&1 | tee >>{log} "
 
 rule annotate:
     input:
         genome_checksum = "config_checksums/genome.watermelon.md5",
+        reference_checksum = "config_checksums/references.watermelon.md5",
         gene_diff_exp = "09-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
         isoform_diff_exp = "09-diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}.txt",
         entrez_gene_info = "references/entrez_gene_info"
@@ -380,20 +421,23 @@ rule annotate:
         isoform_annot = "10-annotated_diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}_annot.txt"
     params:
         output_dir = "10-annotated_diff_expression/{comparison}",
-        genome = config["genome"]
+        genome =  config["genome"]
+    log:
+        "10-annotated_diff_expression/{comparison}/{comparison}_annotate.log"
     shell:
         "python scripts/get_entrez_gene_info.py "
         " -i {input.entrez_gene_info} "
         " -e {input.gene_diff_exp} "
         " -g {params.genome} "
-        " -o {params.output_dir} && "
+        " -o {params.output_dir} "
+        " 2>&1 | tee {log} && "
         
         " python scripts/get_entrez_gene_info.py "
         " -i {input.entrez_gene_info} "
         " -e {input.isoform_diff_exp} "
         " -g {params.genome} "
         " -o {params.output_dir} "
-
+        " 2>&1 | tee >>{log} "
 
 rule flag_diffex:
     input:
@@ -405,6 +449,8 @@ rule flag_diffex:
         isoform_flagged = "09-flag_diff_expression/{comparison}/{comparison}_isoform.flagged.txt",
     params:
         fold_change = config["fold_change"]
+    log:
+        "09-flag_diff_expression/{comparison}/{comparison}_flag_diffex.log"
     shell: 
         " module purge && "
         " module load python/3.4.3 && "
@@ -412,17 +458,19 @@ rule flag_diffex:
         " python scripts/flag_diffex.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_gene_exp} "
-        " {output.gene_flagged} && "
+        " {output.gene_flagged} "
+        " 2>&1 | tee {log} && "
         
         " python scripts/flag_diffex.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_isoform_exp} "
         " {output.isoform_flagged} "
-
+        " 2>&1 | tee >>{log} "
 
 rule annotate_flag_diffex:
     input:
         genome_checksum = "config_checksums/genome.watermelon.md5",
+        reference_checksum = "config_checksums/references.watermelon.md5",
         gene_diff_exp = "09-flag_diff_expression/{comparison}/{comparison}_gene.flagged.txt",
         isoform_diff_exp = "09-flag_diff_expression/{comparison}/{comparison}_isoform.flagged.txt",
         entrez_gene_info = "references/entrez_gene_info"
@@ -432,19 +480,22 @@ rule annotate_flag_diffex:
     params:
         output_dir = "10-annotated_flag_diff_expression/{comparison}",
         genome = config["genome"]
+    log:
+        "10-annotated_flag_diff_expression/{comparison}/{comparison}_annotate_flag_diffex.log"
     shell:
         "python scripts/annotate_entrez_gene_info.py "
         " -i {input.entrez_gene_info} "
         " -e {input.gene_diff_exp} "
         " -g {params.genome} "
-        " -o {params.output_dir} && "
+        " -o {params.output_dir} "
+        " 2>&1 | tee {log} && "
         
         " python scripts/annotate_entrez_gene_info.py "
         " -i {input.entrez_gene_info} "
         " -e {input.isoform_diff_exp} "
         " -g {params.genome} "
         " -o {params.output_dir} "
-    
+        " 2>&1 | tee >>{log} "
 
 rule build_group_replicates:
     input:
@@ -472,6 +523,7 @@ rule build_group_replicates:
 rule cummerbund:
     input:
         genome_checksum = "config_checksums/genome.watermelon.md5",
+        reference_checksum = "config_checksums/references.watermelon.md5",
         group_replicates = "11-group_replicates/{comparison}/group_replicates.txt",
         gtf_file = "references/gtf"
     output:
@@ -482,7 +534,7 @@ rule cummerbund:
         genome = config["genome"],
         logfile = "12-cummerbund/{comparison}/cummerbund.log"
     log:
-         "12-cummerbund/{comparison}/cummerbund.log"
+         "12-cummerbund/{comparison}/{comparison}_cummerbund.log"
     shell:
         " module load rnaseq && "
         " mkdir -p {params.output_dir}/Plots && "
@@ -492,4 +544,4 @@ rule cummerbund:
         " grpRepFile={input.group_replicates} "
         " gtfFile={input.gtf_file} "
         " genome={params.genome} "
-        " 2> {log} "
+        " 2>&1 {log} "

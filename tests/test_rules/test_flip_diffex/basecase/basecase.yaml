@@ -15,6 +15,7 @@ genome:
 references:
 alignment_options:
     library_type: 0
+    transcriptome_only: True
 transcriptome_index:
 comparisons:
 fold_change:

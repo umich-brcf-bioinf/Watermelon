@@ -36,7 +36,7 @@ def missing_or_different_from_expected(expected_dir, actual_dir):
 class FlipDiffexTest(unittest.TestCase):
     def _snakemake(self, configfile_path, source_expected_dir, source_working_dir):
         with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path  # '/tmp/foo'
+            temp_dir_path = '/tmp/foo' #temp_dir.path  # '/tmp/foo'
             tmp_expected_dir = os.path.join(temp_dir_path, 'expected')
             shutil.copytree(source_expected_dir, tmp_expected_dir)
             tmp_actual_dir = os.path.join(temp_dir_path, 'actual')

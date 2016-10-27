@@ -33,7 +33,8 @@ trimming_options:
     trim_length_3prime: 3
 
 alignment_options:
-    transcriptome_only: False
+    transcriptome_only: True
+    library_type: 1  # 1   # 2
 
 genome:
     mm10
@@ -44,6 +45,7 @@ references:
 #    gtf: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Annotation/Genes
 # path to dir with bowtie index
     bowtie2_index: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/bowtie2
+#    bowtie2_index: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex
 # path to entrez gene info file
     entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info
 #    entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02

@@ -86,23 +86,17 @@ rule all:
         "06-qc_metrics/alignment_stats.txt",
         expand("08-cuffdiff/{multi_group_comparison}/gene_exp.diff",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
-        expand("09-flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.txt",
+        expand("10-flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.txt",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
-        expand("09-flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.txt",
+        expand("10-flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.txt",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
-        expand("10-annotated_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.foldchange.{fold_change}_annot.txt",
-               multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
-               fold_change=config["fold_change"]),
-        expand("10-annotated_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.foldchange.{fold_change}_annot.txt",
+        expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
                 fold_change=config["fold_change"]),
-        expand("10-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
+        expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
                 fold_change=config["fold_change"]),
-        expand("10-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
-                multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
-                fold_change=config["fold_change"]),
-        expand("12-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
+        expand("13-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
         "07-htseq/HTSeq_counts.txt"
 
@@ -377,80 +371,18 @@ rule flip_diffex:
         " {params.comparisons} "
 
 
-rule diffex:
-    input:
-        fold_change_checksum = "config_checksums/fold_change.watermelon.md5",
-        cuffdiff_gene_exp = "08-cuffdiff/{comparison}/gene_exp.diff",
-        cuffdiff_isoform_exp = "08-cuffdiff/{comparison}/isoform_exp.diff"
-    output:
-        "09-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
-        "09-diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}.txt",
-    params:
-        output_dir = "09-diff_expression/{comparison}",
-        comparison = lambda wildcards: wildcards.comparison,
-        fold_change = config["fold_change"]
-    log:
-        "09-diff_expression/{comparison}/{comparison}_diffex.log"
-    shell:
-        " module load rnaseq && "
-        " mkdir -p {params.output_dir} &&"
-        
-        " perl scripts/Cuffdiff_out_format_v6.pl "
-        " {input.cuffdiff_gene_exp} "
-        " {params.comparison}_gene "
-        " {params.fold_change} "
-        " {params.output_dir} "
-        " 2>&1 | tee {log} && "
-        
-        " perl scripts/Cuffdiff_out_format_v6.pl "
-        " {input.cuffdiff_isoform_exp} "
-        " {params.comparison}_isoform "
-        " {params.fold_change} "
-        " {params.output_dir} "
-        " 2>&1 | tee >>{log} "
-
-rule annotate:
-    input:
-        genome_checksum = "config_checksums/genome.watermelon.md5",
-        reference_checksum = "config_checksums/references.watermelon.md5",
-        gene_diff_exp = "09-diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}.txt",
-        isoform_diff_exp = "09-diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}.txt",
-        entrez_gene_info = "references/entrez_gene_info"
-    output:
-        gene_annot = "10-annotated_diff_expression/{comparison}/{comparison}_gene.foldchange.{fold_change}_annot.txt",
-        isoform_annot = "10-annotated_diff_expression/{comparison}/{comparison}_isoform.foldchange.{fold_change}_annot.txt"
-    params:
-        output_dir = "10-annotated_diff_expression/{comparison}",
-        genome =  config["genome"]
-    log:
-        "10-annotated_diff_expression/{comparison}/{comparison}_annotate.log"
-    shell:
-        "python scripts/get_entrez_gene_info.py "
-        " -i {input.entrez_gene_info} "
-        " -e {input.gene_diff_exp} "
-        " -g {params.genome} "
-        " -o {params.output_dir} "
-        " 2>&1 | tee {log} && "
-        
-        " python scripts/get_entrez_gene_info.py "
-        " -i {input.entrez_gene_info} "
-        " -e {input.isoform_diff_exp} "
-        " -g {params.genome} "
-        " -o {params.output_dir} "
-        " 2>&1 | tee >>{log} "
-
 rule flag_diffex:
     input:
         fold_change_checksum = "config_checksums/fold_change.watermelon.md5",
         cuffdiff_gene_exp = "09-flip_diffex/{comparison}/gene_exp.flip.diff",
         cuffdiff_isoform_exp = "09-flip_diffex/{comparison}/isoform_exp.flip.diff"
     output:
-        gene_flagged = "09-flag_diff_expression/{comparison}/{comparison}_gene.flagged.txt",
-        isoform_flagged = "09-flag_diff_expression/{comparison}/{comparison}_isoform.flagged.txt",
+        gene_flagged = "10-flag_diff_expression/{comparison}/{comparison}_gene.flagged.txt",
+        isoform_flagged = "10-flag_diff_expression/{comparison}/{comparison}_isoform.flagged.txt",
     params:
         fold_change = config["fold_change"]
     log:
-        "09-flag_diff_expression/{comparison}/{comparison}_flag_diffex.log"
+        "10-flag_diff_expression/{comparison}/{comparison}_flag_diffex.log"
     shell: 
         " module purge && "
         " module load python/3.4.3 && "
@@ -471,17 +403,17 @@ rule annotate_flag_diffex:
     input:
         genome_checksum = "config_checksums/genome.watermelon.md5",
         reference_checksum = "config_checksums/references.watermelon.md5",
-        gene_diff_exp = "09-flag_diff_expression/{comparison}/{comparison}_gene.flagged.txt",
-        isoform_diff_exp = "09-flag_diff_expression/{comparison}/{comparison}_isoform.flagged.txt",
+        gene_diff_exp = "10-flag_diff_expression/{comparison}/{comparison}_gene.flagged.txt",
+        isoform_diff_exp = "10-flag_diff_expression/{comparison}/{comparison}_isoform.flagged.txt",
         entrez_gene_info = "references/entrez_gene_info"
     output:
-        gene_annot = "10-annotated_flag_diff_expression/{comparison}/{comparison}_gene.flagged.annot.txt",
-        isoform_annot = "10-annotated_flag_diff_expression/{comparison}/{comparison}_isoform.flagged.annot.txt"
+        gene_annot = "11-annotated_flag_diff_expression/{comparison}/{comparison}_gene.flagged.annot.txt",
+        isoform_annot = "11-annotated_flag_diff_expression/{comparison}/{comparison}_isoform.flagged.annot.txt"
     params:
-        output_dir = "10-annotated_flag_diff_expression/{comparison}",
+        output_dir = "11-annotated_flag_diff_expression/{comparison}",
         genome = config["genome"]
     log:
-        "10-annotated_flag_diff_expression/{comparison}/{comparison}_annotate_flag_diffex.log"
+        "11-annotated_flag_diff_expression/{comparison}/{comparison}_annotate_flag_diffex.log"
     shell:
         "python scripts/annotate_entrez_gene_info.py "
         " -i {input.entrez_gene_info} "
@@ -501,7 +433,7 @@ rule build_group_replicates:
     input:
         "08-cuffdiff/{comparison}/read_groups.info"
     output:
-        "11-group_replicates/{comparison}/group_replicates.txt"
+        "12-group_replicates/{comparison}/group_replicates.txt"
 #    params:
 #        comparison = lambda wildcards: wildcards.comparison
     run:
@@ -524,17 +456,17 @@ rule cummerbund:
     input:
         genome_checksum = "config_checksums/genome.watermelon.md5",
         reference_checksum = "config_checksums/references.watermelon.md5",
-        group_replicates = "11-group_replicates/{comparison}/group_replicates.txt",
+        group_replicates = "12-group_replicates/{comparison}/group_replicates.txt",
         gtf_file = "references/gtf"
     output:
-        "12-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf" #should we list out all outputs here?
+        "13-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf" #should we list out all outputs here?
     params:
         cuff_diff_dir = "08-cuffdiff/{comparison}",
-        output_dir = "12-cummerbund/{comparison}/",
+        output_dir = "13-cummerbund/{comparison}/",
         genome = config["genome"],
-        logfile = "12-cummerbund/{comparison}/cummerbund.log"
+        logfile = "13-cummerbund/{comparison}/cummerbund.log"
     log:
-         "12-cummerbund/{comparison}/{comparison}_cummerbund.log"
+         "13-cummerbund/{comparison}/{comparison}_cummerbund.log"
     shell:
         " module load rnaseq && "
         " mkdir -p {params.output_dir}/Plots && "

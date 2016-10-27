@@ -39,8 +39,6 @@ def _flip_comparisons(dataframe, comparisons):
     def _flip_comparison(row):
         flipped_comparison = _COMPARISON_NAME_FMT.format(row[REQUIRED_FIELDS.sample_2],
                                                          row[REQUIRED_FIELDS.sample_1])
-        print(flipped_comparison)
-        print(comparisons)
         if flipped_comparison in comparisons:
             return (row[REQUIRED_FIELDS.sample_2], row[REQUIRED_FIELDS.sample_1],
                     row[REQUIRED_FIELDS.value_2], row[REQUIRED_FIELDS.value_1],

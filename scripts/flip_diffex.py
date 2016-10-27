@@ -2,8 +2,10 @@
 from __future__ import print_function, absolute_import, division
 
 import argparse
+import datetime
 import os
 import sys
+import time
 
 import pandas as pd
 
@@ -11,23 +13,44 @@ REQUIRED_FIELDS = argparse.Namespace(
     sample_1='sample_1',
     sample_2='sample_2',
     log2_fold_change='log2(fold_change)',
-    status='value_1',
-    significant='value_2',
+    test_stat='test_stat',
+    value_1='value_1',
+    value_2='value_2',
 )
 
-def _log(msg):
-    print(msg, file=sys.stderr)
+def _time_stamp():
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    return(st)
+
+def _log(message):
+    print('{}|{}'.format(_time_stamp(), message), file=sys.stderr)
+
 
 def _flip_comparisons(dataframe, comparisons):
     _COMPARISON_NAME_FMT = '{}_{}'
-    _COLUMN_NAMES = ['sample_1', 'sample_2', 'value_1', 'value_2', 'log2(fold_change)']
+    _COLUMN_NAMES = [REQUIRED_FIELDS.sample_1,
+                     REQUIRED_FIELDS.sample_2,
+                     REQUIRED_FIELDS.value_1,
+                     REQUIRED_FIELDS.value_2,
+                     REQUIRED_FIELDS.log2_fold_change,
+                     REQUIRED_FIELDS.test_stat]
 
     def _flip_comparison(row):
-        this_comparison = _COMPARISON_NAME_FMT.format(row['sample_2'], row['sample_1'])
-        if this_comparison in comparisons:
-            return row['sample_2'], row['sample_1'], row['value_2'], row['value_1'], -row['log2(fold_change)']
+        flipped_comparison = _COMPARISON_NAME_FMT.format(row[REQUIRED_FIELDS.sample_2],
+                                                         row[REQUIRED_FIELDS.sample_1])
+        print(flipped_comparison)
+        print(comparisons)
+        if flipped_comparison in comparisons:
+            return (row[REQUIRED_FIELDS.sample_2], row[REQUIRED_FIELDS.sample_1],
+                    row[REQUIRED_FIELDS.value_2], row[REQUIRED_FIELDS.value_1],
+                    -row[REQUIRED_FIELDS.log2_fold_change],
+                    -row[REQUIRED_FIELDS.test_stat])
         else:
-            return row['sample_1'], row['sample_2'], row['value_1'], row['value_2'], row['log2(fold_change)']
+            return (row[REQUIRED_FIELDS.sample_1], row[REQUIRED_FIELDS.sample_2],
+                    row[REQUIRED_FIELDS.value_1], row[REQUIRED_FIELDS.value_2],
+                    row[REQUIRED_FIELDS.log2_fold_change],
+                    row[REQUIRED_FIELDS.test_stat])
 
     dataframe[_COLUMN_NAMES] = dataframe.apply(_flip_comparison, axis=1).apply(pd.Series)
 

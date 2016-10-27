@@ -442,8 +442,8 @@ rule annotate:
 rule flag_diffex:
     input:
         fold_change_checksum = "config_checksums/fold_change.watermelon.md5",
-        cuffdiff_gene_exp = "08-cuffdiff/{comparison}/gene_exp.diff",
-        cuffdiff_isoform_exp = "08-cuffdiff/{comparison}/isoform_exp.diff"
+        cuffdiff_gene_exp = "09-flip_diffex/{comparison}/gene_exp.flip.diff",
+        cuffdiff_isoform_exp = "09-flip_diffex/{comparison}/isoform_exp.flip.diff"
     output:
         gene_flagged = "09-flag_diff_expression/{comparison}/{comparison}_gene.flagged.txt",
         isoform_flagged = "09-flag_diff_expression/{comparison}/{comparison}_isoform.flagged.txt",
@@ -544,4 +544,4 @@ rule cummerbund:
         " grpRepFile={input.group_replicates} "
         " gtfFile={input.gtf_file} "
         " genome={params.genome} "
-        " 2>&1 {log} "
+        " 2>&1 | tee {log} "

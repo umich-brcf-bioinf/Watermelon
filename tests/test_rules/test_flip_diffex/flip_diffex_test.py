@@ -15,6 +15,23 @@ ROOT_DIR = os.path.realpath(os.path.join(TEST_DIR, '..', '..', '..'))
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 SNAKEFILE_PATH = os.path.join(ROOT_DIR, 'rnaseq.snakefile')
 
+def _all_left_only_files(dircmp):
+    left_only = sorted(dircmp.left_only)
+    for dir_name, dc in sorted(dircmp.subdirs.items()):
+        left_only.extend([os.path.join(dir_name, lo) for lo in _all_left_only_files(dc)])
+    return left_only
+
+def _all_diff_files(dircmp):
+    diff_files = sorted(dircmp.diff_files)
+    for dir_name, dc in sorted(dircmp.subdirs.items()):
+        diff_files.extend([os.path.join(dir_name, lo) for lo in _all_diff_files(dc)])
+    return diff_files
+
+def missing_or_different_from_expected(expected_dir, actual_dir):
+    dircmp = filecmp.dircmp(expected_dir, actual_dir)
+    diffs = ['different: ' + diff_file for diff_file in _all_diff_files(dircmp)]
+    diffs.extend(['only in expected: ' + expected_only for expected_only in _all_left_only_files(dircmp)])
+    return diffs
 
 class FlipDiffexTest(unittest.TestCase):
     def _snakemake(self, configfile_path, source_expected_dir, source_working_dir):
@@ -35,28 +52,13 @@ class FlipDiffexTest(unittest.TestCase):
 '''.format(SNAKEFILE_PATH, configfile_path)
             subprocess.check_output(command, shell=True)
 
-            diff_command = 'diff --brief -r {} {}'.format(os.path.join(tmp_expected_dir, '09-flip_diffex'),
-                                                          os.path.join(tmp_actual_dir, '09-flip_diffex'))
-            try:
-                subprocess.check_output(command, shell=True)
-                return True
-            except Exception:
-                return True
+            anomalies = missing_or_different_from_expected(tmp_expected_dir,
+                                                           tmp_actual_dir)
+        return anomalies
 
-#             dircmp = filecmp.dircmp(tmp_expected_dir, tmp_actual_dir)
-#             anomalies = {}
-#             if dircmp.left_only:
-#                 anomalies['in expected but not actual'] = dircmp.left_only
-#             if dircmp.diff_files:
-#                 anomalies['files do not match'] = dircmp.diff_files
-# 
-#             print('\n\nBEFORE: ' + str(anomalies))
-#             return anomalies
-#         print('\n\nAFTER: ' + str(anomalies))
-            
     def test_basecase(self):
         configfile_path = os.path.join(TEST_DIR, 'basecase', 'basecase.yaml')
         source_working_dir = os.path.join(TEST_DIR, 'basecase', 'working_dir')
         source_expected_dir = os.path.join(TEST_DIR, 'basecase', 'expected')
-        files_matched =  self._snakemake(configfile_path, source_expected_dir, source_working_dir)
-        self.assertTrue(files_matched, 'some files did not match')
+        anomalies =  self._snakemake(configfile_path, source_expected_dir, source_working_dir)
+        self.assertEqual([], anomalies, 'some files/dirs did not match expected')

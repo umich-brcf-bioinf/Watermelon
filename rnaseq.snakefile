@@ -98,7 +98,8 @@ rule all:
                 fold_change=config["fold_change"]),
         expand("13-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
-        "07-htseq/HTSeq_counts.txt"
+        "07-htseq/HTSeq_counts.txt",
+        expand("14-split_diff_expression/{user_specified_comparison}.txt", user_specified_comparison = config["comparisons"])
 
 
 rule concat_reads:
@@ -477,3 +478,27 @@ rule cummerbund:
         " gtfFile={input.gtf_file} "
         " genome={params.genome} "
         " 2>&1 | tee {log} "
+
+rule split_diffex:
+    input:
+        gene = expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
+                            multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
+#         isoform =  expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
+#                         multi_group_comparison=cuffdiff_conditions(config["comparisons"]))
+    output:
+        expand("14-split_diff_expression/{user_specified_comparisons}.txt", user_specified_comparisons=config["comparisons"])
+    params:
+        output_dir = "14-split_diff_expression",
+        user_specified_comparison_list = ",".join(config["comparisons"].values())
+    shell:
+        " module purge && module load python/3.4.3 && "
+        " python scripts/split_diffex.py "
+        " {input.gene} "
+        " {params.output_dir} "
+        "{params.user_specified_comparison_list} "
+    
+    
+    
+    
+    
+    

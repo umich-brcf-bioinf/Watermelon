@@ -41,7 +41,7 @@ class ConcatReadsTest(unittest.TestCase):
             command = '''snakemake --cores 2 \
      --snakefile {0} \
      --configfile {1} \
-     --force 01-raw_reads/Sample_0_R1.fastq.gz 01-raw_reads/Sample_1_R1.fastq.gz
+     --force 01-raw_reads/Sample_0_R1.fastq.gz 01-raw_reads/Sample_1_R1.fastq.gz 2>/dev/null
 '''.format(SNAKEFILE_PATH, configfile_path)
             subprocess.check_output(command, shell=True)
 

@@ -45,7 +45,7 @@ def _add_columns(input_df, linear_fold_change):
     return df
 
 def _validate_required_fields(input_df, args):
-    required_fields = set([REQUIRED_FIELDS.log2_fold_change, REQUIRED_FIELDS.q_value, REQUIRED_FIELDS.status])
+    required_fields = set(vars(REQUIRED_FIELDS).values())
     actual_fields = set(input_df.columns.values.tolist())
     missing_fields = sorted(required_fields - actual_fields)
     if missing_fields:

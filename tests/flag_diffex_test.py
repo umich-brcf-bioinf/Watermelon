@@ -18,7 +18,6 @@ import scripts.flag_diffex as flag_diffex
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SCRIPTS_DIR = os.path.join(os.path.dirname(TEST_DIR), 'scripts')
 class FlagDiffexTest(unittest.TestCase):
-
     def execute(self, command):
         exit_code = 0
         try:

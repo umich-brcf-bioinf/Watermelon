@@ -110,10 +110,12 @@ gene2|C|D|foo|2|1|1|3.5'''.replace('|', '\t')
                 input_file.write(input_file_contents)
 
             comparisons = 'B_A'
-            command = 'python {} {} {} {}'.format(script_name,
-                                                  input_filename,
-                                                  output_filename,
-                                                  comparisons)
+            redirect_output = '2>/dev/null'
+            command = 'python {} {} {} {} {}'.format(script_name,
+                                                     input_filename,
+                                                     output_filename,
+                                                     comparisons,
+                                                     redirect_output)
             exit_code, command_output = self.execute(command)
 
             self.assertEqual(0, exit_code, command_output)

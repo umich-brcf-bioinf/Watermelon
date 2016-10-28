@@ -18,7 +18,6 @@ import scripts.flag_diffex as flag_diffex
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SCRIPTS_DIR = os.path.join(os.path.dirname(TEST_DIR), 'scripts')
 class FlagDiffexTest(unittest.TestCase):
-
     def execute(self, command):
         exit_code = 0
         try:
@@ -45,10 +44,13 @@ value-1|1|1|OK'''.replace('|', '\t')
             with open(input_filename, 'w') as input_file:
                 input_file.write(input_file_contents)
 
-            command = 'python {} --foldchange {} {} {}'.format(script_name,
+
+            redirect_output = ' 2>/dev/null '
+            command = 'python {} --foldchange {} {} {} {}'.format(script_name,
                                         linear_fold_change_threshold,
                                         input_filename,
-                                        output_filename)
+                                        output_filename,
+                                        redirect_output)
             exit_code, command_output = self.execute(command)
 
             self.assertEqual(0, exit_code, command_output)

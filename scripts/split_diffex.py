@@ -3,12 +3,14 @@ from __future__ import print_function, absolute_import, division
 
 import argparse
 from collections import defaultdict
+import datetime
 import os
 import sys
+import time
 
 import pandas as pd
 
-OUTPUT_FILE_EXTENSION = '.txt'
+DEFAULT_OUTPUT_FILE_SUFFIX = '.txt'
 
 REQUIRED_FIELDS = argparse.Namespace(
     sample_1='sample_1',
@@ -22,6 +24,14 @@ REQUIRED_FIELDS = argparse.Namespace(
 GROUP_BY_COLUMNS= [REQUIRED_FIELDS.sample_1, REQUIRED_FIELDS.sample_2]
 
 COMPARISON_NAME_COLUMN = '_comparison_name'
+
+def _time_stamp():
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    return(st)
+
+def _log(message):
+    print('{}|split_diffex|{}'.format(_time_stamp(), message), file=sys.stderr)
 
 def _mkdir(newdir):
     """works the way a good mkdir should :)
@@ -78,9 +88,6 @@ class _ComparisonHandler(object):
     def end(self):
         pass
 
-def _log(msg):
-    print(msg, file=sys.stderr)
-
 def _get_sort_value(row):
     yes_no = lambda x: 0 if x=='yes' else 1
     ok_no_test = lambda x: 0 if x=='OK' else 1
@@ -108,7 +115,6 @@ def _split_comparisons(df, group_by_columns, comparison_handler, log):
     for index, comparison in unique_comparison_df.iterrows():
         comparison_name = comparison[COMPARISON_NAME_COLUMN]
         comparison_count += 1
-#        log('processing [{}] ({}/{})'.format(comparison_name, comparison_count, total_comparisons))
         comparison_df = df.copy()
         for cols in group_by_columns:
             in_comparison = comparison_df[cols] == comparison[cols]
@@ -159,6 +165,13 @@ def _parse_command_line_args(sys_argv):
         type=str,
         help=('commma separated list of comparisons; comparisons found in the input but '
               'not in this list will be ignored'))
+    parser.add_argument(
+        '-o', '--output_file_suffix',
+        type=str,
+        default=DEFAULT_OUTPUT_FILE_SUFFIX,
+        help=('={} : split filenames are formed by combining values from sample_1, '
+              'sample_2, and this suffix').format(DEFAULT_OUTPUT_FILE_SUFFIX),
+        )
 
     args = parser.parse_args(sys_argv)
     return args 
@@ -170,7 +183,7 @@ def main(sys_argv):
     _validate_inputs(df, args)
     _log('sorting')
     df = _sort(df)
-    comparison_handler = _ComparisonHandler(args.output_dir, OUTPUT_FILE_EXTENSION)
+    comparison_handler = _ComparisonHandler(args.output_dir, args.output_file_suffix)
     included_comparison_list = args.included_comparisons.split(',')
     filtering_handler = _FilteringHandler(included_comparison_list,
                                           comparison_handler,

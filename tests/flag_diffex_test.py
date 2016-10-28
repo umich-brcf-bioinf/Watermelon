@@ -45,10 +45,13 @@ value-1|1|1|OK'''.replace('|', '\t')
             with open(input_filename, 'w') as input_file:
                 input_file.write(input_file_contents)
 
-            command = 'python {} --foldchange {} {} {}'.format(script_name,
+
+            redirect_output = ' 2>/dev/null '
+            command = 'python {} --foldchange {} {} {} {}'.format(script_name,
                                         linear_fold_change_threshold,
                                         input_filename,
-                                        output_filename)
+                                        output_filename,
+                                        redirect_output)
             exit_code, command_output = self.execute(command)
 
             self.assertEqual(0, exit_code, command_output)

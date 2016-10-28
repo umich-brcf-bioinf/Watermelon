@@ -172,11 +172,11 @@ A|B|3|4''')
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             group_name = 'foo'
-            suffix = '.txt'
+            suffix = '.suffix.txt'
             handler = split_diffex._ComparisonHandler(temp_dir_path, suffix)
             handler.handle(group_name, df)
 
-            expected_filename = os.path.join(temp_dir_path, 'foo.txt')
+            expected_filename = os.path.join(temp_dir_path, 'foo.suffix.txt')
             with open(expected_filename, 'r') as input_file:
                 actual_file_data=input_file.readlines()
 
@@ -215,17 +215,21 @@ E|F|OK|yes|yes|2'''.replace('|', '\t')
             with open(input_filename, 'w') as input_file:
                 input_file.write(input_file_contents)
 
+            suffix_option = '--output_file_suffix=.gene.txt'
             included_comparisons = 'C_D,E_F'
-            command = 'python {} {} {} {}'.format(script_name,
-                                                  input_filename,
-                                                  output_dir,
-                                                  included_comparisons)
+            redirect_log = '2>/dev/null'
+            command = 'python {} {} {} {} {} {}'.format(script_name,
+                                                        suffix_option,
+                                                        input_filename,
+                                                        output_dir,
+                                                        included_comparisons,
+                                                        redirect_log)
             exit_code, command_output = self.execute(command)
 
             self.assertEqual(0, exit_code, command_output)
             actual_files = sorted(os.listdir(output_dir))
-            actual_CD_df = pd.read_csv(os.path.join(output_dir, 'C_D.txt'), sep='\t')
-            actual_EF_df = pd.read_csv(os.path.join(output_dir, 'E_F.txt'), sep='\t')
-        self.assertEquals(['C_D.txt', 'E_F.txt', 'input.txt'], actual_files)
+            actual_CD_df = pd.read_csv(os.path.join(output_dir, 'C_D.gene.txt'), sep='\t')
+            actual_EF_df = pd.read_csv(os.path.join(output_dir, 'E_F.gene.txt'), sep='\t')
+        self.assertEquals(['C_D.gene.txt', 'E_F.gene.txt', 'input.txt'], actual_files)
         self.assertEqual((2,6), actual_CD_df.shape)
         self.assertEqual((4,6), actual_EF_df.shape)

@@ -99,7 +99,9 @@ rule all:
         expand("13-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
                 multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
         "07-htseq/HTSeq_counts.txt",
-        expand("14-split_diff_expression/{user_specified_comparison}.txt", user_specified_comparison = config["comparisons"])
+        expand("14-split_diff_expression/{user_specified_comparison}_gene.txt", user_specified_comparison = config["comparisons"]),
+        expand("14-split_diff_expression/{user_specified_comparison}_isoform.txt", user_specified_comparison = config["comparisons"])
+
 
 
 rule concat_reads:
@@ -483,22 +485,45 @@ rule split_diffex:
     input:
         gene = expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
                             multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
-#         isoform =  expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
-#                         multi_group_comparison=cuffdiff_conditions(config["comparisons"]))
+        isoform =  expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
+                        multi_group_comparison=cuffdiff_conditions(config["comparisons"]))
     output:
-        expand("14-split_diff_expression/{user_specified_comparisons}.txt", user_specified_comparisons=config["comparisons"])
+        expand("14-split_diff_expression/{user_specified_comparisons}_gene.txt", user_specified_comparisons=config["comparisons"]),
+        expand("14-split_diff_expression/{user_specified_comparisons}_isoform.txt", user_specified_comparisons=config["comparisons"]),
     params:
         output_dir = "14-split_diff_expression",
         user_specified_comparison_list = ",".join(config["comparisons"].values())
     shell:
         " module purge && module load python/3.4.3 && "
         " python scripts/split_diffex.py "
+        " -o _gene.txt "
         " {input.gene} "
         " {params.output_dir} "
+        "{params.user_specified_comparison_list} && "
+        
+        " module purge && module load python/3.4.3 && "
+        " python scripts/split_diffex.py "
+        " -o _isoform.txt "
+        " {input.isoform} "
+        " {params.output_dir} "
         "{params.user_specified_comparison_list} "
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

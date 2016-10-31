@@ -45,11 +45,12 @@ class FlipDiffexTest(unittest.TestCase):
 
             os.chdir(tmp_actual_dir)
             os.symlink(SCRIPTS_DIR, 'scripts')
+            redirect_output = '2>/dev/null'
             command = '''snakemake --cores 2 \
-     --snakefile {0} \
-     --configfile {1} \
-     --force 09-flip_diffex/A_B/gene_exp.flip.diff 09-flip_diffex/A_B/isoform_exp.flip.diff 2>/dev/null
-'''.format(SNAKEFILE_PATH, configfile_path)
+     --snakefile {} \
+     --configfile {} \
+     --force 09-flip_diffex/A_B/gene_exp.flip.diff 09-flip_diffex/A_B/isoform_exp.flip.diff {}
+'''.format(SNAKEFILE_PATH, configfile_path, redirect_output)
             subprocess.check_output(command, shell=True)
 
             anomalies = missing_or_different_from_expected(tmp_expected_dir,

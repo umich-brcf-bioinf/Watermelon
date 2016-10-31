@@ -11,71 +11,11 @@ from itertools import combinations
 import csv
 import os
 
-import scripts.checksum as checksum
+import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
 
-checksum.reset_checksums("config_checksums", config)
+rnaseq_snakefile_helper.checksum_reset_all("config_checksums", config)
 
-def init_references():
-    def existing_link_target_is_different(link_name, link_path):
-        original_abs_path = os.path.realpath(link_name)
-        new_abs_path = os.path.realpath(link_path)
-        return original_abs_path != new_abs_path
-    if not os.path.exists("references"):
-        os.mkdir("references")
-    os.chdir("references")
-    references = config["references"] if config["references"] else {}
-    for link_name, link_path in references.items():
-        if not os.path.exists(link_path):
-            msg_fmt = 'ERROR: specified config reference files/dirs [{}:{}] cannot be read'
-            msg = msg_fmt.format(link_name, link_path)
-            raise ValueError(msg)
-        elif not os.path.exists(link_name):
-            os.symlink(link_path, link_name)
-        elif existing_link_target_is_different(link_name, link_path):
-            os.remove(link_name)
-            os.symlink(link_path, link_name)
-        else:
-            pass #link matches existing link
-    os.chdir("..")
-
-init_references()
-
-def cuffdiff_conditions(explicit_comparisons):
-    unique_conditions = set()
-    for comparison in explicit_comparisons:
-        unique_conditions.update(comparison.split("_"))
-    multi_condition_comparison = "_".join(sorted(unique_conditions))
-    return(multi_condition_comparison)
-
-
-def check_strand_option(library_type,strand_option):
-
-    tuxedo_library_type = { 0 : "fr-unstranded", 1 : "fr-firststrand", 2 : "fr-secondstrand"}
-    htseq_library_type = { 0 : "no", 1 : "yes", 2 : "reverse"}
-    options = range(0,3)
-# 
-#     TUXEDO = 'tuxedo'
-#     strand_config_param = { 0 : {'tuxedo': 'fr-unstranded', 'htseq': 'no'}, }
-# 
-#     try:
-#         param_value = strand_config_param[config_param][library_type]
-#     except KeyError:
-#         raise KeyError('whatup with yout config')
-
-    if not strand_option in options:
-        msg_format = "ERROR: 'alignment_options:library_type' in config file is '{}'. Valid library_type options are: 0 (un-stranded), 1 (first-strand), or 2 (second-strand)."
-        msg = msg_format.format(strand_option)
-        raise ValueError(msg)
-
-    if library_type == "tuxedo":
-        return tuxedo_library_type[strand_option]
-    elif library_type == "htseq":
-        return htseq_library_type[strand_option]
-    else:
-        msg_format = "ERROR: Unknown library_type {}."
-        msg = msg_format.format(library_type)
-        raise ValueError(msg)
-
+rnaseq_snakefile_helper.init_references(config["references"])
 
 rule all:
     input:
@@ -85,24 +25,22 @@ rule all:
                 sample=config["samples"]),
         "06-qc_metrics/alignment_stats.txt",
         expand("08-cuffdiff/{multi_group_comparison}/gene_exp.diff",
-                multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"])),
         expand("10-flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.txt",
-                multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"])),
         expand("10-flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.txt",
-                multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"])),
         expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
-                multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"]),
                 fold_change=config["fold_change"]),
         expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
-                multi_group_comparison=cuffdiff_conditions(config["comparisons"]),
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"]),
                 fold_change=config["fold_change"]),
         expand("13-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
-                multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"])),
         "07-htseq/HTSeq_counts.txt",
         expand("14-split_diff_expression/{user_specified_comparison}_gene.txt", user_specified_comparison = config["comparisons"]),
         expand("14-split_diff_expression/{user_specified_comparison}_isoform.txt", user_specified_comparison = config["comparisons"])
-
-
 
 rule concat_reads:
     input:
@@ -111,16 +49,6 @@ rule concat_reads:
         "01-raw_reads/{sample}_R1.fastq.gz"
     shell:
         "cat {input}/* > {output}"
-
-def cutadapt_options(trim_params):
-    run_trimming_options = 0
-    for option, value in trim_params.items():
-        if not isinstance(value, int):
-            msg_format = "ERROR: Config trimming_options '{}' must be integer"
-            msg = msg_format.format(value)
-            raise ValueError(msg)
-        run_trimming_options += value
-    return run_trimming_options
 
 rule cutadapt:
     input:
@@ -135,7 +63,7 @@ rule cutadapt:
         trim_length_3prime = config["trimming_options"]["trim_length_3prime"],
         output_dir = "02-cutadapt",
         output_file = "{sample}_trimmed_R1.fastq.gz",
-        trimming_options = cutadapt_options(config["trimming_options"])
+        trimming_options = rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"])
     log:
         "02-cutadapt/{sample}_cutadapt.log"
     shell:
@@ -178,7 +106,7 @@ rule create_transcriptome_index:
         transcriptome_dir = "transcriptome_index",
         temp_dir =  "04-tophat/.tmp",
         output_dir = "04-tophat",
-        strand = check_strand_option("tuxedo", config["alignment_options"]["library_type"]) 
+        strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"]) 
     log: 
         "04-tophat/create_transcriptome_index.log"
     shell:
@@ -194,17 +122,6 @@ rule create_transcriptome_index:
         " mv tophat_out {params.output_dir}/transcriptome_index/ && "
         " touch {params.output_dir}/transcriptome_index/* "
 
-
-def tophat_options(alignment_options):
-    options = ""
-    if not isinstance(alignment_options["transcriptome_only"], bool):
-        raise ValueError("config alignment_options:transcriptome_only must be boolean")
-    if alignment_options["transcriptome_only"]:
-        options += " --transcriptome-only "
-    else:
-        options += " --no-novel-juncs "  # used in Legacy for transcriptome + genome alignment
-    return options
-
 rule tophat:
     input:
         alignment_options_checksum = "config_checksums/alignment_options.watermelon.md5",
@@ -218,8 +135,8 @@ rule tophat:
     params:
         transcriptome_index = "04-tophat/transcriptome_index/transcriptome",
         sample = lambda wildcards: wildcards.sample,
-        tophat_options = lambda wildcards: tophat_options(config["alignment_options"]),
-        strand = check_strand_option("tuxedo", config["alignment_options"]["library_type"])
+        tophat_options = lambda wildcards: rnaseq_snakefile_helper.tophat_options(config["alignment_options"]),
+        strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"])
     log:
         "04-tophat/{sample}/{sample}_tophat.log"
     threads: 8
@@ -274,7 +191,7 @@ rule htseq_per_sample:
         "07-htseq/{sample}_counts.txt"
     params:
         input_dir = "07-htseq",
-        strand = check_strand_option("htseq", config["alignment_options"]["library_type"])
+        strand = rnaseq_snakefile_helper.check_strand_option("htseq", config["alignment_options"]["library_type"])
     log:
         "07-htseq/{sample}_htseq_per_sample.log"
     shell:
@@ -301,22 +218,6 @@ rule htseq_merge:
     shell:
        " perl scripts/mergeHTSeqCountFiles.pl {params.input_dir} "
 
-def cuffdiff_labels(underbar_separated_comparisons):
-    return underbar_separated_comparisons.replace("_", ",")
-
-def cuffdiff_samples(underbar_separated_comparisons,
-                     sample_name_group,
-                     sample_file_format):
-    group_sample_names = defaultdict(list)
-    for actual_sample_name, group in sample_name_group.items():
-        group_sample_names[group].append(sample_file_format.format(sample_placeholder=actual_sample_name))
-    group_sample_names = dict(group_sample_names)
-    params = []
-    for group in underbar_separated_comparisons.split('_'):
-        params.append(','.join(sorted(group_sample_names[group])))
-    return ' '.join(params)
-
-
 rule cuffdiff:
     input:
         sample_checksum = "config_checksums/samples.watermelon.md5",
@@ -331,11 +232,11 @@ rule cuffdiff:
         "08-cuffdiff/{multi_group_comparison}/read_groups.info"
     params:
         output_dir = "08-cuffdiff/{multi_group_comparison}",
-        labels = lambda wildcards : cuffdiff_labels(wildcards.multi_group_comparison),
-        samples = lambda wildcards : cuffdiff_samples(wildcards.multi_group_comparison,
+        labels = lambda wildcards : rnaseq_snakefile_helper.cuffdiff_labels(wildcards.multi_group_comparison),
+        samples = lambda wildcards : rnaseq_snakefile_helper.cuffdiff_samples(wildcards.multi_group_comparison,
                                                       config["samples"],
                                                       "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
-        strand = check_strand_option("tuxedo", config["alignment_options"]["library_type"])
+        strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"])
     log:
         "08-cuffdiff/{multi_group_comparison}/{multi_group_comparison}_cuffdiff.log"
     shell:
@@ -372,7 +273,6 @@ rule flip_diffex:
         " {input.isoform_cuffdiff} "
         " {output.isoform_flip} "
         " {params.comparisons} "
-
 
 rule flag_diffex:
     input:
@@ -436,8 +336,6 @@ rule build_group_replicates:
         "08-cuffdiff/{comparison}/read_groups.info"
     output:
         "12-group_replicates/{comparison}/group_replicates.txt"
-#    params:
-#        comparison = lambda wildcards: wildcards.comparison
     run:
         input_file_name = input[0]
         output_file_name = output[0]
@@ -483,9 +381,9 @@ rule cummerbund:
 rule split_diffex:
     input:
         gene = expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
-                            multi_group_comparison=cuffdiff_conditions(config["comparisons"])),
+                            multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"])),
         isoform =  expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
-                        multi_group_comparison=cuffdiff_conditions(config["comparisons"]))
+                        multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"]))
     output:
         expand("14-split_diff_expression/{user_specified_comparisons}_gene.txt", user_specified_comparisons=config["comparisons"]),
         expand("14-split_diff_expression/{user_specified_comparisons}_isoform.txt", user_specified_comparisons=config["comparisons"]),
@@ -506,23 +404,5 @@ rule split_diffex:
         " {input.isoform} "
         " {params.output_dir} "
         "{params.user_specified_comparison_list} "
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

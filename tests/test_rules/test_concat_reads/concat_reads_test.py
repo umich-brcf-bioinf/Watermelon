@@ -38,11 +38,12 @@ class ConcatReadsTest(unittest.TestCase):
             shutil.copytree(source_working_dir, tmp_actual_dir) 
 
             os.chdir(tmp_actual_dir)
+            redirect_output = '2>/dev/null'
             command = '''snakemake --cores 2 \
-     --snakefile {0} \
-     --configfile {1} \
-     --force 01-raw_reads/Sample_0_R1.fastq.gz 01-raw_reads/Sample_1_R1.fastq.gz 2>/dev/null
-'''.format(SNAKEFILE_PATH, configfile_path)
+     --snakefile {} \
+     --configfile {} \
+     --force 01-raw_reads/Sample_0_R1.fastq.gz 01-raw_reads/Sample_1_R1.fastq.gz {}
+'''.format(SNAKEFILE_PATH, configfile_path, redirect_output)
             subprocess.check_output(command, shell=True)
 
             for expected_filename in glob(tmp_expected_dir + '/01-raw_reads/*'):

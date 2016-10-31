@@ -1,7 +1,8 @@
 input_dir:
     ""
 samples:
-    sampleA: sampleA
+    sampleA: A
+    sampleB: B
 
 trimming_options:
     base_quality_5prime: 0

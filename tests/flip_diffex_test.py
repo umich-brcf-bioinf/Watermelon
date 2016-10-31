@@ -31,7 +31,7 @@ class FlipDiffexTest(unittest.TestCase):
                                  df,
                                  args)
 
-    def test_flip_comparisons_samplesValuesFlippedAndFoldChangAndTestStatInverted(self):
+    def test_flip_comparisons_samplesValuesFlippedAndFoldChangeAndTestStatInverted(self):
         df_contents = StringIO(\
 '''test_id|sample_1|sample_2|status|value_1|value_2|log2(fold_change)|test_stat
 gene0|A|B|foo|4|1|2|3.5
@@ -40,7 +40,8 @@ gene2|C|D|foo|1|3|-1.584962501|-3.5
 gene3|C|D|foo|1|4|-2|-3.5''')
         df = pd.read_csv(df_contents, sep='|')
     
-        flip_diffex._flip_comparisons(df, ['B_A', 'D_C'])
+        comparison_infix = '^'
+        flip_diffex._flip_comparisons(comparison_infix, df, ['B^A', 'D^C'])
 
         self.assertEquals(['gene0', 'B', 'A', 'foo', 1, 4, -2, -3.5], list(df.loc[0].values))
         self.assertEquals(['gene1', 'B', 'A', 'foo', 1, 3, -1.584962501, -3.5], list(df.loc[1].values))
@@ -56,7 +57,7 @@ gene2|C|D|foo|1|3|-1.584962501|-1
 gene3|C|D|foo|1|4|-2|-1''')
         df = pd.read_csv(df_contents, sep='|')
     
-        flip_diffex._flip_comparisons(df, ['B_A'])
+        flip_diffex._flip_comparisons('_', df, ['B_A'])
 
         self.assertEquals(['gene2', 'C', 'D', 'foo', 1, 3, -1.584962501, -1], list(df.loc[2].values))
         self.assertEquals(['gene3', 'C', 'D', 'foo', 1, 4, -2, -1], list(df.loc[3].values))
@@ -70,7 +71,7 @@ gene2|C|D|foo|1|3|-1.584962501|-1
 gene3|C|D|foo|1|4|-2|-1''')
         df = pd.read_csv(df_contents, sep='|')
     
-        flip_diffex._flip_comparisons(df, ['B_A,C_D'])
+        flip_diffex._flip_comparisons('_', df, ['B_A,C_D'])
 
         self.assertEquals(['gene2', 'C', 'D', 'foo', 1, 3, -1.584962501, -1], list(df.loc[2].values))
         self.assertEquals(['gene3', 'C', 'D', 'foo', 1, 4, -2, -1], list(df.loc[3].values))
@@ -109,12 +110,14 @@ gene2|C|D|foo|2|1|1|3.5'''.replace('|', '\t')
             with open(input_filename, 'w') as input_file:
                 input_file.write(input_file_contents)
 
-            comparisons = 'B_A'
+            comparisons = 'B^A'
+            comparison_infix_option = '--comparison_infix ^'
             redirect_output = '2>/dev/null'
-            command = 'python {} {} {} {} {}'.format(script_name,
+            command = 'python {} {} {} {} {} {}'.format(script_name,
                                                      input_filename,
                                                      output_filename,
                                                      comparisons,
+                                                     comparison_infix_option,
                                                      redirect_output)
             exit_code, command_output = self.execute(command)
 

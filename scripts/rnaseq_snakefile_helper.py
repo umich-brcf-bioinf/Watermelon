@@ -109,11 +109,11 @@ def init_references(config_references):
             pass #link matches existing link
     os.chdir("..")
 
-def cuffdiff_conditions(explicit_comparisons):
+def cuffdiff_conditions(comparison_infix, explicit_comparisons):
     unique_conditions = set()
     for comparison in explicit_comparisons:
-        unique_conditions.update(comparison.split("_"))
-    multi_condition_comparison = "_".join(sorted(unique_conditions))
+        unique_conditions.update(comparison.split(comparison_infix))
+    multi_condition_comparison = comparison_infix.join(sorted(unique_conditions))
     return(multi_condition_comparison)
 
 
@@ -146,10 +146,11 @@ def check_strand_option(library_type,strand_option):
         raise ValueError(msg)
 
 
-def cuffdiff_labels(underbar_separated_comparisons):
-    return underbar_separated_comparisons.replace("_", ",")
+def cuffdiff_labels(comparison_infix, underbar_separated_comparisons):
+    return underbar_separated_comparisons.replace(comparison_infix, ",")
 
-def cuffdiff_samples(underbar_separated_comparisons,
+def cuffdiff_samples(comparison_infix,
+                     underbar_separated_comparisons,
                      sample_name_group,
                      sample_file_format):
     group_sample_names = defaultdict(list)
@@ -157,7 +158,7 @@ def cuffdiff_samples(underbar_separated_comparisons,
         group_sample_names[group].append(sample_file_format.format(sample_placeholder=actual_sample_name))
     group_sample_names = dict(group_sample_names)
     params = []
-    for group in underbar_separated_comparisons.split('_'):
+    for group in underbar_separated_comparisons.split(comparison_infix):
         params.append(','.join(sorted(group_sample_names[group])))
     return ' '.join(params)
 

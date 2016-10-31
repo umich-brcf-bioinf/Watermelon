@@ -9,6 +9,8 @@ import time
 
 import pandas as pd
 
+DEFAULT_COMPARISON_INFIX = '_v_'
+
 REQUIRED_FIELDS = argparse.Namespace(
     sample_1='sample_1',
     sample_2='sample_2',
@@ -26,8 +28,8 @@ def _time_stamp():
 def _log(message):
     print('{}|flip_diffex|{}'.format(_time_stamp(), message), file=sys.stderr)
 
-def _flip_comparisons(dataframe, comparisons):
-    _COMPARISON_NAME_FMT = '{}_{}'
+def _flip_comparisons(comparison_infix, dataframe, comparisons):
+    _COMPARISON_NAME_FMT = '{group_1}{comparison_infix}{group_2}'
     _COLUMN_NAMES = [REQUIRED_FIELDS.sample_1,
                      REQUIRED_FIELDS.sample_2,
                      REQUIRED_FIELDS.value_1,
@@ -36,8 +38,9 @@ def _flip_comparisons(dataframe, comparisons):
                      REQUIRED_FIELDS.test_stat]
 
     def _flip_comparison(row):
-        flipped_comparison = _COMPARISON_NAME_FMT.format(row[REQUIRED_FIELDS.sample_2],
-                                                         row[REQUIRED_FIELDS.sample_1])
+        flipped_comparison = _COMPARISON_NAME_FMT.format(group_1=row[REQUIRED_FIELDS.sample_2],
+                                                         comparison_infix=comparison_infix,
+                                                         group_2=row[REQUIRED_FIELDS.sample_1])
         if flipped_comparison in comparisons:
             return (row[REQUIRED_FIELDS.sample_2], row[REQUIRED_FIELDS.sample_1],
                     row[REQUIRED_FIELDS.value_2], row[REQUIRED_FIELDS.value_1],
@@ -79,6 +82,11 @@ def _parse_command_line_args(sys_argv):
         type=str,
         help=('commma separated list of comparisons; comparisons found in the input file but '
               'not in this list will be passed through unmodified'))
+    parser.add_argument(
+        '--comparison_infix',
+        type=str,
+        help=('={} The delimiter that separates group 1 and 2 in the comparisons '
+              'parameter').format(DEFAULT_COMPARISON_INFIX))
 
     args = parser.parse_args(sys_argv)
     return args 
@@ -90,7 +98,7 @@ def main(sys_argv):
     _validate_inputs(df, args)
     comparisons = args.comparisons.split(',')
     _log('flipping comparisons')
-    _flip_comparisons(df, comparisons)
+    _flip_comparisons(DEFAULT_COMPARISON_INFIX, df, comparisons)
     _log('saving {}'.format(args.output_filepath))
     df.to_csv(args.output_filepath, index=False, sep='\t')
     _log('done')

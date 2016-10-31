@@ -114,7 +114,7 @@ E|F|1|2''')
         mock_handler = MockHandler()
         mock_logger = lambda x: None
         group_by_cols = ['sample_1', 'sample_2']
-        split_diffex._split_comparisons(df, group_by_cols, mock_handler, mock_logger)
+        split_diffex._split_comparisons('_', df, group_by_cols, mock_handler, mock_logger)
 
         self.assertEqual(3, len(mock_handler._comparisons))
         self.assertEqual((1,4), mock_handler._comparisons['A_B'].shape)
@@ -122,7 +122,9 @@ E|F|1|2''')
         self.assertEqual((4,4), mock_handler._comparisons['E_F'].shape)
 
     def test_validate_included_comparisons_present_raisesExceptionIfRequestedComparisonMissing(self ):
-        args = Namespace(input_filepath='input.txt', included_comparisons='A_B,E_F,C_D')
+        args = Namespace(input_filepath='input.txt',
+                         included_comparisons='A_B,E_F,C_D',
+                         comparison_infix='_')
         df_contents = StringIO(\
 '''sample_1|sample_2
 A|B''')
@@ -216,10 +218,12 @@ E|F|OK|yes|yes|2'''.replace('|', '\t')
                 input_file.write(input_file_contents)
 
             suffix_option = '--output_file_suffix=.gene.txt'
-            included_comparisons = 'C_D,E_F'
+            included_comparisons = 'C^D,E^F'
+            comparison_infix_option = '--comparison_infix ^'
             redirect_log = '2>/dev/null'
-            command = 'python {} {} {} {} {} {}'.format(script_name,
+            command = 'python {} {} {} {} {} {} {}'.format(script_name,
                                                         suffix_option,
+                                                        comparison_infix_option,
                                                         input_filename,
                                                         output_dir,
                                                         included_comparisons,
@@ -228,8 +232,8 @@ E|F|OK|yes|yes|2'''.replace('|', '\t')
 
             self.assertEqual(0, exit_code, command_output)
             actual_files = sorted(os.listdir(output_dir))
-            actual_CD_df = pd.read_csv(os.path.join(output_dir, 'C_D.gene.txt'), sep='\t')
-            actual_EF_df = pd.read_csv(os.path.join(output_dir, 'E_F.gene.txt'), sep='\t')
-        self.assertEquals(['C_D.gene.txt', 'E_F.gene.txt', 'input.txt'], actual_files)
+            actual_CD_df = pd.read_csv(os.path.join(output_dir, 'C^D.gene.txt'), sep='\t')
+            actual_EF_df = pd.read_csv(os.path.join(output_dir, 'E^F.gene.txt'), sep='\t')
+        self.assertEquals(['C^D.gene.txt', 'E^F.gene.txt', 'input.txt'], actual_files)
         self.assertEqual((2,6), actual_CD_df.shape)
         self.assertEqual((4,6), actual_EF_df.shape)

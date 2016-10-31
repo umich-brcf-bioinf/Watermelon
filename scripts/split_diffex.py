@@ -10,6 +10,7 @@ import time
 
 import pandas as pd
 
+DEFAULT_COMPARISON_INFIX = '_v_'
 DEFAULT_OUTPUT_FILE_SUFFIX = '.txt'
 
 REQUIRED_FIELDS = argparse.Namespace(
@@ -97,19 +98,19 @@ def _get_sort_value(row):
     log2_fold_change = row[REQUIRED_FIELDS.log2_fold_change]
     return (status_sort, significant_sort, diff_exp_sort, -log2_fold_change)
 
-def _get_unique_comparison_df(group_by_columns, df):
+def _get_unique_comparison_df(comparison_infix, group_by_columns, df):
     def _build_comparison_name(row):
         values = []
         for cols in group_by_columns:
             values.append(row[cols])
-        return '_'.join(values)
+        return comparison_infix.join(values)
     unique_comparison_df = df[group_by_columns].drop_duplicates()
     unique_comparison_df[COMPARISON_NAME_COLUMN] = unique_comparison_df.apply(_build_comparison_name,
                                                                               axis=1)
     return unique_comparison_df
 
-def _split_comparisons(df, group_by_columns, comparison_handler, log):
-    unique_comparison_df = _get_unique_comparison_df(group_by_columns, df)
+def _split_comparisons(comparison_infix, df, group_by_columns, comparison_handler, log):
+    unique_comparison_df = _get_unique_comparison_df(comparison_infix, group_by_columns, df)
     total_comparisons = len(unique_comparison_df)
     comparison_count = 0
     for index, comparison in unique_comparison_df.iterrows():
@@ -121,6 +122,7 @@ def _split_comparisons(df, group_by_columns, comparison_handler, log):
             comparison_df = comparison_df[in_comparison]
         comparison_handler.handle(comparison_name, comparison_df)
     comparison_handler.end()
+
 def _sort(input_df):
     df = pd.DataFrame(input_df)
     df['_sort_value'] = input_df.apply(_get_sort_value, axis=1)
@@ -139,7 +141,9 @@ def _validate_required_fields(input_df, args):
 
 def _validate_included_comparisons_present(input_df, args):
     included_comparisons = set(args.included_comparisons.split(','))
-    unique_comparison_df = _get_unique_comparison_df(GROUP_BY_COLUMNS, input_df)
+    unique_comparison_df = _get_unique_comparison_df(args.comparison_infix,
+                                                     GROUP_BY_COLUMNS,
+                                                     input_df)
     found_comparisons = set(unique_comparison_df[COMPARISON_NAME_COLUMN])
     missing_comparisons = sorted(included_comparisons - found_comparisons)
     if missing_comparisons:
@@ -170,8 +174,12 @@ def _parse_command_line_args(sys_argv):
         type=str,
         default=DEFAULT_OUTPUT_FILE_SUFFIX,
         help=('={} : split filenames are formed by combining values from sample_1, '
-              'sample_2, and this suffix').format(DEFAULT_OUTPUT_FILE_SUFFIX),
-        )
+              'sample_2, and this suffix').format(DEFAULT_OUTPUT_FILE_SUFFIX))
+    parser.add_argument(
+        '--comparison_infix',
+        type=str,
+        help=('={} The delimiter that separates group 1 and 2 in the '
+              'included_comparisons parameter').format(DEFAULT_COMPARISON_INFIX))
 
     args = parser.parse_args(sys_argv)
     return args 
@@ -189,7 +197,7 @@ def main(sys_argv):
                                           comparison_handler,
                                           _log)
     _mkdir(args.output_dir)
-    _split_comparisons(df, GROUP_BY_COLUMNS, filtering_handler, _log)
+    _split_comparisons(args.comparison_infix, df, GROUP_BY_COLUMNS, filtering_handler, _log)
     _log('done')
 
 if __name__ == '__main__':

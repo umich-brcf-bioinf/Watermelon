@@ -13,8 +13,9 @@ import os
 
 import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
 
-rnaseq_snakefile_helper.checksum_reset_all("config_checksums", config)
+COMPARISON_INFIX = '_v_'
 
+rnaseq_snakefile_helper.checksum_reset_all("config_checksums", config)
 rnaseq_snakefile_helper.init_references(config["references"])
 
 rule all:
@@ -25,19 +26,19 @@ rule all:
                 sample=config["samples"]),
         "06-qc_metrics/alignment_stats.txt",
         expand("08-cuffdiff/{multi_group_comparison}/gene_exp.diff",
-                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"])),
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
         expand("10-flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.txt",
-                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"])),
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
         expand("10-flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.txt",
-                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"])),
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
         expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
-                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"]),
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"]),
                 fold_change=config["fold_change"]),
         expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
-                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"]),
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"]),
                 fold_change=config["fold_change"]),
         expand("13-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
-                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"])),
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
         "07-htseq/HTSeq_counts.txt",
         expand("14-split_diff_expression/{user_specified_comparison}_gene.txt", user_specified_comparison = config["comparisons"]),
         expand("14-split_diff_expression/{user_specified_comparison}_isoform.txt", user_specified_comparison = config["comparisons"])
@@ -232,10 +233,11 @@ rule cuffdiff:
         "08-cuffdiff/{multi_group_comparison}/read_groups.info"
     params:
         output_dir = "08-cuffdiff/{multi_group_comparison}",
-        labels = lambda wildcards : rnaseq_snakefile_helper.cuffdiff_labels(wildcards.multi_group_comparison),
-        samples = lambda wildcards : rnaseq_snakefile_helper.cuffdiff_samples(wildcards.multi_group_comparison,
-                                                      config["samples"],
-                                                      "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
+        labels = lambda wildcards : rnaseq_snakefile_helper.cuffdiff_labels(COMPARISON_INFIX, wildcards.multi_group_comparison),
+        samples = lambda wildcards : rnaseq_snakefile_helper.cuffdiff_samples(COMPARISON_INFIX,
+                                                                              wildcards.multi_group_comparison,
+                                                                              config["samples"],
+                                                                              "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
         strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"])
     log:
         "08-cuffdiff/{multi_group_comparison}/{multi_group_comparison}_cuffdiff.log"
@@ -265,11 +267,13 @@ rule flip_diffex:
     shell:
         " module purge && module load python/3.4.3 && "
         "python scripts/flip_diffex.py "
+        " --comparison_infix {COMPARISON_INFIX} "
         " {input.gene_cuffdiff} "
         " {output.gene_flip} "
         " {params.comparisons} && "
         
         "python scripts/flip_diffex.py "
+        " --comparison_infix {COMPARISON_INFIX} "
         " {input.isoform_cuffdiff} "
         " {output.isoform_flip} "
         " {params.comparisons} "
@@ -381,9 +385,9 @@ rule cummerbund:
 rule split_diffex:
     input:
         gene = expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
-                            multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"])),
+                            multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
         isoform =  expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
-                        multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(config["comparisons"]))
+                        multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"]))
     output:
         expand("14-split_diff_expression/{user_specified_comparisons}_gene.txt", user_specified_comparisons=config["comparisons"]),
         expand("14-split_diff_expression/{user_specified_comparisons}_isoform.txt", user_specified_comparisons=config["comparisons"]),
@@ -393,6 +397,7 @@ rule split_diffex:
     shell:
         " module purge && module load python/3.4.3 && "
         " python scripts/split_diffex.py "
+        " --comparison_infix {COMPARISON_INFIX} "
         " -o _gene.txt "
         " {input.gene} "
         " {params.output_dir} "
@@ -400,6 +405,7 @@ rule split_diffex:
         
         " module purge && module load python/3.4.3 && "
         " python scripts/split_diffex.py "
+        " --comparison_infix {COMPARISON_INFIX} "
         " -o _isoform.txt "
         " {input.isoform} "
         " {params.output_dir} "

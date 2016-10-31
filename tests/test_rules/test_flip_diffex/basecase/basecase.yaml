@@ -22,4 +22,4 @@ comparisons:
 fold_change:
 
 comparisons:
-    A_B: A_B
+    A_v_B: A_v_B

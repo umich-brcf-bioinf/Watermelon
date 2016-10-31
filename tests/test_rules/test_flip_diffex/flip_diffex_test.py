@@ -41,15 +41,14 @@ class FlipDiffexTest(unittest.TestCase):
             shutil.copytree(source_expected_dir, tmp_expected_dir)
             tmp_actual_dir = os.path.join(temp_dir_path, 'actual')
             shutil.copytree(source_working_dir, tmp_actual_dir)
-            
 
             os.chdir(tmp_actual_dir)
             os.symlink(SCRIPTS_DIR, 'scripts')
             redirect_output = '2>/dev/null'
-            command = '''snakemake --cores 2 \
+            command = '''snakemake -p --cores 2 \
      --snakefile {} \
      --configfile {} \
-     --force 09-flip_diffex/A_B/gene_exp.flip.diff 09-flip_diffex/A_B/isoform_exp.flip.diff {}
+     --force 09-flip_diffex/A_v_B/gene_exp.flip.diff 09-flip_diffex/A_v_B/isoform_exp.flip.diff {}
 '''.format(SNAKEFILE_PATH, configfile_path, redirect_output)
             subprocess.check_output(command, shell=True)
 

@@ -310,11 +310,10 @@ def cuffdiff_samples(underbar_separated_comparisons,
     group_sample_names = defaultdict(list)
     for actual_sample_name, group in sample_name_group.items():
         group_sample_names[group].append(sample_file_format.format(sample_placeholder=actual_sample_name))
-
+    group_sample_names = dict(group_sample_names)
     params = []
     for group in underbar_separated_comparisons.split('_'):
         params.append(','.join(sorted(group_sample_names[group])))
-
     return ' '.join(params)
 
 
@@ -363,6 +362,7 @@ rule flip_diffex:
     params:
         comparisons = ",".join(config["comparisons"].values())
     shell:
+        " module purge && module load python/3.4.3 && "
         "python scripts/flip_diffex.py "
         " {input.gene_cuffdiff} "
         " {output.gene_flip} "
@@ -389,7 +389,6 @@ rule flag_diffex:
     shell: 
         " module purge && "
         " module load python/3.4.3 && "
-        
         " python scripts/flag_diffex.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_gene_exp} "

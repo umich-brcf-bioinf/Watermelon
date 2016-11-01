@@ -49,7 +49,7 @@ rule concat_reads:
     output:
         "01-raw_reads/{sample}_R1.fastq.gz"
     shell:
-        "cat {input}/* > {output}"
+        "cat {input}/*.fastq.gz > {output}"
 
 rule cutadapt:
     input:
@@ -239,11 +239,13 @@ rule cuffdiff:
                                                                               config["samples"],
                                                                               "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
         strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"])
+    threads: 8
     log:
         "08-cuffdiff/{multi_group_comparison}/{multi_group_comparison}_cuffdiff.log"
     shell:
         " module load rnaseq && "
         " cuffdiff -q "
+        " -p {threads} "
         " -L {params.labels} "
         " --max-bundle-frags 999999999 "
         " --library-type {params.strand} "

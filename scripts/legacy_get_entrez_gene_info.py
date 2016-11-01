@@ -85,9 +85,9 @@ with open(gene_info,'r') as geneinfo_file:
     for row in reader:
         (geneinfo_tax_id, geneinfo_gene_id, geneinfo_gene_symbol, geneinfo_gene_description) = (row[0], row[1], row[2], row[8])
         if geneinfo_tax_id == tax_id:
-            gene_details[geneinfo_gene_symbol].append(geneinfo_gene_id)
-            gene_details[geneinfo_gene_symbol].append(geneinfo_gene_description)
+            gene_details[geneinfo_gene_symbol] = (geneinfo_gene_id, geneinfo_gene_description)
 
+print(gene_details['Plin2'])
 
 #### def add_annotation(args.diffexp, outfile_name):
 all_lines = 0

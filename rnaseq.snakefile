@@ -15,6 +15,7 @@ import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
 
 COMPARISON_INFIX = '_v_'
 
+USER_EMAIL = os.getlogin() + '@umich.edu'
 rnaseq_snakefile_helper.checksum_reset_all("config_checksums", config)
 rnaseq_snakefile_helper.init_references(config["references"])
 
@@ -413,4 +414,10 @@ rule split_diffex:
         " {params.output_dir} "
         "{params.user_specified_comparison_list} "
 
+onsuccess:
+    print("Workflow finished, no error")
+    shell("echo 'Watermelon run complete' | mail -s 'Run complete' {USER_EMAIL}")
+onerror:
+    print("An error occurred")
+    shell("echo 'Watermelon  encountered an unexpected error. Review config and contact bfxcore support' | mail -s 'Error in watermelon' {USER_EMAIL}")
 

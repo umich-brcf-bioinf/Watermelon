@@ -1,0 +1,65 @@
+input_dir:
+    "/ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/rat/Sandoval_RS1_rn5/watermelon/inputs/00-multiplexed_reads"
+
+samples:
+    Sample_42969: PR.chow
+    Sample_42970: DR.chow
+    Sample_42971: VSG.chow
+    Sample_42972: PR.chow
+    Sample_42973: DR.chow
+    Sample_42974: VSG.chow
+    Sample_42976: DR.chow
+    Sample_42977: VSG.chow
+    Sample_42978: PR.chow
+    Sample_42979: DR.chow
+    Sample_42980: VSG.chow
+    Sample_42981: PR.chow
+    Sample_42982: DR.chow
+    Sample_42983: VSG.chow
+    Sample_42984: PR.chow
+    Sample_42985: DR.chow
+    Sample_42987: PR.HF
+    Sample_42988: DR.HF
+    Sample_42989: VSG.HF
+    Sample_42990: PR.HF
+    Sample_42991: DR.HF
+    Sample_42992: VSG.HF
+    Sample_42993: PR.HF
+    Sample_42994: DR.HF
+    Sample_42995: VSG.HF
+    Sample_42996: PR.HF
+    Sample_42997: DR.HF
+    Sample_42998: VSG.HF
+    Sample_42999: PR.HF
+    Sample_43000: DR.HF
+    Sample_43001: VSG.HF
+    Sample_43002: PR.HF
+    Sample_43003: DR.HF
+    Sample_43004: VSG.HF
+
+comparisons:
+    VSG.chow_v_VSG.HF: VSG.chow_v_VSG.HF
+
+fold_change:
+    1.5
+trimming_options:
+    base_quality_5prime: 0
+    base_quality_3prime: 0
+    trim_length_5prime: 0
+    trim_length_3prime: 3
+
+alignment_options:
+    transcriptome_only: True
+    library_type: 2  # 1   # 2
+
+genome:
+    rn5
+
+references:
+#path to reference gtf file
+    gtf: /ccmb/BioinfCore/Projects/Manjusha/Genomes/iGenomes/Rattus_norvegicus_UCSC_rn5/Rattus_norvegicus/UCSC/rn5/Annotation/Genes/genes.gtf
+# path to dir with bowtie index
+    bowtie2_index: /ccmb/BioinfCore/Projects/Manjusha/Genomes/iGenomes/Rattus_norvegicus_UCSC_rn5/Rattus_norvegicus/UCSC/rn5/Sequence/Bowtie2Index
+# path to entrez gene info file
+    entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info
+

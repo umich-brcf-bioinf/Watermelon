@@ -13,8 +13,9 @@ import os
 
 import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
 
-COMPARISON_INFIX = '_v_'
+WATERMELON_SCRIPTS_DIR = os.environ.get('WATERMELON_SCRIPTS_DIR', 'scripts')
 
+COMPARISON_INFIX = '_v_'
 rnaseq_snakefile_helper.checksum_reset_all("config_checksums", config)
 rnaseq_snakefile_helper.init_references(config["references"])
 
@@ -217,7 +218,7 @@ rule htseq_merge:
         output_dir = "07-htseq",
         input_dir = "07-htseq"
     shell:
-       " perl scripts/mergeHTSeqCountFiles.pl {params.input_dir} "
+       " perl {WATERMELON_SCRIPTS_DIR}/mergeHTSeqCountFiles.pl {params.input_dir} "
 
 rule cuffdiff:
     input:
@@ -268,13 +269,13 @@ rule flip_diffex:
         comparisons = ",".join(config["comparisons"].values())
     shell:
         " module purge && module load python/3.4.3 && "
-        "python scripts/flip_diffex.py "
+        "python {WATERMELON_SCRIPTS_DIR}/flip_diffex.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " {input.gene_cuffdiff} "
         " {output.gene_flip} "
         " {params.comparisons} && "
         
-        "python scripts/flip_diffex.py "
+        "python {WATERMELON_SCRIPTS_DIR}/flip_diffex.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " {input.isoform_cuffdiff} "
         " {output.isoform_flip} "
@@ -295,13 +296,13 @@ rule flag_diffex:
     shell: 
         " module purge && "
         " module load python/3.4.3 && "
-        " python scripts/flag_diffex.py "
+        " python {WATERMELON_SCRIPTS_DIR}/flag_diffex.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_gene_exp} "
         " {output.gene_flagged} "
         " 2>&1 | tee {log} && "
         
-        " python scripts/flag_diffex.py "
+        " python {WATERMELON_SCRIPTS_DIR}/flag_diffex.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_isoform_exp} "
         " {output.isoform_flagged} "
@@ -323,14 +324,14 @@ rule annotate_flag_diffex:
     log:
         "11-annotated_flag_diff_expression/{comparison}/{comparison}_annotate_flag_diffex.log"
     shell:
-        "python scripts/annotate_entrez_gene_info.py "
+        "python {WATERMELON_SCRIPTS_DIR}/annotate_entrez_gene_info.py "
         " -i {input.entrez_gene_info} "
         " -e {input.gene_diff_exp} "
         " -g {params.genome} "
         " -o {params.output_dir} "
         " 2>&1 | tee {log} && "
         
-        " python scripts/annotate_entrez_gene_info.py "
+        " python {WATERMELON_SCRIPTS_DIR}/annotate_entrez_gene_info.py "
         " -i {input.entrez_gene_info} "
         " -e {input.isoform_diff_exp} "
         " -g {params.genome} "
@@ -376,7 +377,7 @@ rule cummerbund:
     shell:
         " module load rnaseq && "
         " mkdir -p {params.output_dir}/Plots && "
-        " Rscript scripts/Run_cummeRbund.R "
+        " Rscript Run_cummeRbund.R "
         " baseDir={params.output_dir} "
         " cuffDiffDir={params.cuff_diff_dir} "
         " grpRepFile={input.group_replicates} "
@@ -397,20 +398,20 @@ rule split_diffex:
         output_dir = "14-split_diff_expression",
         user_specified_comparison_list = ",".join(config["comparisons"].values())
     shell:
-        " module purge && module load python/3.4.3 && "
-        " python scripts/split_diffex.py "
+        "module purge && module load python/3.4.3 && "
+        "python {WATERMELON_SCRIPTS_DIR}/split_diffex.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " -o _gene.txt "
         " {input.gene} "
         " {params.output_dir} "
-        "{params.user_specified_comparison_list} && "
+        " {params.user_specified_comparison_list} && "
         
-        " module purge && module load python/3.4.3 && "
-        " python scripts/split_diffex.py "
+        "module purge && module load python/3.4.3 && "
+        "python {WATERMELON_SCRIPTS_DIR}/split_diffex.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " -o _isoform.txt "
         " {input.isoform} "
         " {params.output_dir} "
-        "{params.user_specified_comparison_list} "
+        " {params.user_specified_comparison_list} "
 
 

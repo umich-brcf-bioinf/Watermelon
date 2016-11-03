@@ -1,0 +1,134 @@
+#!/bin/bash
+# Launches snakemake
+# 9/27/2016 abhasi/cgates
+
+export WATERMELON_VERSION=0.1
+
+export SCRIPT_NAME=`basename $0 .sh`
+WATERMELON_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
+export RUN_TIME=`date +"%Y%m%d_%H%M%S"`
+export LOG_DIR=logs/${RUN_TIME}
+export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
+export SNAKEFILE=${WATERMELON_ROOT_DIR}/rnaseq.snakefile
+export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
+export CORES=40
+export DRYRUN=""
+
+SNAKEMAKE_VERSION=$(snakemake --version 2>/dev/null)
+if ! [[ $SNAKEMAKE_VERSION ]]; then
+  echo "ERROR: snakemake not found; is the python3 module loaded correctly? (contact bfxcore support for assistance)"
+  exit 1
+fi
+
+set -e #script will fail on any error
+set -u #script will fail on any undefined bash variable
+
+function show_usage {
+cat <<USAGE_HERE
+Usage: ${SCRIPT_NAME} [options] {config_file}
+Example: ${SCRIPT_NAME} ~/my_config.yaml
+
+Executes the RNA-seq workflow by wrapping the snakemake call, specifically setting common,
+useful defaults and passing through any unrecognized command line options through to
+snakemake. Captures all outputs in a log and times overall execution.
+
+Options:
+    --help       : shows this message
+    --cores [N]  : =40, use at most N cores in parallel 
+    -n, --dryrun : show plan without executing anything
+
+v${WATERMELON_VERSION}
+USAGE_HERE
+}
+
+command_line_args=()
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+         --cores | --jobs | -j)
+            CORES="$2"
+            shift 2
+            ;;
+        -h | --help)
+            show_usage
+            exit 0
+            ;;
+        -n | --dryrun)
+            DRYRUN=" --dryrun "
+            shift
+            ;;
+        -s | --snakefile)
+            SNAKEFILE="$2"
+            shift 2
+            ;;
+        *)  # Pass this option through
+            command_line_args+=("$1")
+            shift
+            ;;
+    esac
+done
+
+REQUIRED_ARGS=1
+if [[ ${#command_line_args[@]} -lt $REQUIRED_ARGS ]]; then
+    echo 'Usage problem: must specify config file'
+    echo
+    show_usage
+    exit 1
+fi
+export CONFIG_FILE=${command_line_args[@]:(-1)}
+unset command_line_args[${#command_line_args[@]}-1]
+
+if [[ ! -f $CONFIG_FILE ]]; then
+    echo "ERROR: config file [${CONFIG_FILE}] cannot be read"
+    show_usage
+    exit 1
+fi 
+
+if [[ ! -f $SNAKEFILE ]]; then
+    echo "ERROR: snakefile file [${SNAKEFILE}] cannot be read (contact bfxcore support for assistance)"
+    exit 1
+fi 
+
+export EXTRA_ARGUMENTS=""
+if [[ ${#command_line_args[@]} -gt 0 ]]; then
+  EXTRA_ARGUMENTS="${command_line_args[@]}"
+fi
+
+if [ "$DRYRUN" ]; then
+    export LOG_FILE=/dev/null
+    export WATERMELON_DETAILED_SUMMARY=/dev/null
+else
+    mkdir -p ${LOG_DIR}
+    SNAKEFILE_BASENAME=`basename ${SNAKEFILE}`
+    cp -a ${SNAKEFILE} ${LOG_DIR}/${SNAKEFILE_BASENAME}.${RUN_TIME}
+    CONFIG_BASENAME=`basename ${CONFIG_FILE}`
+    cp -a ${CONFIG_FILE} ${LOG_DIR}/${CONFIG_BASENAME}.${RUN_TIME}
+    export WATERMELON_DETAILED_SUMMARY=${LOG_DIR}/watermelon.detailed_summary
+    echo Logging to ${LOG_FILE}
+fi
+
+(
+echo 0 > .watermelon.exitcode
+echo "watermelon (v${WATERMELON_VERSION}) begins"
+set +e
+
+snakemake_command="snakemake --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} --cores ${CORES} -T ${DRYRUN} ${EXTRA_ARGUMENTS}"
+echo $snakemake_command
+eval $snakemake_command
+SNAKEMAKE_EXIT=$?
+
+snakemake --snakefile ${SNAKEFILE} --configfile ${CONFIG_FILE} -D > ${WATERMELON_DETAILED_SUMMARY}
+
+printf 'elapsed seconds: %d\n' ${SECONDS}
+printf 'elapsed time: %dh:%dm:%ds\n' $((${SECONDS}/3600)) $((${SECONDS}%3600/60)) $((${SECONDS}%60))
+
+if [[ $SNAKEMAKE_EXIT != 0 ]]; then
+    echo 'ERROR: Snakemake encountered an unexpected error. Review config and contact bfxcore support.'
+    echo ${SNAKEMAKE_EXIT} > .watermelon.exitcode
+else
+    echo 'watermelon done'
+fi
+
+) 2>&1 | tee ${LOG_FILE}
+
+EXIT_CODE=$(cat .watermelon.exitcode)
+exit ${EXIT_CODE}

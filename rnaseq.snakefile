@@ -38,7 +38,7 @@ rule all:
         expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
                 multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"]),
                 fold_change=config["fold_change"]),
-        expand("13-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_MDSRep.pdf",
+        expand("13-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_boxplot.pdf",
                 multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
         "07-htseq/HTSeq_counts.txt",
         expand("14-split_diff_expression/{user_specified_comparison}_gene.txt", user_specified_comparison = config["comparisons"]),
@@ -366,7 +366,7 @@ rule cummerbund:
         group_replicates = "12-group_replicates/{comparison}/group_replicates.txt",
         gtf_file = "references/gtf"
     output:
-        "13-cummerbund/{comparison}/Plots/{comparison}_MDSRep.pdf" #should we list out all outputs here?
+        "13-cummerbund/{comparison}/Plots/{comparison}_boxplot.pdf" #should we list out all outputs here?
     params:
         cuff_diff_dir = "08-cuffdiff/{comparison}",
         output_dir = "13-cummerbund/{comparison}/",
@@ -375,9 +375,9 @@ rule cummerbund:
     log:
          "13-cummerbund/{comparison}/{comparison}_cummerbund.log"
     shell:
-        " module load rnaseq && "
-        " mkdir -p {params.output_dir}/Plots && "
-        " Rscript Run_cummeRbund.R "
+        "module load rnaseq && "
+        "mkdir -p {params.output_dir}/Plots && "
+        "Rscript {WATERMELON_SCRIPTS_DIR}/Run_cummeRbund.R "
         " baseDir={params.output_dir} "
         " cuffDiffDir={params.cuff_diff_dir} "
         " grpRepFile={input.group_replicates} "

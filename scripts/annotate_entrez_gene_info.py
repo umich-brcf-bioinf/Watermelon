@@ -20,7 +20,7 @@ def time_stamp():
     return(st)
 
 def log(message):
-    print('{}|{}'.format(time_stamp(), message), file=sys.stderr)
+    print('{}|annotate_entrez_gene_info |{}'.format(time_stamp(), message), file=sys.stderr)
 
 def parse_command_line_args():
     parser = argparse.ArgumentParser(
@@ -87,7 +87,6 @@ with open(gene_info,'r') as geneinfo_file:
         if geneinfo_tax_id == tax_id:
             gene_details[geneinfo_gene_symbol] = [geneinfo_gene_id, geneinfo_gene_description]
 
-print(gene_details['Plin2'])
 
 #### def add_annotation(args.diffexp, outfile_name):
 all_lines = 0

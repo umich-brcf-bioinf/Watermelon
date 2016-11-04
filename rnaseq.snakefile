@@ -15,6 +15,7 @@ import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
 
 WATERMELON_SCRIPTS_DIR = os.environ.get('WATERMELON_SCRIPTS_DIR', 'scripts')
 USER_EMAIL = os.getlogin() + '@umich.edu'
+PROJECT_DIR = os.path.basename(os.getcwd())
 
 COMPARISON_INFIX = '_v_'
 
@@ -417,9 +418,9 @@ rule split_diffex:
         " {params.user_specified_comparison_list} "
 
 onsuccess:
-    print("Workflow finished, no error")
-    shell("echo 'Watermelon run complete' | mail -s 'Run complete' {USER_EMAIL}")
+    print("Workflow finished, no errors")
+    shell("echo 'Run complete for {PROJECT_DIR}. No errors'  | mail -s 'Project {PROJECT_DIR}: Run completed for Watermelon RNA-Seq pipeline' {USER_EMAIL}")
 onerror:
-    print("An error occurred")
-    shell("echo 'Watermelon  encountered an unexpected error. Review config and contact bfxcore support' | mail -s 'Error in watermelon' {USER_EMAIL}")
+    print("Workflow incomplete: Error occurred. See watermelon.log for details")
+    shell("echo 'Watermelon encountered an unexpected error for {PROJECT_DIR}. Review config and contact bfxcore support' | mail -s 'Error in Watermelon RNA-Seq pipeline for {PROJECT_DIR}' {USER_EMAIL}")
 

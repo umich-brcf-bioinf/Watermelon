@@ -56,7 +56,14 @@ gene_info = args.geneinfo
 gene_expr = args.diffexp
 outdir = args.outdir
 
-taxonomy = { 'mm10': '10090', 'hg19': '9606' }
+taxonomy = {'hg19': '9606', 'GRCh37': '9606',   # human
+            'mm10': '10090', 'mm9': '10090',    # mouse
+            'rn5': '10116', 'rn6': '10116',     # rat
+            'WS220': '6239', 'WS220': '6239',   # c. elegans
+            'GRCz10' : '7955', 'Zv9': '7955',   # zebra fish
+            'TAIR9': '3702', 'TAIR10': '3702',   # arabidopis
+            'MSU6': '4530'                      # rice
+            }
 
 def get_taxid(genome):
     if genome in taxonomy:

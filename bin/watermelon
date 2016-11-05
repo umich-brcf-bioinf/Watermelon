@@ -13,6 +13,7 @@ export SNAKEFILE=${WATERMELON_ROOT_DIR}/rnaseq.snakefile
 export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
 export CORES=40
 export DRYRUN=""
+export PASS_THROUGH_ARGS=()
 
 SNAKEMAKE_VERSION=$(snakemake --version 2>/dev/null)
 if ! [[ $SNAKEMAKE_VERSION ]]; then
@@ -41,41 +42,63 @@ v${WATERMELON_VERSION}
 USAGE_HERE
 }
 
-command_line_args=()
-while [[ "$#" -gt 0 ]]; do
-    case "$1" in
-         --cores | --jobs | -j)
-            CORES="$2"
-            shift 2
-            ;;
-        -h | --help)
-            show_usage
-            exit 0
-            ;;
-        -n | --dryrun)
-            DRYRUN=" --dryrun "
-            shift
-            ;;
-        -s | --snakefile)
-            SNAKEFILE="$2"
-            shift 2
-            ;;
-        *)  # Pass this option through
-            command_line_args+=("$1")
-            shift
-            ;;
-    esac
-done
+function set_expanded_options {
+    EXPANDED_OPTIONS=()
+    for arg in "$@"
+    do
+        if [[ "$arg" =~ ^-[^-] ]]; then
+            options=`echo "$arg" | cut -c2- | fold -w1`
+            for char in $options; do
+                EXPANDED_OPTIONS+=("-${char}")
+            done
+        else
+            EXPANDED_OPTIONS+=("$arg")
+        fi
+    done
+}
+
+function parse_args {
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+             --cores | --jobs | -j)
+                CORES="$2"
+                shift 2
+                ;;
+            -h | --help)
+                show_usage
+                exit 0
+                ;;
+            -n | --dryrun)
+                DRYRUN=" --dryrun "
+                shift
+                ;;
+            -s | --snakefile)
+                SNAKEFILE="$2"
+                shift 2
+                ;;
+            *)  # Pass this option/arg through
+                PASS_THROUGH_ARGS+=("$1")
+                shift
+                ;;
+        esac
+    done
+    readonly CORES
+    readonly DRYRUN
+    readonly SNAKEFILE
+}
+
+set_expanded_options "$@"
+parse_args "${EXPANDED_OPTIONS[@]-}"
 
 REQUIRED_ARGS=1
-if [[ ${#command_line_args[@]} -lt $REQUIRED_ARGS ]]; then
+if [[ ${#PASS_THROUGH_ARGS[@]} -lt $REQUIRED_ARGS ]]; then
     echo 'Usage problem: must specify config file'
     echo
     show_usage
     exit 1
 fi
-export CONFIG_FILE=${command_line_args[@]:(-1)}
-unset command_line_args[${#command_line_args[@]}-1]
+export CONFIG_FILE=${PASS_THROUGH_ARGS[@]:(-1)}
+unset PASS_THROUGH_ARGS[${#PASS_THROUGH_ARGS[@]}-1]
 
 if [[ ! -f $CONFIG_FILE ]]; then
     echo "ERROR: config file [${CONFIG_FILE}] cannot be read"
@@ -89,8 +112,8 @@ if [[ ! -f $SNAKEFILE ]]; then
 fi 
 
 export EXTRA_ARGUMENTS=""
-if [[ ${#command_line_args[@]} -gt 0 ]]; then
-  EXTRA_ARGUMENTS="${command_line_args[@]}"
+if [[ ${#PASS_THROUGH_ARGS[@]} -gt 0 ]]; then
+  EXTRA_ARGUMENTS="${PASS_THROUGH_ARGS[@]}"
 fi
 
 if [ "$DRYRUN" ]; then

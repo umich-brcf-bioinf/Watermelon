@@ -123,6 +123,7 @@ class WatermelonTest(unittest.TestCase):
             self.assertTrue(os.path.exists(config_filename), config_filename)
             self.assertTrue(os.path.exists(snakefile_filename), snakefile_filename)
 
+
     def test_watermelon_runsDetailedSummary(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = self.setup_tmp_dir(temp_dir)
@@ -149,6 +150,7 @@ class WatermelonTest(unittest.TestCase):
 
         self.assertRegexpMatches(actual_detailed_summary, r'output_file\tdate\trule')
 
+
     def test_watermelon_failsWhenInvalidConfig(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = self.setup_tmp_dir(temp_dir)
@@ -173,6 +175,7 @@ class WatermelonTest(unittest.TestCase):
 
         self.assertRegexpMatches(actual_log, r'ERROR.*contact bfxcore support')
 
+
     def test_watermelonFailsGracefullyIfSnakefileNotFound(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = self.setup_tmp_dir(temp_dir)
@@ -185,6 +188,7 @@ class WatermelonTest(unittest.TestCase):
             self.assertNotEqual(0, exit_code)
             self.assertRegexpMatches(actual_output, r'ERROR.*\[iAmNotAFile\] cannot be read')
 
+
     def test_watermelonFailsGracefullyIfSnakemakeNotInstalled(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = self.setup_tmp_dir(temp_dir)
@@ -194,6 +198,7 @@ class WatermelonTest(unittest.TestCase):
             exit_code, actual_output = self.execute(command)
             self.assertNotEqual(0, exit_code)
             self.assertRegexpMatches(actual_output, r'snakemake not found')
+
 
     def test_watermelon_showsUsageWhenConfigOmitted(self):
         with TempDirectory() as temp_dir:
@@ -205,6 +210,7 @@ class WatermelonTest(unittest.TestCase):
             self.assertEqual(1, exit_code)
             self.assertRegexpMatches(actual_output, 'Usage')
 
+
     def test_watermelon_showsUsageWhenFileNotFound(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = self.setup_tmp_dir(temp_dir)
@@ -214,6 +220,7 @@ class WatermelonTest(unittest.TestCase):
 
             self.assertEqual(1, exit_code)
             self.assertRegexpMatches(actual_output, 'config file .* cannot be read')
+
 
     def test_watermelon_showsUsageWhenConfigIsDir(self):
         with TempDirectory() as temp_dir:
@@ -226,6 +233,7 @@ class WatermelonTest(unittest.TestCase):
 
             self.assertEqual(1, exit_code)
             self.assertRegexpMatches(actual_output, 'config file .* cannot be read')
+
 
     def test_watermelon_passthroughExtraArguments(self):
         with TempDirectory() as temp_dir:
@@ -251,6 +259,32 @@ class WatermelonTest(unittest.TestCase):
                                       r'-T '
                                       r'1 2 3 baz froody'). format(CONFIG_FILE,
                                                                    TEST_SNAKEFILE))
+
+    def test_watermelon_expandsConcatenatedShortOptions(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = self.setup_tmp_dir(temp_dir)
+            CONFIG_FILE = os.path.join(TESTS_DIR, 'config.yaml')
+            TEST_SNAKEFILE = os.path.join(TESTS_DIR, 'test.snakefile')
+
+            snakemake_executable_path = os.path.join(temp_dir_path, 'snakemake')
+            with open(snakemake_executable_path, 'w') as snakemake_command:
+                snakemake_command_contents = '#!/bin/bash\necho $@'''
+                print(snakemake_command_contents, file=snakemake_command)
+            command = ('chmod u+x snakemake; '
+                       'PATH=.:$PATH; '
+                       '{} --snakefile {} -abcd {}'.format(WATERMELON_EXECUTABLE,
+                                                                      TEST_SNAKEFILE,
+                                                                      CONFIG_FILE))
+            exit_code, actual_output = self.execute(command)
+            self.assertEqual(0, exit_code)
+            self.assertRegexpMatches(actual_output,
+                                     (r'--configfile {} '
+                                     r'--snakefile {} '
+                                      r'--cores 40 '
+                                      r'-T '
+                                      r'-a -b -c -d'). format(CONFIG_FILE,
+                                                              TEST_SNAKEFILE))
+
 
     def test_watermelon_defaultArgumentsSet(self):
         with TempDirectory() as temp_dir:

@@ -14,9 +14,8 @@ from xlsxwriter.workbook import Workbook
 
 DESCRIPTION = \
 '''Combines annotated gene and isoform tab-separated text files into an Excel workbook.
-Accomodates a preamble section of text (prefixed by "#") where the last line of the
-preamble defines the column headers followed by data lines. The preamble is stored as an
-Excel cell comment.'''
+The first line of the file is assumed to be the header. If glossary and info file
+paths are specified, the contents of those files will  be copied to new worksheets.'''
 
 #validate required fields present
 #validate right number of rows/columns
@@ -122,20 +121,9 @@ def _log(message):
         return(st)
     print('{}|diffex_excel|{}'.format(_time_stamp(), message), file=sys.stderr)
 
-def _parse_preamble_header(reader):    
-    preamble=[]
-    for line in reader:
-        if line.startswith(HEADER_PREFIX):
-            preamble.append(line.lstrip(HEADER_PREFIX))
-        else:
-            line1 = line
-            break
-    try:
-        header = preamble.pop()
-    except IndexError:
-        raise ValueError('Missing header line')
-    data_iter = itertools.chain([line1], reader)
-    return ''.join(preamble), header, data_iter
+def _parse_header_data(reader):
+    header = reader.readline()
+    return header, reader
 
 def _write_header_row(worksheet, field_names, format):
     for col_index, value in enumerate(field_names):
@@ -157,15 +145,35 @@ def _add_worksheet(workbook, formatter, worksheet_name, input_filepath):
     ncbi_gene_hyperlink = _NcbiGeneHyperlink(formatter, REQUIRED_FIELDS)
     _log('reading {}'.format(input_filepath))
     with open(input_filepath, 'rU') as input_file:
-        preamble, header, data = _parse_preamble_header(input_file)
+        header, data = _parse_header_data(input_file)
         _validate_required_fields(header.split(DELIMITER), input_filepath)
-        worksheet.write_comment(0, 0, preamble, CELL_COMMENT_FORMAT)
         field_names, data, field_writers = ncbi_gene_hyperlink.inject_field(header, data, field_writers, DELIMITER)
         reader = csv.DictReader(data, fieldnames=field_names, delimiter=DELIMITER)
         _write_header_row(worksheet, reader.fieldnames, formatter.header_format)
         for row_index, row in enumerate(reader):
             _write_data_row(worksheet, reader.fieldnames, formatter, field_writers, row_index + 1, row)
     worksheet.freeze_panes(1, 0)
+
+def _add_glossary(workbook, formatter, worksheet_name, input_filepath):
+    worksheet = workbook.add_worksheet(worksheet_name)
+    field_writers = {}
+    _log('adding glossary from {}'.format(input_filepath))
+    with open(input_filepath, 'rU') as input_file:
+        header, data = _parse_header_data(input_file)
+        field_names = header.split(DELIMITER)
+        reader = csv.DictReader(data, fieldnames=field_names, delimiter=DELIMITER)
+        _write_header_row(worksheet, reader.fieldnames, formatter.header_format)
+        for row_index, row in enumerate(reader):
+            _write_data_row(worksheet, reader.fieldnames, formatter, field_writers, row_index + 1, row)
+    worksheet.freeze_panes(1, 0)
+
+def _add_info(workbook, formatter, worksheet_name, input_filepath):
+    worksheet = workbook.add_worksheet(worksheet_name)
+    field_writers = {}
+    _log('adding info from {}'.format(input_filepath))
+    with open(input_filepath, 'rU') as input_file:
+        for line_num, line in enumerate(input_file):
+            worksheet.write(line_num, 0, line)
 
 def _validate_required_fields(field_names, input_filepath):
     required_field_set = set(vars(REQUIRED_FIELDS).values())
@@ -191,6 +199,16 @@ def _parse_command_line_args(sys_argv):
         required=True,
         help='path to annotated isoform tab-separated text file')
     parser.add_argument(
+        '--glossary_filepath',
+        type=str,
+        required=False,
+        help='contents of this tab-separated text file will become glossary sheet')
+    parser.add_argument(
+        '--info_filepath',
+        type=str,
+        required=False,
+        help='contents of this text file will become info sheet')
+    parser.add_argument(
         'output_filepath',
         type=str,
         help='path to Excel file')
@@ -204,6 +222,10 @@ def main(sys_argv):
     formatter = _Formatter(workbook)
     _add_worksheet(workbook, formatter, 'genes', args.gene_filepath)
     _add_worksheet(workbook, formatter, 'isoforms', args.isoform_filepath)
+    if args.glossary_filepath:
+        _add_glossary(workbook, formatter, 'glossary', args.glossary_filepath)
+    if args.info_filepath:
+        _add_info(workbook, formatter, 'info', args.info_filepath)
 
     _log("saving to {}".format(args.output_filepath))
     workbook.close()

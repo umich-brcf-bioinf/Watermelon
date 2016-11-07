@@ -261,57 +261,57 @@ rule cuffdiff:
         " {params.samples} "
         " 2>&1 | tee {log} "
 
-rule flip_diffex:
+rule diffex_flip:
     input:
         gene_cuffdiff = "08-cuffdiff/{multi_group_comparison}/gene_exp.diff",
         isoform_cuffdiff = "08-cuffdiff/{multi_group_comparison}/isoform_exp.diff"
     output:
-        gene_flip = "09-flip_diffex/{multi_group_comparison}/gene_exp.flip.diff",
-        isoform_flip = "09-flip_diffex/{multi_group_comparison}/isoform_exp.flip.diff"
+        gene_flip = "09-diffex_flip/{multi_group_comparison}/gene_exp.flip.diff",
+        isoform_flip = "09-diffex_flip/{multi_group_comparison}/isoform_exp.flip.diff"
     params:
         comparisons = ",".join(config["comparisons"].values())
     shell:
         " module purge && module load python/3.4.3 && "
-        "python {WATERMELON_SCRIPTS_DIR}/flip_diffex.py "
+        "python {WATERMELON_SCRIPTS_DIR}/diffex_flip.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " {input.gene_cuffdiff} "
         " {output.gene_flip} "
         " {params.comparisons} && "
         
-        "python {WATERMELON_SCRIPTS_DIR}/flip_diffex.py "
+        "python {WATERMELON_SCRIPTS_DIR}/diffex_flip.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " {input.isoform_cuffdiff} "
         " {output.isoform_flip} "
         " {params.comparisons} "
 
-rule flag_diffex:
+rule diffex_flag:
     input:
         fold_change_checksum = "config_checksums/fold_change.watermelon.md5",
-        cuffdiff_gene_exp = "09-flip_diffex/{comparison}/gene_exp.flip.diff",
-        cuffdiff_isoform_exp = "09-flip_diffex/{comparison}/isoform_exp.flip.diff"
+        cuffdiff_gene_exp = "09-diffex_flip/{comparison}/gene_exp.flip.diff",
+        cuffdiff_isoform_exp = "09-diffex_flip/{comparison}/isoform_exp.flip.diff"
     output:
         gene_flagged = "10-flag_diff_expression/{comparison}/{comparison}_gene.flagged.txt",
         isoform_flagged = "10-flag_diff_expression/{comparison}/{comparison}_isoform.flagged.txt",
     params:
         fold_change = config["fold_change"]
     log:
-        "10-flag_diff_expression/{comparison}/{comparison}_flag_diffex.log"
+        "10-flag_diff_expression/{comparison}/{comparison}_diffex_flag.log"
     shell: 
         " module purge && "
         " module load python/3.4.3 && "
-        " python {WATERMELON_SCRIPTS_DIR}/flag_diffex.py "
+        " python {WATERMELON_SCRIPTS_DIR}/diffex_flag.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_gene_exp} "
         " {output.gene_flagged} "
         " 2>&1 | tee {log} && "
         
-        " python {WATERMELON_SCRIPTS_DIR}/flag_diffex.py "
+        " python {WATERMELON_SCRIPTS_DIR}/diffex_flag.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_isoform_exp} "
         " {output.isoform_flagged} "
         " 2>&1 | tee >>{log} "
 
-rule annotate_flag_diffex:
+rule annotate_diffex_flag:
     input:
         genome_checksum = "config_checksums/genome.watermelon.md5",
         reference_checksum = "config_checksums/references.watermelon.md5",
@@ -325,7 +325,7 @@ rule annotate_flag_diffex:
         output_dir = "11-annotated_flag_diff_expression/{comparison}",
         genome = config["genome"]
     log:
-        "11-annotated_flag_diff_expression/{comparison}/{comparison}_annotate_flag_diffex.log"
+        "11-annotated_flag_diff_expression/{comparison}/{comparison}_annotate_diffex_flag.log"
     shell:
         "python {WATERMELON_SCRIPTS_DIR}/annotate_entrez_gene_info.py "
         " -i {input.entrez_gene_info} "
@@ -388,7 +388,7 @@ rule cummerbund:
         " genome={params.genome} "
         " 2>&1 | tee {log} "
 
-rule split_diffex:
+rule diffex_split:
     input:
         gene = expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
                             multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
@@ -402,7 +402,7 @@ rule split_diffex:
         user_specified_comparison_list = ",".join(config["comparisons"].values())
     shell:
         "module purge && module load python/3.4.3 && "
-        "python {WATERMELON_SCRIPTS_DIR}/split_diffex.py "
+        "python {WATERMELON_SCRIPTS_DIR}/diffex_split.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " -o _gene.txt "
         " {input.gene} "
@@ -410,7 +410,7 @@ rule split_diffex:
         " {params.user_specified_comparison_list} && "
         
         "module purge && module load python/3.4.3 && "
-        "python {WATERMELON_SCRIPTS_DIR}/split_diffex.py "
+        "python {WATERMELON_SCRIPTS_DIR}/diffex_split.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " -o _isoform.txt "
         " {input.isoform} "

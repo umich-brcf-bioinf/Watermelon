@@ -14,7 +14,7 @@ except ImportError:
 import pandas as pd
 from testfixtures.tempdirectory import TempDirectory
 
-import scripts.split_diffex as split_diffex
+import scripts.diffex_split as diffex_split
 
 class MockHandler(object):
     def __init__(self):
@@ -37,7 +37,7 @@ class SplitDiffexTest(unittest.TestCase):
                                 (r'Input file \[input.txt\] is missing required '
                                  r'field\(s\) \[diff_exp,log2\(fold_change\),sample_1,'
                                  r'sample_2,significant,status\].'),
-                                 split_diffex._validate_required_fields,
+                                 diffex_split._validate_required_fields,
                                  df,
                                  args)
 
@@ -65,7 +65,7 @@ class SplitDiffexTest(unittest.TestCase):
 1|OK|yes|yes|-1
 0|OK|yes|yes|Inf''')
         df = pd.read_csv(df_contents, sep='|')
-        actual_df = split_diffex._sort(df)
+        actual_df = diffex_split._sort(df)
 
         expected_row = 0
         for index, row in actual_df.iterrows():
@@ -81,8 +81,8 @@ class SplitDiffexTest(unittest.TestCase):
             return df.iloc[0]
 
         def assertLessThan(rowA, rowB):
-            sortA = split_diffex._get_sort_value(rowA)
-            sortB = split_diffex._get_sort_value(rowB)
+            sortA = diffex_split._get_sort_value(rowA)
+            sortB = diffex_split._get_sort_value(rowB)
             self.assertTrue(sortA < sortB, str(sortA) + ' not < ' + str(sortB))
 
         base = row('OK', 'yes', 'yes', 2)
@@ -92,8 +92,8 @@ class SplitDiffexTest(unittest.TestCase):
         lesser_significant = row('OK', 'no', 'yes', 2)
         lesser_status = row('FAIL', 'yes', 'yes', 2)
 
-        self.assertEqual(split_diffex._get_sort_value(base),
-                         split_diffex._get_sort_value(equals))
+        self.assertEqual(diffex_split._get_sort_value(base),
+                         diffex_split._get_sort_value(equals))
         assertLessThan(base, lesser_fold_change)
         assertLessThan(base, lesser_diff_exp)
         assertLessThan(base, lesser_significant)
@@ -114,7 +114,7 @@ E|F|1|2''')
         mock_handler = MockHandler()
         mock_logger = lambda x: None
         group_by_cols = ['sample_1', 'sample_2']
-        split_diffex._split_comparisons('_', df, group_by_cols, mock_handler, mock_logger)
+        diffex_split._split_comparisons('_', df, group_by_cols, mock_handler, mock_logger)
 
         self.assertEqual(3, len(mock_handler._comparisons))
         self.assertEqual((1,4), mock_handler._comparisons['A_B'].shape)
@@ -132,7 +132,7 @@ A|B''')
         self.assertRaisesRegexp(ValueError,
                                 (r'Input file \[input.txt\] is missing requested '
                                  r'comparison\(s\) \[C_D,E_F\].'),
-                                 split_diffex._validate_included_comparisons_present,
+                                 diffex_split._validate_included_comparisons_present,
                                  df,
                                  args)
 
@@ -141,7 +141,7 @@ class FilteringHandlerTest(unittest.TestCase):
         df = 'data_frame'
         base_handler = MockHandler()
         mock_log = []
-        handler = split_diffex._FilteringHandler(['A_B'], base_handler, mock_log.append)
+        handler = diffex_split._FilteringHandler(['A_B'], base_handler, mock_log.append)
 
         handler.handle('A_B', df)
 
@@ -154,7 +154,7 @@ class FilteringHandlerTest(unittest.TestCase):
         df = pd.DataFrame()
         base_handler = MockHandler()
         mock_log = []
-        handler = split_diffex._FilteringHandler(['A_B'], base_handler, mock_log.append)
+        handler = diffex_split._FilteringHandler(['A_B'], base_handler, mock_log.append)
 
         handler.handle('C_D', df)
 
@@ -175,7 +175,7 @@ A|B|3|4''')
             temp_dir_path = temp_dir.path
             group_name = 'foo'
             suffix = '.suffix.txt'
-            handler = split_diffex._ComparisonHandler(temp_dir_path, suffix)
+            handler = diffex_split._ComparisonHandler(temp_dir_path, suffix)
             handler.handle(group_name, df)
 
             expected_filename = os.path.join(temp_dir_path, 'foo.suffix.txt')
@@ -200,7 +200,7 @@ class SplitDiffexFunctoinalTest(unittest.TestCase):
     def test_commandReturnsCorrectRowAndColumnCount(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            script_name = os.path.join(SCRIPTS_DIR, 'split_diffex.py')
+            script_name = os.path.join(SCRIPTS_DIR, 'diffex_split.py')
             input_filename = os.path.join(temp_dir_path, 'input.txt')
             output_dir = temp_dir_path
 

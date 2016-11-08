@@ -14,8 +14,8 @@ export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
 export CORES=40
 export DRYRUN=""
 export PASS_THROUGH_ARGS=()
-export MAIL_TO='chrismgates@gmail.com'
-export MAIL_FROM='cgates@umich.edu'
+export MAIL_TO="${USER}@umich.edu"
+export MAIL_FROM='bfx-rnaseq-pipeline@umich.edu'
 
 SNAKEMAKE_VERSION=$(snakemake --version 2>/dev/null)
 if ! [[ $SNAKEMAKE_VERSION ]]; then
@@ -122,7 +122,9 @@ if [ "$DRYRUN" ]; then
     export LOG_FILE=/dev/null
     export WATERMELON_DETAILED_SUMMARY=/dev/null
 else
-    export WATERMELON_EMAIL_ENABLED=1
+    if [[ -z ${WATERMELON_EMAIL_ENABLED+x} ]]; then
+        export WATERMELON_EMAIL_ENABLED=true
+    fi
     mkdir -p ${LOG_DIR}
     SNAKEFILE_BASENAME=`basename ${SNAKEFILE}`
     cp -a ${SNAKEFILE} ${LOG_DIR}/${SNAKEFILE_BASENAME}.${RUN_TIME}
@@ -157,11 +159,14 @@ else
 fi
 
 echo -e ${mail_message}
-${WATERMELON_SCRIPTS_DIR}/watermelon_mail.sh \
-    -s "${mail_subject}" \
-    -t {$MAIL_TO} \
-    -f ${MAIL_FROM} \
-    -m "${mail_message}"
+
+if [[ "$WATERMELON_EMAIL_ENABLED" = true ]]; then
+    ${WATERMELON_SCRIPTS_DIR}/watermelon_mail.sh \
+        -s "${mail_subject}" \
+        -t "${MAIL_TO}" \
+        -f "${MAIL_FROM}" \
+        -m "${mail_message}"
+fi
 
 ) 2>&1 | tee ${LOG_FILE}
 

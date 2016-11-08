@@ -24,7 +24,4 @@ while getopts "f:m:s:t:" opt; do
   esac
 done
 
-if [[ ${WATERMELON_EMAIL_ENABLED+x} ]]; then
-    EMAIL=${mail_from};
-    echo -e "${mail_message}" | mutt -s \"${mail_subject}\" ${mail_to}
-fi
+export EMAIL=${mail_from}; echo -e "${mail_message}" | mutt -s \"${mail_subject}\" ${mail_to}

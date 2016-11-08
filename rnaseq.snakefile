@@ -14,8 +14,6 @@ import os
 import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
 
 WATERMELON_SCRIPTS_DIR = os.environ.get('WATERMELON_SCRIPTS_DIR', 'scripts')
-USER_EMAIL = os.getlogin() + '@umich.edu'
-PROJECT_DIR = os.path.basename(os.getcwd())
 
 COMPARISON_INFIX = '_v_'
 

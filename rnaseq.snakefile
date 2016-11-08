@@ -417,10 +417,3 @@ rule diffex_split:
         " {params.output_dir} "
         " {params.user_specified_comparison_list} "
 
-onsuccess:
-    print("Workflow finished, no errors")
-    shell("echo 'Run complete for {PROJECT_DIR}. No errors'  | mail -s 'Project {PROJECT_DIR}: Run completed for Watermelon RNA-Seq pipeline' {USER_EMAIL}")
-onerror:
-    print("Workflow incomplete: Error occurred. See watermelon.log for details")
-    shell("echo 'Watermelon encountered an unexpected error for {PROJECT_DIR}. Review config and contact bfxcore support' | mail -s 'Error in Watermelon RNA-Seq pipeline for {PROJECT_DIR}' {USER_EMAIL}")
-

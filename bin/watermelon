@@ -14,6 +14,8 @@ export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
 export CORES=40
 export DRYRUN=""
 export PASS_THROUGH_ARGS=()
+export MAIL_TO='chrismgates@gmail.com'
+export MAIL_FROM='cgates@umich.edu'
 
 SNAKEMAKE_VERSION=$(snakemake --version 2>/dev/null)
 if ! [[ $SNAKEMAKE_VERSION ]]; then
@@ -120,6 +122,7 @@ if [ "$DRYRUN" ]; then
     export LOG_FILE=/dev/null
     export WATERMELON_DETAILED_SUMMARY=/dev/null
 else
+    export WATERMELON_EMAIL_ENABLED=1
     mkdir -p ${LOG_DIR}
     SNAKEFILE_BASENAME=`basename ${SNAKEFILE}`
     cp -a ${SNAKEFILE} ${LOG_DIR}/${SNAKEFILE_BASENAME}.${RUN_TIME}
@@ -145,11 +148,20 @@ printf 'elapsed seconds: %d\n' ${SECONDS}
 printf 'elapsed time: %dh:%dm:%ds\n' $((${SECONDS}/3600)) $((${SECONDS}%3600/60)) $((${SECONDS}%60))
 
 if [[ $SNAKEMAKE_EXIT != 0 ]]; then
-    echo 'ERROR: Snakemake encountered an unexpected error. Review config and contact bfxcore support.'
+    mail_subject="Watermelon failed: ${CONFIG_FILE}"
+    mail_message="ERROR: Watermelon failed: ${CONFIG_FILE}.\nSee logs for details: ${LOG_FILE}"
     echo ${SNAKEMAKE_EXIT} > .watermelon.exitcode
 else
-    echo 'watermelon done'
+    mail_subject="Watermelon complete: ${CONFIG_FILE} (No errors)"
+    mail_message=$mail_subject
 fi
+
+echo -e ${mail_message}
+${WATERMELON_SCRIPTS_DIR}/watermelon_mail.sh \
+    -s "${mail_subject}" \
+    -t {$MAIL_TO} \
+    -f ${MAIL_FROM} \
+    -m "${mail_message}"
 
 ) 2>&1 | tee ${LOG_FILE}
 

@@ -81,7 +81,7 @@ class WatermelonTest(unittest.TestCase):
         self.assertRegexpMatches(actual_log, r'3 of 3 steps \(100%\) done')
         self.assertRegexpMatches(actual_log, r'elapsed seconds: \d+')
         self.assertRegexpMatches(actual_log, r'elapsed time: 0h:0m:\d+s')
-        self.assertRegexpMatches(actual_log, r'watermelon done')
+        self.assertRegexpMatches(actual_log, r'Watermelon complete')
 
 
     def test_watermelon_skipsLogsOnDryrun(self):
@@ -173,7 +173,7 @@ class WatermelonTest(unittest.TestCase):
             with open(log_file_name) as log_file:
                 actual_log = "".join(log_file.readlines())
 
-        self.assertRegexpMatches(actual_log, r'ERROR.*contact bfxcore support')
+        self.assertRegexpMatches(actual_log, r'Watermelon failed: invalid_config.yaml.\nSee logs for details')
 
 
     def test_watermelonFailsGracefullyIfSnakefileNotFound(self):

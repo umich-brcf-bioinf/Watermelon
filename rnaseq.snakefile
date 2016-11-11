@@ -46,7 +46,10 @@ rule all:
         "07-htseq/HTSeq_counts.txt",
         expand("14-split_diff_expression/{user_specified_comparison}_gene.txt", user_specified_comparison = config["comparisons"]),
         expand("14-split_diff_expression/{user_specified_comparison}_isoform.txt", user_specified_comparison = config["comparisons"]),
-        expand("15-reports/{user_specified_comparisons}.xlsx", user_specified_comparisons=config["comparisons"])
+        expand("15-diffex_excel/{user_specified_comparisons}.xlsx", user_specified_comparisons=config["comparisons"]),
+        expand("16-deliverables/diffex/{multi_group_comparison}_raw_counts.txt", 
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"]))
+#        "16-deliverables/diffex"
 
 rule concat_reads:
     input:
@@ -398,7 +401,8 @@ rule diffex_split:
     output:
         expand("14-split_diff_expression/{user_specified_comparisons}_gene.txt", user_specified_comparisons=config["comparisons"]),
         expand("14-split_diff_expression/{user_specified_comparisons}_isoform.txt", user_specified_comparisons=config["comparisons"]),
-        touch("14-split_diff_expression/last_split") 
+        touch("14-split_diff_expression/last_split"),
+        "14-split_diff_expression/glossary.txt"
     params:
         output_dir = "14-split_diff_expression",
         user_specified_comparison_list = ",".join(config["comparisons"].values())
@@ -437,7 +441,7 @@ rule diffex_excel:
         glossary = "14-split_diff_expression/glossary.txt",
         run_info = "14-split_diff_expression/run_info.txt"
     output: 
-        "15-reports/{user_specified_comparisons}.xlsx"
+        "15-diffex_excel/{user_specified_comparisons}.xlsx"
     shell:
         "module purge && module load python/3.4.3 && "
         " python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py "
@@ -447,4 +451,28 @@ rule diffex_excel:
         " --info_filepath {input.run_info} "
         " {output} "
         
-
+rule watermelon_deliverables:
+    input:
+        raw_fastqc = "03-fastqc_reads",
+        align_fastqc = "05-fastqc_align",
+        alignments_stats = "06-qc_metrics/alignment_stats.txt",
+        diffex = "15-diffex_excel",
+        raw_counts = "13-cummerbund/{multi_group_comparison}/{multi_group_comparison}_repRawCounts.txt"
+    output:
+        "16-deliverables/qc/raw_reads_fastqc",
+        "16-deliverables/qc/aligned_reads_fastqc",
+        "16-deliverables/qc/alignment_stats.txt",
+        "16-deliverables/diffex/{multi_group_comparison}_raw_counts.txt"
+    params:
+        raw_counts_output = "{multi_group_comparison}_raw_counts.txt"
+    shell:
+        "mkdir -p 16-deliverables/qc && "
+        " mkdir -p 16-deliverables/diffex && "
+        " cd 16-deliverables/qc && "
+        " ln -sf ../../03-fastqc_reads  raw_reads_fastqc && "
+        " ln -sf ../../05-fastqc_align aligned_reads_fastqc && "
+        " ln -sf ../../06-qc_metrics/alignment_stats.txt alignment_stats.txt && "
+        " cd ../diffex && "
+        " ln -sf ../../15-diffex_excel/* . && "
+        " ln -sf ../../{input.raw_counts} {params.raw_counts_output} && "
+        " cd ../.."

@@ -1,16 +1,18 @@
 -----------
 Quick Start
 -----------
+
 1. **Add 'bfx_modules' to your bashrc**
 
-  Modify .bashrc to add this line: 
+Modify .bashrc to add this line: 
 ::
-
   $ module use /nfs/med-bfx-common/software/bfx_modules
   
 2. **Run watermelon-init**
-  Setup the analysis
+
+Modify .bashrc to add this line: 
 ::
+
   $ watermelon-init mm10 /ccmb/BioinfCore/DNASeqCore/Run_1639/ksinger/Run_1639/ksinger Singer_RS1_DietCell
 
   This will generate three directories: 

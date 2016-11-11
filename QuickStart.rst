@@ -56,6 +56,17 @@ Modify .bashrc to add this line:
   $ watermelon -c Mouse_RS1_Condition1_config.yaml
 
 5. **Reviewing output files**
+  Watermelon generates the following result files:
+  
+* fastqc reports of raw reads
+* fastqc reports of aligned bams 
+* alignment summary stats
+
+* cuffdiff report excel files
+* cummerbund plots
+* tab-delimited file of raw counts of fragments per sample
+
+
 ::
 
   $ ls deliverables-Mouse_RS1_Condition1/

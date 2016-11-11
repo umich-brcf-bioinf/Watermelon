@@ -41,7 +41,8 @@ Modify .bashrc to add this line:
 
   $ ls analysis-Mouse_RS1_Condition1/
   
-    Mouse_RS1_Condition1_config.yaml
+      Mouse_RS1_Condition1_config.yaml
+      
       01-raw_reads/
       02-cutadapt/
       03-fastqc_reads/

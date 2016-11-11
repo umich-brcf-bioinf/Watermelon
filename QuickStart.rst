@@ -18,8 +18,7 @@ Quick Start
   $ watermelon-init mm10 /ccmb/BioinfCore/DNASeqCore/Run_1639/ksinger/Run_1639/ksinger Singer_RS1_DietCell
 
 3. **Reviewing the watermelon-init output**
-  This command will generate three directories: 
-    
+
 ::
   $ ls
      inputs

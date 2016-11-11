@@ -35,5 +35,5 @@
 **Deliverables directory**
 ::
   deliverables-Mouse_RS1_Condition1
-      diffex
-      qc
+      diffex/
+      qc/

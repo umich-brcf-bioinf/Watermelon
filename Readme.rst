@@ -10,7 +10,7 @@
     Sample_61505
     Sample_61506
  
-*Analysis directory**
+**Analysis directory**
 ::
   analysis-Mouse_RS1_Condition1
       01-raw_reads

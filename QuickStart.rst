@@ -23,7 +23,7 @@ Quick Start
     * analysis-project_tag  : This is where the analysis will be run. Contains the config.yaml file which needs to be set-up to run the analysis.
     * deliverables-project_tag (e.g. ) :Contains the results of the analysis
 
-Input directory
+  Input directory
 ::
   inputs/
     Sample_61483/
@@ -35,7 +35,7 @@ Input directory
     Sample_61505/
     Sample_61506/
  
-Analysis directory
+  Analysis directory
 ::
   analysis-Mouse_RS1_Condition1/
   
@@ -61,7 +61,7 @@ Analysis directory
       logs/
       references/
       
-Deliverables directory
+  Deliverables directory
 ::
   deliverables-Mouse_RS1_Condition1
       diffex/

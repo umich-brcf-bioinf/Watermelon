@@ -9,6 +9,7 @@ WATERMELON_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
 export RUN_TIME=`date +"%Y%m%d_%H%M%S"`
 export LOG_DIR=logs/${RUN_TIME}
 export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
+export LOG_FILEPATH=`readlink -f $LOG_FILE`
 export SNAKEFILE=${WATERMELON_ROOT_DIR}/rnaseq.snakefile
 export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
 export CORES=40
@@ -16,6 +17,7 @@ export DRYRUN=""
 export PASS_THROUGH_ARGS=()
 export MAIL_TO="${USER}@umich.edu"
 export MAIL_FROM='bfx-rnaseq-pipeline@umich.edu'
+export CONFIG_FILE='config.yaml'
 
 SNAKEMAKE_VERSION=$(snakemake --version 2>/dev/null)
 if ! [[ $SNAKEMAKE_VERSION ]]; then
@@ -28,17 +30,18 @@ set -u #script will fail on any undefined bash variable
 
 function show_usage {
 cat <<USAGE_HERE
-Usage: ${SCRIPT_NAME} [options] {config_file}
-Example: ${SCRIPT_NAME} ~/my_config.yaml
+Usage: ${SCRIPT_NAME} [options] -c {config_file}
+Example: ${SCRIPT_NAME} -c ~/my_config.yaml
 
 Executes the RNA-seq workflow by wrapping the snakemake call, specifically setting common,
 useful defaults and passing through any unrecognized command line options through to
 snakemake. Captures all outputs in a log and times overall execution.
 
 Options:
-    --help       : shows this message
-    --cores [N]  : =40, use at most N cores in parallel 
-    -n, --dryrun : show plan without executing anything
+    -c, --configfile : [config.yaml] snakemake config file
+    --cores [N]      : =40, use at most N cores in parallel 
+    -n, --dryrun     : show plan without executing anything
+    --help           : shows this message
 
 v${WATERMELON_VERSION}
 USAGE_HERE
@@ -78,6 +81,10 @@ function parse_args {
                 SNAKEFILE="$2"
                 shift 2
                 ;;
+            -c | --configfile)
+                CONFIG_FILE="$2"
+                shift 2
+                ;;
             *)  # Pass this option/arg through
                 PASS_THROUGH_ARGS+=("$1")
                 shift
@@ -92,20 +99,13 @@ function parse_args {
 set_expanded_options "$@"
 parse_args "${EXPANDED_OPTIONS[@]-}"
 
-REQUIRED_ARGS=1
-if [[ ${#PASS_THROUGH_ARGS[@]} -lt $REQUIRED_ARGS ]]; then
-    echo 'Usage problem: must specify config file'
-    echo
-    show_usage
-    exit 1
-fi
-export CONFIG_FILE=${PASS_THROUGH_ARGS[@]:(-1)}
-unset PASS_THROUGH_ARGS[${#PASS_THROUGH_ARGS[@]}-1]
-
 if [[ ! -f $CONFIG_FILE ]]; then
     echo "ERROR: config file [${CONFIG_FILE}] cannot be read"
     show_usage
     exit 1
+else
+    export CONFIG_FILEPATH=`readlink -f $CONFIG_FILE`
+    export CONFIG_BASENAME=`basename ${CONFIG_FILE}`
 fi 
 
 if [[ ! -f $SNAKEFILE ]]; then
@@ -121,6 +121,7 @@ fi
 if [ "$DRYRUN" ]; then
     export LOG_FILE=/dev/null
     export WATERMELON_DETAILED_SUMMARY=/dev/null
+    export WATERMELON_EMAIL_ENABLED=false
 else
     if [[ -z ${WATERMELON_EMAIL_ENABLED+x} ]]; then
         export WATERMELON_EMAIL_ENABLED=true
@@ -128,7 +129,6 @@ else
     mkdir -p ${LOG_DIR}
     SNAKEFILE_BASENAME=`basename ${SNAKEFILE}`
     cp -a ${SNAKEFILE} ${LOG_DIR}/${SNAKEFILE_BASENAME}.${RUN_TIME}
-    CONFIG_BASENAME=`basename ${CONFIG_FILE}`
     cp -a ${CONFIG_FILE} ${LOG_DIR}/${CONFIG_BASENAME}.${RUN_TIME}
     export WATERMELON_DETAILED_SUMMARY=${LOG_DIR}/watermelon.detailed_summary
     echo Logging to ${LOG_FILE}
@@ -150,11 +150,14 @@ printf 'elapsed seconds: %d\n' ${SECONDS}
 printf 'elapsed time: %dh:%dm:%ds\n' $((${SECONDS}/3600)) $((${SECONDS}%3600/60)) $((${SECONDS}%60))
 
 if [[ $SNAKEMAKE_EXIT != 0 ]]; then
-    mail_subject="Watermelon failed: ${CONFIG_FILE}"
-    mail_message="ERROR: Watermelon failed: ${CONFIG_FILE}.\nSee logs for details: ${LOG_FILE}"
+    mail_subject="Watermelon failed: ${CONFIG_FILEPATH}"
+    mail_message="ERROR: Watermelon failed: ${CONFIG_FILEPATH}.\n"
+    if [[ -z "$DRYRUN" ]]; then
+        mail_message="${mail_message}See logs for details: ${LOG_FILEPATH}"
+    fi
     echo ${SNAKEMAKE_EXIT} > .watermelon.exitcode
 else
-    mail_subject="Watermelon complete: ${CONFIG_FILE} (No errors)"
+    mail_subject="Watermelon complete: ${CONFIG_FILEPATH} (No errors)"
     mail_message=$mail_subject
 fi
 

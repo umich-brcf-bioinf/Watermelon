@@ -18,21 +18,21 @@ Modify .bashrc to add this line:
 
   $ watermelon-init mm10 /ccmb/BioinfCore/DNASeqCore/Run_1639/ksinger/Run_1639/ksinger Singer_RS1_DietCell
 
-3. **Review/edit watermelon-init output**
-  This command will generate three directories: 
-    * inputs : Symlinks to the samples dirs of multiplexed sequences
-    * analysis-project_tag  : config.yaml file (which needs to be set-up to run the analysis)
-    * deliverables-project_tag :Results of the analysis
 ::
 
   $ ls
     inputs/
     analysis-Mouse_RS1_Condition1/
     deliverables-Mouse_RS1_Condition1/
-  
-  $ cd analysis-Mouse_RS1_Condition1
-    
+::
 
+  $ cd analysis-Mouse_RS1_Condition1
+
+3. **Review/edit watermelon-init output**
+  This command will generate three directories: 
+    * inputs : Symlinks to the samples dirs of multiplexed sequences
+    * analysis-project_tag  : config.yaml file (which needs to be set-up to run the analysis)
+    * deliverables-project_tag :Results of the analysis
 ::
 
   $ ls inputs/

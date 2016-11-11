@@ -10,9 +10,9 @@ Quick Start
   
 2. **Run watermelon-init to setup the analysis**
   Requires: 
-  * genome build
-  * path to sample directories with multiplexed reads
-  * project tag
+    * genome build
+    * path to sample directories with multiplexed reads
+    * project tag
 ::
 
   $ watermelon-init mm10 /ccmb/BioinfCore/DNASeqCore/Run_1639/ksinger/Run_1639/ksinger Singer_RS1_DietCell

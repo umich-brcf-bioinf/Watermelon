@@ -42,8 +42,12 @@ Modify .bashrc to add this line:
     Mouse_RS1_Condition1_config.yaml
 ::
 
-  $ ls deliverables-Mouse_RS1_Condition1
+  $ ls deliverables-Mouse_RS1_Condition1/
       diffex/
+        LVM_v_LVF.xlsx  
+        VVM_v_LLF.xlsx
+        LLF_v_LVF_v_LVM_v_VVM_repRawCounts.txt
+        cummerbund_plots/
       qc/
 
 3 **Set up watermelon analysis**

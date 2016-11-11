@@ -10,7 +10,7 @@ Modify .bashrc to add this line:
   $ module use /nfs/med-bfx-common/software/bfx_modules
   
 2. **Run watermelon-init to setup the analysis**
-Requires: 
+  Requires: 
     * genome build
     * path to sample directories with multiplexed reads
     * project tag

@@ -9,7 +9,7 @@ Modify .bashrc to add this line:
 ::
   $ module use /nfs/med-bfx-common/software/bfx_modules
   
-2. **Run watermelon-init to setup the analysis**
+2. **Run 'watermelon-init' to setup the analysis**
   Requires: 
 * genome build
 * path to sample directories with multiplexed reads
@@ -18,8 +18,8 @@ Modify .bashrc to add this line:
 
   $ watermelon-init mm10 /ccmb/BioinfCore/DNASeqCore/Run_1639/ksinger/Run_1639/ksinger Singer_RS1_DietCell
 
-3. **Review watermelon-init output**
-  This command will generate three directories: 
+3. **Review 'watermelon-init' output**
+  Generates three directories: 
 * inputs : Symlinks to the samples dirs of multiplexed sequences
 * analysis-project_tag  : config.yaml file (which needs to be set-up to run the analysis)
 * deliverables-project_tag :Results of the analysis
@@ -28,7 +28,19 @@ Modify .bashrc to add this line:
 
   $ ls
     inputs/
+      Sample_61483/
+      Sample_61484/
+      Sample_61490/
+      Sample_61491/
+      Sample_61501/
+      Sample_61502/
+      Sample_61505/
+      Sample_61506/
+    
     analysis-Mouse_RS1_Condition1/
+        Mouse_RS1_Condition1_config.yaml
+        references/
+        
     deliverables-Mouse_RS1_Condition1/
 
 3 **Setup watermelon analysis**
@@ -41,21 +53,9 @@ Modify .bashrc to add this line:
 
 4. **Run watermelon**
 ::
-  $ watermelon
+  $ watermelon -c Mouse_RS1_Condition1_config.yaml
 
-
-::
-
-  $ ls inputs/
-  
-    Sample_61483/
-    Sample_61484/
-    Sample_61490/
-    Sample_61491/
-    Sample_61501/
-    Sample_61502/
-    Sample_61505/
-    Sample_61506/
+5. **Reviewing output files**
 
 ::
 
@@ -88,10 +88,12 @@ Modify .bashrc to add this line:
   
       diffex/
         cummerbund_plots/
-        
         LVM_v_LVF.xlsx  
         VVM_v_LLF.xlsx
         LLF_v_LVF_v_LVM_v_VVM_repRawCounts.txt
         
       qc/
+      raw_reads_fastqc/
+      aligned_reads_fastqc/
+      align_summary.txt
 

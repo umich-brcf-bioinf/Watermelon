@@ -1,5 +1,5 @@
 
-**Directory Structure**
+**Watermelon directory structure**
 
 Input directory
 ::

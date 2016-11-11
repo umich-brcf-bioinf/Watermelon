@@ -23,7 +23,15 @@ Modify .bashrc to add this line:
     * inputs : Symlinks to the samples dirs of multiplexed sequences
     * analysis-project_tag  : config.yaml file (which needs to be set-up to run the analysis)
     * deliverables-project_tag :Results of the analysis
+::
+  $ ls
+    inputs/
+    analysis-Mouse_RS1_Condition1/
+    deliverables-Mouse_RS1_Condition1/
   
+  $ cd analysis-Mouse_RS1_Condition1
+    
+
 ::
 
   $ ls inputs/

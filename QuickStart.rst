@@ -56,32 +56,6 @@ Modify .bashrc to add this line:
   $ watermelon -c Mouse_RS1_Condition1_config.yaml
 
 5. **Reviewing output files**
-
-::
-
-  $ ls analysis-Mouse_RS1_Condition1/
-  
-      Mouse_RS1_Condition1_config.yaml
-      
-      01-raw_reads/
-      02-cutadapt/
-      03-fastqc_reads/
-      04-tophat/
-      05-fastqc_align/
-      06-qc_metrics/
-      07-htseq/
-      08-cuffdiff/
-      09-diffex_flip/
-      10-diffex_flag/
-      11-annotate_diffex_flag/
-      12-group_replicates/
-      13-cummerbund/
-      14-diffex_split/
-      15-diffex_excel/
-      16-deliverables/
-      config_checksums/
-      logs/
-      references/
 ::
 
   $ ls deliverables-Mouse_RS1_Condition1/

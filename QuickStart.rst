@@ -35,9 +35,7 @@ Inputs directory
     Sample_61502/
     Sample_61505/
     Sample_61506/
- 
-Analysis directory
-::
+
   analysis-Mouse_RS1_Condition1/
   
       Mouse_RS1_Condition1_config.yaml
@@ -61,9 +59,7 @@ Analysis directory
       config_checksums/
       logs/
       references/
-      
-  Deliverables directory
-::
+
   deliverables-Mouse_RS1_Condition1
       diffex/
       qc/

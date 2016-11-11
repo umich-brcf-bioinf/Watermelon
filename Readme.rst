@@ -1,4 +1,7 @@
-**Input directory**
+
+**Directory Structure**
+
+Input directory
 ::
   inputs/
     Sample_61483/

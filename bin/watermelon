@@ -9,7 +9,6 @@ WATERMELON_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
 export RUN_TIME=`date +"%Y%m%d_%H%M%S"`
 export LOG_DIR=logs/${RUN_TIME}
 export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
-export LOG_FILEPATH=`readlink -f $LOG_FILE`
 export SNAKEFILE=${WATERMELON_ROOT_DIR}/rnaseq.snakefile
 export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
 export CORES=40
@@ -127,6 +126,7 @@ else
         export WATERMELON_EMAIL_ENABLED=true
     fi
     mkdir -p ${LOG_DIR}
+    export LOG_FILEPATH=`readlink -f ${LOG_FILE}`
     SNAKEFILE_BASENAME=`basename ${SNAKEFILE}`
     cp -a ${SNAKEFILE} ${LOG_DIR}/${SNAKEFILE_BASENAME}.${RUN_TIME}
     cp -a ${CONFIG_FILE} ${LOG_DIR}/${CONFIG_BASENAME}.${RUN_TIME}

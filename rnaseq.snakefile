@@ -398,7 +398,8 @@ rule diffex_split:
     output:
         expand("14-split_diff_expression/{user_specified_comparisons}_gene.txt", user_specified_comparisons=config["comparisons"]),
         expand("14-split_diff_expression/{user_specified_comparisons}_isoform.txt", user_specified_comparisons=config["comparisons"]),
-        touch("14-split_diff_expression/last_split") 
+        touch("14-split_diff_expression/last_split"),
+        "14-split_diff_expression/glossary.txt"
     params:
         output_dir = "14-split_diff_expression",
         user_specified_comparison_list = ",".join(config["comparisons"].values())

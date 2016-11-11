@@ -34,6 +34,12 @@ def missing_or_different_from_expected(expected_dir, actual_dir):
     return diffs
 
 class FlipDiffexTest(unittest.TestCase):
+    def setUp(self):
+        self.original_wd = os.getcwd()
+
+    def tearDown(self):
+        os.chdir(self.original_wd)
+
     def _snakemake(self, configfile_path, source_expected_dir, source_working_dir):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path  # '/tmp/foo'

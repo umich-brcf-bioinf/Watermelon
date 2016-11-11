@@ -26,6 +26,12 @@ def gunzip(source_file_pattern):
         _gunzip_file(source_filename, dest_filename)
 
 class CutadaptTest(unittest.TestCase):
+    def setUp(self):
+        self.original_wd = os.getcwd()
+
+    def tearDown(self):
+        os.chdir(self.original_wd)
+
     #TODO: use a string constant for "02-cutadapt"
     def _snakemake(self, configfile_path, source_expected_dir, source_working_dir):
         anomalies = []

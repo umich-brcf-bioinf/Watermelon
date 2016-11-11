@@ -24,4 +24,4 @@ while getopts "f:m:s:t:" opt; do
   esac
 done
 
-export EMAIL=${mail_from}; echo -e "${mail_message}" | mutt -s \"${mail_subject}\" ${mail_to}
+export EMAIL=${mail_from}; echo -e "${mail_message}" | mutt -s "${mail_subject}" ${mail_to}

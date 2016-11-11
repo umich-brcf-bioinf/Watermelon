@@ -24,6 +24,7 @@ Modify .bashrc to add this line:
     * analysis-project_tag  : config.yaml file (which needs to be set-up to run the analysis)
     * deliverables-project_tag :Results of the analysis
 ::
+
   $ ls
     inputs/
     analysis-Mouse_RS1_Condition1/

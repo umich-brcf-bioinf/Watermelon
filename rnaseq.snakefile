@@ -10,6 +10,8 @@ from collections import defaultdict
 from itertools import combinations
 import csv
 import os
+import subprocess
+import yaml
 
 import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
 
@@ -43,7 +45,8 @@ rule all:
                 multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
         "07-htseq/HTSeq_counts.txt",
         expand("14-split_diff_expression/{user_specified_comparison}_gene.txt", user_specified_comparison = config["comparisons"]),
-        expand("14-split_diff_expression/{user_specified_comparison}_isoform.txt", user_specified_comparison = config["comparisons"])
+        expand("14-split_diff_expression/{user_specified_comparison}_isoform.txt", user_specified_comparison = config["comparisons"]),
+        expand("15-reports/{user_specified_comparisons}.xlsx", user_specified_comparisons=config["comparisons"])
 
 rule concat_reads:
     input:
@@ -395,6 +398,7 @@ rule diffex_split:
     output:
         expand("14-split_diff_expression/{user_specified_comparisons}_gene.txt", user_specified_comparisons=config["comparisons"]),
         expand("14-split_diff_expression/{user_specified_comparisons}_isoform.txt", user_specified_comparisons=config["comparisons"]),
+        touch("14-split_diff_expression/last_split") 
     params:
         output_dir = "14-split_diff_expression",
         user_specified_comparison_list = ",".join(config["comparisons"].values())
@@ -413,5 +417,34 @@ rule diffex_split:
         " -o _isoform.txt "
         " {input.isoform} "
         " {params.output_dir} "
-        " {params.user_specified_comparison_list} "
+        " {params.user_specified_comparison_list} && "
+        "cp {WATERMELON_SCRIPTS_DIR}/glossary.txt {params.output_dir} "
+
+rule build_run_info:
+    input: rules.diffex_split.output
+    output: "14-split_diff_expression/run_info.txt"
+    run:
+        command = 'module load rnaseq; module list -t 2> {}'.format(output[0])
+        subprocess.call(command, shell=True)
+        with open(output[0], 'a') as run_info_file: 
+            print('\n\nConfig\n', file=run_info_file)
+            print(yaml.dump(config, default_flow_style=False), file=run_info_file)
+
+rule diffex_excel:
+    input:
+        gene = "14-split_diff_expression/{user_specified_comparisons}_gene.txt",
+        isoform = "14-split_diff_expression/{user_specified_comparisons}_isoform.txt",
+        glossary = "14-split_diff_expression/glossary.txt",
+        run_info = "14-split_diff_expression/run_info.txt"
+    output: 
+        "15-reports/{user_specified_comparisons}.xlsx"
+    shell:
+        "module purge && module load python/3.4.3 && "
+        " python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py "
+        " -g {input.gene}"
+        " -i {input.isoform}"
+        " --glossary {input.glossary} "
+        " --info_filepath {input.run_info} "
+        " {output} "
+        
 

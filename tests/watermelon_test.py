@@ -22,6 +22,10 @@ WATERMELON_EXECUTABLE = os.path.join(BIN_DIR, 'watermelon')
 class WatermelonTest(unittest.TestCase):
     def setUp(self):
         os.environ['WATERMELON_EMAIL_ENABLED']='false'
+        self.original_wd = os.getcwd()
+
+    def tearDown(self):
+        os.chdir(self.original_wd)
 
     def execute(self, command):
         exit_code = 0

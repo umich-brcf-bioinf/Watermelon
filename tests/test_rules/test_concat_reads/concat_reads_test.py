@@ -25,6 +25,12 @@ def gunzip(source_file_pattern):
         _gunzip_file(source_filename, dest_filename)
 
 class ConcatReadsTest(unittest.TestCase):
+    def setUp(self):
+        self.original_wd = os.getcwd()
+
+    def tearDown(self):
+        os.chdir(self.original_wd)
+
     def test_basecase(self):
         anomalies = []
         configfile_path = os.path.join(TEST_DIR, 'basecase', 'basecase.yaml')

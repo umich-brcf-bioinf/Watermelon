@@ -19,9 +19,6 @@ Quick Start
 
 3. **Reviewing the watermelon-init output**
   This command will generate three directories: 
-    * inputs : contains symlinks to the samples dirs of multiplexed sequences
-    * analysis-project_tag  : This is where the analysis will be run. Contains the config.yaml file which needs to be set-up to run the analysis.
-    * deliverables-project_tag (e.g. ) :Contains the results of the analysis
     
 ::
   $ ls

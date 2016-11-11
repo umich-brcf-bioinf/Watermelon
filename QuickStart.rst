@@ -9,9 +9,7 @@ Quick Start
   $ module use /nfs/med-bfx-common/software/bfx_modules
   
 2. **Run watermelon-init**
-   * Path to sample directories with multiplexed sequence reads (e.g./ccmb/BioinfCore/DNASeqCore/Run_1639/ksinger/Run_1639/ksinger)
-   * genome build (e.g. mm10)
-   * project tag (e.g. Singer_RS1_DietCell)
+  Setup the analysis
 ::
   $ watermelon-init mm10 /ccmb/BioinfCore/DNASeqCore/Run_1639/ksinger/Run_1639/ksinger Singer_RS1_DietCell
 

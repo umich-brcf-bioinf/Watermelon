@@ -25,7 +25,7 @@ Quick Start
   
 ::
 
-  $ inputs/
+  $ ls inputs/
     Sample_61483/
     Sample_61484/
     Sample_61490/
@@ -37,7 +37,7 @@ Quick Start
 
 ::
 
-  $ analysis-Mouse_RS1_Condition1/
+  $ ls analysis-Mouse_RS1_Condition1/
     Mouse_RS1_Condition1_config.yaml
       
       01-raw_reads/
@@ -59,8 +59,9 @@ Quick Start
       config_checksums/
       logs/
       references/
+::
 
-  deliverables-Mouse_RS1_Condition1
+  $ ls deliverables-Mouse_RS1_Condition1
       diffex/
       qc/
 

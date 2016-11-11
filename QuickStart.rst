@@ -69,10 +69,9 @@ Deliverables directory
 
 
 3 **Set up watermelon analysis**
-  cd into 'analysis' directory. Edit the config file (Mouse_RS1_Condition1_config.yaml). Add comparison details; set trimming, alignment options, and fold change threshold.
-::
-  cd analysis-Mouse_RS1_Condition1/
-  
-
+  * cd into 'analysis' directory. 
+  * Edit the config file (Mouse_RS1_Condition1_config.yaml). Add comparison details; set trimming, alignment options, and fold change threshold.
 
 4. **Run watermelon**
+::
+  $ watermelon

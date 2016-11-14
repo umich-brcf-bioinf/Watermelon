@@ -2,8 +2,9 @@
 **Watermelon directory structure**
 
 Input directory
-  Contains the multiplexed raw reads.
+* Contains the multiplexed raw reads
 ::
+
   inputs/
     Sample_61483/
     Sample_61484/
@@ -15,8 +16,9 @@ Input directory
     Sample_61506/
  
 Analysis directory
-  Contains config file, and sub-directories for each step of the analysis.
+* Contains config file, and sub-directories for each step of the analysis
 ::
+
   analysis-Mouse_RS1_Condition1/
   
       Mouse_RS1_Condition1_config.yaml
@@ -42,7 +44,9 @@ Analysis directory
       references/
       
 Deliverables directory
+* Contains the analysis results
 ::
+
   deliverables-Mouse_RS1_Condition1
       diffex/
       qc/

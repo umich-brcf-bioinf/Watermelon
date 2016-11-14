@@ -49,4 +49,12 @@ Deliverables directory
 
   deliverables-Mouse_RS1_Condition1
       diffex/
-      qc/
+       cummerbund_plots/
+       LVM_v_LVF.xlsx
+       VVM_v_LLF.xlsx
+       LLF_v_LVF_v_LVM_v_VVM_repRawCounts.txt
+
+    qc/
+     raw_reads_fastqc/
+     aligned_reads_fastqc/
+     align_summary.txt

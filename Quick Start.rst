@@ -7,12 +7,12 @@ Quick Start
 
 Modify .bashrc to add this line: 
 ::
-  $ module use /nfs/med-bfx-common/software/bfx_modules
+$ module use /nfs/med-bfx-common/software/bfx_modules
   
 2. **Download the example data:**
 ::
 
-  $ git clone <umich-brcf-bioinf/Watermelon.git...? sample_data
+$ git clone <umich-brcf-bioinf/Watermelon.git...? sample_data
 
 3. **Run 'watermelon-init' to setup the analysis**
   Requires: 

@@ -86,3 +86,16 @@ $ git clone <umich-brcf-bioinf/Watermelon.git...? sample_data
       aligned_reads_fastqc/
       align_summary.txt
 
+**8. How to restart Watermelon?**
+
+If you quit Watermelon in the middle of a run, and want to restart it, Watermelon will automatically restart from the point you exited. If partially created files exist, Watermelon will prompt you to use the following commands to clean-up partially created directories and files and restart analysis. 
+::
+
+  --unlock              Remove a lock on the working directory.
+  --cleanup-metadata FILE [FILE ...], --cm  Cleanup the metadata of given files. 
+
+
+If you made changes to the config.yaml (e.g. Added new samples, comparisons, changes to trimming options, etc.), then Watermelon will restart the workflow in a way that meets the workflow’s logical requirements. 
+
+For example, if you added two new samples to the config, Watermelon, will run the Concat, QC and alignment steps for these two samples, and then re-run the entire differential expression analysis. If you just added a new comparison (for existing samples), then it will simply re-run the differential expression analysis steps.
+

@@ -3,13 +3,18 @@
 Quick Start
 -----------
 
-1. **Add 'bfx_modules' to your bashrc**
+1. **Add 'bfx_modules' to your bashrc:**
 
 Modify .bashrc to add this line: 
 ::
   $ module use /nfs/med-bfx-common/software/bfx_modules
   
-2. **Run 'watermelon-init' to setup the analysis**
+2. **Download the example data:**
+::
+
+  $ git clone <umich-brcf-bioinf/Watermelon.git...? sample_data
+
+3. **Run 'watermelon-init' to setup the analysis**
   Requires: 
 * genome build
 * path to sample directories with multiplexed reads
@@ -18,12 +23,11 @@ Modify .bashrc to add this line:
 
   $ watermelon-init mm10 /ccmb/BioinfCore/DNASeqCore/Run_1639/ksinger/Run_1639/ksinger Singer_RS1_DietCell
 
-3. **Review 'watermelon-init' output**
+4. **Review 'watermelon-init' output:**
   Generates three directories: 
 * inputs : Symlinks to the samples dirs of multiplexed sequences
 * analysis-project_tag  : config.yaml file (which needs to be set-up to run the analysis)
 * deliverables-project_tag :Results of the analysis
-    
 ::
 
   $ ls
@@ -43,7 +47,7 @@ Modify .bashrc to add this line:
         
     deliverables-Mouse_RS1_Condition1/
 
-3 **Setup watermelon analysis**
+5. **Setup Watermelon analysis**
 ::
 
   $ cd analysis-Mouse_RS1_Condition1
@@ -51,11 +55,11 @@ Modify .bashrc to add this line:
 * Edit the config file (Mouse_RS1_Condition1_config.yaml). 
 * Add comparison details; set trimming, alignment options, and fold change threshold.
 
-4. **Run watermelon**
+6. **Run Watermelon**
 ::
   $ watermelon -c Mouse_RS1_Condition1_config.yaml
 
-5. **Reviewing output files**
+7. **Reviewing output files**
   Watermelon generates the following result files:
   
 * fastqc reports of raw reads

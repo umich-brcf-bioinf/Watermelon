@@ -17,12 +17,13 @@ import yaml
 
 import scripts.watermelon_init as watermelon_init
 
+_TESTS_DIR = os.path.realpath(os.path.dirname(__file__))
+_WATERMELON_ROOT = os.path.dirname(_TESTS_DIR)
+_CONFIG_DIR = os.path.join(_WATERMELON_ROOT, 'config')
+
 def touch(fname, times=None):
     with open(fname, 'a'):
         os.utime(fname, times)
-
-# TEST_DIR = os.path.realpath(os.path.dirname(__file__))
-# SCRIPTS_DIR = os.path.join(os.path.dirname(TEST_DIR), 'scripts')
 
 class WatermelonInitTest(unittest.TestCase):
     def test_build_postlude(self):
@@ -30,7 +31,7 @@ class WatermelonInitTest(unittest.TestCase):
                          source_fastq_dir='SOURCE_FASTQ_DIR',
                          analysis_dir='ANALYSIS_DIR',
                          deliverables_dir='DELIVERABLES_DIR',
-                         configfile='CONFIGFILE',
+                         config_file='CONFIG_FILE',
                          job_suffix='_JOB_SUFFIX')
         sample_count = 42
         file_count = 168
@@ -46,23 +47,27 @@ class WatermelonInitTest(unittest.TestCase):
         self.assertRegexpMatches(actual_postlude,
                                  r'screen -S watermelon_JOB_SUFFIX')
         self.assertRegexpMatches(actual_postlude,
-                                 r'watermelon --dry-run CONFIGFILE')
+                                 r'watermelon --dry-run CONFIG_FILE')
 
     def test_parse_args(self):
         command_line_args = ('--genome_build mm10 '
                              '--job_suffix _11_01_A '
-                             '--working_dir /tmp.foo '
+                             '--x_working_dir /tmp.foo '
+                             '--x_template_config /tmp/watermelon/template_config.yaml '
+                             '--x_genome_references /tmp/watermelon/genome_references.yaml '
                              'DNASeqCore/Run_1286/rhim/Run_1286').split(' ')
         args = watermelon_init._parse_command_line_args(command_line_args)
         expected_args = ['analysis_dir',
-                         'configfile',
+                         'config_file',
                          'deliverables_dir',
                          'genome_build',
+                         'x_genome_references',
                          'inputs_dir',
                          'job_suffix',
                          'source_fastq_dir',
-                         'working_dir',]
-        self.assertEqual(expected_args, sorted(vars(args)))
+                         'x_template_config',
+                         'x_working_dir']
+        self.assertEqual(sorted(expected_args), sorted(vars(args)))
         self.assertEqual('mm10', args.genome_build)
         self.assertEqual('_11_01_A', args.job_suffix)
         self.assertEqual('DNASeqCore/Run_1286/rhim/Run_1286', args.source_fastq_dir)
@@ -71,18 +76,42 @@ class WatermelonInitTest(unittest.TestCase):
         expected_analysis_filepath = join(basedir, 'analysis_11_01_A')
         self.assertEqual(expected_analysis_filepath, args.analysis_dir)
         self.assertEqual(os.path.join(expected_analysis_filepath, 'config_11_01_A.yaml'),
-                         args.configfile)
+                         args.config_file)
         expected_deliverables_filepath = os.path.join(basedir, 'deliverables_11_01_A')
         self.assertEqual(expected_deliverables_filepath, args.deliverables_dir)
         self.assertEqual(os.path.join(basedir, 'inputs', '00-multiplexed_reads'),
                          args.inputs_dir)
+        self.assertEqual('/tmp/watermelon/template_config.yaml', args.x_template_config)
+        self.assertEqual('/tmp/watermelon/genome_references.yaml', args.x_genome_references)
 
     def test_parse_args_workingDirDefaultsToCwd(self):
         command_line_args = ('--genome_build mm10 '
                              '--job_suffix _11_01_A '
                              'DNASeqCore/Run_1286/rhim/Run_1286').split(' ')
         args = watermelon_init._parse_command_line_args(command_line_args)
-        self.assertEqual(os.getcwd(), args.working_dir) 
+        self.assertEqual(os.getcwd(), args.x_working_dir) 
+
+    def test_parse_args_templateConfigDefaultsToWatermelonConfigDir(self):
+        command_line_args = ('--genome_build mm10 '
+                             '--job_suffix _11_01_A '
+                             'DNASeqCore/Run_1286/rhim/Run_1286').split(' ')
+        args = watermelon_init._parse_command_line_args(command_line_args)
+        self.assertEqual(os.path.join(_CONFIG_DIR, 'template_config.yaml'),
+                         args.x_template_config) 
+
+    def test_parse_args_genomeReferencesDefaultsToWatermelonConfigDir(self):
+        command_line_args = ('--genome_build mm10 '
+                             '--job_suffix _11_01_A '
+                             'DNASeqCore/Run_1286/rhim/Run_1286').split(' ')
+        args = watermelon_init._parse_command_line_args(command_line_args)
+        self.assertEqual(os.path.join(_CONFIG_DIR, 'genome_references.yaml'),
+                         args.x_genome_references) 
+
+    def test_GENOME_BUILD_OPTIONS_matchGenomeReferenceKeys(self):
+        with open(os.path.join(_CONFIG_DIR, 'genome_references.yaml'), 'r') as yaml_file:
+            genome_references = yaml.load(yaml_file)
+        self.assertEqual(sorted(watermelon_init.GENOME_BUILD_OPTIONS),
+                         sorted(genome_references.keys()))
 
     def test_make_top_level_dirs(self):
         with TempDirectory() as temp_dir:
@@ -116,7 +145,7 @@ class WatermelonInitTest(unittest.TestCase):
                        'sB' : os.path.join(source_fastq_dir, 'Sample_B'),
                        'sC' : os.path.join(source_fastq_dir, 'Sample_C'),}
 
-            watermelon_init._populate_input_dir(inputs_dir, samples)
+            watermelon_init._populate_inputs_dir(inputs_dir, samples)
 
             def is_link(o):
                 return os.path.islink(os.path.join(temp_dir_path, inputs_dir, o))
@@ -138,12 +167,14 @@ class WatermelonInitTest(unittest.TestCase):
             source_fastq_dir = os.path.join(temp_dir_path, 'source_fastq_dir')
             os.mkdir(source_fastq_dir)
             os.mkdir(os.path.join(source_fastq_dir, 'Sample_A'))
-            touch(os.path.join(source_fastq_dir, 'Sample_A', 'a.fastq.gz'))
+            touch(os.path.join(source_fastq_dir, 'Sample_A', 'a1.fastq.gz'))
+            touch(os.path.join(source_fastq_dir, 'Sample_A', 'a2.fastq.gz'))
             os.mkdir(os.path.join(source_fastq_dir, 'Sample_B'))
             touch(os.path.join(source_fastq_dir, 'Sample_B', 'b.fastq.gz'))
             os.mkdir(os.path.join(source_fastq_dir, 'Sample_C'))
             touch(os.path.join(source_fastq_dir, 'Sample_C', 'c.fastq.gz'))
-            actual_samples = watermelon_init._initialize_samples(source_fastq_dir)
+            (actual_samples,
+             file_count) = watermelon_init._initialize_samples(source_fastq_dir)
         self.assertEqual(['Sample_A', 'Sample_B', 'Sample_C'],
                          sorted(actual_samples.keys()))
         self._assertSameFile(os.path.join(source_fastq_dir, 'Sample_A'),
@@ -152,6 +183,7 @@ class WatermelonInitTest(unittest.TestCase):
                              actual_samples['Sample_B'])
         self._assertSameFile(os.path.join(source_fastq_dir, 'Sample_C'),
                              actual_samples['Sample_C'])
+        self.assertEqual(4, file_count)
 
     def test_initialize_samples_missingFastqExcluded(self):
         with TempDirectory() as temp_dir:
@@ -164,21 +196,25 @@ class WatermelonInitTest(unittest.TestCase):
             touch(os.path.join(source_fastq_dir, 'Sample_B', 'b.fastq'))
             os.mkdir(os.path.join(source_fastq_dir, 'Sample_C'))
             touch(os.path.join(source_fastq_dir, 'Sample_C', 'c.foo'))
-            actual_samples = watermelon_init._initialize_samples(source_fastq_dir)
+            (actual_samples,
+             file_count) = watermelon_init._initialize_samples(source_fastq_dir)
         self.assertEqual(['Sample_A', 'Sample_B'],
                          sorted(actual_samples.keys()))
         self._assertSameFile(os.path.join(source_fastq_dir, 'Sample_A'),
                              actual_samples['Sample_A'])
         self._assertSameFile(os.path.join(source_fastq_dir, 'Sample_B'),
                              actual_samples['Sample_B'])
+        self.assertEqual(2, file_count)
 
     def test_initialize_samples_emptyIfNoFastqFound(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             source_fastq_dir = os.path.join(temp_dir_path, 'source_fastq_dir')
             os.mkdir(source_fastq_dir)
-            actual_samples = watermelon_init._initialize_samples(source_fastq_dir)
+            (actual_samples,
+             file_count) = watermelon_init._initialize_samples(source_fastq_dir)
         self.assertEqual({}, actual_samples)
+        self.assertEqual(0, file_count)
 
     def test_make_config(self):
         template_config = yaml.load(\
@@ -208,7 +244,7 @@ references:
                          'genome', 'references',
                          'samples', 'comparisons']
         self.assertEquals(sorted(expected_keys), sorted(actual_config.keys()))
-        self.assertEqual(input_dir, actual_config['input_dir'])
+        self.assertEqual('"' + input_dir + '"', actual_config['input_dir'])
         self.assertEqual(template_config['foo1'], actual_config['foo1'])
         self.assertEqual(template_config['foo2'], actual_config['foo2'])
         self.assertEqual(genome_references['genome'], actual_config['genome'])
@@ -217,8 +253,35 @@ references:
                          actual_config['samples'])
         self.assertEqual({'g1_v_g2':'g1_v_g2'}, actual_config['comparisons'])
 
-    def Xtest_get_genome_references(self):
-        self.assertEqual(1, 2)
+    def test_write_config_file(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_filename = os.path.join(temp_dir_path, 'config.yaml')
+            config_dict = {'input_dir' : 'INPUT_DIR',
+                           'samples' : 'SAMPLES',
+                           'comparisons' : 'COMPARISONS',
+                           'genome' : 'GENOME',
+                           'references' : 'REFERENCES',
+                           'templateA' : {'TEMPLATE_A1': 'A1', 'TEMPLATE_A2': 'A2'},
+                           'templateB' : 'TEMPLATE_B',
+                           'templateC' : 'TEMPLATE_C'}
+            watermelon_init._write_config_file(config_filename, config_dict)
+
+            with open(config_filename, 'r') as config_file:
+                config_lines = [line.strip('\n') for line in config_file.readlines()]
+        print(config_lines)
+        self.assertEqual(10, len(config_lines))
+        line_iter = iter(config_lines)
+        self.assertEqual('input_dir: INPUT_DIR', line_iter.next())
+        self.assertEqual('samples: SAMPLES', line_iter.next())
+        self.assertEqual('comparisons: COMPARISONS', line_iter.next())
+        self.assertEqual('genome: GENOME', line_iter.next())
+        self.assertEqual('references: REFERENCES', line_iter.next())
+        self.assertEqual('templateA:', line_iter.next())
+        self.assertEqual('    TEMPLATE_A1: A1', line_iter.next())
+        self.assertEqual('    TEMPLATE_A2: A2', line_iter.next())
+        self.assertEqual('templateB: TEMPLATE_B', line_iter.next())
+        self.assertEqual('templateC: TEMPLATE_C', line_iter.next())
 
 # class WatermelonInitFunctoinalTest(unittest.TestCase):
 #     def execute(self, command):

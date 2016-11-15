@@ -1,20 +1,19 @@
-genome:
-    hg19: 
-        genome: hg19
-        references:
-            gtf: /ccmb/BioinfCore/ActiveProjects/rtagett/noRiboGTFs/noRibo_human.gtf
-            bowtie2_index: /ccmb/BioinfCore/Projects/Manjusha/Genomes/iGenomes/Homo_sapiens_UCSC_hg19/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index
-            entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info
-    mm10:
-        genome: mm10
-        references:
-            gtf: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Annotation/Genes/genes.gtf
-            bowtie2_index: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/bowtie2
-            entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info
-    rn5:
-        genome: rn5
-        references:
-            gtf: /ccmb/BioinfCore/Projects/Manjusha/Genomes/iGenomes/Rattus_norvegicus_UCSC_rn5/Rattus_norvegicus/UCSC/rn5/Annotation/Genes/genes.gtf
-            bowtie2_index: /ccmb/BioinfCore/Projects/Manjusha/Genomes/iGenomes/Rattus_norvegicus_UCSC_rn5/Rattus_norvegicus/UCSC/rn5/Sequence/Bowtie2Index
-            entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info
+hg19: 
+    genome: hg19
+    references:
+        gtf: /ccmb/BioinfCore/ActiveProjects/rtagett/noRiboGTFs/noRibo_human.gtf
+        bowtie2_index: /ccmb/BioinfCore/Projects/Manjusha/Genomes/iGenomes/Homo_sapiens_UCSC_hg19/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info
+mm10:
+    genome: mm10
+    references:
+        gtf: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Annotation/Genes/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/bowtie2
+        entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info
+rn5:
+    genome: rn5
+    references:
+        gtf: /ccmb/BioinfCore/Projects/Manjusha/Genomes/iGenomes/Rattus_norvegicus_UCSC_rn5/Rattus_norvegicus/UCSC/rn5/Annotation/Genes/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Projects/Manjusha/Genomes/iGenomes/Rattus_norvegicus_UCSC_rn5/Rattus_norvegicus/UCSC/rn5/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info
 

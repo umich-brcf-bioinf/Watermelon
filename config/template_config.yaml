@@ -1,0 +1,12 @@
+fold_change:
+    1.5
+
+trimming_options:
+    base_quality_5prime: 0
+    base_quality_3prime: 13
+    trim_length_5prime: 3
+    trim_length_3prime: 0
+
+alignment_options:
+    transcriptome_only: True
+    library_type: 2  # 0, 1, 2

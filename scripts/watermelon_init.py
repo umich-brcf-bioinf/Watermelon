@@ -3,11 +3,18 @@ from __future__ import print_function, absolute_import, division
 import argparse
 import datetime
 import functools
+import glob
 import os
 import sys
 
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
+_FASTQ_GLOBS = ['*.fastq', '*.fastq.gz']
+_CONFIG_KEYS = argparse.Namespace(comparisons='comparisons',
+                                  input_dir='input_dir',
+                                  samples='samples')
+_DEFAULT_PHENOTYPE = 'g1'
+_DEFAULT_COMPARISON = {'g1_v_g2' : 'g1_v_g2'}
 
 _TODAY = datetime.date.today()
 _DEFAULT_JOB_SUFFIX = '_{:02d}_{:02d}'.format(_TODAY.month, _TODAY.day)
@@ -31,6 +38,32 @@ def _mkdir(newdir):
             _mkdir(head)
         if tail:
             os.mkdir(newdir)
+
+def _initialize_samples(source_fastq_dir):
+    def _contains_fastq(dir):
+        for fastq_glob in _FASTQ_GLOBS:
+            if glob.glob(os.path.join(dir, fastq_glob)):
+                return True
+        return False
+
+    samples = {}
+    for file_name in os.listdir(source_fastq_dir):
+        full_path = os.path.realpath(os.path.join(source_fastq_dir, file_name))
+        if os.path.isdir(full_path) and _contains_fastq(full_path):
+            samples[file_name] = full_path
+    return samples
+
+def _populate_input_dir(inputs_dir, samples):
+    for sample_name, sample_dir_target in samples.items():
+        os.symlink(sample_dir_target, os.path.join(inputs_dir, sample_name))
+
+def _make_config_dict(template_config, genome_references, input_dir, samples):
+    config = dict(template_config)
+    config[_CONFIG_KEYS.input_dir] = input_dir
+    config.update(genome_references)
+    config[_CONFIG_KEYS.samples] = dict([(name, _DEFAULT_PHENOTYPE)for name in samples])
+    config[_CONFIG_KEYS.comparisons] = _DEFAULT_COMPARISON
+    return config
 
 def _parse_command_line_args(sys_argv):
     parser = argparse.ArgumentParser(description=DESCRIPTION)

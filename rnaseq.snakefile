@@ -31,22 +31,29 @@ rule all:
         "06-qc_metrics/alignment_stats.txt",
         expand("08-cuffdiff/{multi_group_comparison}/gene_exp.diff",
                 multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
-        expand("10-flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.txt",
+        expand("10-diffex_flag/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.txt",
                 multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
-        expand("10-flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.txt",
+        expand("10-diffex_flag/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.txt",
                 multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
-        expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
+        expand("11-annotate_diffex_flag/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
                 multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"]),
                 fold_change=config["fold_change"]),
-        expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
+        expand("11-annotate_diffex_flag/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
                 multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"]),
                 fold_change=config["fold_change"]),
         expand("13-cummerbund/{multi_group_comparison}/Plots/{multi_group_comparison}_boxplot.pdf",
                 multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
+        expand("13-cummerbund/{multi_group_comparison}/{multi_group_comparison}_repRawCounts.txt",
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
         "07-htseq/HTSeq_counts.txt",
-        expand("14-split_diff_expression/{user_specified_comparison}_gene.txt", user_specified_comparison = config["comparisons"]),
-        expand("14-split_diff_expression/{user_specified_comparison}_isoform.txt", user_specified_comparison = config["comparisons"]),
-        expand("15-reports/{user_specified_comparisons}.xlsx", user_specified_comparisons=config["comparisons"])
+        expand("14-diffex_split/{user_specified_comparison}_gene.txt", user_specified_comparison = config["comparisons"]),
+        expand("14-diffex_split/{user_specified_comparison}_isoform.txt", user_specified_comparison = config["comparisons"]),
+        expand("15-diffex_excel/{user_specified_comparisons}.xlsx", user_specified_comparisons=config["comparisons"]),
+#         expand("16-deliverables/diffex/{multi_group_comparison}_raw_counts.txt",
+#                 multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
+        "16-deliverables/qc/alignment_stats.txt"
+#        expand("16-deliverables/qc/raw_reads_fastqc/{sample}_trimmed_R1_fastqc.html", sample=config["samples"])
+
 
 rule concat_reads:
     input:
@@ -92,7 +99,8 @@ rule cutadapt:
 rule fastqc_trimmed_reads:
     input:
         "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
-    output:
+    output:         
+        touch("03-fastqc_reads/reads_fastq.done"),
         "03-fastqc_reads/{sample}_trimmed_R1_fastqc.html"
     log:
         "03-fastqc_reads/{sample}_fastqc_trimmed_reads.log"
@@ -166,6 +174,7 @@ rule fastqc_tophat_align:
     input:
         "04-tophat/{sample}/{sample}_accepted_hits.bam"
     output:
+        touch("05-fastqc_align/align_fastq.done"),
         "05-fastqc_align/{sample}_accepted_hits_fastqc.html"
     log:
         "05-fastqc_align/{sample}_fastqc_tophat_align.log"
@@ -291,12 +300,12 @@ rule diffex_flag:
         cuffdiff_gene_exp = "09-diffex_flip/{comparison}/gene_exp.flip.diff",
         cuffdiff_isoform_exp = "09-diffex_flip/{comparison}/isoform_exp.flip.diff"
     output:
-        gene_flagged = "10-flag_diff_expression/{comparison}/{comparison}_gene.flagged.txt",
-        isoform_flagged = "10-flag_diff_expression/{comparison}/{comparison}_isoform.flagged.txt",
+        gene_flagged = "10-diffex_flag/{comparison}/{comparison}_gene.flagged.txt",
+        isoform_flagged = "10-diffex_flag/{comparison}/{comparison}_isoform.flagged.txt",
     params:
         fold_change = config["fold_change"]
     log:
-        "10-flag_diff_expression/{comparison}/{comparison}_diffex_flag.log"
+        "10-diffex_flag/{comparison}/{comparison}_diffex_flag.log"
     shell: 
         " module purge && "
         " module load python/3.4.3 && "
@@ -316,17 +325,17 @@ rule annotate_diffex_flag:
     input:
         genome_checksum = "config_checksums/genome.watermelon.md5",
         reference_checksum = "config_checksums/references.watermelon.md5",
-        gene_diff_exp = "10-flag_diff_expression/{comparison}/{comparison}_gene.flagged.txt",
-        isoform_diff_exp = "10-flag_diff_expression/{comparison}/{comparison}_isoform.flagged.txt",
+        gene_diff_exp = "10-diffex_flag/{comparison}/{comparison}_gene.flagged.txt",
+        isoform_diff_exp = "10-diffex_flag/{comparison}/{comparison}_isoform.flagged.txt",
         entrez_gene_info = "references/entrez_gene_info"
     output:
-        gene_annot = "11-annotated_flag_diff_expression/{comparison}/{comparison}_gene.flagged.annot.txt",
-        isoform_annot = "11-annotated_flag_diff_expression/{comparison}/{comparison}_isoform.flagged.annot.txt"
+        gene_annot = "11-annotate_diffex_flag/{comparison}/{comparison}_gene.flagged.annot.txt",
+        isoform_annot = "11-annotate_diffex_flag/{comparison}/{comparison}_isoform.flagged.annot.txt"
     params:
-        output_dir = "11-annotated_flag_diff_expression/{comparison}",
+        output_dir = "11-annotate_diffex_flag/{comparison}",
         genome = config["genome"]
     log:
-        "11-annotated_flag_diff_expression/{comparison}/{comparison}_annotate_diffex_flag.log"
+        "11-annotate_diffex_flag/{comparison}/{comparison}_annotate_diffex_flag.log"
     shell:
         "python {WATERMELON_SCRIPTS_DIR}/annotate_entrez_gene_info.py "
         " -i {input.entrez_gene_info} "
@@ -370,7 +379,8 @@ rule cummerbund:
         group_replicates = "12-group_replicates/{comparison}/group_replicates.txt",
         gtf_file = "references/gtf"
     output:
-        "13-cummerbund/{comparison}/Plots/{comparison}_boxplot.pdf" #should we list out all outputs here?
+        "13-cummerbund/{comparison}/Plots/{comparison}_boxplot.pdf", #should we list out all outputs here?
+        "13-cummerbund/{comparison}/{comparison}_repRawCounts.txt",
     params:
         cuff_diff_dir = "08-cuffdiff/{comparison}",
         output_dir = "13-cummerbund/{comparison}/",
@@ -391,17 +401,17 @@ rule cummerbund:
 
 rule diffex_split:
     input:
-        gene = expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
+        gene = expand("11-annotate_diffex_flag/{multi_group_comparison}/{multi_group_comparison}_gene.flagged.annot.txt",
                             multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
-        isoform =  expand("11-annotated_flag_diff_expression/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
+        isoform =  expand("11-annotate_diffex_flag/{multi_group_comparison}/{multi_group_comparison}_isoform.flagged.annot.txt",
                         multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"]))
     output:
-        expand("14-split_diff_expression/{user_specified_comparisons}_gene.txt", user_specified_comparisons=config["comparisons"]),
-        expand("14-split_diff_expression/{user_specified_comparisons}_isoform.txt", user_specified_comparisons=config["comparisons"]),
-        touch("14-split_diff_expression/last_split"),
-        "14-split_diff_expression/glossary.txt"
+        expand("14-diffex_split/{user_specified_comparisons}_gene.txt", user_specified_comparisons=config["comparisons"]),
+        expand("14-diffex_split/{user_specified_comparisons}_isoform.txt", user_specified_comparisons=config["comparisons"]),
+        touch("14-diffex_split/last_split"),
+        "14-diffex_split/glossary.txt"
     params:
-        output_dir = "14-split_diff_expression",
+        output_dir = "14-diffex_split",
         user_specified_comparison_list = ",".join(config["comparisons"].values())
     shell:
         "module purge && module load python/3.4.3 && "
@@ -423,7 +433,7 @@ rule diffex_split:
 
 rule build_run_info:
     input: rules.diffex_split.output
-    output: "14-split_diff_expression/run_info.txt"
+    output: "14-diffex_split/run_info.txt"
     run:
         command = 'module load rnaseq; module list -t 2> {}'.format(output[0])
         subprocess.call(command, shell=True)
@@ -433,12 +443,12 @@ rule build_run_info:
 
 rule diffex_excel:
     input:
-        gene = "14-split_diff_expression/{user_specified_comparisons}_gene.txt",
-        isoform = "14-split_diff_expression/{user_specified_comparisons}_isoform.txt",
-        glossary = "14-split_diff_expression/glossary.txt",
-        run_info = "14-split_diff_expression/run_info.txt"
+        gene = "14-diffex_split/{user_specified_comparisons}_gene.txt",
+        isoform = "14-diffex_split/{user_specified_comparisons}_isoform.txt",
+        glossary = "14-diffex_split/glossary.txt",
+        run_info = "14-diffex_split/run_info.txt"
     output: 
-        "15-reports/{user_specified_comparisons}.xlsx"
+        "15-diffex_excel/{user_specified_comparisons}.xlsx"
     shell:
         "module purge && module load python/3.4.3 && "
         " python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py "
@@ -447,5 +457,34 @@ rule diffex_excel:
         " --glossary {input.glossary} "
         " --info_filepath {input.run_info} "
         " {output} "
-        
 
+rule watermelon_deliverables:
+    input:
+        raw_fastqc = "03-fastqc_reads",
+        align_fastqc = "05-fastqc_align",
+        alignment_stats = "06-qc_metrics/alignment_stats.txt",
+        diffex_excel = expand("15-diffex_excel/{user_specified_comparisons}.xlsx", user_specified_comparisons=config["comparisons"]),
+        diffex_raw_counts = expand("13-cummerbund/{multi_group_comparison}/{multi_group_comparison}_repRawCounts.txt",
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
+        plots = expand("13-cummerbund/{multi_group_comparison}/Plots",
+                multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
+    output:
+        raw_fastqc = "16-deliverables/qc/raw_reads_fastqc",
+        align_fastqc = "16-deliverables/qc/aligned_reads_fastqc",
+        alignment_stats = "16-deliverables/qc/alignment_stats.txt",
+        diffex_excel = expand("16-deliverables/diffex/cuffdiff_results/{user_specified_comparisons}.xlsx", user_specified_comparisons=config["comparisons"]),
+        diffex_raw_counts = expand("16-deliverables/diffex/{multi_group_comparison}_repRawCounts.txt", 
+                                    multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
+        plots = "16-deliverables/diffex/cummeRbund_plots"
+    params:
+        diffex_excel_input_dir = "15-diffex_excel",
+        diffex_excel_output_dir = "16-deliverables/diffex/cuffdiff_results"
+    shell:
+        "rm -rf 16-deliverables && mkdir -p 16-deliverables/qc && "
+        " mkdir -p 16-deliverables/diffex && "
+        " ln -s ../../{input.raw_fastqc} {output.raw_fastqc} && "
+        " ln -s ../../{input.align_fastqc} {output.align_fastqc}  && "
+        " ln -s ../../{input.alignment_stats} {output.alignment_stats} && "
+        " ln -s ../../{params.diffex_excel_input_dir} {params.diffex_excel_output_dir} && "
+        " ln -s ../../{input.diffex_raw_counts} {output.diffex_raw_counts} && "
+        " ln -s ../../{input.plots}  {output.plots} "

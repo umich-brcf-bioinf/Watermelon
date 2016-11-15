@@ -46,14 +46,13 @@ rule all:
         expand("13-cummerbund/{multi_group_comparison}/{multi_group_comparison}_repRawCounts.txt",
                 multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
         "07-htseq/HTSeq_counts.txt",
-        expand("14-diffex_split/{user_specified_comparison}_gene.txt", user_specified_comparison = config["comparisons"]),
-        expand("14-diffex_split/{user_specified_comparison}_isoform.txt", user_specified_comparison = config["comparisons"]),
-        expand("15-diffex_excel/{user_specified_comparisons}.xlsx", user_specified_comparisons=config["comparisons"]),
-#         expand("16-deliverables/diffex/{multi_group_comparison}_raw_counts.txt",
-#                 multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
-        "16-deliverables/qc/alignment_stats.txt"
-#        expand("16-deliverables/qc/raw_reads_fastqc/{sample}_trimmed_R1_fastqc.html", sample=config["samples"])
-
+        "16-deliverables/qc/raw_reads_fastqc",
+        "16-deliverables/qc/aligned_reads_fastqc",
+        "16-deliverables/qc/alignment_stats.txt",
+        expand("16-deliverables/diffex/cuffdiff_results/{user_specified_comparisons}.xlsx", user_specified_comparisons=config["comparisons"]),
+        expand("16-deliverables/diffex/{multi_group_comparison}_repRawCounts.txt", 
+                                    multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
+        "16-deliverables/diffex/cummeRbund_plots"
 
 rule concat_reads:
     input:
@@ -379,8 +378,9 @@ rule cummerbund:
         group_replicates = "12-group_replicates/{comparison}/group_replicates.txt",
         gtf_file = "references/gtf"
     output:
-        "13-cummerbund/{comparison}/Plots/{comparison}_boxplot.pdf", #should we list out all outputs here?
-        "13-cummerbund/{comparison}/{comparison}_repRawCounts.txt",
+        "13-cummerbund/{comparison}/Plots",
+        "13-cummerbund/{comparison}/Plots/{comparison}_boxplot.pdf",
+        "13-cummerbund/{comparison}/{comparison}_repRawCounts.txt"
     params:
         cuff_diff_dir = "08-cuffdiff/{comparison}",
         output_dir = "13-cummerbund/{comparison}/",
@@ -460,8 +460,10 @@ rule diffex_excel:
 
 rule watermelon_deliverables:
     input:
-        raw_fastqc = "03-fastqc_reads",
-        align_fastqc = "05-fastqc_align",
+        raw_fastqc = expand("03-fastqc_reads/{sample}_trimmed_R1_fastqc.html",
+                                sample=config["samples"]),
+        align_fastqc = expand("05-fastqc_align/{sample}_accepted_hits_fastqc.html",
+                                sample=config["samples"]),
         alignment_stats = "06-qc_metrics/alignment_stats.txt",
         diffex_excel = expand("15-diffex_excel/{user_specified_comparisons}.xlsx", user_specified_comparisons=config["comparisons"]),
         diffex_raw_counts = expand("13-cummerbund/{multi_group_comparison}/{multi_group_comparison}_repRawCounts.txt",
@@ -477,13 +479,15 @@ rule watermelon_deliverables:
                                     multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
         plots = "16-deliverables/diffex/cummeRbund_plots"
     params:
+        align_fastqc_input_dir = "05-fastqc_align",
+        raw_fastqc_input_dir = "03-fastqc_reads",
         diffex_excel_input_dir = "15-diffex_excel",
         diffex_excel_output_dir = "16-deliverables/diffex/cuffdiff_results"
     shell:
         "rm -rf 16-deliverables && mkdir -p 16-deliverables/qc && "
         " mkdir -p 16-deliverables/diffex && "
-        " ln -s ../../{input.raw_fastqc} {output.raw_fastqc} && "
-        " ln -s ../../{input.align_fastqc} {output.align_fastqc}  && "
+        " ln -s ../../{params.raw_fastqc_input_dir} {output.raw_fastqc} && "
+        " ln -s ../../{params.align_fastqc_input_dir} {output.align_fastqc}  && "
         " ln -s ../../{input.alignment_stats} {output.alignment_stats} && "
         " ln -s ../../{params.diffex_excel_input_dir} {params.diffex_excel_output_dir} && "
         " ln -s ../../{input.diffex_raw_counts} {output.diffex_raw_counts} && "

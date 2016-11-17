@@ -43,19 +43,20 @@ class CutadaptTest(unittest.TestCase):
             shutil.copytree(source_working_dir, tmp_actual_dir) 
 
             os.chdir(tmp_actual_dir)
+            redirect_output = "2>/dev/null "
             command = '''snakemake --cores 2 \
      --snakefile {0} \
      --configfile {1} \
-     --force 02-cutadapt/Sample_0_trimmed_R1.fastq.gz 02-cutadapt/Sample_1_trimmed_R1.fastq.gz 2>/dev/null
-'''.format(SNAKEFILE_PATH, configfile_path)
+     --force alignment_results/02-cutadapt/Sample_0_trimmed_R1.fastq.gz alignment_results/02-cutadapt/Sample_1_trimmed_R1.fastq.gz {2}
+'''.format(SNAKEFILE_PATH, configfile_path, redirect_output)
             subprocess.check_output(command, shell=True)
 
-            gunzip(tmp_expected_dir + '/02-cutadapt/*.gz')
-            gunzip('02-cutadapt/*.gz')
+            gunzip(tmp_expected_dir + '/alignment_results/02-cutadapt/*.gz')
+            gunzip('alignment_results/02-cutadapt/*.gz')
 
-            for expected_filename in glob(tmp_expected_dir + '/02-cutadapt/*'):
+            for expected_filename in glob(tmp_expected_dir + '/alignment_results/02-cutadapt/*'):
                 basename = os.path.basename(expected_filename)
-                actual_filename = tmp_actual_dir + '/02-cutadapt/' + basename
+                actual_filename = tmp_actual_dir + '/alignment_results/02-cutadapt/' + basename
                 try:
                     file_matched = filecmp.cmp(expected_filename, actual_filename, shallow=True)
                     if not file_matched:

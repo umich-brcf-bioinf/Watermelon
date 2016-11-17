@@ -93,9 +93,9 @@ rule cutadapt:
         " {input.raw_fastq} && "
         " mv {output}.tmp.gz {output}) 2>&1 | tee {log}; "
         " else "
-        "cd {params.output_dir}; "
-        " ln -sf ../{input.raw_fastq} {params.output_file}; "
-        " cd ..;"
+#        " cd {params.output_dir}; "
+        " ln -sf ../../{input.raw_fastq} {params.output_dir}/{params.output_file}; "
+#        " cd ..;"
         " echo \"No trimming done\" 2>&1 |tee {log}; "
         " fi"
 

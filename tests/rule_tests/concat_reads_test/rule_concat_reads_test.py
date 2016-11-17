@@ -48,7 +48,7 @@ class ConcatReadsTest(unittest.TestCase):
             command = '''snakemake --cores 2 \
      --snakefile {} \
      --configfile {} \
-     --force 01-raw_reads/Sample_0_R1.fastq.gz 01-raw_reads/Sample_1_R1.fastq.gz {}
+     --force alignment_results/01-raw_reads/Sample_0_R1.fastq.gz alignment_results/01-raw_reads/Sample_1_R1.fastq.gz {}
 '''.format(SNAKEFILE_PATH, configfile_path, redirect_output)
             subprocess.check_output(command, shell=True)
 

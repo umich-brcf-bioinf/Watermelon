@@ -10,6 +10,40 @@ import sys
 
 import yaml
 
+
+class UsageError(Exception):
+    '''Raised for malformed command or invalid arguments.'''
+    def __init__(self, msg, *args):
+        super(UsageError, self).__init__(msg, *args)
+
+class _CommandValidator(object):
+    def __init__(self):
+        pass
+
+    def validate_args(args):
+        pass
+
+    def _validate_source_fastq_dir(self, args):
+        if not os.path.isdir(args.source_fastq_dir):
+            msg = ('Specified source_fastq_dir [{}] is not a dir or cannot be read. '
+                   'Review inputs and try again.').format(args.source_fastq_dir)
+            raise UsageError(msg)
+
+    def _validate_overwrite_check(self, args):
+        existing_files = {}
+        if os.path.exists(args.analysis_dir):
+            existing_files['analysis_dir'] = args.analysis_dir
+        if os.path.exists(args.inputs_dir):
+            existing_files['inputs_dir'] = args.inputs_dir
+        if existing_files:
+            file_types = [file_type for file_type in sorted(existing_files.keys())]
+            file_names = [existing_files[key] for key in file_types]
+            msg_format = ('{file_types} [{file_names}] exist(s) (will not overwrite). '
+                          'Remove these dir(s)/files(s) and try again.')
+            msg = msg_format.format(file_types=",".join(file_types),
+                                    file_names=",".join(file_names))
+            raise UsageError(msg)
+
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
 GENOME_BUILD_OPTIONS = ('hg19', 'mm10', 'rn5')
@@ -20,8 +54,8 @@ _CONFIG_DIR = os.path.join(_WATERMELON_ROOT, 'config')
 _DEFAULT_TEMPLATE_CONFIG = os.path.join(_CONFIG_DIR, 'template_config.yaml')
 _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, 'genome_references.yaml')
 
-
 _FASTQ_GLOBS = ['*.fastq', '*.fastq.gz']
+
 _CONFIG_KEYS = argparse.Namespace(comparisons='comparisons',
                                   genome='genome',
                                   input_dir='input_dir',
@@ -33,11 +67,10 @@ _DEFAULT_COMPARISON = {'g1_v_g2' : 'g1_v_g2'}
 _TODAY = datetime.date.today()
 _DEFAULT_JOB_SUFFIX = '_{:02d}_{:02d}'.format(_TODAY.month, _TODAY.day)
 
-def setup_yaml():
+def _setup_yaml():
   """ http://stackoverflow.com/a/8661021 """
   represent_dict_order = lambda self, data:  self.represent_mapping('tag:yaml.org,2002:map', data.items())
   yaml.add_representer(OrderedDict, represent_dict_order)    
-setup_yaml()
 
 def _mkdir(newdir):
     """works the way a good mkdir should :)
@@ -93,7 +126,6 @@ Created files and dirs:
         source fastq dir | sample count | fastq file count
         {source_fastq_dir} | {sample_count} samples | {file_count} files
     {analysis_dir}
-    {deliverables_dir}
     {config_file}
 
 You need to review config file: {config_file}:
@@ -118,7 +150,6 @@ $ watermelon -c {config_basename}
            sample_count=sample_count,
            file_count=file_count,
            analysis_dir=args.analysis_dir,
-           deliverables_dir=args.deliverables_dir,
            config_file=args.config_file,
            config_basename=os.path.basename(args.config_file),
            job_suffix=args.job_suffix,)
@@ -126,7 +157,6 @@ $ watermelon -c {config_basename}
 
 def _make_top_level_dirs(args):
     _mkdir(args.analysis_dir)
-    _mkdir(args.deliverables_dir)
     _mkdir(args.inputs_dir)
 
 def _write_config_file(config_filename, config_dict):
@@ -196,7 +226,6 @@ def _parse_command_line_args(sys_argv):
     args.analysis_dir = realpath('analysis{}'.format(args.job_suffix))
     args.config_file = os.path.join(args.analysis_dir,
                                     'config{}.yaml'.format(args.job_suffix))
-    args.deliverables_dir = realpath('deliverables{}'.format(args.job_suffix))
     args.inputs_dir = realpath('inputs', '00-multiplexed_reads')
 
     return args
@@ -218,5 +247,6 @@ def main(sys_argv):
     print(_build_postlude(args, len(samples), file_count))
 
 
+_setup_yaml()
 if __name__ == '__main__':
     main(sys.argv[1:])

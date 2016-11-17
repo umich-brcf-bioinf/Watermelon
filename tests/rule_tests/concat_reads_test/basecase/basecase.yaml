@@ -1,7 +1,10 @@
 input_dir:
-    "./00-multiplexed_reads"
+    "./inputs/00-multiplexed_reads"
 samples:
     sampleA: sampleA
+
+alignment_output_dir:
+    "alignment_results"
 
 trimming_options:
     base_quality_5prime: 0

@@ -1,5 +1,9 @@
 input_dir:
     ""
+
+alignment_output_dir:
+    ""
+
 samples:
     sampleA: A
     sampleB: B

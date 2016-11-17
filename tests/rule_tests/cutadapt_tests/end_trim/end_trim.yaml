@@ -1,5 +1,8 @@
 input_dir:
     ""
+alignment_output_dir:
+    "alignment_results"
+
 samples:
     sampleA: sampleA
 

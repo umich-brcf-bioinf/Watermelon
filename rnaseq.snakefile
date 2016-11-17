@@ -58,6 +58,15 @@ rule all:
                                     multi_group_comparison=rnaseq_snakefile_helper.cuffdiff_conditions(COMPARISON_INFIX, config["comparisons"])),
         "diffex_results/Deliverables/diffex/cummeRbund_plots"
 
+def make_readme(output_file):
+    command = 'module load rnaseq; module list -t 2> {}'.format(output_file)
+    subprocess.call(command, shell=True)
+    with open(output_file, 'a') as run_info_file: 
+        print('\n\nConfig:', file=run_info_file)
+        print(yaml.dump(config, default_flow_style=False), file=run_info_file)
+
+
+
 rule concat_reads:
     input:
         INPUT_DIR + "/{sample}/"
@@ -442,7 +451,11 @@ rule diffex_split:
 
 rule build_run_info:
     input: rules.diffex_split.output
-    output: "diffex_results/14-diffex_split/run_info.txt"
+    output: 
+        "diffex_results/14-diffex_split/run_info.txt",
+        "diffex_results/readme.txt"
+    params:
+        lambda wildcards: make_readme("diffex_results/readme.txt")
     run:
         command = 'module load rnaseq; module list -t 2> {}'.format(output[0])
         subprocess.call(command, shell=True)
@@ -457,7 +470,7 @@ rule diffex_excel:
         glossary = "diffex_results/14-diffex_split/glossary.txt",
         run_info = "diffex_results/14-diffex_split/run_info.txt"
     output: 
-        "diffex_results/15-diffex_excel/{user_specified_comparisons}.xlsx"
+        "diffex_results/15-diffex_excel/{user_specified_comparisons}.xlsx",
     shell:
         "module purge && module load python/3.4.3 && "
         " python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py "

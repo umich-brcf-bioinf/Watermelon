@@ -4,6 +4,9 @@ input_dir:
 alignment_output_dir:
     ""
 
+diffex_output_dir:
+    "diffex_results"
+
 samples:
     sampleA: A
     sampleB: B

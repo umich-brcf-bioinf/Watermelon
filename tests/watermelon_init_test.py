@@ -286,10 +286,10 @@ class CommandValidatorTest(unittest.TestCase):
             temp_dir_path = temp_dir.path
             source_fastq_dir = os.path.join(temp_dir_path, 'source')
             args = Namespace(source_fastq_dir=source_fastq_dir)
-            self.assertRaisesRegex(watermelon_init.UsageError,
-                                   'Specified source_fastq_dir \[.*\] is not a dir or cannot be read. ',
-                                   validator._validate_source_fastq_dir,
-                                   args)
+            self.assertRaisesRegexp(watermelon_init._UsageError,
+                                    'Specified source_fastq_dir \[.*\] is not a dir or cannot be read. ',
+                                    validator._validate_source_fastq_dir,
+                                    args)
 
     def test_validate_source_fastq_dir_ok(self):
         validator = watermelon_init._CommandValidator()
@@ -320,10 +320,10 @@ class CommandValidatorTest(unittest.TestCase):
             analysis_dir = os.path.join(temp_dir_path, 'analysis')
             inputs_dir = os.path.join(temp_dir_path, 'inputs')
             args = Namespace(analysis_dir=analysis_dir, inputs_dir=inputs_dir)
-            self.assertRaisesRegex(watermelon_init.UsageError,
-                                   r'analysis_dir \[.*\] exist\(s\)',
-                                   validator._validate_overwrite_check,
-                                   args)
+            self.assertRaisesRegexp(watermelon_init._UsageError,
+                                    r'analysis_dir \[.*\] exist\(s\)',
+                                    validator._validate_overwrite_check,
+                                    args)
 
     def test_validate_overwrite_check_raisesIfInputsExists(self):
         validator = watermelon_init._CommandValidator()
@@ -333,10 +333,10 @@ class CommandValidatorTest(unittest.TestCase):
             inputs_dir = os.path.join(temp_dir_path, 'inputs')
             analysis_dir = os.path.join(temp_dir_path, 'analysis')
             args = Namespace(analysis_dir=analysis_dir, inputs_dir=inputs_dir)
-            self.assertRaisesRegex(watermelon_init.UsageError,
-                                   r'inputs_dir \[.*\] exist\(s\)',
-                                   validator._validate_overwrite_check,
-                                   args)
+            self.assertRaisesRegexp(watermelon_init._UsageError,
+                                    r'inputs_dir \[.*\] exist\(s\)',
+                                    validator._validate_overwrite_check,
+                                    args)
 
 
 # class WatermelonInitFunctoinalTest(unittest.TestCase):

@@ -10,24 +10,27 @@ import sys
 
 import yaml
 
+README_FILENAME = 'watermelon.README'
 
-class UsageError(Exception):
+class _UsageError(Exception):
     '''Raised for malformed command or invalid arguments.'''
     def __init__(self, msg, *args):
-        super(UsageError, self).__init__(msg, *args)
+        super(_UsageError, self).__init__(msg, *args)
 
 class _CommandValidator(object):
     def __init__(self):
         pass
 
-    def validate_args(args):
-        pass
+    def validate_args(self, args):
+        for validation in [self._validate_source_fastq_dir,
+                           self._validate_overwrite_check]:
+            validation(args)
 
     def _validate_source_fastq_dir(self, args):
         if not os.path.isdir(args.source_fastq_dir):
             msg = ('Specified source_fastq_dir [{}] is not a dir or cannot be read. '
                    'Review inputs and try again.').format(args.source_fastq_dir)
-            raise UsageError(msg)
+            raise _UsageError(msg)
 
     def _validate_overwrite_check(self, args):
         existing_files = {}
@@ -42,7 +45,7 @@ class _CommandValidator(object):
                           'Remove these dir(s)/files(s) and try again.')
             msg = msg_format.format(file_types=",".join(file_types),
                                     file_names=",".join(file_names))
-            raise UsageError(msg)
+            raise _UsageError(msg)
 
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
@@ -121,7 +124,11 @@ def _make_config_dict(template_config, genome_references, input_dir, samples):
 def _build_postlude(args, sample_count, file_count):
     postlude = \
 '''
-Created files and dirs:
+watermelon_init.README
+======================
+
+Created files and dirs
+----------------------
     {inputs_dir}
         source fastq dir | sample count | fastq file count
         {source_fastq_dir} | {sample_count} samples | {file_count} files
@@ -129,6 +136,7 @@ Created files and dirs:
     {config_file}
 
 You need to review config file: {config_file}:
+-------------------------------
 1) Review/adjust samples names
     Note: if you change names in config, also change the sample dir names in the input dir
 2) Add a sample group for each sample
@@ -138,6 +146,7 @@ You need to review config file: {config_file}:
 6) Review trimming options
 
 When the config file looks good:
+--------------------------------
 $ cd {analysis_dir}
 # start a screen session:
 $ screen -S watermelon{job_suffix}
@@ -231,21 +240,36 @@ def _parse_command_line_args(sys_argv):
     return args
 
 def main(sys_argv):
-    args = _parse_command_line_args(sys_argv)
-    _make_top_level_dirs(args)
-    (samples, file_count) = _initialize_samples(args.source_fastq_dir)
-    _populate_inputs_dir(args.inputs_dir, samples)
-    with open(args.x_template_config, 'r') as template_config_file:
-        template_config = yaml.load(template_config_file)
-    with open(args.x_genome_references, 'r') as genome_references_file:
-        genome_references = yaml.load(genome_references_file)[args.genome_build]
-    config_dict = _make_config_dict(template_config,
-                                    genome_references,
-                                    args.inputs_dir,
-                                    samples)
-    _write_config_file(args.config_file, config_dict)
-    print(_build_postlude(args, len(samples), file_count))
+    try:
+        args = _parse_command_line_args(sys_argv)
+        _CommandValidator().validate_args(args)
 
+        _make_top_level_dirs(args)
+        (samples, file_count) = _initialize_samples(args.source_fastq_dir)
+        _populate_inputs_dir(args.inputs_dir, samples)
+        with open(args.x_template_config, 'r') as template_config_file:
+            template_config = yaml.load(template_config_file)
+        with open(args.x_genome_references, 'r') as genome_references_file:
+            genome_references = yaml.load(genome_references_file)[args.genome_build]
+        config_dict = _make_config_dict(template_config,
+                                        genome_references,
+                                        args.inputs_dir,
+                                        samples)
+        _write_config_file(args.config_file, config_dict)
+        postlude = _build_postlude(args, len(samples), file_count)
+        print(postlude)
+        with open(README_FILENAME, 'w') as readme:
+            print(postlude, file=readme)
+    except _UsageError as usage_error:
+        message = "watermelon-init usage problem: {}".format(str(usage_error))
+        print(message, file=sys.stderr)
+        print("See 'watermelon-init --help'.", file=sys.stderr)
+        sys.exit(1)
+    except Exception: #pylint: disable=broad-except
+        show = partial(print, file=sys.stderr)
+        show("An unexpected error occurred")
+        show(traceback.format_exc())
+        exit(1)
 
 _setup_yaml()
 if __name__ == '__main__':

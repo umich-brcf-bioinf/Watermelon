@@ -7,6 +7,8 @@ import functools
 import glob
 import os
 import sys
+import time
+import traceback
 
 import yaml
 
@@ -36,7 +38,7 @@ class _CommandValidator(object):
         existing_files = {}
         if os.path.exists(args.analysis_dir):
             existing_files['analysis_dir'] = args.analysis_dir
-        if os.path.exists(args.inputs_dir):
+        if os.path.exists(args.inputs_dir) and args.is_source_fastq_external:
             existing_files['inputs_dir'] = args.inputs_dir
         if existing_files:
             file_types = [file_type for file_type in sorted(existing_files.keys())]
@@ -46,6 +48,9 @@ class _CommandValidator(object):
             msg = msg_format.format(file_types=",".join(file_types),
                                     file_names=",".join(file_names))
             raise _UsageError(msg)
+
+def _timestamp():
+    return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
@@ -69,6 +74,18 @@ _DEFAULT_COMPARISON = {'g1_v_g2' : 'g1_v_g2'}
 
 _TODAY = datetime.date.today()
 _DEFAULT_JOB_SUFFIX = '_{:02d}_{:02d}'.format(_TODAY.month, _TODAY.day)
+_CONFIG_PRELUDE=\
+'''# config created {timestamp}
+# To do:
+# ------
+# 1) Review/adjust samples names
+#     Note: if you change names in config, also change the sample dir names in the input dir
+# 2) Add a sample group for each sample
+# 3) Add comparisons
+# 4) Review genome and references
+# 5) Review alignment options
+# 6) Review trimming options
+'''.format(timestamp=_timestamp())
 
 def _setup_yaml():
   """ http://stackoverflow.com/a/8661021 """
@@ -108,6 +125,12 @@ def _initialize_samples(source_fastq_dir):
             samples[file_name] = full_path
             file_count += _count_fastq(full_path)
     return samples, file_count
+
+def _is_source_fastq_external(source_fastq_dir, working_dir=os.getcwd()):
+    a = os.path.realpath(source_fastq_dir)
+    b = os.path.realpath(working_dir)
+    common_prefix = os.path.commonprefix([a, b])
+    return common_prefix != b
 
 def _populate_inputs_dir(inputs_dir, samples):
     for sample_name, sample_dir_target in samples.items():
@@ -151,7 +174,7 @@ $ cd {analysis_dir}
 # start a screen session:
 $ screen -S watermelon{job_suffix}
 # to validate the config and check the execution plan:
-$ watermelon --dry-run {config_basename}
+$ watermelon --dry-run -c {config_basename}
 # to run:
 $ watermelon -c {config_basename}
 '''.format(inputs_dir=args.inputs_dir,
@@ -166,7 +189,8 @@ $ watermelon -c {config_basename}
 
 def _make_top_level_dirs(args):
     _mkdir(args.analysis_dir)
-    _mkdir(args.inputs_dir)
+    if args.is_source_fastq_external:
+        _mkdir(args.inputs_dir)
 
 def _write_config_file(config_filename, config_dict):
     tmp_config_dict = dict(config_dict)
@@ -182,6 +206,7 @@ def _write_config_file(config_filename, config_dict):
     for key in sorted(tmp_config_dict):
         ordered_config_dict[key] = tmp_config_dict[key]
     with open(config_filename, 'w') as config_file:
+        print(_CONFIG_PRELUDE, file=config_file)
         yaml.dump(ordered_config_dict, config_file, default_flow_style=False, indent=4)
 
 def _parse_command_line_args(sys_argv):
@@ -236,6 +261,8 @@ def _parse_command_line_args(sys_argv):
     args.config_file = os.path.join(args.analysis_dir,
                                     'config{}.yaml'.format(args.job_suffix))
     args.inputs_dir = realpath('inputs', '00-multiplexed_reads')
+    args.is_source_fastq_external = _is_source_fastq_external(args.source_fastq_dir,
+                                                              args.x_working_dir)
 
     return args
 
@@ -244,9 +271,11 @@ def main(sys_argv):
         args = _parse_command_line_args(sys_argv)
         _CommandValidator().validate_args(args)
 
-        _make_top_level_dirs(args)
         (samples, file_count) = _initialize_samples(args.source_fastq_dir)
-        _populate_inputs_dir(args.inputs_dir, samples)
+        _make_top_level_dirs(args)
+        if args.is_source_fastq_external:
+            _populate_inputs_dir(args.inputs_dir, samples)
+
         with open(args.x_template_config, 'r') as template_config_file:
             template_config = yaml.load(template_config_file)
         with open(args.x_genome_references, 'r') as genome_references_file:
@@ -256,6 +285,7 @@ def main(sys_argv):
                                         args.inputs_dir,
                                         samples)
         _write_config_file(args.config_file, config_dict)
+
         postlude = _build_postlude(args, len(samples), file_count)
         print(postlude)
         with open(README_FILENAME, 'w') as readme:
@@ -266,9 +296,8 @@ def main(sys_argv):
         print("See 'watermelon-init --help'.", file=sys.stderr)
         sys.exit(1)
     except Exception: #pylint: disable=broad-except
-        show = partial(print, file=sys.stderr)
-        show("An unexpected error occurred")
-        show(traceback.format_exc())
+        print("An unexpected error occurred", file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr)
         exit(1)
 
 _setup_yaml()

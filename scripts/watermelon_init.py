@@ -1,4 +1,26 @@
 #!/usr/bin/env python
+'''Creates template config file and directories for a watermelon rnaseq job.
+
+Specifically this does three things:
+1) watermelon-init accepts a source fastq dir which would typically contain a set of
+   sample_dirs each of which would contain fastq files for that sample. To encapsulate 
+   the project data flow, while enabling data provenance, init creates a local inputs dir
+   and creates symlinks to the original source dir.
+   
+   Note that this step is skipped if the source fastq is inside the working dir (i.e.
+   already local).
+
+2) watermelon-init creates an analysis directory which contains a template watermelon
+   config file. The template config file is created by combining the specified genome
+   with the sample names in (from the inputs dir). The template config must be reviewed
+   and edited to:
+   a) adjust run params
+   b) add sample phenotypes/aliases
+   c) specify sample comparisons
+
+3) watermelon-init creates a readme file that lists basic info about when/how it was run,
+   what it did, and what the user has to do to prepare the template config 
+'''
 from __future__ import print_function, absolute_import, division
 import argparse
 from collections import OrderedDict
@@ -12,7 +34,8 @@ import traceback
 
 import yaml
 
-README_FILENAME = 'watermelon.README'
+DESCRIPTION = \
+'''Creates template config file and directories for a watermelon rnaseq job.'''
 
 class _UsageError(Exception):
     '''Raised for malformed command or invalid arguments.'''
@@ -52,8 +75,8 @@ class _CommandValidator(object):
 def _timestamp():
     return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
-DESCRIPTION = \
-'''Creates template config file and directories for a watermelon rnaseq job.'''
+README_FILENAME = 'watermelon.README'
+
 GENOME_BUILD_OPTIONS = ('hg19', 'mm10', 'rn5')
 
 _SCRIPTS_DIR = os.path.realpath(os.path.dirname(__file__))

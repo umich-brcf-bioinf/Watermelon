@@ -506,8 +506,17 @@ rule diffex_split:
         gene = DIFFEX_DIR + "/11-annotate_diffex_flag/{phenotype_name}/{phenotype_name}_gene.flagged.annot.txt",
         isoform = DIFFEX_DIR + "/11-annotate_diffex_flag/{phenotype_name}/{phenotype_name}_isoform.flagged.annot.txt" 
     output:
-        DIFFEX_DIR + "/14-diffex_split/{phenotype_name}/{comparison}_gene.txt",
-        DIFFEX_DIR + "/14-diffex_split/{phenotype_name}/{comparison}_isoform.txt",
+        expand("{diffex_dir}/14-diffex_split/{phenotype_name}/{comparison}_gene.txt",
+                zip,
+                diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
+                phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
+        expand("{diffex_dir}/14-diffex_split/{phenotype_name}/{comparison}_isoform.txt",
+                zip,
+                diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
+                phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
+        touch(DIFFEX_DIR + "/14-diffex_split/last_split")
+#         DIFFEX_DIR + "/14-diffex_split/{phenotype_name}/{comparison}_gene.txt",
+#         DIFFEX_DIR + "/14-diffex_split/{phenotype_name}/{comparison}_isoform.txt",
     params:
         output_dir = DIFFEX_DIR + "/14-diffex_split/{phenotype_name}",
         user_specified_comparison_list = lambda wildcards: CONFIG_COMPARISONS[wildcards.phenotype_name],
@@ -531,9 +540,9 @@ rule diffex_split:
         " cp {WATERMELON_SCRIPTS_DIR}/glossary.txt {params.split_dir} " # &&"
 #        " touch {params.last_split} "
 
-rule last_split:
-    input: rules.diffex_split.output
-    output:touch( DIFFEX_DIR + "/14-diffex_split/last_split")
+# rule last_split:
+#     input: rules.diffex_split.output
+#     output:touch( DIFFEX_DIR + "/14-diffex_split/last_split")
 
 rule build_run_info:
     input: 

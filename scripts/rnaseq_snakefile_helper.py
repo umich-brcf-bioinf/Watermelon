@@ -146,29 +146,33 @@ def check_strand_option(library_type,strand_option):
         raise ValueError(msg)
 
 
-def cuffdiff_labels(comparison_infix, underbar_separated_comparisons):
-    return underbar_separated_comparisons.replace(comparison_infix, ",")
+# def cuffdiff_labels(comparison_infix, underbar_separated_comparisons):
+#     return underbar_separated_comparisons.replace(comparison_infix, ",")
+
 
 def cuffdiff_samples(comparison_infix,
                      underbar_separated_comparisons,
                      sample_name_group,
                      sample_file_format):
     group_sample_names = defaultdict(list)
-    for actual_sample_name, group in sample_name_group.items():
-        group_sample_names[group].append(sample_file_format.format(sample_placeholder=actual_sample_name))
+    for phenotype, sample_list in sample_name_group.items():
+        for sample_name in sample_list:
+            group_sample_names[phenotype].append(sample_file_format.format(sample_placeholder=sample_name))
     group_sample_names = dict(group_sample_names)
+
     params = []
     for group in underbar_separated_comparisons.split(comparison_infix):
         params.append(','.join(sorted(group_sample_names[group])))
     return ' '.join(params)
 
+
 def cutadapt_options(trim_params):
     run_trimming_options = 0
     for option, value in trim_params.items():
         if not isinstance(value, int):
+            raise ValueError(msg)
             msg_format = "ERROR: Config trimming_options '{}' must be integer"
             msg = msg_format.format(value)
-            raise ValueError(msg)
         run_trimming_options += value
     return run_trimming_options
 

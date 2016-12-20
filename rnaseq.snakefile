@@ -8,6 +8,7 @@ from __future__ import print_function, absolute_import, division
 
 from collections import defaultdict, OrderedDict
 from itertools import combinations, repeat
+from shutil import copyfile
 import csv
 import os
 import subprocess
@@ -115,6 +116,12 @@ rule all:
         expand("{diffex_dir}/11-annotate_diffex_flag/{phenotype}/{phenotype}_isoform.flagged.annot.txt",
                 diffex_dir=DIFFEX_DIR,
                 phenotype=sorted(PHENOTYPE.keys())),
+        expand("{diffex_dir}/13-cummerbund/{pheno}/Plots/{pheno}_boxplot.pdf",
+                diffex_dir=DIFFEX_DIR,
+                pheno=sorted(PHENOTYPE.keys())),
+        expand("{diffex_dir}/13-cummerbund/{pheno}/{pheno}_repRawCounts.txt",
+                diffex_dir=DIFFEX_DIR,
+                pheno=sorted(PHENOTYPE.keys())),
         expand("{diffex_dir}/14-diffex_split/{phenotype_name}/{comparison}_gene.txt",
                 zip,
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
@@ -123,15 +130,8 @@ rule all:
                 zip,
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
                 phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
-        expand("{diffex_dir}/13-cummerbund/{pheno}/Plots/{pheno}_boxplot.pdf",
-                diffex_dir=DIFFEX_DIR,
-                pheno=sorted(PHENOTYPE.keys())),
-        expand("{diffex_dir}/13-cummerbund/{pheno}/{pheno}_repRawCounts.txt",
-                diffex_dir=DIFFEX_DIR,
-                pheno=sorted(PHENOTYPE.keys())),
-        DIFFEX_DIR + "/14-diffex_split/run_info.txt",
-#        DIFFEX_DIR + "/14-diffex_split/last_split",
-        expand("{diffex_dir}/15-diffex_excel/{phenotype_name}/{comparison}.xlsx",
+        DIFFEX_DIR + "/14-diffex_split/last_split",
+        expand("{diffex_dir}/16-diffex_excel/{phenotype_name}/{comparison}.xlsx",
                 zip,
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
                 phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
@@ -503,24 +503,14 @@ rule cummerbund:
  
 rule diffex_split:
     input:
-        gene = DIFFEX_DIR + "/11-annotate_diffex_flag/{phenotype_name}/{phenotype_name}_gene.flagged.annot.txt",
-        isoform = DIFFEX_DIR + "/11-annotate_diffex_flag/{phenotype_name}/{phenotype_name}_isoform.flagged.annot.txt" 
+        gene = "{diffex_dir}/11-annotate_diffex_flag/{phenotype_name}/{phenotype_name}_gene.flagged.annot.txt",
+        isoform = "{diffex_dir}/11-annotate_diffex_flag/{phenotype_name}/{phenotype_name}_isoform.flagged.annot.txt",
     output:
-        expand("{diffex_dir}/14-diffex_split/{phenotype_name}/{comparison}_gene.txt",
-                zip,
-                diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
-                phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
-        expand("{diffex_dir}/14-diffex_split/{phenotype_name}/{comparison}_isoform.txt",
-                zip,
-                diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
-                phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
-        touch(DIFFEX_DIR + "/14-diffex_split/last_split")
-#         DIFFEX_DIR + "/14-diffex_split/{phenotype_name}/{comparison}_gene.txt",
-#         DIFFEX_DIR + "/14-diffex_split/{phenotype_name}/{comparison}_isoform.txt",
+        "{diffex_dir}/14-diffex_split/{phenotype_name}/{comparison}_gene.txt",
+        "{diffex_dir}/14-diffex_split/{phenotype_name}/{comparison}_isoform.txt"
     params:
         output_dir = DIFFEX_DIR + "/14-diffex_split/{phenotype_name}",
         user_specified_comparison_list = lambda wildcards: CONFIG_COMPARISONS[wildcards.phenotype_name],
-#        last_split = DIFFEX_DIR + "/14-diffex_split/last_split",
     shell:
         "module purge && module load python/3.4.3 && "
         "python {WATERMELON_SCRIPTS_DIR}/diffex_split.py "
@@ -536,35 +526,45 @@ rule diffex_split:
         " -o _isoform.txt "
         " {input.isoform} "
         " {params.output_dir} "
-        " {params.user_specified_comparison_list} && "
-        " cp {WATERMELON_SCRIPTS_DIR}/glossary.txt {params.split_dir} " # &&"
-#        " touch {params.last_split} "
+        " {params.user_specified_comparison_list} "
 
-# rule last_split:
-#     input: rules.diffex_split.output
-#     output:touch( DIFFEX_DIR + "/14-diffex_split/last_split")
+
+rule last_split:
+    input: 
+        expand("{diffex_dir}/14-diffex_split/{phenotype_name}/{comparison}_gene.txt",
+                zip,
+                diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
+                phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS)
+    output:
+        touch(DIFFEX_DIR + "/14-diffex_split/last_split")
+
 
 rule build_run_info:
     input: 
-        DIFFEX_DIR + "/14-diffex_split/last_split"
-    output: 
-        DIFFEX_DIR + "/14-diffex_split/run_info.txt",
+        DIFFEX_DIR + "/14-diffex_split/last_split",
+        glossary = WATERMELON_SCRIPTS_DIR + "/glossary.txt"
         
+    output: 
+        DIFFEX_DIR + "/15-run_info/run_info.txt",
+        DIFFEX_DIR + "/15-run_info/glossary.txt"
+
     run:
         command = 'module load rnaseq; module list -t 2> {}'.format(output[0])
         subprocess.call(command, shell=True)
         with open(output[0], 'a') as run_info_file: 
             print('\n\nConfig\n', file=run_info_file)
             print(yaml.dump(config, default_flow_style=False), file=run_info_file)
-
+        
+        copyfile(WATERMELON_SCRIPTS_DIR + '/glossary.txt', DIFFEX_DIR + '/15-run_info/glossary.txt')
+ 
 rule diffex_excel:
     input:
         gene = DIFFEX_DIR + "/14-diffex_split/{phenotype_name}/{comparison}_gene.txt",
         isoform = DIFFEX_DIR + "/14-diffex_split/{phenotype_name}/{comparison}_isoform.txt",
-        glossary = DIFFEX_DIR + "/14-diffex_split/glossary.txt",
-        run_info = DIFFEX_DIR + "/14-diffex_split/run_info.txt"
+        glossary = DIFFEX_DIR + "/15-run_info/glossary.txt",
+        run_info = DIFFEX_DIR + "/15-run_info/run_info.txt"
     output: 
-        DIFFEX_DIR + "/15-diffex_excel/{phenotype_name}/{comparison}.xlsx",
+        DIFFEX_DIR + "/16-diffex_excel/{phenotype_name}/{comparison}.xlsx",
     shell:
         "module purge && module load python/3.4.3 && "
         " python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py "
@@ -581,7 +581,7 @@ rule deliverables_align_cuffdiff:
         align_fastqc = expand("{alignment_dir}/05-fastqc_align/{sample}_accepted_hits_fastqc.html",
                                 alignment_dir=ALIGNMENT_DIR, sample=config["samples"]),
         alignment_stats = ALIGNMENT_DIR + "/06-qc_metrics/alignment_stats.txt",
-        diffex_excel = expand("{diffex_dir}/15-diffex_excel/{phenotype_name}/{comparison}.xlsx", 
+        diffex_excel = expand("{diffex_dir}/16-diffex_excel/{phenotype_name}/{comparison}.xlsx", 
                                     zip,
                                     diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
                                     phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS)
@@ -598,7 +598,7 @@ rule deliverables_align_cuffdiff:
         align_fastqc_input_dir = ALIGNMENT_DIR + "/05-fastqc_align",
         raw_fastqc_input_dir = ALIGNMENT_DIR + "/03-fastqc_reads",
         
-        diffex_excel_input_dir = DIFFEX_DIR + "/15-diffex_excel",
+        diffex_excel_input_dir = DIFFEX_DIR + "/16-diffex_excel",
         diffex_excel_output_dir = DIFFEX_DIR + "/Deliverables/diffex/cuffdiff_results"
     shell:
         "rm -rf {DIFFEX_DIR}/Deliverables && mkdir -p {DIFFEX_DIR}/Deliverables/qc && "
@@ -620,7 +620,3 @@ rule deliverables_cummerbund:
     shell:
         " ln -s ../../../{input.diffex_raw_counts} {output.diffex_raw_counts} && "
         " ln -s ../../../{input.plots}  {output.plots} "
-
-
-
-

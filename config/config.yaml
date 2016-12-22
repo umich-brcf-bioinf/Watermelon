@@ -1,0 +1,83 @@
+input_dir:
+    "/ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1_tests/test_data/inputs/00-multiplexed_reads"
+alignment_output_dir:
+    "alignment_results"
+diffex_output_dir:
+    "diffex_results"
+
+
+#phenoptypes:    gender  |  diet  |    male.diet   |   female.diet
+#samples:
+#    Sample_61483: M,HF,HF,
+#    Sample_61484: M,ND,ND,
+#    Sample_61485: M,HF,HF,
+#    Sample_61486: F,HF,,ND
+#    Sample_61487: F,HF,,HF
+#    Sample_61488: F,HF,,HF
+#    Sample_61489: NA,DRG,,
+#    Sample_61490: NA,DRG,,
+
+#
+##phenoptypes:    gender  |  diet  |    male.diet   |   female.diet
+#samples:
+#  Sample_61483: M     |   HF   |      HF        |             
+#  Sample_61484: M     |   ND   |      ND        |             
+#  Sample_61485: M     |   HF   |      HF        |             
+#  Sample_61486: F     |   ND   |                |    ND       
+#  Sample_61487: F     |   HF   |                |    HF       
+#  Sample_61488: F     |   HF   |                |    HF       
+#  Sample_61489: F     |   DRG  |                |    DRG      
+#  Sample_61490: F     |   DRG  |                |    DRG      
+
+samples:
+ Sample_61483: M
+ Sample_61484: M
+ Sample_61485: M
+ Sample_61486: F
+ Sample_61487: F
+ Sample_61488: F
+ Sample_61489: F
+ Sample_61490: F
+
+
+comparisons:
+#    gender: 
+#        M_v_F
+    diet:
+        HF_v_ND
+        HF_v_DRG
+        ND_v_DRG
+    male.diet:
+       HF_v_ND
+    female.diet:
+       HF_v_ND
+       HF_v_DRG
+
+
+fold_change:
+    1.5
+
+trimming_options:
+    base_quality_5prime: 0
+    base_quality_3prime: 0
+    trim_length_5prime: 0
+    trim_length_3prime: 3
+
+alignment_options:
+    transcriptome_only: True
+    library_type: 0  # 1   # 2
+
+genome:
+    mm10
+
+references:
+#path to reference gtf file
+    gtf: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1_tests/test_data/inputs/references/mm10_tronson/genes.gtf
+#    gtf: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Annotation/Genes
+# path to dir with bowtie index
+    bowtie2_index: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/bowtie2
+#    bowtie2_index: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex
+# path to entrez gene info file
+    entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info
+#    entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02
+

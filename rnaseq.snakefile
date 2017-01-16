@@ -27,49 +27,55 @@ rnaseq_snakefile_helper.checksum_reset_all("config_checksums", config)
 rnaseq_snakefile_helper.init_references(config["references"])
 
 
-#phenoptypes:    gender |  diet  |    male.diet   |   female.diet
-# samples:
-#   Sample_61483: M     |   HF   |      HF        |             
-#   Sample_61484: M     |   ND   |      ND        |             
-#   Sample_61485: M     |   HF   |      HF        |             
-#   Sample_61486: F     |        |                |    ND       
-#   Sample_61487: F     |   HF   |                |    HF       
-#   Sample_61488: F     |   HF   |                |    HF       
-#   Sample_61489: F     |   DRG  |                |    DRG      
-#   Sample_61490: F     |   DRG  |                |    DRG      
+COMPARISON_INFIX = '_v_'
+DELIMITER = '^'
+SAMPLES_KEY = 'samples'
+PHENOTYPES_KEY = 'phenotypes'
+COMPARISONS_KEY ='comparisons'
 
-PHENOTYPE = defaultdict(dict)
+phenotype_dict = defaultdict(partial(defaultdict, list))
+phenotype_labels = list(map(str.strip, config[PHENOTYPES_KEY].split(DELIMITER)))
+for sample, phenotype_values in config[SAMPLES_KEY].items():
+    sample_phenotypes = dict(zip(phenotype_labels, map(str.strip, phenotype_values.split(DELIMITER)))) 
+    for label, value in sample_phenotypes.items():
+        if value != '':
+            phenotype_dict[label][value].append(sample)
 
-# PHENOTYPE['gender']['M'] = ['Sample_61483', 'Sample_61484', 'Sample_61485']
-# PHENOTYPE['gender']['F'] = ['Sample_61486', 'Sample_61487', 'Sample_61488', 'Sample_61489', 'Sample_61490']
+PHENOTYPE = phenotype_dict
 
-PHENOTYPE['diet']['HF']  = ['Sample_61483', 'Sample_61485', 'Sample_61488']
-PHENOTYPE['diet']['ND']  = ['Sample_61484', 'Sample_61486']
-PHENOTYPE['diet']['DRG'] = ['Sample_61489', 'Sample_61490']
+# CUFFDIFF_COMMA_LABELS = { 'gender' : 'M,F',
+#                           'diet' : 'HF,ND,DRG',
+#                           'male.diet' : 'HF,ND',
+#                           'female.diet' : 'HF,ND,DRG' }
+#                 
+# CUFFDIFF_UNDERBAR_LABELS = { 'gender' : 'M_v_F',
+#                              'diet' : 'HF_v_ND_v_DRG',
+#                              'male.diet' : 'HF_v_ND',
+#                              'female.diet' : 'HF_v_ND_v_DRG' }
+# 
+# CONFIG_COMPARISONS = { 'gender' : 'M_v_F',
+#                        'diet' : 'HF_v_ND,HF_v_DRG,ND_v_DRG',
+#                        'male.diet' : 'HF_v_ND',
+#                        'female.diet' : 'HF_v_ND,HF_v_DRG' }
 
-PHENOTYPE['male.diet']['HF'] = ['Sample_61483', 'Sample_61485']
-PHENOTYPE['male.diet']['ND'] = ['Sample_61484']
+CONFIG_COMPARISONS = defaultdict()
+for phenotype, comparison in config[COMPARISONS_KEY].items():
+    comma_separated_comparisons = ','.join(list(map(str.strip, comparison.split())))
+    CONFIG_COMPARISONS[phenotype]= comma_separated_comparisons
 
-PHENOTYPE['female.diet']['HF']  = ['Sample_61487', 'Sample_61488']
-PHENOTYPE['female.diet']['ND']  = ['Sample_61486']
-PHENOTYPE['female.diet']['DRG'] = ['Sample_61489', 'Sample_61490']
+CUFFDIFF_UNDERBAR_LABELS = defaultdict()
+CUFFDIFF_COMMA_LABELS = defaultdict()
+for phenotype, comparison in config[COMPARISONS_KEY].items():
+    comparison_list = list(map(str.strip,comparison.split()))
+    unique_conditions = set()
+    for group in comparison_list:
+        unique_conditions.update(group.split(COMPARISON_INFIX))   
+    underbar_separated_groups = COMPARISON_INFIX.join(sorted(unique_conditions)) 
+    comma_separated_groups = ','.join(sorted(unique_conditions)) 
+    print(phenotype, ':', underbar_separated_groups)
+    CUFFDIFF_UNDERBAR_LABELS[phenotype] = underbar_separated_groups
+    CUFFDIFF_COMMA_LABELS[phenotype] = comma_separated_groups
 
-
-
-CUFFDIFF_COMMA_LABELS = { 'gender' : 'M,F',
-                          'diet' : 'HF,ND,DRG',
-                          'male.diet' : 'HF,ND',
-                          'female.diet' : 'HF,ND,DRG' }
-                
-CUFFDIFF_UNDERBAR_LABELS = { 'gender' : 'M_v_F',
-                             'diet' : 'HF_v_ND_v_DRG',
-                             'male.diet' : 'HF_v_ND',
-                             'female.diet' : 'HF_v_ND_v_DRG' }
-
-CONFIG_COMPARISONS = { 'gender' : 'M_v_F',
-                       'diet' : 'HF_v_ND,HF_v_DRG,ND_v_DRG',
-                       'male.diet' : 'HF_v_ND',
-                       'female.diet' : 'HF_v_ND,HF_v_DRG' }
 
 def map_phenotypes_comparisons(config_comparisons):
     phenotype_comparison = dict([(k, v.split()) for k,v in config_comparisons.items()])
@@ -83,10 +89,6 @@ def map_phenotypes_comparisons(config_comparisons):
 
 
 (PHENOTYPE_NAMES,COMPARISON_GROUPS)=map_phenotypes_comparisons(config["comparisons"])
-
-# print(config["comparisons"])
-# print('PHENOTYPE_NAMES::::  ' , PHENOTYPE_NAMES)
-# print('COMPARISON_GROUPS:: ', COMPARISON_GROUPS)
 
 
 rule all:
@@ -103,38 +105,41 @@ rule all:
         ALIGNMENT_DIR + "/06-qc_metrics/alignment_stats.txt",
         expand("{diffex_dir}/08-cuffdiff/{phenotype}/gene_exp.diff",
                 diffex_dir=DIFFEX_DIR, 
-                phenotype=sorted(PHENOTYPE.keys())),
+                phenotype=sorted(config[COMPARISONS_KEY].keys())),
         expand("{diffex_dir}/10-diffex_flag/{phenotype}/{phenotype}_gene.flagged.txt",
                 diffex_dir=DIFFEX_DIR,
-                phenotype=sorted(PHENOTYPE.keys())),
+                phenotype=sorted(config[COMPARISONS_KEY].keys())),
         expand("{diffex_dir}/10-diffex_flag/{phenotype}/{phenotype}_isoform.flagged.txt",
                 diffex_dir=DIFFEX_DIR,
-                phenotype=sorted(PHENOTYPE.keys())),                
+                phenotype=sorted(config[COMPARISONS_KEY].keys())),                
         expand("{diffex_dir}/11-annotate_diffex_flag/{phenotype}/{phenotype}_gene.flagged.annot.txt",
                 diffex_dir=DIFFEX_DIR,
-                phenotype=sorted(PHENOTYPE.keys())),
+                phenotype=sorted(config[COMPARISONS_KEY].keys())),
         expand("{diffex_dir}/11-annotate_diffex_flag/{phenotype}/{phenotype}_isoform.flagged.annot.txt",
                 diffex_dir=DIFFEX_DIR,
-                phenotype=sorted(PHENOTYPE.keys())),
+                phenotype=sorted(config[COMPARISONS_KEY].keys())),
         expand("{diffex_dir}/13-cummerbund/{pheno}/Plots/{pheno}_boxplot.pdf",
                 diffex_dir=DIFFEX_DIR,
-                pheno=sorted(PHENOTYPE.keys())),
+                pheno=sorted(config[COMPARISONS_KEY].keys())),
         expand("{diffex_dir}/13-cummerbund/{pheno}/{pheno}_repRawCounts.txt",
                 diffex_dir=DIFFEX_DIR,
-                pheno=sorted(PHENOTYPE.keys())),
+                pheno=sorted(config[COMPARISONS_KEY].keys())),
         expand("{diffex_dir}/14-diffex_split/{phenotype_name}/{comparison}_gene.txt",
                 zip,
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
-                phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
+                phenotype_name=PHENOTYPE_NAMES, 
+                comparison=COMPARISON_GROUPS),
         expand("{diffex_dir}/14-diffex_split/{phenotype_name}/{comparison}_isoform.txt",
                 zip,
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
-                phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
+                phenotype_name=PHENOTYPE_NAMES, 
+                comparison=COMPARISON_GROUPS),
         DIFFEX_DIR + "/14-diffex_split/last_split",
         expand("{diffex_dir}/16-diffex_excel/{phenotype_name}/{comparison}.xlsx",
                 zip,
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
-                phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
+                phenotype_name=PHENOTYPE_NAMES, 
+                comparison=COMPARISON_GROUPS),
         DIFFEX_DIR + "/Deliverables/qc/raw_reads_fastqc",
         DIFFEX_DIR + "/Deliverables/qc/aligned_reads_fastqc",
         DIFFEX_DIR + "/Deliverables/qc/alignment_stats.txt",
@@ -144,7 +149,7 @@ rule all:
                 phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
         expand("{diffex_dir}/Deliverables/diffex/{phenotype_name}_repRawCounts.txt", 
                 diffex_dir=DIFFEX_DIR,
-                phenotype_name=sorted(PHENOTYPE.keys())),
+                phenotype_name=sorted(config[COMPARISONS_KEY].keys())),
         expand("{diffex_dir}/Deliverables/diffex/{phenotype_name}_cummeRbund_plots",
                     diffex_dir=DIFFEX_DIR, 
                     phenotype_name=PHENOTYPE_NAMES)
@@ -534,7 +539,8 @@ rule last_split:
         expand("{diffex_dir}/14-diffex_split/{phenotype_name}/{comparison}_gene.txt",
                 zip,
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
-                phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS)
+                phenotype_name=PHENOTYPE_NAMES,
+                comparison=COMPARISON_GROUPS)
     output:
         touch(DIFFEX_DIR + "/14-diffex_split/last_split")
 
@@ -618,5 +624,7 @@ rule deliverables_cummerbund:
         diffex_raw_counts = "{diffex_dir}/Deliverables/diffex/{phenotype_name}_repRawCounts.txt",
         plots = "{diffex_dir}/Deliverables/diffex/{phenotype_name}_cummeRbund_plots",
     shell:
+        " rm -rf {output.diffex_raw_counts} && "
+        " rm -rf {output.plots} && "
         " ln -s ../../../{input.diffex_raw_counts} {output.diffex_raw_counts} && "
         " ln -s ../../../{input.plots}  {output.plots} "

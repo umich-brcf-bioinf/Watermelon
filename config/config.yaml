@@ -5,44 +5,20 @@ alignment_output_dir:
 diffex_output_dir:
     "diffex_results"
 
-
-#phenoptypes:    gender  |  diet  |    male.diet   |   female.diet
-#samples:
-#    Sample_61483: M,HF,HF,
-#    Sample_61484: M,ND,ND,
-#    Sample_61485: M,HF,HF,
-#    Sample_61486: F,HF,,ND
-#    Sample_61487: F,HF,,HF
-#    Sample_61488: F,HF,,HF
-#    Sample_61489: NA,DRG,,
-#    Sample_61490: NA,DRG,,
-
-#
-##phenoptypes:    gender  |  diet  |    male.diet   |   female.diet
-#samples:
-#  Sample_61483: M     |   HF   |      HF        |             
-#  Sample_61484: M     |   ND   |      ND        |             
-#  Sample_61485: M     |   HF   |      HF        |             
-#  Sample_61486: F     |   ND   |                |    ND       
-#  Sample_61487: F     |   HF   |                |    HF       
-#  Sample_61488: F     |   HF   |                |    HF       
-#  Sample_61489: F     |   DRG  |                |    DRG      
-#  Sample_61490: F     |   DRG  |                |    DRG      
-
+phenotypes:    gender  ^  diet  ^    male.diet   ^   female.diet
 samples:
- Sample_61483: M
- Sample_61484: M
- Sample_61485: M
- Sample_61486: F
- Sample_61487: F
- Sample_61488: F
- Sample_61489: F
- Sample_61490: F
-
-
+    Sample_61483: Ma     ^   HF   ^      HF        ^             
+    Sample_61484: Ma     ^   ND   ^      ND        ^             
+    Sample_61485: Ma     ^   HF   ^      HF        ^             
+    Sample_61486:       ^   ND   ^                ^    ND       
+    Sample_61487: Fe     ^   HF   ^                ^    HF       
+    Sample_61488: Fe     ^   HF   ^                ^    HF       
+    Sample_61489: Fe     ^   DRG  ^                ^    DRG      
+    Sample_61490: Fe     ^   DRG  ^                ^    DRG      
+    
 comparisons:
-#    gender: 
-#        M_v_F
+    gender: 
+       Ma_v_Fe
     diet:
         HF_v_ND
         HF_v_DRG

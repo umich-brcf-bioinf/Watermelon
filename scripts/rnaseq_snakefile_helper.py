@@ -1,4 +1,4 @@
-'''Creates checksum files that represent the top-level keys of a Snakemake snakefile.
+'''Functions that support the RNASeq Snakemake snakefile.
 '''
 from __future__ import print_function, absolute_import, division
 
@@ -33,58 +33,87 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
-def _checksum_filepath(checksum_dir, key):
-    checksum_filename = '{}{}'.format(key, FILE_EXTENSION)
-    return join(checksum_dir, checksum_filename)
+class ChecksumManager(object):
+    def __init__(self, checksum_dir, file_extension):
+        self.checksum_dir = checksum_dir
+        self.file_extension = file_extension
 
-def _checksum_matches(checksum_filepath, new_checksum):
-    checksums_match = False
-    if os.path.exists(checksum_filepath):
-        with open(checksum_filepath, 'r') as file:
-            old_checksum = file.readlines()
-        checksums_match = len(old_checksum) == 1 and old_checksum[0] == new_checksum
-    return checksums_match
+    def _checksum_filepath(self, prefix, key):
+        checksum_filename = '{}-{}{}'.format(prefix, key, self.file_extension)
+        return join(self.checksum_dir, checksum_filename)
 
-def _checksum_reset_file(checksum_filepath, new_checksum):
-    with open(checksum_filepath, 'w') as file:
-        file.write(new_checksum)
+    @staticmethod
+    def _checksum_matches(checksum_filepath, new_checksum):
+        checksums_match = False
+        if os.path.exists(checksum_filepath):
+            with open(checksum_filepath, 'r') as file:
+                old_checksum = file.readlines()
+            checksums_match = len(old_checksum) == 1 and old_checksum[0] == new_checksum
+        return checksums_match
 
-def _checksum_remove_extra_files(checksum_dir, valid_checksum_files):
-    '''Removes extraneous checksum files (checking for proper name and checksum prefix).'''
-    wildcard = join(checksum_dir, '*{}'.format(FILE_EXTENSION))
-    all_checksum_files = set(glob.glob(wildcard))
-    extra_checksum_files = all_checksum_files - valid_checksum_files
-    for filename in extra_checksum_files:
-        with open(filename, 'r') as file:
-            lines = file.readlines()
-        if len(lines) == 1 and lines[0].startswith(FILE_EXTENSION):
-            os.remove(filename)
+    @staticmethod
+    def _checksum_reset_file(checksum_filepath, new_checksum):
+        with open(checksum_filepath, 'w') as file:
+            file.write(new_checksum)
 
-def _build_checksum(value):
-    '''Creates a checksum based on the supplied value. Typically just the md5 of the
-    str representation, but if the value is itself a dict will create a str representation
-    of an ordered dict. (This extra step avoids non-deterministic behavior around how
-    dicts are ordered between/within python2/3, but the naive implementation assumes that
-    the config will only be two dicts deep at most.)
-    '''
-    if isinstance(value, dict):
-        value = collections.OrderedDict(sorted(value.items()))
-    return FILE_EXTENSION + ':' + hashlib.md5(str(value).encode('utf-8')).hexdigest()
+    def _checksum_remove_extra_files(self, valid_checksum_files):
+        '''Removes extraneous checksum files (checking for proper name and checksum prefix).'''
+        wildcard = join(self.checksum_dir, '*{}'.format(self.file_extension))
+        all_checksum_files = set(glob.glob(wildcard))
+        extra_checksum_files = all_checksum_files - valid_checksum_files
+        for filename in extra_checksum_files:
+            with open(filename, 'r') as file:
+                lines = file.readlines()
+            if len(lines) == 1 and lines[0].startswith(self.file_extension):
+                os.remove(filename)
 
-def checksum_reset_all(checksum_dir, config):
-    '''Create, examine, or update a file for each top-level key in the config dict.
-    Each value yields a checksum which is compared with the checksum stored in the file.
-    If the file is absent, or the checksum doesn't match, a new checksum file is created.
-    Checksum files which are not found in the config keys are removed.'''
-    _mkdir(checksum_dir)
-    checksum_files = set()
-    for key, value in config.items():
-        checksum_filepath = _checksum_filepath(checksum_dir, key)
-        new_checksum = _build_checksum(value)
-        if not _checksum_matches(checksum_filepath, new_checksum):
-            _checksum_reset_file(checksum_filepath, new_checksum)
-        checksum_files.add(checksum_filepath)
-    _checksum_remove_extra_files(checksum_dir, checksum_files)
+    @staticmethod
+    def _build_checksum(value):
+        '''Creates a checksum based on the supplied value. Typically just the md5 of the
+        str representation, but if the value is itself a dict will create a str representation
+        of an ordered dict. (This extra step avoids non-deterministic behavior around how
+        dicts are ordered between/within python2/3, but the naive implementation assumes that
+        the config will only be two dicts deep at most.)
+        '''
+        if isinstance(value, dict):
+            value = collections.OrderedDict(sorted(value.items()))
+        return FILE_EXTENSION + ':' + hashlib.md5(str(value).encode('utf-8')).hexdigest()
+
+    def reset_checksum_for_dict(self, the_name, the_dict):
+        '''Checksum of each value is compared with the checksum stored in the file; if
+        the checksum doesn't match, create a new checksum file.'''
+        checksum_files = set()
+        for key, value in the_dict.items():
+            checksum_filepath = self._checksum_filepath(the_name, key)
+            new_checksum = self._build_checksum(value)
+            if not self._checksum_matches(checksum_filepath, new_checksum):
+                self._checksum_reset_file(checksum_filepath, new_checksum)
+            checksum_files.add(checksum_filepath)
+        return checksum_files
+
+    def reset_checksums(self, **kwargs):
+        '''Create, examine, or update a file for each top-level key in the dictionaries.
+        Stray checksum files are removed.'''
+        _mkdir(self.checksum_dir)
+        checksum_files = set()
+        for the_name, the_dict in kwargs.items():
+            checksum_files.update(tuple(self.reset_checksum_for_dict(the_name, the_dict)))
+        self._checksum_remove_extra_files(checksum_files)
+
+
+def phenotype_dict_from_config(config):
+    phenotype_dict = defaultdict(partial(defaultdict, list))
+    phenotype_label_list = list(map(str.strip, config[PHENOTYPES_KEY].split(DELIMITER)))
+    for sample, phenotype_values in config[SAMPLES_KEY].items():
+        phenotype_value_list = map(str.strip, phenotype_values.split(DELIMITER))
+        sample_phenotypes = dict(zip(phenotype_label_list, phenotype_value_list)) 
+        for label, value in sample_phenotypes.items():
+            if value:
+                phenotype_dict[label][value].append(sample)
+    return phenotype_dict
+
+def checksum_reset_all(checksum_dir, **kwargs):
+    ChecksumManager(checksum_dir, FILE_EXTENSION).reset_checksums(**kwargs)
 
 def init_references(config_references):
     def existing_link_target_is_different(link_name, link_path):

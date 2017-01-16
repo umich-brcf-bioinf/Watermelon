@@ -23,7 +23,6 @@ INPUT_DIR = config.get("input_dir", "inputs")
 ALIGNMENT_DIR = config.get("alignment_output_dir", "alignment_results")
 DIFFEX_DIR = config.get("diffex_output_dir", "diffex_results")
 
-rnaseq_snakefile_helper.checksum_reset_all("config_checksums", config)
 rnaseq_snakefile_helper.init_references(config["references"])
 
 
@@ -42,6 +41,12 @@ for sample, phenotype_values in config[SAMPLES_KEY].items():
             phenotype_dict[label][value].append(sample)
 
 PHENOTYPE = phenotype_dict
+
+rnaseq_snakefile_helper.checksum_reset_all("config_checksums",
+                                           config=config,
+                                           phenotype_comparisons=config['comparisons'],
+                                           phenotype_samples=phenotype_dict)
+
 
 # CUFFDIFF_COMMA_LABELS = { 'gender' : 'M,F',
 #                           'diet' : 'HF,ND,DRG',
@@ -165,7 +170,7 @@ rule concat_reads:
 
 rule cutadapt:
     input:
-        trimming_options_checksum = "config_checksums/trimming_options.watermelon.md5",
+        trimming_options_checksum = "config_checksums/config-trimming_options.watermelon.md5",
         raw_fastq = ALIGNMENT_DIR + "/01-raw_reads/{sample}_R1.fastq.gz"
     output:
         ALIGNMENT_DIR + "/02-cutadapt/{sample}_trimmed_R1.fastq.gz"
@@ -210,8 +215,8 @@ rule fastqc_trimmed_reads:
 
 rule create_transcriptome_index:
     input:
-        alignment_options_checksum =  "config_checksums/alignment_options.watermelon.md5",
-        reference_checksum =  "config_checksums/references.watermelon.md5",
+        alignment_options_checksum =  "config_checksums/config-alignment_options.watermelon.md5",
+        reference_checksum =  "config_checksums/config-references.watermelon.md5",
         gtf = "references/gtf",
         bowtie2_index_dir = "references/bowtie2_index"
     output:
@@ -238,8 +243,8 @@ rule create_transcriptome_index:
 
 rule tophat:
     input:
-        alignment_options_checksum = "config_checksums/alignment_options.watermelon.md5",
-        reference_checksum = "config_checksums/references.watermelon.md5",
+        alignment_options_checksum = "config_checksums/config-alignment_options.watermelon.md5",
+        reference_checksum = "config_checksums/config-references.watermelon.md5",
         transcriptome_fasta = ALIGNMENT_DIR + "/04-tophat/transcriptome_index/transcriptome.fa",
         bowtie2_index_dir = "references/bowtie2_index",
         fastq = ALIGNMENT_DIR + "/02-cutadapt/{sample}_trimmed_R1.fastq.gz"
@@ -287,7 +292,7 @@ rule fastqc_tophat_align:
 
 rule align_qc_metrics:
     input:
-        sample_checksum = "config_checksums/samples.watermelon.md5",
+        sample_checksum = "config_checksums/config-samples.watermelon.md5",
         align_summary_files = expand("{alignment_dir}/04-tophat/{sample}/{sample}_align_summary.txt", 
                                         alignment_dir= ALIGNMENT_DIR, sample=config["samples"])
     output:
@@ -305,7 +310,7 @@ rule align_qc_metrics:
 
 rule htseq_per_sample:
     input:
-        reference_checksum = "config_checksums/references.watermelon.md5",
+        reference_checksum = "config_checksums/config-references.watermelon.md5",
         bams = ALIGNMENT_DIR + "/04-tophat/{sample}/{sample}_accepted_hits.bam",
         gtf = "references/gtf"
     output:
@@ -328,7 +333,7 @@ rule htseq_per_sample:
 
 rule htseq_merge:
     input:
-        sample_checksum = "config_checksums/samples.watermelon.md5",
+        sample_checksum = "config_checksums/config-samples.watermelon.md5",
         sample_count_files = expand("{diffex_dir}/07-htseq/{sample}_counts.txt",
                                     diffex_dir=DIFFEX_DIR, sample=config["samples"])
     output:
@@ -341,9 +346,9 @@ rule htseq_merge:
 
 rule cuffdiff:
     input:
-        sample_checksum = "config_checksums/samples.watermelon.md5",
-        comparison_checksum = "config_checksums/comparisons.watermelon.md5",
-        reference_checksum = "config_checksums/references.watermelon.md5",
+        sample_checksum = "config_checksums/phenotype_samples-{pheno}.watermelon.md5",
+        comparison_checksum = "config_checksums/phenotype_comparisons-{pheno}.watermelon.md5",
+        reference_checksum = "config_checksums/config-references.watermelon.md5",
         fasta_file = "references/bowtie2_index/genome.fa",
         gtf_file = "references/gtf",
         bam_files = expand("{alignment_dir}/04-tophat/{sample}/{sample}_accepted_hits.bam",
@@ -403,7 +408,7 @@ rule diffex_flip:
 
 rule diffex_flag:
     input:
-        fold_change_checksum = "config_checksums/fold_change.watermelon.md5",
+        fold_change_checksum = "config_checksums/config-fold_change.watermelon.md5",
         cuffdiff_gene_exp = DIFFEX_DIR + "/09-diffex_flip/{pheno}/gene_exp.flip.diff",
         cuffdiff_isoform_exp = DIFFEX_DIR + "/09-diffex_flip/{pheno}/isoform_exp.flip.diff"
     output:
@@ -430,8 +435,8 @@ rule diffex_flag:
 
 rule annotate_diffex_flag:
     input:
-        genome_checksum = "config_checksums/genome.watermelon.md5",
-        reference_checksum = "config_checksums/references.watermelon.md5",
+        genome_checksum = "config_checksums/config-genome.watermelon.md5",
+        reference_checksum = "config_checksums/config-references.watermelon.md5",
         gene_diff_exp = DIFFEX_DIR + "/10-diffex_flag/{pheno}/{pheno}_gene.flagged.txt",
         isoform_diff_exp = DIFFEX_DIR + "/10-diffex_flag/{pheno}/{pheno}_isoform.flagged.txt",
         entrez_gene_info = "references/entrez_gene_info"
@@ -481,8 +486,8 @@ rule build_group_replicates:
 
 rule cummerbund:
     input:
-        genome_checksum = "config_checksums/genome.watermelon.md5",
-        reference_checksum = "config_checksums/references.watermelon.md5",
+        genome_checksum = "config_checksums/config-genome.watermelon.md5",
+        reference_checksum = "config_checksums/config-references.watermelon.md5",
         group_replicates = DIFFEX_DIR + "/12-group_replicates/{pheno}/group_replicates.txt",
         gtf_file = "references/gtf"
     output:

@@ -510,7 +510,8 @@ rule cummerbund:
         " grpRepFile={input.group_replicates} "
         " gtfFile={input.gtf_file} "
         " genome={params.genome} "
-        " 2>&1 | tee {log} "
+        " 2>&1 | tee {log} && "
+        " touch {params.output_dir}/Plots "
  
 rule diffex_split:
     input:

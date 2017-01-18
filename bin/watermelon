@@ -48,10 +48,9 @@ USAGE_HERE
 
 function set_expanded_options {
     EXPANDED_OPTIONS=()
-    for arg in "$@"
-    do
+    for arg in "$@"; do
         if [[ "$arg" =~ ^-[^-] ]]; then
-            options=`echo "$arg" | cut -c2- | fold -w1`
+            printf -v options ${arg:1:1}
             for char in $options; do
                 EXPANDED_OPTIONS+=("-${char}")
             done
@@ -141,7 +140,7 @@ set +e
 
 snakemake_command="snakemake --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} --cores ${CORES} -T ${DRYRUN} ${EXTRA_ARGUMENTS}"
 echo $snakemake_command
-eval $snakemake_command
+unbuffer $snakemake_command
 SNAKEMAKE_EXIT=$?
 
 snakemake --snakefile ${SNAKEFILE} --configfile ${CONFIG_FILE} -D > ${WATERMELON_DETAILED_SUMMARY}

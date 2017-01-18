@@ -34,7 +34,9 @@ COMPARISONS_KEY ='comparisons'
 
 phenotype_dict = defaultdict(partial(defaultdict, list))
 phenotype_labels = list(map(str.strip, config[PHENOTYPES_KEY].split(DELIMITER)))
-for sample, phenotype_values in config[SAMPLES_KEY].items():
+sample_phenotypes_dict = config[SAMPLES_KEY]
+sorted_sample_phenotypes_items = sorted([(k, v) for k,v in sample_phenotypes_dict.items()])
+for sample, phenotype_values in sorted_sample_phenotypes_items:
     sample_phenotypes = dict(zip(phenotype_labels, map(str.strip, phenotype_values.split(DELIMITER)))) 
     for label, value in sample_phenotypes.items():
         if value != '':
@@ -77,7 +79,6 @@ for phenotype, comparison in config[COMPARISONS_KEY].items():
         unique_conditions.update(group.split(COMPARISON_INFIX))   
     underbar_separated_groups = COMPARISON_INFIX.join(sorted(unique_conditions)) 
     comma_separated_groups = ','.join(sorted(unique_conditions)) 
-    print(phenotype, ':', underbar_separated_groups)
     CUFFDIFF_UNDERBAR_LABELS[phenotype] = underbar_separated_groups
     CUFFDIFF_COMMA_LABELS[phenotype] = comma_separated_groups
 

@@ -34,7 +34,7 @@ class ChecksumManagerTest(unittest.TestCase):
             self.assertChecksumFile(config_dir, 'configThing-B.watermelon.md5', '.watermelon.md5:37b51d194a7513e45b56f6524f2d51f2')
             self.assertChecksumFile(config_dir, 'configThing-C.watermelon.md5', '.watermelon.md5:73feffa4b7f6bb68e44cf984c85f6e88')
 
-    def test_checksum_reset_all_doesNotOverwriteUnchangedKeys(self):
+    def test_checksum_reset_all_doesNotOverwriteUnchangedKeysForSimpleValues(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             config_dir = temp_dir_path
@@ -62,6 +62,36 @@ class ChecksumManagerTest(unittest.TestCase):
             checksum_A2_timestamp = mod_time('config-A.watermelon.md5')
             checksum_B2_timestamp = mod_time('config-B.watermelon.md5')
             checksum_C2_timestamp = mod_time('config-C.watermelon.md5')
+
+    def test_checksum_reset_all_doesNotOverwriteUnchangedKeysForComplexValues(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_dir = temp_dir_path
+            config = {'A' : {'1': 'foo', '2': 'bar'},
+                      'B' : {'1': 'foo', '2': 'bar'},
+                      'C' : {'1': 'foo', '2': 'bar'}}
+
+            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
+
+            def mod_time(filename):
+                return os.path.getmtime(os.path.join(config_dir, filename))
+
+            checksum_A1_timestamp = mod_time('config-A.watermelon.md5')
+            checksum_B1_timestamp = mod_time('config-B.watermelon.md5')
+            checksum_C1_timestamp = mod_time('config-C.watermelon.md5')
+
+            time.sleep(1)
+
+            config = {'A' : {'2': 'bar', '1': 'foo'},
+                      'B' : {'2': 'bar', '1': 'foo'},
+                      'C' : {'2': 'bar', '1': 'foo'}}
+
+            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
+
+            checksum_A2_timestamp = mod_time('config-A.watermelon.md5')
+            checksum_B2_timestamp = mod_time('config-B.watermelon.md5')
+            checksum_C2_timestamp = mod_time('config-C.watermelon.md5')
+
 
     def test_checksum_reset_all_addsNewFilesForNewKeys(self):
         with TempDirectory() as temp_dir:

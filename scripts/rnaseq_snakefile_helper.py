@@ -101,17 +101,6 @@ class ChecksumManager(object):
         self._checksum_remove_extra_files(checksum_files)
 
 
-def phenotype_dict_from_config(config):
-    phenotype_dict = defaultdict(partial(defaultdict, list))
-    phenotype_label_list = list(map(str.strip, config[PHENOTYPES_KEY].split(DELIMITER)))
-    for sample, phenotype_values in config[SAMPLES_KEY].items():
-        phenotype_value_list = map(str.strip, phenotype_values.split(DELIMITER))
-        sample_phenotypes = dict(zip(phenotype_label_list, phenotype_value_list)) 
-        for label, value in sample_phenotypes.items():
-            if value:
-                phenotype_dict[label][value].append(sample)
-    return phenotype_dict
-
 def checksum_reset_all(checksum_dir, **kwargs):
     ChecksumManager(checksum_dir, FILE_EXTENSION).reset_checksums(**kwargs)
 

@@ -7,8 +7,10 @@ alignment_output_dir:
 diffex_output_dir:
     ""
 
+phenotypes: pLabel
 samples:
-    sampleA: sampleA
+    sampleA: pval1
+    sampleB: pval2
 
 trimming_options:
     base_quality_5prime: 20
@@ -27,4 +29,4 @@ comparisons:
 fold_change:
 
 comparisons:
-    A_B: A_B
+    pLabel: pval1_v_pval2

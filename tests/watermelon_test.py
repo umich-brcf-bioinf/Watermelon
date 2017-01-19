@@ -272,7 +272,7 @@ class WatermelonTest(unittest.TestCase):
                 print(snakemake_command_contents, file=snakemake_command)
             command = ('chmod u+x snakemake; '
                        'PATH=.:$PATH; '
-                       '{} --snakefile {} -abd '
+                       '{} --snakefile {} -nabd '
                        '--configfile {}').format(WATERMELON_EXECUTABLE,
                                                  TEST_SNAKEFILE,
                                                  CONFIG_FILE)
@@ -280,11 +280,11 @@ class WatermelonTest(unittest.TestCase):
             self.assertEqual(0, exit_code)
             self.assertRegexpMatches(actual_output,
                                      (r'--configfile {} '
-                                     r'--snakefile {} '
+                                      r'--snakefile {} '
                                       r'--cores 40 '
                                       r'-T '
-                                      r'-a -b -d'). format(CONFIG_FILE,
-                                                              TEST_SNAKEFILE))
+                                      r'--dryrun -a -b -d'). format(CONFIG_FILE,
+                                                           TEST_SNAKEFILE))
 
 
     def test_watermelon_defaultArgumentsSet(self):

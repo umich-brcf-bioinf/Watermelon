@@ -23,7 +23,6 @@ INPUT_DIR = config.get("input_dir", "inputs")
 ALIGNMENT_DIR = config.get("alignment_output_dir", "alignment_results")
 DIFFEX_DIR = config.get("diffex_output_dir", "diffex_results")
 
-rnaseq_snakefile_helper.checksum_reset_all("config_checksums", config)
 rnaseq_snakefile_helper.init_references(config["references"])
 
 
@@ -35,11 +34,36 @@ COMPARISONS_KEY ='comparisons'
 
 phenotype_dict = defaultdict(partial(defaultdict, list))
 phenotype_labels = list(map(str.strip, config[PHENOTYPES_KEY].split(DELIMITER)))
-for sample, phenotype_values in config[SAMPLES_KEY].items():
+sample_phenotypes_dict = config[SAMPLES_KEY]
+sorted_sample_phenotypes_items = sorted([(k, v) for k,v in sample_phenotypes_dict.items()])
+for sample, phenotype_values in sorted_sample_phenotypes_items:
     sample_phenotypes = dict(zip(phenotype_labels, map(str.strip, phenotype_values.split(DELIMITER)))) 
     for label, value in sample_phenotypes.items():
         if value != '':
             phenotype_dict[label][value].append(sample)
+
+PHENOTYPE = phenotype_dict
+
+rnaseq_snakefile_helper.checksum_reset_all("config_checksums",
+                                           config=config,
+                                           phenotype_comparisons=config['comparisons'],
+                                           phenotype_samples=phenotype_dict)
+
+
+# CUFFDIFF_COMMA_LABELS = { 'gender' : 'M,F',
+#                           'diet' : 'HF,ND,DRG',
+#                           'male.diet' : 'HF,ND',
+#                           'female.diet' : 'HF,ND,DRG' }
+#                 
+# CUFFDIFF_UNDERBAR_LABELS = { 'gender' : 'M_v_F',
+#                              'diet' : 'HF_v_ND_v_DRG',
+#                              'male.diet' : 'HF_v_ND',
+#                              'female.diet' : 'HF_v_ND_v_DRG' }
+# 
+# CONFIG_COMPARISONS = { 'gender' : 'M_v_F',
+#                        'diet' : 'HF_v_ND,HF_v_DRG,ND_v_DRG',
+#                        'male.diet' : 'HF_v_ND',
+#                        'female.diet' : 'HF_v_ND,HF_v_DRG' }
 
 CONFIG_COMPARISONS = defaultdict()
 for phenotype, comparison in config[COMPARISONS_KEY].items():
@@ -55,7 +79,6 @@ for phenotype, comparison in config[COMPARISONS_KEY].items():
         unique_conditions.update(group.split(COMPARISON_INFIX))   
     underbar_separated_groups = COMPARISON_INFIX.join(sorted(unique_conditions)) 
     comma_separated_groups = ','.join(sorted(unique_conditions)) 
-
     CUFFDIFF_UNDERBAR_LABELS[phenotype] = underbar_separated_groups
     CUFFDIFF_COMMA_LABELS[phenotype] = comma_separated_groups
 
@@ -123,21 +146,19 @@ rule all:
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
                 phenotype_name=PHENOTYPE_NAMES, 
                 comparison=COMPARISON_GROUPS),
-        expand(DIFFEX_DIR + "/Deliverables/qc/raw_reads_fastqc/{sample}_trimmed_R1_fastqc.html",
-                sample=config["samples"]),
-        expand(DIFFEX_DIR + "/Deliverables/qc/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
-                sample=config["samples"]),
-         DIFFEX_DIR + "/Deliverables/qc/alignment_stats.txt",
+        DIFFEX_DIR + "/Deliverables/qc/raw_reads_fastqc",
+        DIFFEX_DIR + "/Deliverables/qc/aligned_reads_fastqc",
+        DIFFEX_DIR + "/Deliverables/qc/alignment_stats.txt",
         expand("{diffex_dir}/Deliverables/diffex/cuffdiff_results/{phenotype_name}/{comparison}.xlsx", 
                 zip,
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
                 phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
-        expand("{diffex_dir}/Deliverables/diffex/cummeRbund_results/{phenotype_name}_repRawCounts.txt", 
+        expand("{diffex_dir}/Deliverables/diffex/{phenotype_name}_repRawCounts.txt", 
                 diffex_dir=DIFFEX_DIR,
                 phenotype_name=sorted(config[COMPARISONS_KEY].keys())),
-        expand("{diffex_dir}/Deliverables/diffex/cummeRbund_results/{phenotype_name}_cummeRbund_plots",
+        expand("{diffex_dir}/Deliverables/diffex/{phenotype_name}_cummeRbund_plots",
                     diffex_dir=DIFFEX_DIR, 
-                    phenotype_name=sorted(config[COMPARISONS_KEY].keys())),
+                    phenotype_name=PHENOTYPE_NAMES)
 
 
 rule concat_reads:
@@ -150,7 +171,7 @@ rule concat_reads:
 
 rule cutadapt:
     input:
-        trimming_options_checksum = "config_checksums/trimming_options.watermelon.md5",
+        trimming_options_checksum = "config_checksums/config-trimming_options.watermelon.md5",
         raw_fastq = ALIGNMENT_DIR + "/01-raw_reads/{sample}_R1.fastq.gz"
     output:
         ALIGNMENT_DIR + "/02-cutadapt/{sample}_trimmed_R1.fastq.gz"
@@ -195,8 +216,8 @@ rule fastqc_trimmed_reads:
 
 rule create_transcriptome_index:
     input:
-        alignment_options_checksum =  "config_checksums/alignment_options.watermelon.md5",
-        reference_checksum =  "config_checksums/references.watermelon.md5",
+        alignment_options_checksum =  "config_checksums/config-alignment_options.watermelon.md5",
+        reference_checksum =  "config_checksums/config-references.watermelon.md5",
         gtf = "references/gtf",
         bowtie2_index_dir = "references/bowtie2_index"
     output:
@@ -223,8 +244,8 @@ rule create_transcriptome_index:
 
 rule tophat:
     input:
-        alignment_options_checksum = "config_checksums/alignment_options.watermelon.md5",
-        reference_checksum = "config_checksums/references.watermelon.md5",
+        alignment_options_checksum = "config_checksums/config-alignment_options.watermelon.md5",
+        reference_checksum = "config_checksums/config-references.watermelon.md5",
         transcriptome_fasta = ALIGNMENT_DIR + "/04-tophat/transcriptome_index/transcriptome.fa",
         bowtie2_index_dir = "references/bowtie2_index",
         fastq = ALIGNMENT_DIR + "/02-cutadapt/{sample}_trimmed_R1.fastq.gz"
@@ -272,7 +293,7 @@ rule fastqc_tophat_align:
 
 rule align_qc_metrics:
     input:
-        sample_checksum = "config_checksums/samples.watermelon.md5",
+        sample_checksum = "config_checksums/config-samples.watermelon.md5",
         align_summary_files = expand("{alignment_dir}/04-tophat/{sample}/{sample}_align_summary.txt", 
                                         alignment_dir= ALIGNMENT_DIR, sample=config["samples"])
     output:
@@ -290,7 +311,7 @@ rule align_qc_metrics:
 
 rule htseq_per_sample:
     input:
-        reference_checksum = "config_checksums/references.watermelon.md5",
+        reference_checksum = "config_checksums/config-references.watermelon.md5",
         bams = ALIGNMENT_DIR + "/04-tophat/{sample}/{sample}_accepted_hits.bam",
         gtf = "references/gtf"
     output:
@@ -313,7 +334,7 @@ rule htseq_per_sample:
 
 rule htseq_merge:
     input:
-        sample_checksum = "config_checksums/samples.watermelon.md5",
+        sample_checksum = "config_checksums/config-samples.watermelon.md5",
         sample_count_files = expand("{diffex_dir}/07-htseq/{sample}_counts.txt",
                                     diffex_dir=DIFFEX_DIR, sample=config["samples"])
     output:
@@ -326,9 +347,9 @@ rule htseq_merge:
 
 rule cuffdiff:
     input:
-        sample_checksum = "config_checksums/samples.watermelon.md5",
-        comparison_checksum = "config_checksums/comparisons.watermelon.md5",
-        reference_checksum = "config_checksums/references.watermelon.md5",
+        sample_checksum = "config_checksums/phenotype_samples-{pheno}.watermelon.md5",
+        comparison_checksum = "config_checksums/phenotype_comparisons-{pheno}.watermelon.md5",
+        reference_checksum = "config_checksums/config-references.watermelon.md5",
         fasta_file = "references/bowtie2_index/genome.fa",
         gtf_file = "references/gtf",
         bam_files = expand("{alignment_dir}/04-tophat/{sample}/{sample}_accepted_hits.bam",
@@ -342,7 +363,7 @@ rule cuffdiff:
         labels = lambda wildcards : CUFFDIFF_COMMA_LABELS[wildcards.pheno],
         samples = lambda wildcards : rnaseq_snakefile_helper.cuffdiff_samples(COMPARISON_INFIX,
                                                                               CUFFDIFF_UNDERBAR_LABELS[wildcards.pheno],
-                                                                              phenotype_dict[wildcards.pheno],
+                                                                              PHENOTYPE[wildcards.pheno],
                                                                                ALIGNMENT_DIR + "/04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
         strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"])
     threads: 8
@@ -388,7 +409,7 @@ rule diffex_flip:
 
 rule diffex_flag:
     input:
-        fold_change_checksum = "config_checksums/fold_change.watermelon.md5",
+        fold_change_checksum = "config_checksums/config-fold_change.watermelon.md5",
         cuffdiff_gene_exp = DIFFEX_DIR + "/09-diffex_flip/{pheno}/gene_exp.flip.diff",
         cuffdiff_isoform_exp = DIFFEX_DIR + "/09-diffex_flip/{pheno}/isoform_exp.flip.diff"
     output:
@@ -415,8 +436,8 @@ rule diffex_flag:
 
 rule annotate_diffex_flag:
     input:
-        genome_checksum = "config_checksums/genome.watermelon.md5",
-        reference_checksum = "config_checksums/references.watermelon.md5",
+        genome_checksum = "config_checksums/config-genome.watermelon.md5",
+        reference_checksum = "config_checksums/config-references.watermelon.md5",
         gene_diff_exp = DIFFEX_DIR + "/10-diffex_flag/{pheno}/{pheno}_gene.flagged.txt",
         isoform_diff_exp = DIFFEX_DIR + "/10-diffex_flag/{pheno}/{pheno}_isoform.flagged.txt",
         entrez_gene_info = "references/entrez_gene_info"
@@ -466,8 +487,8 @@ rule build_group_replicates:
 
 rule cummerbund:
     input:
-        genome_checksum = "config_checksums/genome.watermelon.md5",
-        reference_checksum = "config_checksums/references.watermelon.md5",
+        genome_checksum = "config_checksums/config-genome.watermelon.md5",
+        reference_checksum = "config_checksums/config-references.watermelon.md5",
         group_replicates = DIFFEX_DIR + "/12-group_replicates/{pheno}/group_replicates.txt",
         gtf_file = "references/gtf"
     output:
@@ -489,7 +510,8 @@ rule cummerbund:
         " grpRepFile={input.group_replicates} "
         " gtfFile={input.gtf_file} "
         " genome={params.genome} "
-        " 2>&1 | tee {log} "
+        " 2>&1 | tee {log} && "
+        " touch {params.output_dir}/Plots "
  
 rule diffex_split:
     input:
@@ -565,50 +587,51 @@ rule diffex_excel:
         " --info_filepath {input.run_info} "
         " {output} "
 
-rule deliverables:
+rule deliverables_align_cuffdiff:
     input:
         raw_fastqc = expand("{alignment_dir}/03-fastqc_reads/{sample}_trimmed_R1_fastqc.html",
-                                 alignment_dir=ALIGNMENT_DIR, sample=config["samples"]),
+                                alignment_dir=ALIGNMENT_DIR, sample=config["samples"]),
         align_fastqc = expand("{alignment_dir}/05-fastqc_align/{sample}_accepted_hits_fastqc.html",
-                                 alignment_dir=ALIGNMENT_DIR, sample=config["samples"]),
+                                alignment_dir=ALIGNMENT_DIR, sample=config["samples"]),
         alignment_stats = ALIGNMENT_DIR + "/06-qc_metrics/alignment_stats.txt",
         diffex_excel = expand("{diffex_dir}/16-diffex_excel/{phenotype_name}/{comparison}.xlsx", 
                                     zip,
                                     diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
-                                    phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
+                                    phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS)
     output:
-        raw_fastqc = expand(DIFFEX_DIR + "/Deliverables/qc/raw_reads_fastqc/{sample}_trimmed_R1_fastqc.html",
-                            sample=config["samples"]),
-        align_fastqc = expand(DIFFEX_DIR + "/Deliverables/qc/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
-                            sample=config["samples"]),
+        raw_fastqc = DIFFEX_DIR + "/Deliverables/qc/raw_reads_fastqc",
+        align_fastqc = DIFFEX_DIR + "/Deliverables/qc/aligned_reads_fastqc",
         alignment_stats = DIFFEX_DIR + "/Deliverables/qc/alignment_stats.txt",
         diffex_excel = expand("{diffex_dir}/Deliverables/diffex/cuffdiff_results/{phenotype_name}/{comparison}.xlsx", 
                                     zip,
                                     diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
                                     phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
+        diffex_dir = DIFFEX_DIR + "/Deliverables/diffex",
     params:
-        raw_fastqc_input_dir    =  ALIGNMENT_DIR + "/03-fastqc_reads",
-        raw_fastqc_output_dir   =  DIFFEX_DIR + "/Deliverables/qc/raw_reads_fastqc",
-        align_fastqc_input_dir  =  ALIGNMENT_DIR + "/05-fastqc_align",
-        align_fastqc_output_dir =  DIFFEX_DIR + "/Deliverables/qc/aligned_reads_fastqc",
-        diffex_excel_input_dir  =  DIFFEX_DIR +  "/16-diffex_excel",
-        diffex_excel_output_dir =  DIFFEX_DIR + "/Deliverables/diffex/cuffdiff_results"
+        align_fastqc_input_dir = ALIGNMENT_DIR + "/05-fastqc_align",
+        raw_fastqc_input_dir = ALIGNMENT_DIR + "/03-fastqc_reads",
+        
+        diffex_excel_input_dir = DIFFEX_DIR + "/16-diffex_excel",
+        diffex_excel_output_dir = DIFFEX_DIR + "/Deliverables/diffex/cuffdiff_results"
     shell:
-        " cp -r {params.raw_fastqc_input_dir}/* {params.raw_fastqc_output_dir} && "
-        " cp -r {params.align_fastqc_input_dir}/* {params.align_fastqc_output_dir} && "
-        " cp -r {input.alignment_stats} {output.alignment_stats} && "
-        " cp -r {params.diffex_excel_input_dir}/* {params.diffex_excel_output_dir} "
+        "rm -rf {DIFFEX_DIR}/Deliverables && mkdir -p {DIFFEX_DIR}/Deliverables/qc && "
+        " mkdir -p {DIFFEX_DIR}/Deliverables/diffex && "
+        " ln -s ../../../{params.raw_fastqc_input_dir} {output.raw_fastqc} && "
+        " ln -s ../../../{params.align_fastqc_input_dir} {output.align_fastqc}  && "
+        " ln -s ../../../{input.alignment_stats} {output.alignment_stats} && "
+        " ln -s ../../../{params.diffex_excel_input_dir} {params.diffex_excel_output_dir} "
 
 
 rule deliverables_cummerbund:
     input:
+        diffex_dir = "{diffex_dir}/Deliverables/diffex",
         diffex_raw_counts = "{diffex_dir}/13-cummerbund/{phenotype_name}/{phenotype_name}_repRawCounts.txt",
         plots = "{diffex_dir}/13-cummerbund/{phenotype_name}/Plots",
     output:
-        diffex_raw_counts = "{diffex_dir}/Deliverables/diffex/cummeRbund_results/{phenotype_name}_repRawCounts.txt",
-        plots = "{diffex_dir}/Deliverables/diffex/cummeRbund_results/{phenotype_name}_cummeRbund_plots"
-    params:
-        diffex_dir = "{diffex_dir}/Deliverables/diffex",
+        diffex_raw_counts = "{diffex_dir}/Deliverables/diffex/{phenotype_name}_repRawCounts.txt",
+        plots = "{diffex_dir}/Deliverables/diffex/{phenotype_name}_cummeRbund_plots",
     shell:
-        " cp -r {input.diffex_raw_counts} {output.diffex_raw_counts} && "
-        " cp -r {input.plots}  {output.plots} "
+        " rm -rf {output.diffex_raw_counts} && "
+        " rm -rf {output.plots} && "
+        " ln -s ../../../{input.diffex_raw_counts} {output.diffex_raw_counts} && "
+        " ln -s ../../../{input.plots}  {output.plots} "

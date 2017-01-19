@@ -1,7 +1,10 @@
 input_dir:
     "./inputs/00-multiplexed_reads"
+
+phenotypes: pLabel
 samples:
-    sampleA: sampleA
+    sampleA: pval1
+    sampleB: pval2
 
 alignment_output_dir:
     "alignment_results"
@@ -22,4 +25,4 @@ fold_change:
 alignment_options:
     library_type: 0
 comparisons:
-    A_B: A_B
+    pLabel: pval1_v_lval2

@@ -134,39 +134,21 @@ def cuffdiff_conditions(comparison_infix, explicit_comparisons):
     multi_condition_comparison = comparison_infix.join(sorted(unique_conditions))
     return(multi_condition_comparison)
 
-
 def check_strand_option(library_type,strand_option):
+    strand_config_param = { 'fr-unstranded' : {'tuxedo': 'fr-unstranded', 'htseq': 'no'}, 
+                            'fr-firststrand' : {'tuxedo' : 'fr-firststrand', 'htseq': 'yes'}, 
+                            'fr-secondstrand' : {'tuxedo' : 'fr-secondstrand', 'htseq': 'reverse'} }
 
-    tuxedo_library_type = { 0 : "fr-unstranded", 1 : "fr-firststrand", 2 : "fr-secondstrand"}
-    htseq_library_type = { 0 : "no", 1 : "yes", 2 : "reverse"}
-    options = range(0,3)
-# 
-#     TUXEDO = 'tuxedo'
-#     strand_config_param = { 0 : {'tuxedo': 'fr-unstranded', 'htseq': 'no'}, }
-# 
-#     try:
-#         param_value = strand_config_param[config_param][library_type]
-#     except KeyError:
-#         raise KeyError('whatup with yout config')
-
-    if not strand_option in options:
-        msg_format = "ERROR: 'alignment_options:library_type' in config file is '{}'. Valid library_type options are: 0 (un-stranded), 1 (first-strand), or 2 (second-strand)."
+    if not strand_option in strand_config_param.keys():
+        msg_format = "ERROR: 'alignment_options:library_type' in config file is '{}'. Valid library_type options are: 'fr-unstranded', 'fr-firststrand', 'fr-secondstrand'."
         msg = msg_format.format(strand_option)
         raise ValueError(msg)
 
-    if library_type == "tuxedo":
-        return tuxedo_library_type[strand_option]
-    elif library_type == "htseq":
-        return htseq_library_type[strand_option]
-    else:
-        msg_format = "ERROR: Unknown library_type {}."
-        msg = msg_format.format(library_type)
-        raise ValueError(msg)
-
-
-# def cuffdiff_labels(comparison_infix, underbar_separated_comparisons):
-#     return underbar_separated_comparisons.replace(comparison_infix, ",")
-
+    try:
+        param_value = strand_config_param[strand_option][library_type]
+        return param_value
+    except KeyError:
+        raise KeyError('invalid library type option: ', library_type)
 
 def cuffdiff_samples(comparison_infix,
                      underbar_separated_comparisons,

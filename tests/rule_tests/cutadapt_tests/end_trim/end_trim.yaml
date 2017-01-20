@@ -21,6 +21,6 @@ comparisons:
 fold_change:
 references:
 alignment_options:
-    library_type: 0
+    library_type: fr-unstranded
 comparisons:
     pLabel: pval1_v_pval2

@@ -4,6 +4,7 @@ from __future__ import print_function, absolute_import, division
 
 import collections
 from collections import defaultdict
+from functools import partial
 import glob
 import hashlib
 import os
@@ -100,7 +101,6 @@ class ChecksumManager(object):
             checksum_files.update(tuple(self.reset_checksum_for_dict(the_name, the_dict)))
         self._checksum_remove_extra_files(checksum_files)
 
-
 def checksum_reset_all(checksum_dir, **kwargs):
     ChecksumManager(checksum_dir, FILE_EXTENSION).reset_checksums(**kwargs)
 
@@ -126,6 +126,29 @@ def init_references(config_references):
         else:
             pass #link matches existing link
     os.chdir("..")
+
+def build_phenotype_dict(phenotype_labels_string,
+                         sample_phenotype_value_dict,
+                         delimiter):
+    '''Translates config phenotypes/samples into nested dict of phenotypes.
+    Specifically {phenotype_label : {phenotype_value : [list of samples] } }
+
+    Strips all surrounding white space.
+    
+    phenotypes_string : delimited phenotype labels (columns)
+    sample_phenotype_value_dict : {sample_id : delimited phenotype_value_string} (rows)
+    '''
+    phenotype_dict = defaultdict(partial(defaultdict, list))
+    phenotype_labels = list(map(str.strip, phenotype_labels_string.split(delimiter)))
+    sorted_sample_phenotypes_items = sorted([(k, v) for k,v in sample_phenotype_value_dict.items()])
+    for sample, phenotype_values in sorted_sample_phenotypes_items:
+        sample_phenotype_values = map(str.strip, phenotype_values.split(delimiter))
+        sample_phenotypes = dict(zip(phenotype_labels, sample_phenotype_values)) 
+        for label, value in sample_phenotypes.items():
+            if value != '':
+                phenotype_dict[label][value].append(sample)
+    return phenotype_dict
+
 
 def cuffdiff_conditions(comparison_infix, explicit_comparisons):
     unique_conditions = set()

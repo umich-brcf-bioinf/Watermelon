@@ -2,8 +2,6 @@
 ## 7/26/2016
 ## Watermelon 1.0 : Recreate Legacy pipeline in snakemake
 
-## snakemake --snakefile <snakefile> --configfile <config.yaml> --cores 40 -T
-## snakemake --snakefile Snakefile --configfile tronson_config.yaml  --cores 40 -T -D >workflow_summary.xls
 from __future__ import print_function, absolute_import, division
 
 from collections import defaultdict, OrderedDict
@@ -26,7 +24,6 @@ DIFFEX_DIR = config.get("diffex_output_dir", "diffex_results")
 rnaseq_snakefile_helper.init_references(config["references"])
 
 
-COMPARISON_INFIX = '_v_'
 DELIMITER = '^'
 SAMPLES_KEY = 'samples'
 PHENOTYPES_KEY = 'phenotypes'
@@ -47,7 +44,7 @@ PHENOTYPE = phenotype_dict
 rnaseq_snakefile_helper.checksum_reset_all("config_checksums",
                                            config=config,
                                            phenotype_comparisons=config['comparisons'],
-                                           phenotype_samples=phenotype_dict)
+                                           phenotype_samples=PHENOTYPE)
 
 
 # CUFFDIFF_COMMA_LABELS = { 'gender' : 'M,F',

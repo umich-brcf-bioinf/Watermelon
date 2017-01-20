@@ -241,3 +241,35 @@ class ChecksumManagerTest(unittest.TestCase):
                                     'phenotype_comparisons-diet.watermelon.md5',
                                     '.watermelon.md5:0ef89ab1c75b2de0359c4dff6363105f')
 
+class RnaseqSnakefileHelper(unittest.TestCase):
+    def test_build_phenotype_dict(self):
+        phenotype_labels = 'A | B | C'
+        sample_phenotype_value_dict = {'s3' : ' a1 | b1 | c1 ',
+                                       's4' : ' a2 | b2 | c2 ',
+                                       's1' : ' a1 | b1 | c1 ',
+                                       's2' : ' a2 | b2 | c2 ',}
+        delimiter = '|'
+        actual_dict = rnaseq_snakefile_helper.build_phenotype_dict(phenotype_labels,
+                                                                   sample_phenotype_value_dict,
+                                                                   delimiter)
+        expected_dict = {'A' : {'a1': ['s1', 's3'], 'a2': ['s2','s4']},
+                         'B' : {'b1': ['s1', 's3'], 'b2': ['s2','s4']},
+                         'C' : {'c1': ['s1', 's3'], 'c2': ['s2','s4']},}
+
+        self.assertEqual(expected_dict, actual_dict)
+
+    def test_build_phenotype_dict_missing_values(self):
+        phenotype_labels = 'A | B | C'
+        sample_phenotype_value_dict = {'s3' : ' a1 | b1 | c1 ',
+                                       's4' : '    | b2 | c2 ',
+                                       's1' : ' a1 |    | c1 ',
+                                       's2' : ' a2 |    | ',}
+        delimiter = '|'
+        actual_dict = rnaseq_snakefile_helper.build_phenotype_dict(phenotype_labels,
+                                                                   sample_phenotype_value_dict,
+                                                                   delimiter)
+        expected_dict = {'A' : {'a1': ['s1', 's3'], 'a2': ['s2']},
+                         'B' : {'b1': ['s3'], 'b2': ['s4']},
+                         'C' : {'c1': ['s1', 's3'], 'c2': ['s4']},}
+
+        self.assertEqual(expected_dict, actual_dict)

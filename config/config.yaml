@@ -7,28 +7,27 @@ diffex_output_dir:
 
 phenotypes:    gender  ^  diet  ^    male.diet   ^   female.diet
 samples:
-    Sample_61483: Ma     ^   HF   ^      HF        ^             
-    Sample_61484: Ma     ^   ND   ^      ND        ^             
-    Sample_61485: Ma     ^   HF   ^      HF        ^             
+    Sample_61483: Me     ^   HF   ^      HF        ^             
+    Sample_61484: Me     ^   ND   ^      ND        ^             
+    Sample_61485: Me     ^   HF   ^      HF        ^             
     Sample_61486:       ^   ND   ^                ^    ND       
-    Sample_61487: Fe     ^   HF   ^                ^    HF       
-    Sample_61488: Fe     ^   HF   ^                ^    HF       
-    Sample_61489: Fe     ^   DRG  ^                ^    DRG      
-    Sample_61490: Fe     ^   DRG  ^                ^    DRG      
+    Sample_61504: Fe     ^   HF   ^                ^    HF       
+    Sample_61505: Fe     ^   HF   ^                ^    HF       
+    Sample_61506: Fe     ^   DRG  ^                ^    DRG      
+    Sample_61490:       ^   DRG  ^                ^    DRG      
     
 comparisons:
     gender: 
-       Ma_v_Fe
+       Me_v_Fe
     diet:
-        HF_v_ND
-        HF_v_DRG
-        ND_v_DRG
-    male.diet:
-       HF_v_ND
-    female.diet:
        HF_v_ND
        HF_v_DRG
-
+       ND_v_DRG
+    male.diet:
+      HF_v_ND
+    female.diet:
+      HF_v_ND
+      HF_v_DRG
 
 fold_change:
     1.5
@@ -41,7 +40,7 @@ trimming_options:
 
 alignment_options:
     transcriptome_only: True
-    library_type: 0  # 1   # 2
+    library_type: fr-unstranded   #1   # 2
 
 genome:
     mm10

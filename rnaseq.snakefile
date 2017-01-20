@@ -106,6 +106,7 @@ rule all:
                 alignment_dir=ALIGNMENT_DIR,
                 sample=config["samples"]),
         ALIGNMENT_DIR + "/06-qc_metrics/alignment_stats.txt",
+        DIFFEX_DIR + "/07-htseq/HTSeq_counts.txt",
         expand("{diffex_dir}/08-cuffdiff/{phenotype}/gene_exp.diff",
                 diffex_dir=DIFFEX_DIR, 
                 phenotype=sorted(config[COMPARISONS_KEY].keys())),

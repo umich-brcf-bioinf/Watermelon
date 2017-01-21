@@ -270,6 +270,6 @@ class RnaseqSnakefileHelper(unittest.TestCase):
                                                                    delimiter)
         expected_dict = {'A' : {'a1': ['s1', 's3'], 'a2': ['s2']},
                          'B' : {'b1': ['s3'], 'b2': ['s4']},
-                         'C' : {'c1': ['s1', 's3'], 'c2': ['s4']},}
+                         'C' : {'c1': ['s1', 's3'], 'c2': [     's4']},}
 
         self.assertEqual(expected_dict, actual_dict)

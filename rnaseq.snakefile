@@ -129,7 +129,7 @@ rule cutadapt:
         output_file = "{sample}_trimmed_R1.fastq.gz",
         trimming_options = rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"])
     log:
-        ALIGNMENT_DIR + "/02-cutadapt/{sample}_cutadapt.log"
+        ALIGNMENT_DIR + "/02-cutadapt/log/{sample}_cutadapt.log"
     shell:
         "module load rnaseq && "
         "if [[ {params.trimming_options} > 0 ]]; then "
@@ -152,7 +152,7 @@ rule fastqc_trimmed_reads:
         touch(ALIGNMENT_DIR + "/03-fastqc_reads/reads_fastq.done"),
         ALIGNMENT_DIR + "/03-fastqc_reads/{sample}_trimmed_R1_fastqc.html"
     log:
-        ALIGNMENT_DIR + "/03-fastqc_reads/{sample}_fastqc_trimmed_reads.log"
+        ALIGNMENT_DIR + "/03-fastqc_reads/log/{sample}_fastqc_trimmed_reads.log"
     params:
         fastqc_dir = ALIGNMENT_DIR + "/03-fastqc_reads"
     shell:
@@ -173,7 +173,7 @@ rule create_transcriptome_index:
         output_dir = ALIGNMENT_DIR + "/04-tophat",
         strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"]) 
     log: 
-        ALIGNMENT_DIR + "/04-tophat/create_transcriptome_index.log"
+        ALIGNMENT_DIR + "/04-tophat/log/create_transcriptome_index.log"
     shell:
         "mkdir -p {params.temp_dir} && "
         " rm -rf {params.temp_dir}/* && "
@@ -204,7 +204,7 @@ rule tophat:
         tophat_options = lambda wildcards: rnaseq_snakefile_helper.tophat_options(config["alignment_options"]),
         strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"])
     log:
-        ALIGNMENT_DIR + "/04-tophat/{sample}/{sample}_tophat.log"
+        ALIGNMENT_DIR + "/04-tophat/log/{sample}_tophat.log"
     threads: 8
     shell: 
             " module load rnaseq && "
@@ -231,7 +231,7 @@ rule fastqc_tophat_align:
     params:
         fastqc_dir =  ALIGNMENT_DIR + "/05-fastqc_align"
     log:
-        ALIGNMENT_DIR + "/05-fastqc_align/{sample}_fastqc_tophat_align.log"
+        ALIGNMENT_DIR + "/05-fastqc_align/log/{sample}_fastqc_tophat_align.log"
     shell:
         " module load rnaseq && "
         "fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log} "
@@ -264,7 +264,7 @@ rule htseq_per_sample:
     params:
         strand = rnaseq_snakefile_helper.check_strand_option("htseq", config["alignment_options"]["library_type"])
     log:
-        DIFFEX_DIR + "/07-htseq/{sample}_htseq_per_sample.log"
+        DIFFEX_DIR + "/07-htseq/log/{sample}_htseq_per_sample.log"
     shell:
         " module load rnaseq &&"
         " python -m HTSeq.scripts.count "
@@ -275,7 +275,7 @@ rule htseq_per_sample:
         " -q {input.bams} "
         " {input.gtf} "
         " > {output} "
-        " 2> {log} "
+        " 2>&1 | tee {log}"
 
 rule htseq_merge:
     input:
@@ -287,8 +287,10 @@ rule htseq_merge:
     params:
         output_dir = DIFFEX_DIR + "/07-htseq",
         input_dir = DIFFEX_DIR + "/07-htseq"
+    log:
+        DIFFEX_DIR + "/07-htseq/log/htseq_merge.log"
     shell:
-       " perl {WATERMELON_SCRIPTS_DIR}/mergeHTSeqCountFiles.pl {params.input_dir} "
+       " perl {WATERMELON_SCRIPTS_DIR}/mergeHTSeqCountFiles.pl {params.input_dir} 2>&1 | tee {log}"
 
 rule cuffdiff:
     input:
@@ -312,7 +314,7 @@ rule cuffdiff:
         strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"])
     threads: 8
     log:
-        DIFFEX_DIR + "/08-cuffdiff/{pheno}/{pheno}_cuffdiff.log"
+        DIFFEX_DIR + "/08-cuffdiff/log/{pheno}_cuffdiff.log"
     shell:
         " module load rnaseq && "
         " cuffdiff -q "
@@ -337,19 +339,23 @@ rule diffex_flip:
         isoform_flip = DIFFEX_DIR + "/09-diffex_flip/{pheno}/isoform_exp.flip.diff"
     params:
         comparisons = lambda wildcards: phenotypeManager.separated_comparisons(',')[wildcards.pheno]
+    log: 
+        DIFFEX_DIR + "/09-diffex_flip/log/{pheno}_diffex_flip.log"
     shell:
         " module purge && module load python/3.4.3 && "
         "python {WATERMELON_SCRIPTS_DIR}/diffex_flip.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " {input.gene_cuffdiff} "
         " {output.gene_flip} "
-        " {params.comparisons} && "
+        " {params.comparisons} "
+        " 2>&1 | tee {log} && "
         
         "python {WATERMELON_SCRIPTS_DIR}/diffex_flip.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " {input.isoform_cuffdiff} "
         " {output.isoform_flip} "
         " {params.comparisons} "
+        " 2>&1 | tee >>{log} "
 
 rule diffex_flag:
     input:
@@ -362,7 +368,7 @@ rule diffex_flag:
     params:
         fold_change = config["fold_change"]
     log:
-        DIFFEX_DIR + "/10-diffex_flag/{pheno}/{pheno}_diffex_flag.log"
+        DIFFEX_DIR + "/10-diffex_flag/log/{pheno}_diffex_flag.log"
     shell: 
         " module purge && "
         " module load python/3.4.3 && "
@@ -392,7 +398,7 @@ rule annotate_diffex_flag:
         output_dir = DIFFEX_DIR + "/11-annotate_diffex_flag/{pheno}",
         genome = config["genome"]
     log:
-        DIFFEX_DIR + "/11-annotate_diffex_flag/{pheno}/{pheno}_annotate_diffex_flag.log"
+        DIFFEX_DIR + "/11-annotate_diffex_flag/log/{pheno}_annotate_diffex_flag.log"
     shell:
         "python {WATERMELON_SCRIPTS_DIR}/annotate_entrez_gene_info.py "
         " -i {input.entrez_gene_info} "
@@ -444,7 +450,7 @@ rule cummerbund:
         output_dir = DIFFEX_DIR + "/13-cummerbund/{pheno}",
         genome = config["genome"],
     log:
-         DIFFEX_DIR + "/13-cummerbund/{pheno}/{pheno}_cummerbund.log"
+         DIFFEX_DIR + "/13-cummerbund/log/{pheno}_cummerbund.log"
     shell:
         "module load rnaseq && "
         "mkdir -p {params.output_dir}/Plots && "
@@ -467,6 +473,8 @@ rule diffex_split:
     params:
         output_dir = DIFFEX_DIR + "/14-diffex_split/{phenotype_name}",
         user_specified_comparison_list = lambda wildcards: phenotypeManager.separated_comparisons(',')[wildcards.phenotype_name],
+    log:
+        DIFFEX_DIR + "/14-diffex_split/log/{phenotype_name}_diffex_split.log"
     shell:
         "module purge && module load python/3.4.3 && "
         "python {WATERMELON_SCRIPTS_DIR}/diffex_split.py "
@@ -474,7 +482,8 @@ rule diffex_split:
         " -o _gene.txt "
         " {input.gene} "
         " {params.output_dir} "
-        " {params.user_specified_comparison_list} && "
+        " {params.user_specified_comparison_list} "
+        " 2>&1 | tee {log} && "
 
         "module purge && module load python/3.4.3 && "
         "python {WATERMELON_SCRIPTS_DIR}/diffex_split.py "
@@ -483,6 +492,7 @@ rule diffex_split:
         " {input.isoform} "
         " {params.output_dir} "
         " {params.user_specified_comparison_list} "
+        " 2>&1 | tee >>{log} "
 
 
 rule last_split:
@@ -521,7 +531,9 @@ rule diffex_excel:
         glossary = DIFFEX_DIR + "/15-run_info/glossary.txt",
         run_info = DIFFEX_DIR + "/15-run_info/run_info.txt"
     output: 
-        DIFFEX_DIR + "/16-diffex_excel/{phenotype_name}/{comparison}.xlsx",
+        DIFFEX_DIR + "/16-diffex_excel/{phenotype_name}/{comparison}.xlsx"
+    log:
+        DIFFEX_DIR + "/16-diffex_excel/log/{phenotype_name}_diffex_excel.log"
     shell:
         "module purge && module load python/3.4.3 && "
         " python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py "
@@ -530,6 +542,7 @@ rule diffex_excel:
         " --glossary {input.glossary} "
         " --info_filepath {input.run_info} "
         " {output} "
+        " 2>&1 | tee {log} "
 
 rule deliverables_align_cuffdiff:
     input:

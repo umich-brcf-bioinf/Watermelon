@@ -21,78 +21,21 @@ INPUT_DIR = config.get("input_dir", "inputs")
 ALIGNMENT_DIR = config.get("alignment_output_dir", "alignment_results")
 DIFFEX_DIR = config.get("diffex_output_dir", "diffex_results")
 
-rnaseq_snakefile_helper.init_references(config["references"])
-
-
 DELIMITER = '^'
 SAMPLES_KEY = 'samples'
 PHENOTYPES_KEY = 'phenotypes'
 COMPARISONS_KEY ='comparisons'
 
-phenotype_dict = defaultdict(partial(defaultdict, list))
-phenotype_labels = list(map(str.strip, config[PHENOTYPES_KEY].split(DELIMITER)))
-sample_phenotypes_dict = config[SAMPLES_KEY]
-sorted_sample_phenotypes_items = sorted([(k, v) for k,v in sample_phenotypes_dict.items()])
-for sample, phenotype_values in sorted_sample_phenotypes_items:
-    sample_phenotypes = dict(zip(phenotype_labels, map(str.strip, phenotype_values.split(DELIMITER)))) 
-    for label, value in sample_phenotypes.items():
-        if value != '':
-            phenotype_dict[label][value].append(sample)
+phenotypeManager = PhenotypeManager(config, DELIMITER, COMPARISON_INFIX)
 
-PHENOTYPE = phenotype_dict
+PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_tuple.phenotypes
+COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_tuple.comparisons
 
+rnaseq_snakefile_helper.init_references(config["references"])
 rnaseq_snakefile_helper.checksum_reset_all("config_checksums",
                                            config=config,
                                            phenotype_comparisons=config['comparisons'],
-                                           phenotype_samples=PHENOTYPE)
-
-
-# CUFFDIFF_COMMA_LABELS = { 'gender' : 'M,F',
-#                           'diet' : 'HF,ND,DRG',
-#                           'male.diet' : 'HF,ND',
-#                           'female.diet' : 'HF,ND,DRG' }
-#                 
-# CUFFDIFF_UNDERBAR_LABELS = { 'gender' : 'M_v_F',
-#                              'diet' : 'HF_v_ND_v_DRG',
-#                              'male.diet' : 'HF_v_ND',
-#                              'female.diet' : 'HF_v_ND_v_DRG' }
-# 
-# CONFIG_COMPARISONS = { 'gender' : 'M_v_F',
-#                        'diet' : 'HF_v_ND,HF_v_DRG,ND_v_DRG',
-#                        'male.diet' : 'HF_v_ND',
-#                        'female.diet' : 'HF_v_ND,HF_v_DRG' }
-
-CONFIG_COMPARISONS = defaultdict()
-for phenotype, comparison in config[COMPARISONS_KEY].items():
-    comma_separated_comparisons = ','.join(list(map(str.strip, comparison.split())))
-    CONFIG_COMPARISONS[phenotype]= comma_separated_comparisons
-
-CUFFDIFF_UNDERBAR_LABELS = defaultdict()
-CUFFDIFF_COMMA_LABELS = defaultdict()
-for phenotype, comparison in config[COMPARISONS_KEY].items():
-    comparison_list = list(map(str.strip,comparison.split()))
-    unique_conditions = set()
-    for group in comparison_list:
-        unique_conditions.update(group.split(COMPARISON_INFIX))   
-    underbar_separated_groups = COMPARISON_INFIX.join(sorted(unique_conditions)) 
-    comma_separated_groups = ','.join(sorted(unique_conditions)) 
-    CUFFDIFF_UNDERBAR_LABELS[phenotype] = underbar_separated_groups
-    CUFFDIFF_COMMA_LABELS[phenotype] = comma_separated_groups
-
-
-def map_phenotypes_comparisons(config_comparisons):
-    phenotype_comparison = dict([(k, v.split()) for k,v in config_comparisons.items()])
-    phenotypes=[]
-    comparisons=[]
-    for k,v in phenotype_comparison.items():
-        for c in v:
-            phenotypes.append(k)
-            comparisons.append(c)
-    return(phenotypes,comparisons)
-
-
-(PHENOTYPE_NAMES,COMPARISON_GROUPS)=map_phenotypes_comparisons(config["comparisons"])
-
+                                           phenotype_samples=phenotypeManager.phenotype_sample_list)
 
 rule all:
     input:
@@ -360,11 +303,9 @@ rule cuffdiff:
         DIFFEX_DIR + "/08-cuffdiff/{pheno}/read_groups.info"
     params:
         output_dir = DIFFEX_DIR + "/08-cuffdiff/{pheno}/",
-        labels = lambda wildcards : CUFFDIFF_COMMA_LABELS[wildcards.pheno],
-        samples = lambda wildcards : rnaseq_snakefile_helper.cuffdiff_samples(COMPARISON_INFIX,
-                                                                              CUFFDIFF_UNDERBAR_LABELS[wildcards.pheno],
-                                                                              PHENOTYPE[wildcards.pheno],
-                                                                               ALIGNMENT_DIR + "/04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
+        labels = lambda wildcards : phenotypeManager.concatenated_comparison_values(',')[wildcards.pheno],
+        samples = lambda wildcards : phenotypeManager.cuffdiff_samples(wildcards.pheno,
+                                                                       ALIGNMENT_DIR + "/04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
         strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"])
     threads: 8
     log:
@@ -392,7 +333,7 @@ rule diffex_flip:
         gene_flip = DIFFEX_DIR + "/09-diffex_flip/{pheno}/gene_exp.flip.diff",
         isoform_flip = DIFFEX_DIR + "/09-diffex_flip/{pheno}/isoform_exp.flip.diff"
     params:
-        comparisons = lambda wildcards: CONFIG_COMPARISONS[wildcards.pheno]
+        comparisons = lambda wildcards: phenotypeManager.separated_comparisons(',')[wildcards.pheno]
     shell:
         " module purge && module load python/3.4.3 && "
         "python {WATERMELON_SCRIPTS_DIR}/diffex_flip.py "
@@ -522,7 +463,7 @@ rule diffex_split:
         "{diffex_dir}/14-diffex_split/{phenotype_name}/{comparison}_isoform.txt"
     params:
         output_dir = DIFFEX_DIR + "/14-diffex_split/{phenotype_name}",
-        user_specified_comparison_list = lambda wildcards: CONFIG_COMPARISONS[wildcards.phenotype_name],
+        user_specified_comparison_list = lambda wildcards: phenotypeManager.separated_comparisons(',')[wildcards.phenotype_name],
     shell:
         "module purge && module load python/3.4.3 && "
         "python {WATERMELON_SCRIPTS_DIR}/diffex_split.py "

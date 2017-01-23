@@ -7,9 +7,12 @@ import time
 import unittest
 
 from testfixtures.tempdirectory import TempDirectory
+import yaml
 
 import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
-from scripts.rnaseq_snakefile_helper import PhenotypeManager
+from scripts.rnaseq_snakefile_helper import ConfigValidator,\
+                                            PhenotypeManager, \
+                                            WatermelonException
 
 class ChecksumManagerTest(unittest.TestCase):
     def assertChecksumFile(self, config_dir, config_filename, expected_checksum=None):
@@ -476,6 +479,91 @@ class PhenotypeManagerTest(unittest.TestCase):
 
         expected = '/foo/s1.bar,/foo/s2.bar,/foo/s4.bar /foo/s5.bar,/foo/s6.bar'
         self.assertEqual(expected, actual)
+
+class MicroMock(object):
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
+class ConfigValidatorTest(unittest.TestCase):
+    def ok(self):
+        self.assertEqual(1, 1)
+
+    def test_validate(self):
+        validator = ConfigValidator({})
+        validator.validate()
+        self.ok()
+
+    def test_comparison_missing_phenotype_value_singleValue(self):
+        config_string = \
+'''phenotypes: diet
+samples:
+    s1: HD
+    s2: LD
+    s3: ND
+    s4: NA
+comparisons:
+    diet:
+        HD_v_LD
+        HD_v_ND'''
+        config = yaml.load(config_string)
+        phenotype_manager = PhenotypeManager(config)
+        validator = ConfigValidator(phenotype_manager)
+        
+        expected_message = (r'WARNING: .* \(diet:NA\) are not present in comparisons;'
+                            r' some samples \(diet:s4\) will be excluded from comparisons .*')
+        self.assertRaisesRegex(WatermelonException,
+                               expected_message,
+                               validator._comparison_missing_phenotype_value)
+
+    def test_comparison_missing_phenotype_value_muiltipleValues(self):
+        config_string = \
+'''phenotypes: pLabelA
+samples:
+    s1: pVal1
+    s2: pVal2
+    s3: pVal3
+    s4: pVal4
+    s5: pVal5
+comparisons:
+    pLabelA:
+        pVal1_v_pVal2
+'''
+        config = yaml.load(config_string)
+        phenotype_manager = PhenotypeManager(config)
+        validator = ConfigValidator(phenotype_manager)
+        
+        expected_message = (r'WARNING: .* \(pLabelA:pVal3,pVal4,pVal5\)'
+                            r' are not present in comparisons; '
+                            r'some samples \(pLabelA:s3,s4,s5\) will be excluded from comparisons .*')
+        self.assertRaisesRegex(WatermelonException,
+                               expected_message,
+                               validator._comparison_missing_phenotype_value)
+
+    def test_comparison_missing_phenotype_value_muiltiplePhenotypes(self):
+        config_string = \
+'''phenotypes: pLabelA ^ pLabelB
+samples:
+    s1: A1 ^ B4
+    s2: A2 ^ B3
+    s3: A3 ^ B2
+    s4: A4 ^ B1
+comparisons:
+    pLabelA:
+        A1_v_A2
+    pLabelB:
+        B1_v_B2
+'''
+        config = yaml.load(config_string)
+        phenotype_manager = PhenotypeManager(config)
+        validator = ConfigValidator(phenotype_manager)
+        
+        expected_message = (r'WARNING: .* \(pLabelA:A3,A4;pLabelB:B3,B4\)'
+                            r' are not present in comparisons; '
+                            r'some samples \(pLabelA:s3,s4;pLabelB:s1,s2\) will be excluded from comparisons .*')
+        self.assertRaisesRegex(WatermelonException,
+                               expected_message,
+                               validator._comparison_missing_phenotype_value)
+
 
 class RnaseqSnakefileHelperTest(unittest.TestCase):
     def test_cutadapt_options_noOptionsReturns0(self):

@@ -41,6 +41,13 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
+class WatermelonException(Exception):
+    """Flagging cases that we can not process at this time."""
+    def __init__(self, msg, *args):
+        #pylint: disable=star-args
+        error_msg = msg.format(*[str(i) for i in args])
+        super(WatermelonException, self).__init__(error_msg)
+
 class ChecksumManager(object):
     def __init__(self, checksum_dir, file_extension):
         self.checksum_dir = checksum_dir
@@ -257,6 +264,34 @@ class PhenotypeManager(object):
 
         return group_separator.join(params)
 
+class ConfigValidator(object):
+    def __init__(self, phenotype_manager):
+        self.phenotype_manager = phenotype_manager
+
+    def validate(self):
+        pass
+
+    def _comparison_missing_phenotype_value(self):
+        comparison_pheno_values = set()
+        for pheno_label, pheno_values in self.phenotype_manager.comparison_values.items():
+            for pheno_value in pheno_values:
+                comparison_pheno_values.add((pheno_label, pheno_value))
+
+        pheno_values = defaultdict(list)
+        pheno_samples = defaultdict(list)
+        for phenoLabel, phenoValueSamples in self.phenotype_manager.phenotype_sample_list.items():
+            for phenoValue, samples in phenoValueSamples.items():
+                if (phenoLabel, phenoValue) not in comparison_pheno_values:
+                    pheno_values[phenoLabel].append(phenoValue)
+                    pheno_samples[phenoLabel].extend(samples)
+        if pheno_values:
+            label_values = [label +':' + ','.join(sorted(values)) for label, values in sorted(pheno_values.items())]
+            samples = [label + ':' + ','.join(sorted(samples)) for label, samples in sorted(pheno_samples.items())]
+            msg_fmt = ('WARNING: Some phenotypes ({}) are not present in comparisons; '
+                       'some samples ({}) will be excluded from comparisons for those '
+                       'phenotypes.')
+            msg = msg_fmt.format(';'.join(label_values), ';'.join(samples))
+            raise WatermelonException(msg)
 
 def check_strand_option(library_type,strand_option):
     strand_config_param = { 'fr-unstranded' : {'tuxedo': 'fr-unstranded', 'htseq': 'no'}, 

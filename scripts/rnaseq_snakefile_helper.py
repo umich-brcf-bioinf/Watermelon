@@ -177,7 +177,7 @@ class PhenotypeManager(object):
         check_phenotype_labels(phenotype_labels)
         sorted_sample_phenotypes_items = sorted([(k, v) for k,v in self.sample_phenotype_value_dict.items()])
         for sample, phenotype_values in sorted_sample_phenotypes_items:
-            sample_phenotype_values = map(str.strip, phenotype_values.split(self.delimiter))
+            sample_phenotype_values = list(map(str.strip, phenotype_values.split(self.delimiter)))
             sample_phenotypes = dict(zip(phenotype_labels, sample_phenotype_values)) 
             check_labels_match_values(phenotype_labels,
                                       sample,
@@ -221,8 +221,8 @@ class PhenotypeManager(object):
         phenotype_comparison = dict([(k, v.split()) for k,v in self.comparisons.items()])
         phenotypes=[]
         comparisons=[]
-        for k, v in phenotype_comparison.items():
-            for c in v:
+        for k, v in sorted(phenotype_comparison.items()):
+            for c in sorted(v):
                 phenotypes.append(k)
                 comparisons.append(c)
         PhenotypesComparisons = collections.namedtuple('PhenotypeComparisons',

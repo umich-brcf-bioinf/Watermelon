@@ -26,7 +26,9 @@ SAMPLES_KEY = 'samples'
 PHENOTYPES_KEY = 'phenotypes'
 COMPARISONS_KEY ='comparisons'
 
-phenotypeManager = PhenotypeManager(config, DELIMITER, COMPARISON_INFIX)
+phenotypeManager = rnaseq_snakefile_helper.PhenotypeManager(config,
+                                                            DELIMITER,
+                                                            COMPARISON_INFIX)
 
 PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_tuple.phenotypes
 COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_tuple.comparisons
@@ -296,7 +298,8 @@ rule cuffdiff:
         fasta_file = "references/bowtie2_index/genome.fa",
         gtf_file = "references/gtf",
         bam_files = expand("{alignment_dir}/04-tophat/{sample}/{sample}_accepted_hits.bam",
-                            alignment_dir= ALIGNMENT_DIR, sample=config["samples"])
+                            alignment_dir= ALIGNMENT_DIR,
+                            sample=config["samples"])
     output:
         DIFFEX_DIR + "/08-cuffdiff/{pheno}/gene_exp.diff",
         DIFFEX_DIR + "/08-cuffdiff/{pheno}/isoform_exp.diff",

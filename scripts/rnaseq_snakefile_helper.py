@@ -231,7 +231,7 @@ class PhenotypeManager(object):
         return PhenotypesComparisons(phenotypes=phenotypes, comparisons=comparisons)
 
     def cuffdiff_samples(self,
-                         phenotype,
+                         phenotype_label,
                          sample_file_format):
         '''Returns a list of sample files grouped by phenotype value.
            Each sample group represents the comma separated samples for a phenotype value.
@@ -241,28 +241,22 @@ class PhenotypeManager(object):
 
         group_separator = ' '
         file_separator = ','
-        sample_name_group = self.phenotype_sample_list[phenotype]
+
+        sample_name_group = self.phenotype_sample_list[phenotype_label]
 
         group_sample_names = defaultdict(list)
-        for phenotype, sample_list in sample_name_group.items():
+        for phenotype_value, sample_list in sample_name_group.items():
             for sample_name in sample_list:
                 sample_file = sample_file_format.format(sample_placeholder=sample_name)
-                group_sample_names[phenotype].append(sample_file)
+                group_sample_names[phenotype_value].append(sample_file)
         group_sample_names = dict(group_sample_names)
 
         params = []
-        for group in self.comparison_values:
+        for group in self.comparison_values[phenotype_label]:
             params.append(file_separator.join(sorted(group_sample_names[group])))
+
         return group_separator.join(params)
 
-
-#TODO: (cgates): is this used?
-# def cuffdiff_conditions(comparison_infix, explicit_comparisons):
-#     unique_conditions = set()
-#     for comparison in explicit_comparisons:
-#         unique_conditions.update(comparison.split(comparison_infix))
-#     multi_condition_comparison = comparison_infix.join(sorted(unique_conditions))
-#     return(multi_condition_comparison)
 
 def check_strand_option(library_type,strand_option):
     strand_config_param = { 'fr-unstranded' : {'tuxedo': 'fr-unstranded', 'htseq': 'no'}, 
@@ -279,21 +273,6 @@ def check_strand_option(library_type,strand_option):
         return param_value
     except KeyError:
         raise KeyError('invalid library type option: ', library_type)
-
-def cuffdiff_samples(comparison_infix,
-                     underbar_separated_comparisons,
-                     sample_name_group,
-                     sample_file_format):
-    group_sample_names = defaultdict(list)
-    for phenotype, sample_list in sample_name_group.items():
-        for sample_name in sample_list:
-            group_sample_names[phenotype].append(sample_file_format.format(sample_placeholder=sample_name))
-    group_sample_names = dict(group_sample_names)
-
-    params = []
-    for group in underbar_separated_comparisons.split(comparison_infix):
-        params.append(','.join(sorted(group_sample_names[group])))
-    return ' '.join(params)
 
 
 def cutadapt_options(trim_params):

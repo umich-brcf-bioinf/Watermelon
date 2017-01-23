@@ -40,7 +40,7 @@ trimming_options:
 
 alignment_options:
     transcriptome_only: True
-    library_type: fr-unstranded   #1   # 2
+    library_type: fr-unstranded   #fr-firststrand   #fr-secondstrand
 
 genome:
     mm10

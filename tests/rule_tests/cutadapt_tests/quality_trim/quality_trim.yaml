@@ -23,7 +23,7 @@ entrez_gene_info:
 genome:
 references:
 alignment_options:
-    library_type: 0
+    library_type: fr-unstranded
 transcriptome_index:
 comparisons:
 fold_change:

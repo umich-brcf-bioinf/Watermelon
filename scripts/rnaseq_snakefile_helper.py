@@ -2,14 +2,22 @@
 '''
 from __future__ import print_function, absolute_import, division
 
+from argparse import Namespace
 import collections
 from collections import defaultdict
+from functools import partial
 import glob
 import hashlib
 import os
 from os.path import join
 from os.path import isfile
 
+
+CONFIG_KEYS = Namespace(phenotypes='phenotypes',
+                        samples='samples',
+                        comparisons='comparisons')
+DEFAULT_COMPARISON_INFIX = '_v_'
+DEFAULT_PHENOTYPE_DELIM = '^'
 
 FILE_EXTENSION = '.watermelon.md5'
 '''Appended to all checksum filenames; must be very distinctive to ensure the module can
@@ -100,7 +108,6 @@ class ChecksumManager(object):
             checksum_files.update(tuple(self.reset_checksum_for_dict(the_name, the_dict)))
         self._checksum_remove_extra_files(checksum_files)
 
-
 def checksum_reset_all(checksum_dir, **kwargs):
     ChecksumManager(checksum_dir, FILE_EXTENSION).reset_checksums(**kwargs)
 
@@ -127,12 +134,129 @@ def init_references(config_references):
             pass #link matches existing link
     os.chdir("..")
 
-def cuffdiff_conditions(comparison_infix, explicit_comparisons):
-    unique_conditions = set()
-    for comparison in explicit_comparisons:
-        unique_conditions.update(comparison.split(comparison_infix))
-    multi_condition_comparison = comparison_infix.join(sorted(unique_conditions))
-    return(multi_condition_comparison)
+class PhenotypeManager(object):
+    def __init__(self,
+                 config={},
+                 delimiter=DEFAULT_PHENOTYPE_DELIM,
+                 comparison_infix=DEFAULT_COMPARISON_INFIX):
+        self.phenotype_labels_string = config.get(CONFIG_KEYS.phenotypes, None)
+        self.sample_phenotype_value_dict = config.get(CONFIG_KEYS.samples, None)
+        self.comparisons = config.get(CONFIG_KEYS.comparisons, None)
+        self.delimiter = delimiter
+        self.comparison_infix = comparison_infix
+
+    @property
+    def phenotype_sample_list(self):
+        '''Translates config phenotypes/samples into nested dict of phenotypes.
+        Specifically {phenotype_label : {phenotype_value : [list of samples] } }
+
+        Strips all surrounding white space.
+    
+        phenotypes_string : delimited phenotype labels (columns)
+        sample_phenotype_value_dict : {sample_id : delimited phenotype_value_string} (rows)
+        '''
+        def check_labels_match_values(phenotype_labels,
+                                      sample,
+                                      phenotype_values):
+            if len(phenotype_labels) != len(phenotype_values):
+                msg_fmt = 'expected {} phenotype values but sample {} had {}'
+                msg = msg_fmt.format(len(phenotype_labels),
+                                     sample,
+                                     len(phenotype_values))
+                raise ValueError(msg)
+
+        def check_phenotype_labels(labels):
+            for i,label in enumerate(labels):
+                if label == '':
+                    msg_fmt = 'label of phenotype {} is empty'
+                    msg = msg_fmt.format(i + 1)
+                    raise ValueError(msg)
+
+        phenotype_dict = defaultdict(partial(defaultdict, list))
+        phenotype_labels = list(map(str.strip, self.phenotype_labels_string.split(self.delimiter)))
+        check_phenotype_labels(phenotype_labels)
+        sorted_sample_phenotypes_items = sorted([(k, v) for k,v in self.sample_phenotype_value_dict.items()])
+        for sample, phenotype_values in sorted_sample_phenotypes_items:
+            sample_phenotype_values = list(map(str.strip, phenotype_values.split(self.delimiter)))
+            sample_phenotypes = dict(zip(phenotype_labels, sample_phenotype_values)) 
+            check_labels_match_values(phenotype_labels,
+                                      sample,
+                                      sample_phenotype_values)
+            for label, value in sample_phenotypes.items():
+                if value != '':
+                    phenotype_dict[label][value].append(sample)
+        return phenotype_dict
+
+    def separated_comparisons(self, output_delimiter):
+        '''Returns a dict of {phenotype_label: 'val1_v_val2,val3_v_val4'}'''
+        comparisons = {}
+        for phenotype, comparison in self.comparisons.items():
+            comp_string = output_delimiter.join(list(map(str.strip, comparison.split())))
+            comparisons[phenotype]= comp_string
+        return comparisons
+
+    @property
+    def comparison_values(self):
+        '''Returns dict of {pheno_label : [val1,val2,val3,val4] }'''
+        phenotype_label_values = {}
+        for phenotype, comparison in self.comparisons.items():
+            comparison_list = list(map(str.strip, comparison.split()))
+            unique_conditions = set()
+            for group in comparison_list:
+                unique_conditions.update(group.split(self.comparison_infix))
+            values = sorted(unique_conditions) 
+            phenotype_label_values[phenotype] = values
+        return phenotype_label_values
+
+    def concatenated_comparison_values(self, output_delimiter):
+        '''Returns dict of {pheno_label : 'val1,val2,val3,val4' }'''
+        phenotype_label_values = {}
+        for phenotype_label, values in self.comparison_values.items():
+            phenotype_label_values[phenotype_label] = output_delimiter.join(values)
+        return phenotype_label_values
+
+    @property
+    def phenotypes_comparisons_tuple(self):
+        '''Returns named tuple of phenotype, comparison for all comparisons'''
+        phenotype_comparison = dict([(k, v.split()) for k,v in self.comparisons.items()])
+        phenotypes=[]
+        comparisons=[]
+        for k, v in sorted(phenotype_comparison.items()):
+            for c in sorted(v):
+                phenotypes.append(k)
+                comparisons.append(c)
+        PhenotypesComparisons = collections.namedtuple('PhenotypeComparisons',
+                                                       'phenotypes comparisons')
+
+        return PhenotypesComparisons(phenotypes=phenotypes, comparisons=comparisons)
+
+    def cuffdiff_samples(self,
+                         phenotype_label,
+                         sample_file_format):
+        '''Returns a list of sample files grouped by phenotype value.
+           Each sample group represents the comma separated samples for a phenotype value.
+           Sample groups are separated by a space.
+           
+           sample_file_format is format string with placeholder {sample_placeholder}'''
+
+        group_separator = ' '
+        file_separator = ','
+
+        sample_name_group = self.phenotype_sample_list[phenotype_label]
+
+        group_sample_names = defaultdict(list)
+        for phenotype_value, sample_list in sample_name_group.items():
+            for sample_name in sample_list:
+                sample_file = sample_file_format.format(sample_placeholder=sample_name)
+                group_sample_names[phenotype_value].append(sample_file)
+        group_sample_names = dict(group_sample_names)
+
+        params = []
+        for group in self.comparison_values[phenotype_label]:
+            params.append(file_separator.join(sorted(group_sample_names[group])))
+
+        return group_separator.join(params)
+
 
 def check_strand_option(library_type,strand_option):
     strand_config_param = { 'fr-unstranded' : {'tuxedo': 'fr-unstranded', 'htseq': 'no'}, 
@@ -149,21 +273,6 @@ def check_strand_option(library_type,strand_option):
         return param_value
     except KeyError:
         raise KeyError('invalid library type option: ', library_type)
-
-def cuffdiff_samples(comparison_infix,
-                     underbar_separated_comparisons,
-                     sample_name_group,
-                     sample_file_format):
-    group_sample_names = defaultdict(list)
-    for phenotype, sample_list in sample_name_group.items():
-        for sample_name in sample_list:
-            group_sample_names[phenotype].append(sample_file_format.format(sample_placeholder=sample_name))
-    group_sample_names = dict(group_sample_names)
-
-    params = []
-    for group in underbar_separated_comparisons.split(comparison_infix):
-        params.append(','.join(sorted(group_sample_names[group])))
-    return ' '.join(params)
 
 
 def cutadapt_options(trim_params):

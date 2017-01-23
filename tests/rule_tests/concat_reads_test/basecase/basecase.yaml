@@ -23,6 +23,6 @@ transcriptome_index:
 comparisons:
 fold_change:
 alignment_options:
-    library_type: 0
+    library_type: fr-unstranded
 comparisons:
     pLabel: pval1_v_lval2

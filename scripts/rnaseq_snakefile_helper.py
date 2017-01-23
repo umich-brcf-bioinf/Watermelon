@@ -279,17 +279,17 @@ def cutadapt_options(trim_params):
     run_trimming_options = 0
     for option, value in trim_params.items():
         if not isinstance(value, int):
+            msg_format = "ERROR: config:trimming_options '{}={}' must be integer"
+            msg = msg_format.format(option, value)
             raise ValueError(msg)
-            msg_format = "ERROR: Config trimming_options '{}' must be integer"
-            msg = msg_format.format(value)
-        run_trimming_options += value
+        run_trimming_options = 1
     return run_trimming_options
 
 
 def tophat_options(alignment_options):
     options = ""
     if not isinstance(alignment_options["transcriptome_only"], bool):
-        raise ValueError("config alignment_options:transcriptome_only must be boolean")
+        raise ValueError("config:alignment_options:transcriptome_only must be True or False")
     if alignment_options["transcriptome_only"]:
         options += " --transcriptome-only "
     else:

@@ -590,4 +590,6 @@ rule deliverables_cummerbund:
         diffex_dir = "{diffex_dir}/Deliverables/diffex",
     shell:
         " cp -r {input.diffex_raw_counts} {output.diffex_raw_counts} && "
-        " cp -r {input.plots}  {output.plots} "
+        " find {output.diffex_raw_counts} | xargs -I ^ touch ^ && "
+        " cp -r {input.plots}  {output.plots} && "
+        " find {output.plots} | xargs -I ^ touch ^ "

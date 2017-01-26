@@ -18,16 +18,16 @@ samples:
     
 comparisons:
     gender: 
-       Me_v_Fe
+    - Me_v_Fe
     diet:
-       HF_v_ND
-       HF_v_DRG
-       ND_v_DRG
+    - HF_v_ND
+    - HF_v_DRG
+    - ND_v_DRG
     male.diet:
-      HF_v_ND
+    - HF_v_ND
     female.diet:
-      HF_v_ND
-      HF_v_DRG
+    - HF_v_ND
+    - HF_v_DRG
 
 fold_change:
     1.5
@@ -40,7 +40,7 @@ trimming_options:
 
 alignment_options:
     transcriptome_only: True
-    library_type: fr-unstranded   #fr-firststrand   #fr-secondstrand
+    library_type: fr-unstranded  # fr-firststrand # fr-secondstrand 
 
 genome:
     mm10

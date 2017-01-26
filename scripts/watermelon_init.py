@@ -27,6 +27,7 @@ from collections import OrderedDict
 import datetime
 import functools
 import glob
+import itertools
 import os
 import sys
 import time
@@ -90,10 +91,16 @@ _FASTQ_GLOBS = ['*.fastq', '*.fastq.gz']
 _CONFIG_KEYS = argparse.Namespace(comparisons='comparisons',
                                   genome='genome',
                                   input_dir='input_dir',
+                                  phenotypes='phenotypes',
                                   references='references',
                                   samples='samples')
-_DEFAULT_PHENOTYPE = 'g1'
-_DEFAULT_COMPARISON = {'g1_v_g2' : 'g1_v_g2'}
+_PHENOTYPE_DELIM = ' ^ '
+_DEFAULT_PHENOTYPE_LABELS = 'gender ^ genotype'
+_DEFAULT_GENDER_VALUES = ['female', 'male']
+_DEFAULT_GENOTYPE_VALUES = ['MutA', 'MutB', 'WT']
+_DEFAULT_COMPARISONS = {'gender'   : ['male_v_female'],
+                        'genotype' : ['MutA_v_WT', 'MutB_v_WT']
+                       }
 
 _TODAY = datetime.date.today()
 _DEFAULT_JOB_SUFFIX = '_{:02d}_{:02d}'.format(_TODAY.month, _TODAY.day)
@@ -159,12 +166,25 @@ def _populate_inputs_dir(inputs_dir, samples):
     for sample_name, sample_dir_target in samples.items():
         os.symlink(sample_dir_target, os.path.join(inputs_dir, sample_name))
 
+def _build_phenotypes_samples_comparisons(samples):
+    config = {}
+    config[_CONFIG_KEYS.phenotypes] = _DEFAULT_PHENOTYPE_LABELS
+
+    gender_value = itertools.cycle(_DEFAULT_GENDER_VALUES)
+    genotype_value = itertools.cycle(_DEFAULT_GENOTYPE_VALUES)
+    pheno_value_items = [(next(gender_value), next(genotype_value)) for _ in samples]
+    pheno_value_strings = [_PHENOTYPE_DELIM.join(values) for values in sorted(pheno_value_items)]
+    samples_dict = dict([(s, v) for s, v in zip(sorted(samples), pheno_value_strings)])
+    config[_CONFIG_KEYS.samples] = samples_dict
+
+    config[_CONFIG_KEYS.comparisons] = _DEFAULT_COMPARISONS
+    return config
+
 def _make_config_dict(template_config, genome_references, input_dir, samples):
     config = dict(template_config)
     config[_CONFIG_KEYS.input_dir] = '"{}"'.format(input_dir)
     config.update(genome_references)
-    config[_CONFIG_KEYS.samples] = dict([(name, _DEFAULT_PHENOTYPE)for name in samples])
-    config[_CONFIG_KEYS.comparisons] = _DEFAULT_COMPARISON
+    config.update(_build_phenotypes_samples_comparisons(samples))
     return config
 
 def _build_postlude(args, sample_count, file_count):
@@ -219,6 +239,7 @@ def _write_config_file(config_filename, config_dict):
     tmp_config_dict = dict(config_dict)
     ordered_config_dict = OrderedDict()
     named_keys = [_CONFIG_KEYS.input_dir,
+                  _CONFIG_KEYS.phenotypes,
                   _CONFIG_KEYS.samples,
                   _CONFIG_KEYS.comparisons,
                   _CONFIG_KEYS.genome,

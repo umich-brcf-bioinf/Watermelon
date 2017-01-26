@@ -272,7 +272,9 @@ references:
     entrez_gene_info: /ccmb/BioinfCore/entrez_gene_info/2016_09_02/gene_info
 ''')
         input_dir = '/my/input/dir'
-        samples = {'sA':'fooA', 'sB': 'fooB', 'sC': 'fooC'}
+        samples = {'sA':'fooA', 'sB': 'fooB', 'sC': 'fooC',
+                   'sD':'fooA', 'sE': 'fooB', 'sF': 'fooC',
+                  }
         actual_config = watermelon_init._make_config_dict(template_config,
                                                           genome_references,
                                                           input_dir,
@@ -280,16 +282,26 @@ references:
         expected_keys = ['input_dir',
                          'foo1', 'foo2',
                          'genome', 'references',
-                         'samples', 'comparisons']
+                         'phenotypes','samples', 'comparisons']
         self.assertEquals(sorted(expected_keys), sorted(actual_config.keys()))
         self.assertEqual('"' + input_dir + '"', actual_config['input_dir'])
         self.assertEqual(template_config['foo1'], actual_config['foo1'])
         self.assertEqual(template_config['foo2'], actual_config['foo2'])
         self.assertEqual(genome_references['genome'], actual_config['genome'])
         self.assertEqual(genome_references['references'], actual_config['references'])
-        self.assertEqual({'sA':'g1', 'sB':'g1', 'sC':'g1'},
+        self.assertEqual(      'gender ^ genotype', actual_config['phenotypes'])
+        self.assertEqual({'sA':'female ^ MutA',
+                          'sB':'female ^ MutB',
+                          'sC':'female ^ WT',
+                          'sD':'male ^ MutA',
+                          'sE':'male ^ MutB',
+                          'sF':'male ^ WT',
+                          },
                          actual_config['samples'])
-        self.assertEqual({'g1_v_g2':'g1_v_g2'}, actual_config['comparisons'])
+        self.assertEqual(['male_v_female'],
+                         actual_config['comparisons']['gender'])
+        self.assertEqual(['MutA_v_WT', 'MutB_v_WT'],
+                         actual_config['comparisons']['genotype'])
 
     def test_write_config_file(self):
         with TempDirectory() as temp_dir:

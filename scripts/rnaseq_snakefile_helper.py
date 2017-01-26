@@ -199,7 +199,7 @@ class PhenotypeManager(object):
         '''Returns a dict of {phenotype_label: 'val1_v_val2,val3_v_val4'}'''
         comparisons = {}
         for phenotype, comparison in self.comparisons.items():
-            comp_string = output_delimiter.join(list(map(str.strip, comparison.split())))
+            comp_string = output_delimiter.join(list(map(str.strip, comparison)))
             comparisons[phenotype]= comp_string
         return comparisons
 
@@ -207,8 +207,8 @@ class PhenotypeManager(object):
     def comparison_values(self):
         '''Returns dict of {pheno_label : [val1,val2,val3,val4] }'''
         phenotype_label_values = {}
-        for phenotype, comparison in self.comparisons.items():
-            comparison_list = list(map(str.strip, comparison.split()))
+        for phenotype, comparison_list in self.comparisons.items():
+            comparison_list = list(map(str.strip, comparison_list))
             unique_conditions = set()
             for group in comparison_list:
                 unique_conditions.update(group.split(self.comparison_infix))
@@ -226,13 +226,13 @@ class PhenotypeManager(object):
     @property
     def phenotypes_comparisons_tuple(self):
         '''Returns named tuple of phenotype, comparison for all comparisons'''
-        phenotype_comparison = dict([(k, v.split()) for k,v in self.comparisons.items()])
+        phenotype_comparison = dict([(k, v) for k,v in self.comparisons.items()])
         phenotypes=[]
         comparisons=[]
         for k, v in sorted(phenotype_comparison.items()):
             for c in sorted(v):
                 phenotypes.append(k)
-                comparisons.append(c)
+                comparisons.append(c.strip())
         PhenotypesComparisons = collections.namedtuple('PhenotypeComparisons',
                                                        'phenotypes comparisons')
 

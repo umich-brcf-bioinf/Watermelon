@@ -1,3 +1,8 @@
+alignment_output_dir:
+    "alignment_results"
+diffex_output_dir:
+    "diffex_results"
+
 fold_change:
     1.5
 

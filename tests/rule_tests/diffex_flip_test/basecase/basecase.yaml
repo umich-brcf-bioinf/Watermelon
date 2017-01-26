@@ -26,8 +26,8 @@ alignment_options:
     library_type: fr-unstranded
     transcriptome_only: True
 transcriptome_index:
-comparisons:
 fold_change:
 
 comparisons:
-    pLabel: A_v_B
+    pLabel:
+    - A_v_B

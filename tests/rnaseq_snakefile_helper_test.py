@@ -348,8 +348,8 @@ class PhenotypeManagerTest(unittest.TestCase):
                                 'phenotype_sample_list')
 
     def test_separated_comparisons(self):
-        comparison_dict = {'phenoLabel1' : '1A_v_1B\n1C_v_1D',
-                           'phenoLabel2' : '2A_v_2B\n2C_v_2D'}
+        comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
+                           'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
         manager = PhenotypeManager({'comparisons' : comparison_dict})
         actual_comparisons = manager.separated_comparisons('#')
 
@@ -358,8 +358,8 @@ class PhenotypeManagerTest(unittest.TestCase):
         self.assertEqual(expected_comparisons, actual_comparisons)
 
     def test_separated_comparisons_stripsWhitespace(self):
-        comparison_dict = {'phenoLabel1' : '\t1A_v_1B\t\n\t1C_v_1D\t',
-                           'phenoLabel2' : '  2A_v_2B  \n  2C_v_2D  '}
+        comparison_dict = {'phenoLabel1' : ['\t1A_v_1B\t','\t1C_v_1D\t'],
+                           'phenoLabel2' : ['  2A_v_2B  ','  2C_v_2D  ']}
         manager = PhenotypeManager({'comparisons' : comparison_dict})
         actual_comparisons = manager.separated_comparisons('$')
 
@@ -373,8 +373,8 @@ class PhenotypeManagerTest(unittest.TestCase):
         self.assertEqual({}, actual_comparisons)
 
     def test_concatenated_comparison_values(self):
-        comparison_dict = {'phenoLabel1' : '1A_v_1B\n1C_v_1D',
-                           'phenoLabel2' : '2A_v_2B\n2C_v_2D'}
+        comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
+                           'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
         comparison_infix = '_v_'
         delimiter = '|^|'
         manager = PhenotypeManager({'comparisons' : comparison_dict})
@@ -384,7 +384,7 @@ class PhenotypeManagerTest(unittest.TestCase):
         self.assertEqual(expected_comparisons, actual_comparisons)
 
     def test_concatenated_comparison_values_stripsWhitespace(self):
-        comparison_dict = {'phenoLabel1' : ' \t1A_v_1B \t\n\t 1C_v_1D \t'}
+        comparison_dict = {'phenoLabel1' : [' \t1A_v_1B \t', '\t 1C_v_1D \t']}
         comparison_infix = '_v_'
         delimiter = '|^|'
 
@@ -395,7 +395,7 @@ class PhenotypeManagerTest(unittest.TestCase):
         self.assertEqual(expected_comparisons, actual_comparisons)
 
     def test_concatenated_comparison_values_duplicateValuesCoalesced(self):
-        comparison_dict = {'phenoLabel1' : '1A_v_1B\n1A_v_1C\n1A_v_1D'}
+        comparison_dict = {'phenoLabel1' : ['1A_v_1B','1A_v_1C','1A_v_1D']}
         comparison_infix = '_v_'
         delimiter = '|^|'
 
@@ -407,7 +407,7 @@ class PhenotypeManagerTest(unittest.TestCase):
 
 
     def test_concatenated_comparison_values_reorders(self):
-        comparison_dict = {'phenoLabel1' : '1D_v_1B\n1C_v_1A'}
+        comparison_dict = {'phenoLabel1' : ['1D_v_1B','1C_v_1A']}
         comparison_infix = '_v_'
         delimiter = '|^|'
 
@@ -418,8 +418,8 @@ class PhenotypeManagerTest(unittest.TestCase):
         self.assertEqual(expected_comparisons, actual_comparisons)
 
     def test_phenotypes_comparisons_tuple(self):
-        comparison_dict = {'phenoLabel1' : '1A_v_1B\n1C_v_1D',
-                           'phenoLabel2' : '2A_v_2B\n2C_v_2D'}
+        comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
+                           'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
 
         manager = PhenotypeManager({'comparisons' : comparison_dict})
 
@@ -431,7 +431,7 @@ class PhenotypeManagerTest(unittest.TestCase):
                          actual.comparisons)
 
     def test_phenotypes_comparisons_tuple_oneLabelOneComparison(self):
-        comparison_dict = {'phenoLabel1' : '1A_v_1B'}
+        comparison_dict = {'phenoLabel1' : ['1A_v_1B']}
 
         manager = PhenotypeManager({'comparisons' : comparison_dict})
         actual = manager.phenotypes_comparisons_tuple
@@ -442,8 +442,8 @@ class PhenotypeManagerTest(unittest.TestCase):
                          actual.comparisons)
 
     def test_phenotypes_comparisons_tuple_stripsWhitespace(self):
-        comparison_dict = {'phenoLabel1' : ' 1A_v_1B\t\n 1C_v_1D ',
-                           'phenoLabel2' : ' 2A_v_2B\t\n 2C_v_2D '}
+        comparison_dict = {'phenoLabel1' : [' 1A_v_1B\t',' 1C_v_1D '],
+                           'phenoLabel2' : [' 2A_v_2B\t',' 2C_v_2D ']}
         manager = PhenotypeManager({'comparisons' : comparison_dict})
 
         actual = manager.phenotypes_comparisons_tuple
@@ -461,8 +461,8 @@ class PhenotypeManagerTest(unittest.TestCase):
                    's4' : '    ^ 2A ',
                    's5' : ' 1C ^ 2B ',
                    's6' : ' 1D ^ 2B '}
-        comparison_dict = {'pLabel1' : ' 1A_v_1B\t\n 1C_v_1D ',
-                           'pLabel2' : ' 2A_v_2B'}
+        comparison_dict = {'pLabel1' : [' 1A_v_1B\t',' 1C_v_1D '],
+                           'pLabel2' : [' 2A_v_2B']}
         manager = PhenotypeManager({'phenotypes' : phenotypes,
                                     'samples' : samples,
                                     'comparisons' : comparison_dict})

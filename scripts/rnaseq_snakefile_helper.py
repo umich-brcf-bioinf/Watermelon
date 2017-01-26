@@ -41,12 +41,11 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
-class WatermelonException(Exception):
-    """Flagging cases that we can not process at this time."""
+class WatermelonWarning(Exception):
     def __init__(self, msg, *args):
         #pylint: disable=star-args
         error_msg = msg.format(*[str(i) for i in args])
-        super(WatermelonException, self).__init__(error_msg)
+        super(WatermelonWarning, self).__init__(error_msg)
 
 class ChecksumManager(object):
     def __init__(self, checksum_dir, file_extension):
@@ -142,6 +141,8 @@ def init_references(config_references):
     os.chdir("..")
 
 class PhenotypeManager(object):
+    '''Interprets a subset of the config to help answer questions around how
+    samples map to phenotype labels and values and vice versa.'''
     def __init__(self,
                  config={},
                  delimiter=DEFAULT_PHENOTYPE_DELIM,
@@ -267,9 +268,14 @@ class PhenotypeManager(object):
 class ConfigValidator(object):
     def __init__(self, phenotype_manager):
         self.phenotype_manager = phenotype_manager
+        self.validations = [self._comparison_missing_phenotype_value,
+                            self._comparison_missing_phenotype_label,
+                            self._samples_excluded_from_comparison]
 
     def validate(self):
         pass
+#         for validation in self.validations:
+#             validation()
 
     def _comparison_missing_phenotype_value(self):
         comparison_pheno_values = set()
@@ -287,11 +293,36 @@ class ConfigValidator(object):
         if pheno_values:
             label_values = [label +':' + ','.join(sorted(values)) for label, values in sorted(pheno_values.items())]
             samples = [label + ':' + ','.join(sorted(samples)) for label, samples in sorted(pheno_samples.items())]
-            msg_fmt = ('WARNING: Some phenotypes ({}) are not present in comparisons; '
+            msg_fmt = ('Some phenotypes ({}) are not present in comparisons; '
                        'some samples ({}) will be excluded from comparisons for those '
                        'phenotypes.')
             msg = msg_fmt.format(';'.join(label_values), ';'.join(samples))
-            raise WatermelonException(msg)
+            raise WatermelonWarning(msg)
+
+    def _comparison_missing_phenotype_label(self):
+        comparison_pheno_labels = self.phenotype_manager.comparison_values.keys()
+        sample_pheno_labels = self.phenotype_manager.phenotype_sample_list.keys()
+        missing_labels = sorted(set(sample_pheno_labels) - set(comparison_pheno_labels))
+
+        if missing_labels:
+            msg_fmt = ('Some phenotype labels ({}) are not present in comparisons.')
+            msg = msg_fmt.format(','.join(missing_labels))
+            raise WatermelonWarning(msg)
+
+    def _samples_excluded_from_comparison(self):
+        all_samples = set(self.phenotype_manager.sample_phenotype_value_dict.keys())
+        comparison_pheno_labels = self.phenotype_manager.comparison_values.keys()
+        phenotype_sample_list = self.phenotype_manager.phenotype_sample_list
+        all_compared_samples = set()
+        for (pheno_label, pheno_values) in self.phenotype_manager.comparison_values.items():
+            for pheno_value in pheno_values:
+                samples = phenotype_sample_list[pheno_label][pheno_value]
+                all_compared_samples.update(samples)
+        missing_samples = sorted(all_samples - all_compared_samples)
+        if missing_samples:
+            msg_fmt = 'Some samples ({}) will not be compared.'
+            msg = msg_fmt.format(','.join(missing_samples))
+            raise WatermelonWarning(msg)
 
 def check_strand_option(library_type,strand_option):
     strand_config_param = { 'fr-unstranded' : {'tuxedo': 'fr-unstranded', 'htseq': 'no'}, 

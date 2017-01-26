@@ -503,8 +503,8 @@ samples:
     s4: NA
 comparisons:
     diet:
-        HD_v_LD
-        HD_v_ND'''
+    - HD_v_LD
+    - HD_v_ND'''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
         validator = ConfigValidator(phenotype_manager)
@@ -526,7 +526,7 @@ samples:
     s5: pVal5
 comparisons:
     pLabelA:
-        pVal1_v_pVal2
+    - pVal1_v_pVal2
 '''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
@@ -549,9 +549,9 @@ samples:
     s4: A4 ^ B1
 comparisons:
     pLabelA:
-        A1_v_A2
+    - A1_v_A2
     pLabelB:
-        B1_v_B2
+    - B1_v_B2
 '''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
@@ -576,7 +576,7 @@ comparisons:
     diet:
         HD_v_LD
     gender:
-        M_v_F'''
+    - M_v_F'''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
         validator = ConfigValidator(phenotype_manager)
@@ -593,7 +593,7 @@ samples:
     s4: HD ^ F
 comparisons:
     diet:
-        HD_v_LD'''
+    - HD_v_LD'''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
         validator = ConfigValidator(phenotype_manager)
@@ -610,7 +610,7 @@ samples:
     s2: LD ^ F
 comparisons:
     diet:
-        HD_v_LD'''
+    - HD_v_LD'''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
         validator = ConfigValidator(phenotype_manager)
@@ -627,7 +627,7 @@ samples:
     s4:    ^ M
 comparisons:
     diet:
-        HD_v_LD'''
+    - HD_v_LD'''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
         validator = ConfigValidator(phenotype_manager)
@@ -646,7 +646,7 @@ samples:
     s4:    ^ X
 comparisons:
     gender:
-        M_v_F'''
+    - M_v_F'''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
         validator = ConfigValidator(phenotype_manager)

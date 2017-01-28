@@ -18,9 +18,10 @@ class _WatermelonConfigWarning(Exception):
 
 
 class _ValidationCollector(object):
-    def __init__(self):
+    def __init__(self, log):
         self.failures = []
         self.warnings = []
+        self._log = log
 
     def check(self, validation):
         try:
@@ -48,22 +49,42 @@ class _ValidationCollector(object):
             summary = 'FAILED'
             results.insert(0, '{} failures'.format(len(self.failures)))
         if results:
-            return '{} ({}):'.format(summary, ','.join(results))
+            return '{} ({}):'.format(summary, ', '.join(results))
         else:
             return summary
 
-    def log_results(self, log):
-        log.write('config validation: {}\n'.format(self.summary_result))
+    def log_results(self):
+        self._log.write('config validation: {}\n'.format(self.summary_result))
+        for failure in self.failures:
+            self._log.write('failure: {}\n'.format(failure))
+        for warning in self.warnings:
+            self._log.write('warning: {}\n'.format(warning))
+
+    def ok_to_proceed(self, prompt_to_override_warnings):
+        result = True
+        if self.failures:
+            self._log.write('There were config file validation failures; please review/revise the config and try again.\n')
+            result = False
+        elif self.warnings:
+            self._log.write('There were config file validation warnings.\n')
+            result = prompt_to_override_warnings()
+            if result:
+                self._log.write('Based on user input Watermelon will continue despite warnings above.\n')
+        if not result:
+            self._log.write('Watermelon stopped to review config file warnings/errors.\n')
+        return result
+
 
 class _ConfigValidator(object):
-    def __init__(self, phenotype_manager, stderr=sys.stderr):
+    def __init__(self, phenotype_manager, log=sys.stderr):
         self.phenotype_manager = phenotype_manager
         self._validations = [self._comparison_missing_phenotype_value,
                              self._comparison_missing_phenotype_label,
                              self._samples_excluded_from_comparison]
+        self._log = log
 
     def validate(self):
-        collector = _ValidationCollector()
+        collector = _ValidationCollector(self._log)
         for validation in self._validations:
             collector.check(validation)
         return collector
@@ -115,7 +136,22 @@ class _ConfigValidator(object):
             msg = msg_fmt.format(','.join(missing_samples))
             raise _WatermelonConfigWarning(msg)
 
+def _ok_to_proceed(validation_collector, log, prompt_to_override):
+    result = True
+    if validation_collector.failures:
+        log.write('There were config file validation failures; please review/revise the config and try again.\n')
+        result = False
+    elif validation_collector.warnings:
+        log.write('There were config file validation warnings. Should Watermelon ignore these and proceed? (yes/no):')
+        response = prompt_to_continue()
+        result = response.upper().strip() == 'YES'
+    if not result:
+        log.write('Watermelon stopped to review config file warnings/errors.\n')
+    return result
 
+def prompt_to_override():
+    value = input('Should Watermelon ignore these errors and proceed? (yes/no): ')
+    return value.lower().strip() == 'yes'
 
 def main(config_filename):
     pass

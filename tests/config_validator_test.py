@@ -14,27 +14,31 @@ except ImportError:
 import yaml
 
 from scripts.rnaseq_snakefile_helper import  PhenotypeManager
-from scripts.config_validator import ConfigValidator
-from scripts.config_validator import WatermelonConfigWarning
+from scripts.config_validator import _ConfigValidator
+from scripts.config_validator import _WatermelonConfigFailure
+from scripts.config_validator import _WatermelonConfigWarning
+from scripts.config_validator import _ValidationCollector
 
+
+class MockValidation(object):
+    def __init__(self, warning_or_error=None):
+        self.validate_was_called = False
+        self.warning_or_error = warning_or_error
+
+    def validate(self):
+        self.validate_was_called = True
+        if self.warning_or_error:
+            raise self.warning_or_error
+                
 class ConfigValidatorTest(unittest.TestCase):
-    class MockValidation(object):
-        def __init__(self, warning_or_error=None):
-            self.validate_was_called = False
-            self.warning_or_error = warning_or_error
-
-        def validate(self):
-            self.validate_was_called = True
-            if self.warning_or_error:
-                raise self.warning_or_error
 
     def ok(self):
         self.assertEqual(1, 1)
 
     def test_validate_ok(self):
-        validator = ConfigValidator({})
-        validation1 = ConfigValidatorTest.MockValidation()
-        validation2 = ConfigValidatorTest.MockValidation()
+        validator = _ConfigValidator({})
+        validation1 = MockValidation()
+        validation2 = MockValidation()
         validator._validations=[validation1.validate, validation2.validate]
 
         validation_result = validator.validate()
@@ -42,15 +46,15 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual(True, validation1.validate_was_called)
         self.assertEqual(True, validation2.validate_was_called)
         self.assertEqual(True, validation_result.passed)
-        self.assertEqual([], validation_result.errors)
+        self.assertEqual([], validation_result.failures)
         self.assertEqual([], validation_result.warnings)
 
-    def test_validate_error(self):
+    def test_validate_warning(self):
         stderr = StringIO()
-        validator = ConfigValidator({}, stderr=stderr)
-        validation1 = ConfigValidatorTest.MockValidation()
-        warning = WatermelonConfigWarning("I'm angry")
-        validation2 = ConfigValidatorTest.MockValidation(warning)
+        validator = _ConfigValidator({}, stderr=stderr)
+        validation1 = MockValidation()
+        warning =_WatermelonConfigWarning("I'm angry")
+        validation2 = MockValidation(warning)
         validator._validations=[validation1.validate, validation2.validate]
 
         validation_result = validator.validate()
@@ -59,7 +63,66 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual(True, validation2.validate_was_called)
         self.assertEqual(False, validation_result.passed)
         self.assertEqual([warning], validation_result.warnings)
-        self.assertEqual([], validation_result.errors)
+        self.assertEqual([], validation_result.failures)
+
+
+    def test_validate_earlyWarningContinuesProcessingValidations(self):
+        stderr = StringIO()
+        validator = _ConfigValidator({}, stderr=stderr)
+        warning =_WatermelonConfigWarning("I'm angry")
+        validation1 = MockValidation(warning)
+        validation2 = MockValidation()
+        validator._validations=[validation1.validate, validation2.validate]
+
+        validation_result = validator.validate()
+
+        self.assertEqual(True, validation1.validate_was_called)
+        self.assertEqual(True, validation2.validate_was_called)
+        self.assertEqual(False, validation_result.passed)
+        self.assertEqual([warning], validation_result.warnings)
+        self.assertEqual([], validation_result.failures)
+
+    def test_validate_error(self):
+        stderr = StringIO()
+        validator = _ConfigValidator({}, stderr=stderr)
+        validation1 = MockValidation()
+        error =_WatermelonConfigFailure("I'm angry")
+        validation2 = MockValidation(error)
+        validator._validations=[validation1.validate, validation2.validate]
+
+        validation_result = validator.validate()
+
+        self.assertEqual(True, validation1.validate_was_called)
+        self.assertEqual(True, validation2.validate_was_called)
+        self.assertEqual(False, validation_result.passed)
+        self.assertEqual([], validation_result.warnings)
+        self.assertEqual([error], validation_result.failures)
+
+
+    def test_validate_mixOfWarningsAndErrors(self):
+        stderr = StringIO()
+        validator = _ConfigValidator({}, stderr=stderr)
+        problem1 =_WatermelonConfigFailure("I'm angry")
+        validation1 = MockValidation(problem1)
+        problem2 =_WatermelonConfigWarning("I'm angry")
+        validation2 = MockValidation(problem2)
+        problem3 =_WatermelonConfigWarning("I'm angry")
+        validation3 = MockValidation(problem3)
+        problem4 =_WatermelonConfigFailure("I'm angry")
+        validation4 = MockValidation(problem4)
+        validator._validations=[validation1.validate,
+                                validation2.validate,
+                                validation3.validate,
+                                validation4.validate]
+
+        validation_result = validator.validate()
+
+        self.assertEqual(True, validation1.validate_was_called)
+        self.assertEqual(True, validation2.validate_was_called)
+        self.assertEqual(False, validation_result.passed)
+        self.assertEqual([problem2, problem3], validation_result.warnings)
+        self.assertEqual([problem1, problem4], validation_result.failures)
+
 
 
     def test_comparison_missing_phenotype_value_singleValue(self):
@@ -76,11 +139,11 @@ comparisons:
     - HD_v_ND'''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
-        validator = ConfigValidator(phenotype_manager)
+        validator = _ConfigValidator(phenotype_manager)
         
         expected_message = (r'\(diet:NA\) are not present in comparisons;'
                             r' some samples \(diet:s4\) will be excluded from comparisons .*')
-        self.assertRaisesRegex(WatermelonConfigWarning,
+        self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
                                validator._comparison_missing_phenotype_value)
 
@@ -99,12 +162,12 @@ comparisons:
 '''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
-        validator = ConfigValidator(phenotype_manager)
+        validator = _ConfigValidator(phenotype_manager)
         
         expected_message = (r'\(pLabelA:pVal3,pVal4,pVal5\)'
                             r' are not present in comparisons; '
                             r'some samples \(pLabelA:s3,s4,s5\) will be excluded from comparisons .*')
-        self.assertRaisesRegex(WatermelonConfigWarning,
+        self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
                                validator._comparison_missing_phenotype_value)
 
@@ -124,12 +187,12 @@ comparisons:
 '''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
-        validator = ConfigValidator(phenotype_manager)
+        validator = _ConfigValidator(phenotype_manager)
         
         expected_message = (r'\(pLabelA:A3,A4;pLabelB:B3,B4\)'
                             r' are not present in comparisons; '
                             r'some samples \(pLabelA:s3,s4;pLabelB:s1,s2\) will be excluded from comparisons .*')
-        self.assertRaisesRegex(WatermelonConfigWarning,
+        self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
                                validator._comparison_missing_phenotype_value)
 
@@ -148,7 +211,7 @@ comparisons:
     - M_v_F'''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
-        validator = ConfigValidator(phenotype_manager)
+        validator = _ConfigValidator(phenotype_manager)
         validator._comparison_missing_phenotype_label()
         self.ok()
 
@@ -165,9 +228,9 @@ comparisons:
     - HD_v_LD'''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
-        validator = ConfigValidator(phenotype_manager)
+        validator = _ConfigValidator(phenotype_manager)
         expected_message = (r'\(gender\) are not present in comparisons.')
-        self.assertRaisesRegex(WatermelonConfigWarning,
+        self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
                                validator._comparison_missing_phenotype_label)
 
@@ -182,7 +245,7 @@ comparisons:
     - HD_v_LD'''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
-        validator = ConfigValidator(phenotype_manager)
+        validator = _ConfigValidator(phenotype_manager)
         validator._samples_excluded_from_comparison()
         self.ok()
 
@@ -199,9 +262,9 @@ comparisons:
     - HD_v_LD'''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
-        validator = ConfigValidator(phenotype_manager)
+        validator = _ConfigValidator(phenotype_manager)
         expected_message = r'Some samples \(s3,s4\) will not be compared.'
-        self.assertRaisesRegex(WatermelonConfigWarning,
+        self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
                                validator._samples_excluded_from_comparison)
 
@@ -218,8 +281,64 @@ comparisons:
     - M_v_F'''
         config = yaml.load(config_string)
         phenotype_manager = PhenotypeManager(config)
-        validator = ConfigValidator(phenotype_manager)
+        validator = _ConfigValidator(phenotype_manager)
         expected_message = r'Some samples \(s2,s4\) will not be compared.'
-        self.assertRaisesRegex(WatermelonConfigWarning,
+        self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
                                validator._samples_excluded_from_comparison)
+
+
+class ValidationCollectorTest(unittest.TestCase):
+    def test_passed_true(self):
+        collector = _ValidationCollector()
+        self.assertEqual(True, collector.passed)
+        passing_validation = MockValidation()
+        collector.check(passing_validation.validate)
+        self.assertEqual(True, collector.passed)
+        self.assertEqual([], collector.warnings)
+        self.assertEqual([], collector.failures)
+
+    def test_passed_falseIfConfigWarning(self):
+        collector = _ValidationCollector()
+        self.assertEqual(True, collector.passed)
+        problem = _WatermelonConfigWarning('foo')
+        problem_validation = MockValidation(problem)
+        collector.check(problem_validation.validate)
+        self.assertEqual(False, collector.passed)
+        self.assertEqual([problem], collector.warnings)
+        self.assertEqual([], collector.failures)
+
+    def test_passed_falseIfConfigError(self):
+        collector = _ValidationCollector()
+        self.assertEqual(True, collector.passed)
+        problem = _WatermelonConfigFailure('error')
+        problem_validation = MockValidation(problem)
+        collector.check(problem_validation.validate)
+        self.assertEqual(False, collector.passed)
+        self.assertEqual([], collector.warnings)
+        self.assertEqual([problem], collector.failures)
+
+    def test_passed_raiseIfUnknownError(self):
+        collector = _ValidationCollector()
+        self.assertEqual(True, collector.passed)
+        problem_validation = MockValidation(ValueError('foo'))
+        self.assertRaisesRegex(ValueError,
+                               'foo',
+                               collector.check,
+                               problem_validation.validate)
+
+    def test_log_validation_results_ok(self):
+        log = StringIO()
+        collector = _ValidationCollector()
+        collector.log_results(log)
+        
+        self.assertEqual('config validation: OK\n', log.getvalue())
+
+    def test_log_validation_results_error(self):
+        log = StringIO()
+        collector = _ValidationCollector()
+        validation = MockValidation(_WatermelonConfigWarning('warn1'))
+        collector.check(validation.validate)
+        collector.log_results(log)
+        
+        self.assertEqual('config validation: WARNING (1 warnings):\n', log.getvalue())

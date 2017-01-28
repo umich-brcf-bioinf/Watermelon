@@ -1,18 +1,61 @@
 from __future__ import print_function, absolute_import, division
 
-from argparse import Namespace
 from collections import defaultdict
 import sys
 
 
-class WatermelonConfigWarning(Exception):
+class _WatermelonConfigFailure(Exception):
     def __init__(self, msg, *args):
         #pylint: disable=star-args
         error_msg = msg.format(*[str(i) for i in args])
-        super(WatermelonConfigWarning, self).__init__(error_msg)
+        super(_WatermelonConfigFailure, self).__init__(error_msg)
+
+class _WatermelonConfigWarning(Exception):
+    def __init__(self, msg, *args):
+        #pylint: disable=star-args
+        error_msg = msg.format(*[str(i) for i in args])
+        super(_WatermelonConfigWarning, self).__init__(error_msg)
 
 
-class ConfigValidator(object):
+class _ValidationCollector(object):
+    def __init__(self):
+        self.failures = []
+        self.warnings = []
+
+    def check(self, validation):
+        try:
+            validation()
+        except _WatermelonConfigWarning as warning:
+            self.warnings.append(warning)
+        except _WatermelonConfigFailure as failure:
+            self.failures.append(failure)
+
+    @property
+    def passed(self):
+        if self.warnings or self.failures:
+            return False
+        else:
+            return True
+
+    @property
+    def summary_result(self):
+        results = []
+        summary = 'OK'
+        if self.warnings:
+            summary = 'WARNING'
+            results.append('{} warnings'.format(len(self.warnings)))
+        if self.failures:
+            summary = 'FAILED'
+            results.insert(0, '{} failures'.format(len(self.failures)))
+        if results:
+            return '{} ({}):'.format(summary, ','.join(results))
+        else:
+            return summary
+
+    def log_results(self, log):
+        log.write('config validation: {}\n'.format(self.summary_result))
+
+class _ConfigValidator(object):
     def __init__(self, phenotype_manager, stderr=sys.stderr):
         self.phenotype_manager = phenotype_manager
         self._validations = [self._comparison_missing_phenotype_value,
@@ -20,17 +63,10 @@ class ConfigValidator(object):
                              self._samples_excluded_from_comparison]
 
     def validate(self):
-        passed = True
-        warnings = []
-        errors = []
-        try:
-            for validation in self._validations:
-                validation()
-        except WatermelonConfigWarning as warning:
-            warnings.append(warning)
-        if warnings or errors:
-            passed = False
-        return Namespace(passed=passed, warnings=warnings, errors=errors)
+        collector = _ValidationCollector()
+        for validation in self._validations:
+            collector.check(validation)
+        return collector
 
     def _comparison_missing_phenotype_value(self):
         comparison_pheno_values = set()
@@ -52,7 +88,7 @@ class ConfigValidator(object):
                        'some samples ({}) will be excluded from comparisons for those '
                        'phenotypes.')
             msg = msg_fmt.format(';'.join(label_values), ';'.join(samples))
-            raise WatermelonConfigWarning(msg)
+            raise _WatermelonConfigWarning(msg)
 
     def _comparison_missing_phenotype_label(self):
         comparison_pheno_labels = self.phenotype_manager.comparison_values.keys()
@@ -62,7 +98,7 @@ class ConfigValidator(object):
         if missing_labels:
             msg_fmt = ('Some phenotype labels ({}) are not present in comparisons.')
             msg = msg_fmt.format(','.join(missing_labels))
-            raise WatermelonConfigWarning(msg)
+            raise _WatermelonConfigWarning(msg)
 
     def _samples_excluded_from_comparison(self):
         all_samples = set(self.phenotype_manager.sample_phenotype_value_dict.keys())
@@ -77,4 +113,9 @@ class ConfigValidator(object):
         if missing_samples:
             msg_fmt = 'Some samples ({}) will not be compared.'
             msg = msg_fmt.format(','.join(missing_samples))
-            raise WatermelonConfigWarning(msg)
+            raise _WatermelonConfigWarning(msg)
+
+
+
+def main(config_filename):
+    pass

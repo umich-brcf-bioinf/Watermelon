@@ -11,14 +11,15 @@ try:
 except ImportError:
     from io import StringIO
 
+from testfixtures.tempdirectory import TempDirectory
 import yaml
 
-from scripts.rnaseq_snakefile_helper import  PhenotypeManager
+from scripts.rnaseq_snakefile_helper import PhenotypeManager
 from scripts.config_validator import _ConfigValidator
 from scripts.config_validator import _WatermelonConfigFailure
 from scripts.config_validator import _WatermelonConfigWarning
 from scripts.config_validator import _ValidationCollector
-
+from scripts.config_validator import main
 
 class MockValidation(object):
     def __init__(self, warning_or_error=None):
@@ -40,6 +41,19 @@ class MockPromptOverride(object):
         self.prompt_to_override_was_called = True
         return self.prompt_to_override_return
 
+
+class MockValidationCollector(object):
+    def __init__(self):
+        self.check_calls = []
+
+    def check(self, validation):
+        self.check_calls.append(validation)
+
+def _write_config_file(path, filename, contents):
+    config_filename = os.path.join(path, filename)
+    with open(config_filename, 'w') as config_file:
+        print(contents, file=config_file)
+    return config_filename
 
 class ConfigValidatorTest(unittest.TestCase):
 
@@ -437,4 +451,85 @@ class ValidationCollectorTest(unittest.TestCase):
         self.assertRegex(next(lines), 'There were.*warnings')
         self.assertRegex(next(lines), 'Watermelon stopped')
 
+    def test_main_configOk(self):
+        mock_override = MockPromptOverride(False)
+        log = StringIO()
+        config_contents = \
+'''phenotypes: diet ^ gender
+samples:
+    s1: HD ^ M
+    s2: LD ^ F
+comparisons:
+    diet:
+    - HD_v_LD
+    gender:
+    - M_v_F
+'''
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_filename = _write_config_file(temp_dir.path,
+                                                 'config.yaml',
+                                                 config_contents)
 
+            exit_code = main(config_filename,
+                             log=log,
+                             prompt_to_override=mock_override.prompt_to_override)
+
+        lines = iter(log.getvalue().split('\n'))
+        self.assertEquals(0, exit_code)
+        self.assertEquals(False, mock_override.prompt_to_override_was_called)
+        self.assertEquals('config validation: OK', next(lines))
+
+    def test_main_configWarningStop(self):
+        mock_override = MockPromptOverride(False)
+        log = StringIO()
+        config_contents = \
+'''phenotypes: diet ^ gender
+samples:
+    s1: HD ^ M
+    s2: LD ^ F
+comparisons:
+    diet:
+    - HD_v_LD
+'''
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_filename = _write_config_file(temp_dir.path,
+                                                 'config.yaml',
+                                                 config_contents)
+
+            exit_code = main(config_filename,
+                             log=log,
+                             prompt_to_override=mock_override.prompt_to_override)
+
+        lines = iter(log.getvalue().split('\n'))
+        self.assertEquals(1, exit_code)
+        self.assertEquals(True, mock_override.prompt_to_override_was_called)
+        self.assertRegex(next(lines), r'config validation: WARNING')
+
+    def test_main_configWarningContinue(self):
+        mock_override = MockPromptOverride(True)
+        log = StringIO()
+        config_contents = \
+'''phenotypes: diet ^ gender
+samples:
+    s1: HD ^ M
+    s2: LD ^ F
+comparisons:
+    diet:
+    - HD_v_LD
+'''
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_filename = _write_config_file(temp_dir.path,
+                                                 'config.yaml',
+                                                 config_contents)
+
+            exit_code = main(config_filename,
+                             log=log,
+                             prompt_to_override=mock_override.prompt_to_override)
+
+        lines = iter(log.getvalue().split('\n'))
+        self.assertEquals(0, exit_code)
+        self.assertEquals(True, mock_override.prompt_to_override_was_called)
+        self.assertRegex(next(lines), r'config validation: WARNING')

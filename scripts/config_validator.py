@@ -1,7 +1,12 @@
+#!/usr/bin/env python
 from __future__ import print_function, absolute_import, division
 
 from collections import defaultdict
 import sys
+
+import yaml
+
+from scripts.rnaseq_snakefile_helper import PhenotypeManager
 
 
 class _WatermelonConfigFailure(Exception):
@@ -9,6 +14,7 @@ class _WatermelonConfigFailure(Exception):
         #pylint: disable=star-args
         error_msg = msg.format(*[str(i) for i in args])
         super(_WatermelonConfigFailure, self).__init__(error_msg)
+
 
 class _WatermelonConfigWarning(Exception):
     def __init__(self, msg, *args):
@@ -108,8 +114,9 @@ class _ConfigValidator(object):
             msg_fmt = ('Some phenotypes ({}) are not present in comparisons; '
                        'some samples ({}) will be excluded from comparisons for those '
                        'phenotypes.')
-            msg = msg_fmt.format(';'.join(label_values), ';'.join(samples))
-            raise _WatermelonConfigWarning(msg)
+            raise _WatermelonConfigWarning(msg_fmt,
+                                           ';'.join(label_values),
+                                           ';'.join(samples))
 
     def _comparison_missing_phenotype_label(self):
         comparison_pheno_labels = self.phenotype_manager.comparison_values.keys()
@@ -118,8 +125,7 @@ class _ConfigValidator(object):
 
         if missing_labels:
             msg_fmt = ('Some phenotype labels ({}) are not present in comparisons.')
-            msg = msg_fmt.format(','.join(missing_labels))
-            raise _WatermelonConfigWarning(msg)
+            raise _WatermelonConfigWarning(msg_fmt, ','.join(missing_labels))
 
     def _samples_excluded_from_comparison(self):
         all_samples = set(self.phenotype_manager.sample_phenotype_value_dict.keys())
@@ -133,25 +139,28 @@ class _ConfigValidator(object):
         missing_samples = sorted(all_samples - all_compared_samples)
         if missing_samples:
             msg_fmt = 'Some samples ({}) will not be compared.'
-            msg = msg_fmt.format(','.join(missing_samples))
-            raise _WatermelonConfigWarning(msg)
-
-def _ok_to_proceed(validation_collector, log, prompt_to_override):
-    result = True
-    if validation_collector.failures:
-        log.write('There were config file validation failures; please review/revise the config and try again.\n')
-        result = False
-    elif validation_collector.warnings:
-        log.write('There were config file validation warnings. Should Watermelon ignore these and proceed? (yes/no):')
-        response = prompt_to_continue()
-        result = response.upper().strip() == 'YES'
-    if not result:
-        log.write('Watermelon stopped to review config file warnings/errors.\n')
-    return result
+            raise _WatermelonConfigWarning(msg_fmt,
+                                           ','.join(missing_samples))
 
 def prompt_to_override():
     value = input('Should Watermelon ignore these errors and proceed? (yes/no): ')
     return value.lower().strip() == 'yes'
 
-def main(config_filename):
-    pass
+def main(config_filename,
+         log=sys.stderr,
+         prompt_to_override=prompt_to_override):
+    exit_code = 0
+    with open(config_filename, 'r') as config_file:
+        config = yaml.load(config_file)
+    phenotype_manager = PhenotypeManager(config)
+    validator = _ConfigValidator(phenotype_manager, log=log)
+    validation_collector = validator.validate()
+    validation_collector.log_results()
+    if not validation_collector.ok_to_proceed(prompt_to_override):
+        exit_code = 1
+    return exit_code
+
+if __name__ == '__main__':
+    config_filepath = sys.argv[1]
+    exit_code = main(config_filepath)
+    exit(exit_code)

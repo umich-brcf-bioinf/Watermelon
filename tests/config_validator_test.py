@@ -363,9 +363,12 @@ class ValidationCollectorTest(unittest.TestCase):
     def test_log_validation_results_ok(self):
         log = StringIO()
         collector = _ValidationCollector(log)
+
         collector.log_results()
-        
-        self.assertEqual('config validation: OK\n', log.getvalue())
+
+        lines = iter(log.getvalue().split('\n'))
+        self.assertRegex(next(lines), r'===')
+        self.assertEqual('config validation: OK', next(lines))
 
     def test_log_validation_results_warning(self):
         log = StringIO()
@@ -375,7 +378,9 @@ class ValidationCollectorTest(unittest.TestCase):
         collector.log_results()
 
         lines = iter(log.getvalue().split('\n'))
+        self.assertRegex(next(lines), r'===')
         self.assertEqual('config validation: WARNING (1 warnings):', next(lines))
+        self.assertRegex(next(lines), r'---')
         self.assertEqual('warning: warn1', next(lines))
 
     def test_log_validation_results_failure(self):
@@ -386,7 +391,9 @@ class ValidationCollectorTest(unittest.TestCase):
         collector.log_results()
 
         lines = iter(log.getvalue().split('\n'))
+        self.assertRegex(next(lines), r'===')
         self.assertEqual('config validation: FAILED (1 failures):', next(lines))
+        self.assertRegex(next(lines), r'---')
         self.assertEqual('failure: fail1', next(lines))
 
     def test_log_validation_failuresComeFirst(self):
@@ -404,7 +411,9 @@ class ValidationCollectorTest(unittest.TestCase):
         collector.log_results()
 
         lines = iter(log.getvalue().split('\n'))
+        self.assertRegex(next(lines), r'===')
         self.assertEqual('config validation: FAILED (2 failures, 2 warnings):', next(lines))
+        self.assertRegex(next(lines), r'---')
         self.assertEqual('failure: fail1', next(lines))
         self.assertEqual('failure: fail2', next(lines))
         self.assertEqual('warning: warn1', next(lines))
@@ -416,7 +425,7 @@ class ValidationCollectorTest(unittest.TestCase):
         collector = _ValidationCollector(log)
         self.assertEqual(True, collector.ok_to_proceed(prompt.prompt_to_override))
         self.assertEqual(False, prompt.prompt_to_override_was_called)
-        self.assertEqual('', log.getvalue())
+        self.assertRegex(log.getvalue(), r'===')
 
     def test_ok_to_proceed_FalseIfFailed(self):
         log = StringIO()
@@ -426,6 +435,7 @@ class ValidationCollectorTest(unittest.TestCase):
         self.assertEqual(False, collector.ok_to_proceed(prompt.prompt_to_override))
         self.assertEqual(False, prompt.prompt_to_override_was_called)
         lines = iter(log.getvalue().split('\n'))
+        self.assertRegex(next(lines), r'===')
         self.assertRegex(next(lines), 'There were.*failures')
         self.assertRegex(next(lines), 'Watermelon stopped')
 
@@ -437,6 +447,7 @@ class ValidationCollectorTest(unittest.TestCase):
         self.assertEqual(True, collector.ok_to_proceed(prompt.prompt_to_override))
         self.assertEqual(True, prompt.prompt_to_override_was_called)
         lines = iter(log.getvalue().split('\n'))
+        self.assertRegex(next(lines), r'===')
         self.assertRegex(next(lines), 'There were.*warnings')
         self.assertRegex(next(lines), 'Watermelon will continue despite warnings above.')
 
@@ -448,6 +459,7 @@ class ValidationCollectorTest(unittest.TestCase):
         self.assertEqual(False, collector.ok_to_proceed(prompt.prompt_to_override))
         self.assertEqual(True, prompt.prompt_to_override_was_called)
         lines = iter(log.getvalue().split('\n'))
+        self.assertRegex(next(lines), r'===')
         self.assertRegex(next(lines), 'There were.*warnings')
         self.assertRegex(next(lines), 'Watermelon stopped')
 
@@ -478,6 +490,7 @@ comparisons:
         lines = iter(log.getvalue().split('\n'))
         self.assertEquals(0, exit_code)
         self.assertEquals(False, mock_override.prompt_to_override_was_called)
+        self.assertRegex(next(lines), r'===')
         self.assertEquals('config validation: OK', next(lines))
 
     def test_main_configWarningStop(self):
@@ -505,6 +518,7 @@ comparisons:
         lines = iter(log.getvalue().split('\n'))
         self.assertEquals(1, exit_code)
         self.assertEquals(True, mock_override.prompt_to_override_was_called)
+        self.assertRegex(next(lines), r'===')
         self.assertRegex(next(lines), r'config validation: WARNING')
 
     def test_main_configWarningContinue(self):
@@ -532,4 +546,5 @@ comparisons:
         lines = iter(log.getvalue().split('\n'))
         self.assertEquals(0, exit_code)
         self.assertEquals(True, mock_override.prompt_to_override_was_called)
+        self.assertRegex(next(lines), r'===')
         self.assertRegex(next(lines), r'config validation: WARNING')

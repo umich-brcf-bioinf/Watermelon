@@ -8,6 +8,8 @@ import yaml
 
 from scripts.rnaseq_snakefile_helper import PhenotypeManager
 
+_HEADER_RULE = '=' * 70 + '\n'
+_SECTION_RULE = '-' * 70 + '\n'
 
 class _WatermelonConfigFailure(Exception):
     def __init__(self, msg, *args):
@@ -60,7 +62,10 @@ class _ValidationCollector(object):
             return summary
 
     def log_results(self):
+        self._log.write(_HEADER_RULE)
         self._log.write('config validation: {}\n'.format(self.summary_result))
+        if not self.passed:
+            self._log.write(_SECTION_RULE)
         for failure in self.failures:
             self._log.write('failure: {}\n'.format(failure))
         for warning in self.warnings:
@@ -69,15 +74,18 @@ class _ValidationCollector(object):
     def ok_to_proceed(self, prompt_to_override_warnings):
         result = True
         if self.failures:
+            self._log.write(_HEADER_RULE)
             self._log.write('There were config file validation failures; please review/revise the config and try again.\n')
             result = False
         elif self.warnings:
+            self._log.write(_HEADER_RULE)
             self._log.write('There were config file validation warnings.\n')
             result = prompt_to_override_warnings()
             if result:
                 self._log.write('Based on user input Watermelon will continue despite warnings above.\n')
         if not result:
             self._log.write('Watermelon stopped to review config file warnings/errors.\n')
+        self._log.write(_HEADER_RULE)
         return result
 
 
@@ -143,7 +151,7 @@ class _ConfigValidator(object):
                                            ','.join(missing_samples))
 
 def prompt_to_override():
-    value = input('Should Watermelon ignore these errors and proceed? (yes/no): ')
+    value = input('Should Watermelon ignore these problems and proceed? (yes/no): ')
     return value.lower().strip() == 'yes'
 
 def main(config_filename,

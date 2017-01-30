@@ -127,8 +127,8 @@ fi
 if [ "$DAG" ]; then
     export snakemake_command="snakemake --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} ${EXTRA_ARGUMENTS}"
     set -o pipefail
-    $snakemake_command --dag | dot -Tpdf > dag.pdf && \
-    $snakemake_command --rulegraph | dot -Tpdf > dag.rulegraph.pdf
+    $snakemake_command --dag | dot -Tpdf > dag.pdf 2>/dev/null && \
+    $snakemake_command --rulegraph | dot -Tpdf > dag.rulegraph.pdf 2>/dev/null
     #$snakemake_command --dag | dot > dag.dot && \
     #$snakemake_command --dag | dot -Tsvg > dag.svg && \
     #$snakemake_command --rulegraph | dot > dag.rulegraph.dot && \

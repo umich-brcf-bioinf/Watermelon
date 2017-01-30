@@ -331,3 +331,40 @@ class WatermelonTest(unittest.TestCase):
             self.assertEqual(0, exit_code)
             self.assertRegexpMatches(actual_output,
                                      r'--cores {}'.format(CUSTOM_CORES))
+
+    def test_watermelon_skipsLogsOnDag(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = self.setup_tmp_dir(temp_dir)
+            CONFIG_FILE = os.path.join(TESTS_DIR, 'config.yaml')
+            TEST_SNAKEFILE = os.path.join(TESTS_DIR, 'test.snakefile')
+
+            command = ('{} --snakefile {} '
+                       '--configfile {} --dag').format(WATERMELON_EXECUTABLE,
+                                                          TEST_SNAKEFILE,
+                                                          CONFIG_FILE)
+            exit_code, actual_output = self.execute(command)
+
+            self.assertEqual(0, exit_code)
+
+            log_dirs = glob.glob("logs/*")
+            self.assertEquals(0, len(log_dirs))
+
+    def test_watermelon_createsDagFiles(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = self.setup_tmp_dir(temp_dir)
+            CONFIG_FILE = os.path.join(TESTS_DIR, 'config.yaml')
+            TEST_SNAKEFILE = os.path.join(TESTS_DIR, 'test.snakefile')
+
+            command = ('{} --snakefile {} '
+                       '--configfile {} --dag').format(WATERMELON_EXECUTABLE,
+                                                          TEST_SNAKEFILE,
+                                                          CONFIG_FILE)
+            exit_code, actual_output = self.execute(command)
+
+            self.assertEqual(0, exit_code)
+
+            dag_files = sorted(glob.glob("dag*.*"))
+            self.assertEqual(2, len(dag_files))
+            file_iter=iter(dag_files)
+            self.assertEqual('dag.pdf', next(file_iter))
+            self.assertEqual('dag.rulegraph.pdf', next(file_iter))

@@ -37,6 +37,10 @@ Executes the RNA-seq workflow by wrapping the snakemake call, specifically setti
 useful defaults and passing through any unrecognized command line options through to
 snakemake. Captures all outputs in a log and times overall execution.
 
+Also see the companion executable watermelon-init which creates a watermelon config
+file based on specified sequence dirs.
+See "watermelon-init --help" for more info.
+
 Options:
     -c, --configfile : [config.yaml] snakemake config file
     --cores [N]      : =40, use at most N cores in parallel

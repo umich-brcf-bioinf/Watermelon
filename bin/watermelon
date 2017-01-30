@@ -13,6 +13,7 @@ export SNAKEFILE=${WATERMELON_ROOT_DIR}/rnaseq.snakefile
 export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
 export CORES=40
 export DRYRUN=""
+export DAG=""
 export PASS_THROUGH_ARGS=()
 export MAIL_TO="${USER}@umich.edu"
 export MAIL_FROM='bfx-rnaseq-pipeline@umich.edu'
@@ -38,7 +39,8 @@ snakemake. Captures all outputs in a log and times overall execution.
 
 Options:
     -c, --configfile : [config.yaml] snakemake config file
-    --cores [N]      : =40, use at most N cores in parallel 
+    --cores [N]      : =40, use at most N cores in parallel
+    --dag            : create DAG files (in working dir) to visualize execution plan
     -n, --dryrun     : show plan without executing anything
     --help           : shows this message
 
@@ -76,6 +78,10 @@ function parse_args {
                 DRYRUN=" --dryrun "
                 shift
                 ;;
+            --dag)
+                DAG=" --dag "
+                shift
+                ;;
             -s | --snakefile)
                 SNAKEFILE="$2"
                 shift 2
@@ -92,6 +98,7 @@ function parse_args {
     done
     readonly CORES
     readonly DRYRUN
+    readonly DAG
     readonly SNAKEFILE
 }
 
@@ -117,7 +124,23 @@ if [[ ${#PASS_THROUGH_ARGS[@]} -gt 0 ]]; then
   EXTRA_ARGUMENTS="${PASS_THROUGH_ARGS[@]}"
 fi
 
-if [ "$DRYRUN" ]; then
+if [ "$DAG" ]; then
+    export snakemake_command="snakemake --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} ${EXTRA_ARGUMENTS}"
+    set -o pipefail
+    $snakemake_command --dag | dot -Tpdf > dag.pdf && \
+    $snakemake_command --rulegraph | dot -Tpdf > dag.rulegraph.pdf
+    #$snakemake_command --dag | dot > dag.dot && \
+    #$snakemake_command --dag | dot -Tsvg > dag.svg && \
+    #$snakemake_command --rulegraph | dot > dag.rulegraph.dot && \
+    #$snakemake_command --rulegraph | dot -Tsvg > dag.rulegraph.svg
+    SNAKEMAKE_EXIT=$?
+    if [[ $SNAKEMAKE_EXIT != 0 ]]; then
+        echo "ERROR: could not create DAG files"
+    else
+        echo "Created dag.pdf, dag.rulegraph.pdf"
+    fi
+    exit $SNAKEMAKE_EXIT
+elif [ "$DRYRUN" ]; then
     export LOG_FILE=/dev/null
     export WATERMELON_DETAILED_SUMMARY=/dev/null
     export WATERMELON_EMAIL_ENABLED=false
@@ -140,7 +163,7 @@ echo "watermelon (v${WATERMELON_VERSION}) begins"
 set +e
 
 snakemake_command="snakemake --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} --cores ${CORES} -T ${DRYRUN} ${EXTRA_ARGUMENTS}"
-echo $snakemake_command
+    echo $snakemake_command
 unbuffer $snakemake_command
 SNAKEMAKE_EXIT=$?
 

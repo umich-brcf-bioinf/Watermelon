@@ -2,6 +2,7 @@
 from __future__ import print_function, absolute_import, division
 
 from collections import defaultdict
+from functools import partial
 import sys
 
 import yaml
@@ -90,12 +91,12 @@ class _ValidationCollector(object):
 
 
 class _ConfigValidator(object):
-    def __init__(self, phenotype_manager, log=sys.stderr):
-        self.phenotype_manager = phenotype_manager
+    def __init__(self, config, log=sys.stderr):
+        self.config = config
+        self._log = log
         self._validations = [self._comparison_missing_phenotype_value,
                              self._comparison_missing_phenotype_label,
                              self._samples_excluded_from_comparison]
-        self._log = log
 
     def validate(self):
         collector = _ValidationCollector(self._log)
@@ -104,14 +105,15 @@ class _ConfigValidator(object):
         return collector
 
     def _comparison_missing_phenotype_value(self):
+        phenotype_manager = PhenotypeManager(self.config)
         comparison_pheno_values = set()
-        for pheno_label, pheno_values in self.phenotype_manager.comparison_values.items():
+        for pheno_label, pheno_values in phenotype_manager.comparison_values.items():
             for pheno_value in pheno_values:
                 comparison_pheno_values.add((pheno_label, pheno_value))
 
         pheno_values = defaultdict(list)
         pheno_samples = defaultdict(list)
-        for phenoLabel, phenoValueSamples in self.phenotype_manager.phenotype_sample_list.items():
+        for phenoLabel, phenoValueSamples in phenotype_manager.phenotype_sample_list.items():
             for phenoValue, samples in phenoValueSamples.items():
                 if (phenoLabel, phenoValue) not in comparison_pheno_values:
                     pheno_values[phenoLabel].append(phenoValue)
@@ -127,8 +129,9 @@ class _ConfigValidator(object):
                                            ';'.join(samples))
 
     def _comparison_missing_phenotype_label(self):
-        comparison_pheno_labels = self.phenotype_manager.comparison_values.keys()
-        sample_pheno_labels = self.phenotype_manager.phenotype_sample_list.keys()
+        phenotype_manager = PhenotypeManager(self.config)
+        comparison_pheno_labels = phenotype_manager.comparison_values.keys()
+        sample_pheno_labels = phenotype_manager.phenotype_sample_list.keys()
         missing_labels = sorted(set(sample_pheno_labels) - set(comparison_pheno_labels))
 
         if missing_labels:
@@ -136,11 +139,12 @@ class _ConfigValidator(object):
             raise _WatermelonConfigWarning(msg_fmt, ','.join(missing_labels))
 
     def _samples_excluded_from_comparison(self):
-        all_samples = set(self.phenotype_manager.sample_phenotype_value_dict.keys())
-        comparison_pheno_labels = self.phenotype_manager.comparison_values.keys()
-        phenotype_sample_list = self.phenotype_manager.phenotype_sample_list
+        phenotype_manager = PhenotypeManager(self.config)
+        all_samples = set(phenotype_manager.sample_phenotype_value_dict.keys())
+        comparison_pheno_labels = phenotype_manager.comparison_values.keys()
+        phenotype_sample_list = phenotype_manager.phenotype_sample_list
         all_compared_samples = set()
-        for (pheno_label, pheno_values) in self.phenotype_manager.comparison_values.items():
+        for (pheno_label, pheno_values) in phenotype_manager.comparison_values.items():
             for pheno_value in pheno_values:
                 samples = phenotype_sample_list[pheno_label][pheno_value]
                 all_compared_samples.update(samples)
@@ -160,8 +164,7 @@ def main(config_filename,
     exit_code = 0
     with open(config_filename, 'r') as config_file:
         config = yaml.load(config_file)
-    phenotype_manager = PhenotypeManager(config)
-    validator = _ConfigValidator(phenotype_manager, log=log)
+    validator = _ConfigValidator(config, log=log)
     validation_collector = validator.validate()
     validation_collector.log_results()
     if not validation_collector.ok_to_proceed(prompt_to_override):

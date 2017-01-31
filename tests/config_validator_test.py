@@ -14,7 +14,6 @@ except ImportError:
 from testfixtures.tempdirectory import TempDirectory
 import yaml
 
-from scripts.rnaseq_snakefile_helper import PhenotypeManager
 from scripts.config_validator import _ConfigValidator
 from scripts.config_validator import _WatermelonConfigFailure
 from scripts.config_validator import _WatermelonConfigWarning
@@ -26,7 +25,7 @@ class MockValidation(object):
         self.validate_was_called = False
         self.warning_or_error = warning_or_error
 
-    def validate(self):
+    def validate(self, *argv):
         self.validate_was_called = True
         if self.warning_or_error:
             raise self.warning_or_error
@@ -163,10 +162,9 @@ comparisons:
     - HD_v_LD
     - HD_v_ND'''
         config = yaml.load(config_string)
-        phenotype_manager = PhenotypeManager(config)
         log = StringIO()
-        validator = _ConfigValidator(phenotype_manager, log)
-        
+        validator = _ConfigValidator(config, log)
+
         expected_message = (r'\(diet:NA\) are not present in comparisons;'
                             r' some samples \(diet:s4\) will be excluded from comparisons .*')
         self.assertRaisesRegex(_WatermelonConfigWarning,
@@ -187,10 +185,9 @@ comparisons:
     - pVal1_v_pVal2
 '''
         config = yaml.load(config_string)
-        phenotype_manager = PhenotypeManager(config)
         log = StringIO()
-        validator = _ConfigValidator(phenotype_manager, log)
-        
+        validator = _ConfigValidator(config, log)
+
         expected_message = (r'\(pLabelA:pVal3,pVal4,pVal5\)'
                             r' are not present in comparisons; '
                             r'some samples \(pLabelA:s3,s4,s5\) will be excluded from comparisons .*')
@@ -213,9 +210,8 @@ comparisons:
     - B1_v_B2
 '''
         config = yaml.load(config_string)
-        phenotype_manager = PhenotypeManager(config)
         log = StringIO()
-        validator = _ConfigValidator(phenotype_manager, log)
+        validator = _ConfigValidator(config, log)
         
         expected_message = (r'\(pLabelA:A3,A4;pLabelB:B3,B4\)'
                             r' are not present in comparisons; '
@@ -238,9 +234,8 @@ comparisons:
     gender:
     - M_v_F'''
         config = yaml.load(config_string)
-        phenotype_manager = PhenotypeManager(config)
         log = StringIO()
-        validator = _ConfigValidator(phenotype_manager, log)
+        validator = _ConfigValidator(config, log)
         validator._comparison_missing_phenotype_label()
         self.ok()
 
@@ -256,9 +251,8 @@ comparisons:
     diet:
     - HD_v_LD'''
         config = yaml.load(config_string)
-        phenotype_manager = PhenotypeManager(config)
         log = StringIO()
-        validator = _ConfigValidator(phenotype_manager, log)
+        validator = _ConfigValidator(config, log)
         expected_message = (r'\(gender\) are not present in comparisons.')
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
@@ -274,9 +268,8 @@ comparisons:
     diet:
     - HD_v_LD'''
         config = yaml.load(config_string)
-        phenotype_manager = PhenotypeManager(config)
         log = StringIO()
-        validator = _ConfigValidator(phenotype_manager, log)
+        validator = _ConfigValidator(config, log)
         validator._samples_excluded_from_comparison()
         self.ok()
 
@@ -292,9 +285,8 @@ comparisons:
     diet:
     - HD_v_LD'''
         config = yaml.load(config_string)
-        phenotype_manager = PhenotypeManager(config)
         log = StringIO()
-        validator = _ConfigValidator(phenotype_manager, log)
+        validator = _ConfigValidator(config, log)
         expected_message = r'Some samples \(s3,s4\) will not be compared.'
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
@@ -312,9 +304,8 @@ comparisons:
     gender:
     - M_v_F'''
         config = yaml.load(config_string)
-        phenotype_manager = PhenotypeManager(config)
         log = StringIO()
-        validator = _ConfigValidator(phenotype_manager, log)
+        validator = _ConfigValidator(config, log)
         expected_message = r'Some samples \(s2,s4\) will not be compared.'
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,

@@ -8,6 +8,7 @@ import sys
 import yaml
 
 from scripts.rnaseq_snakefile_helper import PhenotypeManager
+from scripts import watermelon_config
 
 _HEADER_RULE = '=' * 70 + '\n'
 _SECTION_RULE = '-' * 70 + '\n'
@@ -94,9 +95,9 @@ class _ConfigValidator(object):
     def __init__(self, config, log=sys.stderr):
         self.config = config
         self._log = log
-        self._validations = [self._comparison_missing_phenotype_value,
-                             self._comparison_missing_phenotype_label,
-                             self._samples_excluded_from_comparison]
+        self._validations = [self._check_comparison_missing_phenotype_value,
+                             self._check_comparison_missing_phenotype_label,
+                             self._check_samples_excluded_from_comparison]
 
     def validate(self):
         collector = _ValidationCollector(self._log)
@@ -104,7 +105,63 @@ class _ConfigValidator(object):
             collector.check(validation)
         return collector
 
-    def _comparison_missing_phenotype_value(self):
+    def _check_missing_required_field(self):
+        required_fields = set([watermelon_config.CONFIG_KEYS.phenotypes,
+                               watermelon_config.CONFIG_KEYS.samples,
+                               watermelon_config.CONFIG_KEYS.comparisons])
+        missing_fields = required_fields - self.config.keys()
+        if missing_fields:
+            msg_fmt = ('Some required fields were missing from config: ({}); '
+                       'review config and try again.')
+            raise _WatermelonConfigFailure(msg_fmt, ', '.join(sorted(missing_fields)))
+
+    def _check_comparisons_not_a_dict_of_lists(self):
+        msg = (r'Config entry comparisons must be formatted as a dict of lists; '
+               r'review config an try again.')
+        failure = _WatermelonConfigFailure(msg)
+        comparisons = self.config[watermelon_config.CONFIG_KEYS.comparisons]
+        if not isinstance(comparisons, dict):
+            raise failure
+        for value in comparisons.values():
+            if not isinstance(value, list):
+                raise failure
+
+    def _check_comparisons_not_a_pair(self):
+        comparisons = self.config[watermelon_config.CONFIG_KEYS.comparisons]
+        malformed_comparisons = []
+        for phenotype_label, comparison_list in comparisons.items():
+            for comparison in comparison_list:
+                if not comparison:
+                    malformed_comparisons.append("[empty comparison]")
+                else:
+                    values = comparison.strip().split(watermelon_config.DEFAULT_COMPARISON_INFIX)
+                    values = [i for i in values if i]
+                    if len(values) != 2:
+                        malformed_comparisons.append(comparison)
+        if malformed_comparisons:
+            msg = (r'Some comparisons are not paired: ({}); '
+                   r'review config and try again')
+            malformed_str = ', '.join(sorted(malformed_comparisons))
+            raise _WatermelonConfigFailure(msg, malformed_str)
+
+    def _check_phenotypes_samples_not_rectangular(self):
+        pheno_labels = self.config[watermelon_config.CONFIG_KEYS.phenotypes]
+        pheno_labels_count = len(pheno_labels.split(watermelon_config.DEFAULT_PHENOTYPE_DELIM))
+        sample_pheno_values = self.config[watermelon_config.CONFIG_KEYS.samples]
+        problem_samples = defaultdict(int)
+        for sample, pheno_values in sample_pheno_values.items():
+            pheno_values_count = len(str(pheno_values).split(watermelon_config.DEFAULT_PHENOTYPE_DELIM))
+            if pheno_labels_count != pheno_values_count:
+                problem_samples[sample] = pheno_values_count
+        if problem_samples:
+            problems = ['{} [{} values]'.format(s, v) for s,v in sorted(problem_samples.items())]
+            problems_str = ', '.join(problems)
+            msg = (r'Some samples had unexpected number of phenotype values '
+                   r'[expected {} values]: ({}); '
+                   r'review config and try again.')
+            raise _WatermelonConfigFailure(msg, pheno_labels_count, problems_str)
+
+    def _check_comparison_missing_phenotype_value(self):
         phenotype_manager = PhenotypeManager(self.config)
         comparison_pheno_values = set()
         for pheno_label, pheno_values in phenotype_manager.comparison_values.items():
@@ -128,7 +185,7 @@ class _ConfigValidator(object):
                                            ';'.join(label_values),
                                            ';'.join(samples))
 
-    def _comparison_missing_phenotype_label(self):
+    def _check_comparison_missing_phenotype_label(self):
         phenotype_manager = PhenotypeManager(self.config)
         comparison_pheno_labels = phenotype_manager.comparison_values.keys()
         sample_pheno_labels = phenotype_manager.phenotype_sample_list.keys()
@@ -138,7 +195,7 @@ class _ConfigValidator(object):
             msg_fmt = ('Some phenotype labels ({}) are not present in comparisons.')
             raise _WatermelonConfigWarning(msg_fmt, ','.join(missing_labels))
 
-    def _samples_excluded_from_comparison(self):
+    def _check_samples_excluded_from_comparison(self):
         phenotype_manager = PhenotypeManager(self.config)
         all_samples = set(phenotype_manager.sample_phenotype_value_dict.keys())
         comparison_pheno_labels = phenotype_manager.comparison_values.keys()

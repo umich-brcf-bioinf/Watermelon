@@ -13,12 +13,9 @@ from os.path import join
 from os.path import isfile
 import sys
 
-
-CONFIG_KEYS = Namespace(phenotypes='phenotypes',
-                        samples='samples',
-                        comparisons='comparisons')
-DEFAULT_COMPARISON_INFIX = '_v_'
-DEFAULT_PHENOTYPE_DELIM = '^'
+from scripts.watermelon_config import CONFIG_KEYS
+from scripts.watermelon_config import DEFAULT_COMPARISON_INFIX
+from scripts.watermelon_config import DEFAULT_PHENOTYPE_DELIM
 
 FILE_EXTENSION = '.watermelon.md5'
 '''Appended to all checksum filenames; must be very distinctive to ensure the module can

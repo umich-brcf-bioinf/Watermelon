@@ -147,9 +147,136 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual([problem2, problem3], validation_result.warnings)
         self.assertEqual([problem1, problem4], validation_result.failures)
 
+    def test_check_missing_required_field_ok(self):
+        config_string = \
+'''phenotypes: X
+samples: X
+comparisons: X
+'''
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        validator._check_missing_required_field()
+        self.ok()
 
+    def test_check_missing_required_field_raises(self):
+        config_string = 'foo: bar'
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               (r'Some required fields were missing from config: '
+                                r'\(comparisons, phenotypes, samples\); '
+                                r'review config and try again.'),
+                               validator._check_missing_required_field)
 
-    def test_comparison_missing_phenotype_value_singleValue(self):
+    def test_check_comparisons_not_a_dict_of_lists_ok(self):
+        config_string = \
+'''comparisons:
+    foo:
+    - x1_v_x2
+    bar:
+    - y1_v_y2
+'''
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        validator._check_comparisons_not_a_dict_of_lists()
+        self.ok()
+
+    def test_check_comparisons_not_a_dict_of_lists_raisesIfNotDict(self):
+        config_string = \
+'''comparisons:
+    - foo_v_bar
+    - bar_v_foo
+'''
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               r'comparisons.*as a dict of lists',
+                               validator._check_comparisons_not_a_dict_of_lists)
+
+    def test_check_comparisons_not_a_dict_of_lists_raisesIfNotList(self):
+        config_string = \
+'''comparisons:
+    foo:
+        foo_v_bar
+        bar_v_foo
+'''
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               r'comparisons.*as a dict of lists',
+                               validator._check_comparisons_not_a_dict_of_lists)
+
+    def test_check_comparisons_not_a_pair_ok(self):
+        config_string = \
+'''comparisons:
+    foo:
+    - x1_v_x2
+    - x3_v_x4
+'''
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        validator._check_comparisons_not_a_pair()
+        self.ok()
+
+    def test_check_comparisons_not_a_pair_raises(self):
+        config_string = \
+'''comparisons:
+    foo:
+    - ok1_v_ok2
+    - bar_foo
+    - x_v_
+    - _v_
+    - a_v_b_v_c
+    - 
+'''
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               (r'comparisons are not paired: \(\[empty comparison\], '
+                                r'_v_, a_v_b_v_c, bar_foo, x_v_\);'),
+                               validator._check_comparisons_not_a_pair)
+
+    def test_check_phenotypes_samples_not_rectangular_ok(self):
+        config_string = \
+'''phenotypes: a ^ b
+samples:
+    s1: 1 ^ 2
+    s2: 3 ^ 4
+'''
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        validator._check_phenotypes_samples_not_rectangular()
+        self.ok()
+
+    def test_check_phenotypes_samples_not_rectangular_raises(self):
+        config_string = \
+'''phenotypes: a ^ b
+samples:
+    s1: 1
+    s2: 1 ^ 2
+    s3: 1 ^ 2 ^ 3
+'''
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               (r'Some samples had unexpected number of phenotype values '
+                                r'\[expected 2 values\]: '
+                                r'\(s1 \[1 values\], s3 \[3 values\]\); '
+                                r'review config and try again.'),
+                               validator._check_phenotypes_samples_not_rectangular)
+
+    def test_check_comparison_missing_phenotype_value_singleValue(self):
         config_string = \
 '''phenotypes: diet
 samples:
@@ -169,9 +296,9 @@ comparisons:
                             r' some samples \(diet:s4\) will be excluded from comparisons .*')
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
-                               validator._comparison_missing_phenotype_value)
+                               validator._check_comparison_missing_phenotype_value)
 
-    def test_comparison_missing_phenotype_value_muiltipleValues(self):
+    def test_check_comparison_missing_phenotype_value_muiltipleValues(self):
         config_string = \
 '''phenotypes: pLabelA
 samples:
@@ -193,9 +320,9 @@ comparisons:
                             r'some samples \(pLabelA:s3,s4,s5\) will be excluded from comparisons .*')
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
-                               validator._comparison_missing_phenotype_value)
+                               validator._check_comparison_missing_phenotype_value)
 
-    def test_comparison_missing_phenotype_value_muiltiplePhenotypes(self):
+    def test_check_comparison_missing_phenotype_value_muiltiplePhenotypes(self):
         config_string = \
 '''phenotypes: pLabelA ^ pLabelB
 samples:
@@ -218,9 +345,9 @@ comparisons:
                             r'some samples \(pLabelA:s3,s4;pLabelB:s1,s2\) will be excluded from comparisons .*')
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
-                               validator._comparison_missing_phenotype_value)
+                               validator._check_comparison_missing_phenotype_value)
 
-    def test_comparison_missing_phenotype_label_ok(self):
+    def test_check_comparison_missing_phenotype_label_ok(self):
         config_string = \
 '''phenotypes: diet ^ gender
 samples:
@@ -236,10 +363,10 @@ comparisons:
         config = yaml.load(config_string)
         log = StringIO()
         validator = _ConfigValidator(config, log)
-        validator._comparison_missing_phenotype_label()
+        validator._check_comparison_missing_phenotype_label()
         self.ok()
 
-    def test_comparison_missing_phenotype_label_singleValueRaises(self):
+    def test_check_comparison_missing_phenotype_label_singleValueRaises(self):
         config_string = \
 '''phenotypes: diet ^ gender
 samples:
@@ -256,9 +383,9 @@ comparisons:
         expected_message = (r'\(gender\) are not present in comparisons.')
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
-                               validator._comparison_missing_phenotype_label)
+                               validator._check_comparison_missing_phenotype_label)
 
-    def test_samples_excluded_from_comparison_ok(self):
+    def test_check_samples_excluded_from_comparison_ok(self):
         config_string = \
 '''phenotypes: diet ^ gender
 samples:
@@ -270,10 +397,10 @@ comparisons:
         config = yaml.load(config_string)
         log = StringIO()
         validator = _ConfigValidator(config, log)
-        validator._samples_excluded_from_comparison()
+        validator._check_samples_excluded_from_comparison()
         self.ok()
 
-    def test_samples_excluded_from_comparison_missingBecausePhenoLabelRaises(self):
+    def test_check_samples_excluded_from_comparison_missingBecausePhenoLabelRaises(self):
         config_string = \
 '''phenotypes: diet ^ gender
 samples:
@@ -290,9 +417,9 @@ comparisons:
         expected_message = r'Some samples \(s3,s4\) will not be compared.'
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
-                               validator._samples_excluded_from_comparison)
+                               validator._check_samples_excluded_from_comparison)
 
-    def test_samples_excluded_from_comparison_missingBecausePhenoValueRaises(self):
+    def test_check_samples_excluded_from_comparison_missingBecausePhenoValueRaises(self):
         config_string = \
 '''phenotypes: diet ^ gender
 samples:
@@ -309,7 +436,7 @@ comparisons:
         expected_message = r'Some samples \(s2,s4\) will not be compared.'
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
-                               validator._samples_excluded_from_comparison)
+                               validator._check_samples_excluded_from_comparison)
 
 
 class ValidationCollectorTest(unittest.TestCase):

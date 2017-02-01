@@ -95,29 +95,55 @@ class _ConfigValidator(object):
     def __init__(self, config, log=sys.stderr):
         self.config = config
         self._log = log
-        self._validations = [self._check_comparison_missing_phenotype_value,
-                             self._check_comparison_missing_phenotype_label,
-                             self._check_samples_excluded_from_comparison]
+        self._primary_validations = [self._check_missing_required_field,
+                                     self._check_samples_malformed,
+                                     self._check_samples_not_stringlike,
+                                     self._check_comparisons_malformed,
+                                     self._check_comparisons_not_a_pair,
+                                     self._check_phenotypes_samples_not_rectangular,
+                                     ]
+        self._secondary_validations = [self._check_comparison_missing_phenotype_value,
+                                       self._check_comparison_missing_phenotype_label,
+                                       self._check_samples_excluded_from_comparison,
+                                       ]
 
     def validate(self):
         collector = _ValidationCollector(self._log)
-        for validation in self._validations:
+        for validation in self._secondary_validations:
             collector.check(validation)
         return collector
 
     def _check_missing_required_field(self):
-        required_fields = set([watermelon_config.CONFIG_KEYS.phenotypes,
-                               watermelon_config.CONFIG_KEYS.samples,
-                               watermelon_config.CONFIG_KEYS.comparisons])
-        missing_fields = required_fields - self.config.keys()
+        missing_fields = watermelon_config.REQUIRED_FIELDS - self.config.keys()
         if missing_fields:
             msg_fmt = ('Some required fields were missing from config: ({}); '
                        'review config and try again.')
             raise _WatermelonConfigFailure(msg_fmt, ', '.join(sorted(missing_fields)))
 
-    def _check_comparisons_not_a_dict_of_lists(self):
-        msg = (r'Config entry comparisons must be formatted as a dict of lists; '
-               r'review config an try again.')
+    def _check_samples_malformed(self):
+        msg = ('Config entry [samples] must be formatted as a dict of "{}" separated '
+               'strings; review config and try again.'
+              ).format(watermelon_config.DEFAULT_PHENOTYPE_DELIM)
+        failure = _WatermelonConfigFailure(msg)
+        samples = self.config[watermelon_config.CONFIG_KEYS.samples]
+        if not isinstance(samples, dict):
+            raise failure
+
+    def _check_samples_not_stringlike(self):
+        samples = self.config[watermelon_config.CONFIG_KEYS.samples]
+        odd_samples = []
+        for sample, pheno_value in samples.items():
+            if not isinstance(pheno_value, (str, int, float)):
+                odd_samples.append(sample)
+        if odd_samples:
+            msg = ('Some [samples] phenotype values could not be parsed: ({}); '
+                   'review config and try again.')
+            odd_samples_str = ', '.join(sorted(odd_samples))
+            raise _WatermelonConfigFailure(msg, odd_samples_str)
+
+    def _check_comparisons_malformed(self):
+        msg = ('Config entry [comparisons] must be formatted as a dict of lists; '
+               'review config an try again.')
         failure = _WatermelonConfigFailure(msg)
         comparisons = self.config[watermelon_config.CONFIG_KEYS.comparisons]
         if not isinstance(comparisons, dict):
@@ -139,8 +165,8 @@ class _ConfigValidator(object):
                     if len(values) != 2:
                         malformed_comparisons.append(comparison)
         if malformed_comparisons:
-            msg = (r'Some comparisons are not paired: ({}); '
-                   r'review config and try again')
+            msg = ('Some [comparisons] are not paired: ({}); '
+                   'review config and try again')
             malformed_str = ', '.join(sorted(malformed_comparisons))
             raise _WatermelonConfigFailure(msg, malformed_str)
 
@@ -156,9 +182,9 @@ class _ConfigValidator(object):
         if problem_samples:
             problems = ['{} [{} values]'.format(s, v) for s,v in sorted(problem_samples.items())]
             problems_str = ', '.join(problems)
-            msg = (r'Some samples had unexpected number of phenotype values '
-                   r'[expected {} values]: ({}); '
-                   r'review config and try again.')
+            msg = ('Some [samples] had unexpected number of phenotype values '
+                   '[expected {} values]: ({}); '
+                    'review config and try again.')
             raise _WatermelonConfigFailure(msg, pheno_labels_count, problems_str)
 
     def _check_comparison_missing_phenotype_value(self):
@@ -178,7 +204,7 @@ class _ConfigValidator(object):
         if pheno_values:
             label_values = [label +':' + ','.join(sorted(values)) for label, values in sorted(pheno_values.items())]
             samples = [label + ':' + ','.join(sorted(samples)) for label, samples in sorted(pheno_samples.items())]
-            msg_fmt = ('Some phenotypes ({}) are not present in comparisons; '
+            msg_fmt = ('Some phenotype values ({}) are not present in [comparisons]; '
                        'some samples ({}) will be excluded from comparisons for those '
                        'phenotypes.')
             raise _WatermelonConfigWarning(msg_fmt,
@@ -192,7 +218,7 @@ class _ConfigValidator(object):
         missing_labels = sorted(set(sample_pheno_labels) - set(comparison_pheno_labels))
 
         if missing_labels:
-            msg_fmt = ('Some phenotype labels ({}) are not present in comparisons.')
+            msg_fmt = ('Some phenotype labels ({}) are not present in [comparisons].')
             raise _WatermelonConfigWarning(msg_fmt, ','.join(missing_labels))
 
     def _check_samples_excluded_from_comparison(self):
@@ -218,14 +244,20 @@ def prompt_to_override():
 def main(config_filename,
          log=sys.stderr,
          prompt_to_override=prompt_to_override):
-    exit_code = 0
-    with open(config_filename, 'r') as config_file:
-        config = yaml.load(config_file)
-    validator = _ConfigValidator(config, log=log)
-    validation_collector = validator.validate()
-    validation_collector.log_results()
-    if not validation_collector.ok_to_proceed(prompt_to_override):
-        exit_code = 1
+    exit_code = 1
+    try:
+        with open(config_filename, 'r') as config_file:
+            config = yaml.load(config_file)
+        validator = _ConfigValidator(config, log=log)
+        validation_collector = validator.validate()
+        validation_collector.log_results()
+        if validation_collector.ok_to_proceed(prompt_to_override):
+            exit_code = 0
+    except yaml.YAMLError:
+        log.write(_HEADER_RULE)
+        log.write('config validation: ERROR\n')
+        log.write(('Could not parse this config file [{}]; '
+                   'is it valid YAML?\n').format(config_filename))
     return exit_code
 
 if __name__ == '__main__':

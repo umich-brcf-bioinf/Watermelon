@@ -59,11 +59,11 @@ class ConfigValidatorTest(unittest.TestCase):
     def ok(self):
         self.assertEqual(1, 1)
 
-    def test_validate_ok(self):
+    def test_validate_secondary_ok(self):
         validator = _ConfigValidator({})
         validation1 = MockValidation()
         validation2 = MockValidation()
-        validator._validations=[validation1.validate, validation2.validate]
+        validator._secondary_validations=[validation1.validate, validation2.validate]
 
         validation_result = validator.validate()
 
@@ -73,13 +73,13 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual([], validation_result.failures)
         self.assertEqual([], validation_result.warnings)
 
-    def test_validate_warning(self):
+    def test_validate_secondary_warning(self):
         log = StringIO()
         validator = _ConfigValidator({}, log)
         validation1 = MockValidation()
         warning =_WatermelonConfigWarning("I'm angry")
         validation2 = MockValidation(warning)
-        validator._validations=[validation1.validate, validation2.validate]
+        validator._secondary_validations=[validation1.validate, validation2.validate]
 
         validation_result = validator.validate()
 
@@ -96,7 +96,7 @@ class ConfigValidatorTest(unittest.TestCase):
         warning =_WatermelonConfigWarning("I'm angry")
         validation1 = MockValidation(warning)
         validation2 = MockValidation()
-        validator._validations=[validation1.validate, validation2.validate]
+        validator._secondary_validations=[validation1.validate, validation2.validate]
 
         validation_result = validator.validate()
 
@@ -112,7 +112,7 @@ class ConfigValidatorTest(unittest.TestCase):
         validation1 = MockValidation()
         error =_WatermelonConfigFailure("I'm angry")
         validation2 = MockValidation(error)
-        validator._validations=[validation1.validate, validation2.validate]
+        validator._secondary_validations=[validation1.validate, validation2.validate]
 
         validation_result = validator.validate()
 
@@ -134,10 +134,10 @@ class ConfigValidatorTest(unittest.TestCase):
         validation3 = MockValidation(problem3)
         problem4 =_WatermelonConfigFailure("I'm angry")
         validation4 = MockValidation(problem4)
-        validator._validations=[validation1.validate,
-                                validation2.validate,
-                                validation3.validate,
-                                validation4.validate]
+        validator._secondary_validations=[validation1.validate,
+                                          validation2.validate,
+                                          validation3.validate,
+                                          validation4.validate]
 
         validation_result = validator.validate()
 
@@ -170,7 +170,67 @@ comparisons: X
                                 r'review config and try again.'),
                                validator._check_missing_required_field)
 
-    def test_check_comparisons_not_a_dict_of_lists_ok(self):
+    def test_check_samples_malformed_ok(self):
+        config_string = \
+'''samples:
+    s1: 1
+    s2: b
+'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        validator._check_samples_malformed()
+        self.ok()
+
+    def test_check_samples_malformed_raisesIfList(self):
+        config_string = \
+'''samples:
+   - s1
+   - s2 
+'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               r'\[samples\].*as a dict of.*strings',
+                               validator._check_samples_malformed)
+
+    def test_check_samples_malformed_raisesIfStr(self):
+        config_string = \
+'''samples:
+    s1
+    s2 
+'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               r'\[samples\].*as a dict of.*strings',
+                               validator._check_samples_malformed)
+
+    def test_check_samples_not_stringlike_ok(self):
+        config_string = \
+'''samples:
+    s1: A
+    s2: 42
+    s3: 42.42
+'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        validator._check_samples_not_stringlike()
+        self.ok()
+
+    def test_check_samples_not_stringlike_raisesIfNotStringlike(self):
+        config_string = \
+'''samples:
+    s1:
+        a: b
+    s2: A
+    s3: 42
+    s4: 42.42
+    s5:
+    - b
+'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               r'Some \[samples\] phenotype values could not be parsed: '
+                               r'\(s1, s5\); review config and try again.',
+                               validator._check_samples_not_stringlike)
+
+    def test_check_comparisons_malformed_ok(self):
         config_string = \
 '''comparisons:
     foo:
@@ -181,10 +241,10 @@ comparisons: X
         config = yaml.load(config_string)
         log = StringIO()
         validator = _ConfigValidator(config, log)
-        validator._check_comparisons_not_a_dict_of_lists()
+        validator._check_comparisons_malformed()
         self.ok()
 
-    def test_check_comparisons_not_a_dict_of_lists_raisesIfNotDict(self):
+    def test_check_comparisons_malformed_raisesIfNotDict(self):
         config_string = \
 '''comparisons:
     - foo_v_bar
@@ -195,9 +255,9 @@ comparisons: X
         validator = _ConfigValidator(config, log)
         self.assertRaisesRegex(_WatermelonConfigFailure,
                                r'comparisons.*as a dict of lists',
-                               validator._check_comparisons_not_a_dict_of_lists)
+                               validator._check_comparisons_malformed)
 
-    def test_check_comparisons_not_a_dict_of_lists_raisesIfNotList(self):
+    def test_check_comparisons_malformed_raisesIfNotList(self):
         config_string = \
 '''comparisons:
     foo:
@@ -209,7 +269,7 @@ comparisons: X
         validator = _ConfigValidator(config, log)
         self.assertRaisesRegex(_WatermelonConfigFailure,
                                r'comparisons.*as a dict of lists',
-                               validator._check_comparisons_not_a_dict_of_lists)
+                               validator._check_comparisons_malformed)
 
     def test_check_comparisons_not_a_pair_ok(self):
         config_string = \
@@ -240,7 +300,7 @@ comparisons: X
         validator = _ConfigValidator(config, log)
         
         self.assertRaisesRegex(_WatermelonConfigFailure,
-                               (r'comparisons are not paired: \(\[empty comparison\], '
+                               (r'\[comparisons\] are not paired: \(\[empty comparison\], '
                                 r'_v_, a_v_b_v_c, bar_foo, x_v_\);'),
                                validator._check_comparisons_not_a_pair)
 
@@ -270,7 +330,7 @@ samples:
         validator = _ConfigValidator(config, log)
         
         self.assertRaisesRegex(_WatermelonConfigFailure,
-                               (r'Some samples had unexpected number of phenotype values '
+                               (r'Some \[samples\] had unexpected number of phenotype values '
                                 r'\[expected 2 values\]: '
                                 r'\(s1 \[1 values\], s3 \[3 values\]\); '
                                 r'review config and try again.'),
@@ -292,7 +352,7 @@ comparisons:
         log = StringIO()
         validator = _ConfigValidator(config, log)
 
-        expected_message = (r'\(diet:NA\) are not present in comparisons;'
+        expected_message = (r'\(diet:NA\) are not present in \[comparisons\];'
                             r' some samples \(diet:s4\) will be excluded from comparisons .*')
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
@@ -316,7 +376,7 @@ comparisons:
         validator = _ConfigValidator(config, log)
 
         expected_message = (r'\(pLabelA:pVal3,pVal4,pVal5\)'
-                            r' are not present in comparisons; '
+                            r' are not present in \[comparisons\]; '
                             r'some samples \(pLabelA:s3,s4,s5\) will be excluded from comparisons .*')
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
@@ -341,7 +401,7 @@ comparisons:
         validator = _ConfigValidator(config, log)
         
         expected_message = (r'\(pLabelA:A3,A4;pLabelB:B3,B4\)'
-                            r' are not present in comparisons; '
+                            r' are not present in \[comparisons\]; '
                             r'some samples \(pLabelA:s3,s4;pLabelB:s1,s2\) will be excluded from comparisons .*')
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
@@ -380,7 +440,7 @@ comparisons:
         config = yaml.load(config_string)
         log = StringIO()
         validator = _ConfigValidator(config, log)
-        expected_message = (r'\(gender\) are not present in comparisons.')
+        expected_message = (r'\(gender\) are not present in \[comparisons\].')
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
                                validator._check_comparison_missing_phenotype_label)
@@ -611,6 +671,30 @@ comparisons:
         self.assertRegex(next(lines), r'===')
         self.assertEquals('config validation: OK', next(lines))
 
+    def test_main_invalidYaml(self):
+        mock_override = MockPromptOverride(False)
+        log = StringIO()
+        config_contents = '1:\n2\n3\n'
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            config_filename = _write_config_file(temp_dir.path,
+                                                 'config.yaml',
+                                                 config_contents)
+
+            exit_code = main(config_filename,
+                             log=log,
+                             prompt_to_override=mock_override.prompt_to_override)
+
+        lines = iter(log.getvalue().split('\n'))
+        self.assertEquals(1, exit_code)
+        self.assertEquals(False, mock_override.prompt_to_override_was_called)
+        self.assertRegex(next(lines), r'===')
+        self.assertEqual('config validation: ERROR', next(lines))
+        self.assertEqual(('Could not parse this config file [{}]; '
+                           'is it valid YAML?').format(config_filename),
+                          next(lines))
+
+
     def test_main_configWarningStop(self):
         mock_override = MockPromptOverride(False)
         log = StringIO()
@@ -634,8 +718,8 @@ comparisons:
                              prompt_to_override=mock_override.prompt_to_override)
 
         lines = iter(log.getvalue().split('\n'))
-        self.assertEquals(1, exit_code)
-        self.assertEquals(True, mock_override.prompt_to_override_was_called)
+        self.assertEqual(1, exit_code)
+        self.assertEqual(True, mock_override.prompt_to_override_was_called)
         self.assertRegex(next(lines), r'===')
         self.assertRegex(next(lines), r'config validation: WARNING')
 
@@ -662,7 +746,7 @@ comparisons:
                              prompt_to_override=mock_override.prompt_to_override)
 
         lines = iter(log.getvalue().split('\n'))
-        self.assertEquals(0, exit_code)
-        self.assertEquals(True, mock_override.prompt_to_override_was_called)
+        self.assertEqual(0, exit_code)
+        self.assertEqual(True, mock_override.prompt_to_override_was_called)
         self.assertRegex(next(lines), r'===')
         self.assertRegex(next(lines), r'config validation: WARNING')

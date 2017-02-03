@@ -545,7 +545,7 @@ comparisons:
                                expected_message,
                                validator._check_samples_excluded_from_comparison)
 
-    def test_check_comparison_references_unknown_phenotype_ok(self):
+    def test_check_comparison_references_unknown_phenotype_label_ok(self):
         config_string = \
 '''phenotypes: diet ^ gender
 samples:
@@ -557,10 +557,10 @@ comparisons:
         config = yaml.load(config_string)
         log = StringIO()
         validator = _ConfigValidator(config, log)
-        validator._check_comparison_references_unknown_phenotype()
+        validator._check_comparison_references_unknown_phenotype_label()
         self.ok()
 
-    def test_check_comparison_references_unknown_phenotype_raises(self):
+    def test_check_comparison_references_unknown_phenotype_label_raises(self):
         config_string = \
 '''phenotypes: diet ^ gender
 samples:
@@ -578,10 +578,51 @@ comparisons:
         config = yaml.load(config_string)
         log = StringIO()
         validator = _ConfigValidator(config, log)
-        expected_message = r'referenced phenotype labels not found in.*genotype,status'
+        expected_message = r'referenced phenotype labels not found in.*genotype, status'
         self.assertRaisesRegex(_WatermelonConfigFailure,
                                expected_message,
-                               validator._check_comparison_references_unknown_phenotype)
+                               validator._check_comparison_references_unknown_phenotype_label)
+
+    def test_check_comparison_references_unknown_phenotype_value_ok(self):
+        config_string = \
+'''phenotypes: diet ^ gender
+samples:
+    s1: HD ^ M
+    s2: LD ^ X
+comparisons:
+    diet:
+    - HD_v_LD'''
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        validator._check_comparison_references_unknown_phenotype_value()
+        self.ok()
+
+    def test_check_comparison_references_unknown_phenotype_value_raises(self):
+        config_string = \
+'''phenotypes: diet ^ gender
+samples:
+    s1: HD ^ M
+    s2: LD ^ X
+    s3:    ^ F
+    s4:    ^ X
+comparisons:
+    diet:
+    - HD_v_LD
+    - HD_v_FOO
+    gender:
+    - M_v_F
+    - X_v_BAZ
+    - HD_v_BAR'''
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        expected_message = (r'referenced phenotype values not found in.*'
+                            r'diet:FOO, gender:BAR, gender:BAZ')
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_message,
+                               validator._check_comparison_references_unknown_phenotype_value)
+
 
     def test_init_validationsAreIncluded(self):
         validator = _ConfigValidator(config={}, log=StringIO())
@@ -596,6 +637,8 @@ comparisons:
         secondary_validation_names = [f.__name__ for f in validator._SECONDARY_VALIDATIONS]
         self.assertEqual(['_check_comparison_missing_phenotype_value',
                           '_check_comparison_missing_phenotype_label',
+                          '_check_comparison_references_unknown_phenotype_label',
+                          '_check_comparison_references_unknown_phenotype_value',
                           '_check_samples_excluded_from_comparison'],
                          secondary_validation_names)
 

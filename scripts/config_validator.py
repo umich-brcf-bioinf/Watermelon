@@ -104,8 +104,10 @@ class _ConfigValidator(object):
                                      ]
         self._SECONDARY_VALIDATIONS = [self._check_comparison_missing_phenotype_value,
                                        self._check_comparison_missing_phenotype_label,
+                                       self._check_comparison_references_unknown_phenotype_label,
+                                       self._check_comparison_references_unknown_phenotype_value,
                                        self._check_samples_excluded_from_comparison,
-                                       ]
+                                      ]
 
     def validate(self):
         collector = _ValidationCollector(self._log)
@@ -193,7 +195,7 @@ class _ConfigValidator(object):
                     'review config and try again.')
             raise _WatermelonConfigFailure(msg, pheno_labels_count, problems_str)
 
-    def _check_comparison_references_unknown_phenotype(self):
+    def _check_comparison_references_unknown_phenotype_label(self):
         phenotype_manager = PhenotypeManager(self.config)
         comparison_pheno_labels = set(phenotype_manager.comparison_values.keys())
         phenotype_labels = set(phenotype_manager.phenotype_sample_list.keys())
@@ -202,7 +204,26 @@ class _ConfigValidator(object):
             msg = ('Some [comparisons] referenced phenotype labels not found in '
                    '[phenotypes]: ({}); review config and try again.'
                   )
-            raise _WatermelonConfigFailure(msg, ','.join(unknown_pheno_labels))
+            raise _WatermelonConfigFailure(msg, ', '.join(unknown_pheno_labels))
+
+    def _check_comparison_references_unknown_phenotype_value(self):
+        pheno_label_values = []
+        phenotype_manager = PhenotypeManager(self.config)
+        for label, values in phenotype_manager.phenotype_sample_list.items():
+            for value in values:
+                pheno_label_values.append((label, value))
+        comparison_label_values = [] 
+        for label, values in phenotype_manager.comparison_values.items():
+            for value in values:
+                comparison_label_values.append((label, value))
+        unknown_pheno_values = sorted(set(comparison_label_values) - set(pheno_label_values))
+        if unknown_pheno_values:
+            msg = ('Some [comparisons] referenced phenotype values not found in '
+                   '[samples]: ({}); review config and try again.'
+                  )
+            pheno_value_strings = ['{}:{}'.format(l,v)for (l,v) in unknown_pheno_values]
+            raise _WatermelonConfigFailure(msg, ', '.join(pheno_value_strings))
+
 
     def _check_comparison_missing_phenotype_value(self):
         phenotype_manager = PhenotypeManager(self.config)

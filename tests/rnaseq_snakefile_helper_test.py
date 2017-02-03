@@ -6,10 +6,16 @@ import os
 import time
 import unittest
 
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
+
 from testfixtures.tempdirectory import TempDirectory
+import yaml
 
 import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
-from scripts.rnaseq_snakefile_helper import PhenotypeManager
+from scripts.rnaseq_snakefile_helper import  PhenotypeManager
 
 class ChecksumManagerTest(unittest.TestCase):
     def assertChecksumFile(self, config_dir, config_filename, expected_checksum=None):
@@ -476,6 +482,8 @@ class PhenotypeManagerTest(unittest.TestCase):
 
         expected = '/foo/s1.bar,/foo/s2.bar,/foo/s4.bar /foo/s5.bar,/foo/s6.bar'
         self.assertEqual(expected, actual)
+
+
 
 class RnaseqSnakefileHelperTest(unittest.TestCase):
     def test_cutadapt_options_noOptionsReturns0(self):

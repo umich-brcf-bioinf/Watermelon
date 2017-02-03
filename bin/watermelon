@@ -5,7 +5,7 @@
 export WATERMELON_VERSION=0.1
 
 export SCRIPT_NAME=`basename $0 .sh`
-WATERMELON_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
+export WATERMELON_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
 export RUN_TIME=`date +"%Y%m%d_%H%M%S"`
 export LOG_DIR=logs/${RUN_TIME}
 export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
@@ -117,6 +117,13 @@ else
     export CONFIG_FILEPATH=`readlink -f $CONFIG_FILE`
     export CONFIG_BASENAME=`basename ${CONFIG_FILE}`
 fi 
+
+(   cd ${WATERMELON_ROOT_DIR}
+    python -m scripts.config_validator $CONFIG_FILEPATH
+)
+if [[ $? -ne 0 ]] ; then
+    exit 1
+fi
 
 if [[ ! -f $SNAKEFILE ]]; then
     echo "ERROR: snakefile file [${SNAKEFILE}] cannot be read (contact bfxcore support for assistance)"

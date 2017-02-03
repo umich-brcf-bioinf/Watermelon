@@ -11,13 +11,15 @@ export LOG_DIR=logs/${RUN_TIME}
 export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
 export SNAKEFILE=${WATERMELON_ROOT_DIR}/rnaseq.snakefile
 export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
+
+export CONFIG_FILE='config.yaml'
 export CORES=40
 export DRYRUN=""
 export DAG=""
 export PASS_THROUGH_ARGS=()
 export MAIL_TO="${USER}@umich.edu"
 export MAIL_FROM='bfx-rnaseq-pipeline@umich.edu'
-export CONFIG_FILE='config.yaml'
+export SKIP_CONFIG_VALIDATION=""
 
 SNAKEMAKE_VERSION=$(snakemake --version 2>/dev/null)
 if ! [[ $SNAKEMAKE_VERSION ]]; then
@@ -94,6 +96,10 @@ function parse_args {
                 CONFIG_FILE="$2"
                 shift 2
                 ;;
+            --skip_config_validation)
+                SKIP_CONFIG_VALIDATION="SKIP_CONFIG_VALIDATION"
+                shift
+                ;;
             *)  # Pass this option/arg through
                 PASS_THROUGH_ARGS+=("$1")
                 shift
@@ -118,11 +124,13 @@ else
     export CONFIG_BASENAME=`basename ${CONFIG_FILE}`
 fi 
 
-(   cd ${WATERMELON_ROOT_DIR}
-    python -m scripts.config_validator $CONFIG_FILEPATH
-)
-if [[ $? -ne 0 ]] ; then
-    exit 1
+if [[ ${SKIP_CONFIG_VALIDATION} == "" ]]; then
+    (   cd ${WATERMELON_ROOT_DIR}
+        python -m scripts.config_validator $CONFIG_FILEPATH
+    )
+    if [[ $? -ne 0 ]] ; then
+        exit 1
+    fi
 fi
 
 if [[ ! -f $SNAKEFILE ]]; then

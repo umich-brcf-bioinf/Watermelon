@@ -30,7 +30,9 @@ class WatermelonTest(unittest.TestCase):
     def execute(self, command):
         exit_code = 0
         try:
-            actual_output = subprocess.check_output(command, shell=True)
+            actual_output = subprocess.check_output(command,
+                                                    stderr=subprocess.STDOUT,
+                                                    shell=True)
         except subprocess.CalledProcessError as e:
             exit_code = e.returncode
             actual_output = e.output
@@ -47,9 +49,12 @@ class WatermelonTest(unittest.TestCase):
             CONFIG_FILE = os.path.join(TESTS_DIR, 'config.yaml')
             TEST_SNAKEFILE = os.path.join(TESTS_DIR, 'test.snakefile')
 
-            command = '{} --snakefile {} --configfile {}'.format(WATERMELON_EXECUTABLE,
-                                                                 TEST_SNAKEFILE,
-                                                                 CONFIG_FILE)
+            command = ('{} '
+                       '--snakefile {} '
+                       '--configfile {} '
+                       '--skip_config_validation ').format(WATERMELON_EXECUTABLE,
+                                                           TEST_SNAKEFILE,
+                                                           CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
             self.assertEqual(0, exit_code)
 
@@ -68,9 +73,12 @@ class WatermelonTest(unittest.TestCase):
             CONFIG_FILE = os.path.join(TESTS_DIR, 'config.yaml')
             TEST_SNAKEFILE = os.path.join(TESTS_DIR, 'test.snakefile')
 
-            command = '{} --snakefile {} --configfile {}'.format(WATERMELON_EXECUTABLE,
-                                                                 TEST_SNAKEFILE,
-                                                                 CONFIG_FILE)
+            command = ('{} '
+                       '--snakefile {} '
+                       '--configfile {} '
+                       '--skip_config_validation ').format(WATERMELON_EXECUTABLE,
+                                                           TEST_SNAKEFILE,
+                                                           CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
             self.assertEqual(0, exit_code)
@@ -96,10 +104,13 @@ class WatermelonTest(unittest.TestCase):
             CONFIG_FILE = os.path.join(TESTS_DIR, 'config.yaml')
             TEST_SNAKEFILE = os.path.join(TESTS_DIR, 'test.snakefile')
 
-            command = ('{} --snakefile {} '
-                       '--configfile {} --dryrun').format(WATERMELON_EXECUTABLE,
-                                                          TEST_SNAKEFILE,
-                                                          CONFIG_FILE)
+            command = ('{} '
+                       '--snakefile {} '
+                       '--configfile {} '
+                       '--skip_config_validation '
+                       '--dryrun').format(WATERMELON_EXECUTABLE,
+                                          TEST_SNAKEFILE,
+                                          CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
             self.assertEqual(0, exit_code)
@@ -114,10 +125,12 @@ class WatermelonTest(unittest.TestCase):
             CONFIG_FILE=os.path.join(TESTS_DIR, 'config.yaml')
             TEST_SNAKEFILE=os.path.join(TESTS_DIR, 'test.snakefile')
 
-            command = ('{} --snakefile {} '
-                       '--configfile {}').format(WATERMELON_EXECUTABLE,
-                                                    TEST_SNAKEFILE,
-                                                    CONFIG_FILE)
+            command = ('{} '
+                       '--snakefile {} '
+                       '--configfile {} '
+                       '--skip_config_validation ').format(WATERMELON_EXECUTABLE,
+                                                           TEST_SNAKEFILE,
+                                                           CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
             self.assertEqual(0, exit_code)
@@ -138,10 +151,12 @@ class WatermelonTest(unittest.TestCase):
             CONFIG_FILE = os.path.join(TESTS_DIR, 'config.yaml')
             TEST_SNAKEFILE = os.path.join(TESTS_DIR, 'test.snakefile')
 
-            command = ('{} --snakefile {} '
-                       '--configfile {}').format(WATERMELON_EXECUTABLE,
-                                                    TEST_SNAKEFILE,
-                                                    CONFIG_FILE)
+            command = ('{} '
+                       '--snakefile {} '
+                       '--configfile {} '
+                       '--skip_config_validation ').format(WATERMELON_EXECUTABLE,
+                                                           TEST_SNAKEFILE,
+                                                           CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
             self.assertEqual(0, exit_code)
@@ -159,40 +174,60 @@ class WatermelonTest(unittest.TestCase):
 
         self.assertRegexpMatches(actual_detailed_summary, r'output_file\tdate\trule')
 
-
     def test_watermelon_failsWhenInvalidConfig(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = self.setup_tmp_dir(temp_dir)
             with open('invalid_config.yaml', 'w') as config_file:
-                print('an invalid config file', file=config_file)
+                print('a:\nb: c: []', file=config_file)
             TEST_SNAKEFILE = os.path.join(TESTS_DIR, 'test.snakefile')
 
-            command = '{} {} --configfile {}'.format(WATERMELON_EXECUTABLE,
-                                                     TEST_SNAKEFILE,
-                                                     'invalid_config.yaml')
+            command = ('{} '
+                       '{} '
+                       '--configfile {} '
+                       ).format(WATERMELON_EXECUTABLE,
+                                                 TEST_SNAKEFILE,
+                                                 'invalid_config.yaml')
             exit_code, actual_output = self.execute(command)
 
             self.assertEqual(1, exit_code)
 
             log_dirs = glob.glob("logs/*")
-            self.assertEquals(1, len(log_dirs))
-            log_dir = log_dirs[0]
-            log_file_name = os.path.join(log_dir, 'watermelon.log')
-            self.assertTrue(os.path.exists(log_file_name))
-            with open(log_file_name) as log_file:
-                actual_log = "".join(log_file.readlines())
+            self.assertEquals(0, len(log_dirs))
 
-        self.assertRegexpMatches(actual_log, r'Watermelon failed: .*invalid_config.yaml.\nSee logs for details')
+        self.assertRegexpMatches(actual_output, r'config validation: ERROR')
 
+    def test_validates_config_ok(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = self.setup_tmp_dir(temp_dir)
+            CONFIG_FILE = os.path.join(TESTS_DIR, 'valid_config.yaml')
+            TEST_SNAKEFILE = os.path.join(TESTS_DIR, 'test.snakefile')
+
+            snakemake_executable_path = os.path.join(temp_dir_path, 'snakemake')
+            with open(snakemake_executable_path, 'w') as snakemake_command:
+                snakemake_command_contents = '#!/bin/bash\necho $@'''
+                print(snakemake_command_contents, file=snakemake_command)
+            command = ('chmod u+x snakemake; '
+                       'PATH=.:$PATH; '
+                       '{} '
+                       '--snakefile {} '
+                       '--configfile {} ').format(WATERMELON_EXECUTABLE,
+                                                  TEST_SNAKEFILE,
+                                                  CONFIG_FILE)
+            exit_code, actual_output = self.execute(command)
+            print(actual_output)
+            self.assertEqual(0, exit_code)
+            self.assertRegexpMatches(actual_output, r'config validation: OK')
 
     def test_watermelonFailsGracefullyIfSnakefileNotFound(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = self.setup_tmp_dir(temp_dir)
             CONFIG_FILE=os.path.join(TESTS_DIR, 'config.yaml')
 
-            command = ('{} --snakefile iAmNotAFile '
-                       '--configfile {}').format(WATERMELON_EXECUTABLE,
-                                                 CONFIG_FILE)
+            command = ('{} '
+                       '--snakefile iAmNotAFile '
+                       '--configfile {} '
+                       '--skip_config_validation ').format(WATERMELON_EXECUTABLE,
+                                                           CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
             self.assertNotEqual(0, exit_code)
@@ -247,9 +282,10 @@ class WatermelonTest(unittest.TestCase):
             command = ('chmod u+x snakemake; '
                        'PATH=.:$PATH; '
                        '{} --snakefile {} 1 2 3 baz froody '
-                       '--configfile {}').format(WATERMELON_EXECUTABLE,
-                                                 TEST_SNAKEFILE,
-                                                 CONFIG_FILE)
+                       '--configfile {} '
+                       '--skip_config_validation ').format(WATERMELON_EXECUTABLE,
+                                                           TEST_SNAKEFILE,
+                                                           CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
             self.assertEqual(0, exit_code)
             self.assertRegexpMatches(actual_output,
@@ -273,9 +309,10 @@ class WatermelonTest(unittest.TestCase):
             command = ('chmod u+x snakemake; '
                        'PATH=.:$PATH; '
                        '{} --snakefile {} -nabd '
-                       '--configfile {}').format(WATERMELON_EXECUTABLE,
-                                                 TEST_SNAKEFILE,
-                                                 CONFIG_FILE)
+                       '--configfile {} '
+                       '--skip_config_validation ').format(WATERMELON_EXECUTABLE,
+                                                           TEST_SNAKEFILE,
+                                                           CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
             self.assertEqual(0, exit_code)
             self.assertRegexpMatches(actual_output,
@@ -301,7 +338,7 @@ class WatermelonTest(unittest.TestCase):
                 print(snakemake_command_contents, file=snakemake_command)
             command = ('chmod u+x snakemake; '
                        'PATH=.:$PATH; '
-                       '{}').format(WATERMELON_EXECUTABLE)
+                       '{} --skip_config_validation ').format(WATERMELON_EXECUTABLE)
             exit_code, actual_output = self.execute(command)
             #self.assertEqual(0, exit_code)
             self.assertRegexpMatches(actual_output,
@@ -324,9 +361,12 @@ class WatermelonTest(unittest.TestCase):
                 print(snakemake_command_contents, file=snakemake_command)
             command = ('chmod u+x snakemake; '
                        'PATH=.:$PATH; '
-                       '{} --cores {} --configfile {}').format(WATERMELON_EXECUTABLE,
-                                                               CUSTOM_CORES,
-                                                               CONFIG_FILE)
+                       '{} '
+                       '--cores {} '
+                       '--configfile {} '
+                       '--skip_config_validation ').format(WATERMELON_EXECUTABLE,
+                                                           CUSTOM_CORES,
+                                                           CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
             self.assertEqual(0, exit_code)
             self.assertRegexpMatches(actual_output,
@@ -338,10 +378,13 @@ class WatermelonTest(unittest.TestCase):
             CONFIG_FILE = os.path.join(TESTS_DIR, 'config.yaml')
             TEST_SNAKEFILE = os.path.join(TESTS_DIR, 'test.snakefile')
 
-            command = ('{} --snakefile {} '
-                       '--configfile {} --dag').format(WATERMELON_EXECUTABLE,
-                                                          TEST_SNAKEFILE,
-                                                          CONFIG_FILE)
+            command = ('{} '
+                       '--snakefile {} '
+                       '--configfile '
+                       '{} --dag '
+                       '--skip_config_validation ').format(WATERMELON_EXECUTABLE,
+                                                           TEST_SNAKEFILE,
+                                                           CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
             self.assertEqual(0, exit_code)
@@ -355,10 +398,13 @@ class WatermelonTest(unittest.TestCase):
             CONFIG_FILE = os.path.join(TESTS_DIR, 'config.yaml')
             TEST_SNAKEFILE = os.path.join(TESTS_DIR, 'test.snakefile')
 
-            command = ('{} --snakefile {} '
-                       '--configfile {} --dag').format(WATERMELON_EXECUTABLE,
-                                                          TEST_SNAKEFILE,
-                                                          CONFIG_FILE)
+            command = ('{} '
+                       '--snakefile {} '
+                       '--configfile {} '
+                       '--dag '
+                       '--skip_config_validation ').format(WATERMELON_EXECUTABLE,
+                                                           TEST_SNAKEFILE,
+                                                           CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
             self.assertEqual(0, exit_code)

@@ -109,6 +109,12 @@ class _ConfigValidator(object):
 
     def validate(self):
         collector = _ValidationCollector(self._log)
+
+        for validation in self._primary_validations:
+            collector.check(validation)
+            if not collector.passed:
+                return collector
+
         for validation in self._secondary_validations:
             collector.check(validation)
         return collector

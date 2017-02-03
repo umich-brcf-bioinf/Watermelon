@@ -59,11 +59,51 @@ class ConfigValidatorTest(unittest.TestCase):
     def ok(self):
         self.assertEqual(1, 1)
 
+    def test_validate_primary_ok(self):
+        validator = _ConfigValidator({})
+        validation1 = MockValidation()
+        validation2 = MockValidation()
+        validator._primary_validations = [validation1.validate,
+                                          validation2.validate]
+        validator._secondary_validations = []
+
+        validation_result = validator.validate()
+
+        self.assertEqual(True, validation1.validate_was_called)
+        self.assertEqual(True, validation2.validate_was_called)
+        self.assertEqual(True, validation_result.passed)
+        self.assertEqual([], validation_result.failures)
+        self.assertEqual([], validation_result.warnings)
+
+    def test_validate_primaryFailureFailsFast(self):
+        log = StringIO()
+        validator = _ConfigValidator({}, log)
+        failure =_WatermelonConfigFailure("I'm angry")
+        primaryValidation1 = MockValidation(failure)
+        primaryValidation2 = MockValidation()
+        secondaryValidation1 = MockValidation()
+
+        validator._primary_validations = [primaryValidation1.validate,
+                                          primaryValidation2.validate]
+        validator._secondary_validations = [secondaryValidation1.validate]
+
+        validation_result = validator.validate()
+
+        self.assertEqual(True, primaryValidation1.validate_was_called)
+        self.assertEqual(False, primaryValidation2.validate_was_called)
+        self.assertEqual(False, secondaryValidation1.validate_was_called)
+        self.assertEqual(False, validation_result.passed)
+        self.assertEqual([], validation_result.warnings)
+        self.assertEqual([failure], validation_result.failures)
+
+
     def test_validate_secondary_ok(self):
         validator = _ConfigValidator({})
         validation1 = MockValidation()
         validation2 = MockValidation()
-        validator._secondary_validations=[validation1.validate, validation2.validate]
+        validator._primary_validations = []
+        validator._secondary_validations = [validation1.validate,
+                                            validation2.validate]
 
         validation_result = validator.validate()
 
@@ -79,7 +119,9 @@ class ConfigValidatorTest(unittest.TestCase):
         validation1 = MockValidation()
         warning =_WatermelonConfigWarning("I'm angry")
         validation2 = MockValidation(warning)
-        validator._secondary_validations=[validation1.validate, validation2.validate]
+        validator._primary_validations = []
+        validator._secondary_validations = [validation1.validate,
+                                            validation2.validate]
 
         validation_result = validator.validate()
 
@@ -90,13 +132,15 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual([], validation_result.failures)
 
 
-    def test_validate_earlyWarningContinuesProcessingValidations(self):
+    def test_validate_secondaryWarningContinuesProcessingValidations(self):
         log = StringIO()
         validator = _ConfigValidator({}, log)
         warning =_WatermelonConfigWarning("I'm angry")
         validation1 = MockValidation(warning)
         validation2 = MockValidation()
-        validator._secondary_validations=[validation1.validate, validation2.validate]
+        validator._primary_validations = []
+        validator._secondary_validations = [validation1.validate,
+                                            validation2.validate]
 
         validation_result = validator.validate()
 
@@ -106,13 +150,15 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual([warning], validation_result.warnings)
         self.assertEqual([], validation_result.failures)
 
-    def test_validate_error(self):
+    def test_validate_secondaryFailure(self):
         log = StringIO()
         validator = _ConfigValidator({}, log)
         validation1 = MockValidation()
         error =_WatermelonConfigFailure("I'm angry")
         validation2 = MockValidation(error)
-        validator._secondary_validations=[validation1.validate, validation2.validate]
+        validator._primary_validations = []
+        validator._secondary_validations = [validation1.validate,
+                                            validation2.validate]
 
         validation_result = validator.validate()
 
@@ -123,7 +169,7 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual([error], validation_result.failures)
 
 
-    def test_validate_mixOfWarningsAndErrors(self):
+    def test_validate_secondaryMixOfWarningsAndErrors(self):
         log = StringIO()
         validator = _ConfigValidator({}, log)
         problem1 =_WatermelonConfigFailure("I'm angry")
@@ -134,10 +180,11 @@ class ConfigValidatorTest(unittest.TestCase):
         validation3 = MockValidation(problem3)
         problem4 =_WatermelonConfigFailure("I'm angry")
         validation4 = MockValidation(problem4)
-        validator._secondary_validations=[validation1.validate,
-                                          validation2.validate,
-                                          validation3.validate,
-                                          validation4.validate]
+        validator._primary_validations = []
+        validator._secondary_validations = [validation1.validate,
+                                            validation2.validate,
+                                            validation3.validate,
+                                            validation4.validate]
 
         validation_result = validator.validate()
 

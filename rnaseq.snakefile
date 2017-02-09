@@ -89,19 +89,19 @@ rule all:
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
                 phenotype_name=PHENOTYPE_NAMES, 
                 comparison=COMPARISON_GROUPS),
-        expand(DIFFEX_DIR + "/Deliverables/qc/raw_reads_fastqc/{sample}_trimmed_R1_fastqc.html",
+        expand(DIFFEX_DIR + "/Deliverables/alignment_deliverables/raw_reads_fastqc/{sample}_trimmed_R1_fastqc.html",
                 sample=config["samples"]),
-        expand(DIFFEX_DIR + "/Deliverables/qc/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
+        expand(DIFFEX_DIR + "/Deliverables/alignment_deliverables/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
                 sample=config["samples"]),
-         DIFFEX_DIR + "/Deliverables/qc/alignment_stats.txt",
-        expand("{diffex_dir}/Deliverables/diffex/cuffdiff_results/{phenotype_name}/{comparison}.xlsx", 
+         DIFFEX_DIR + "/Deliverables/alignment_deliverables/alignment_stats.txt",
+        expand("{diffex_dir}/Deliverables/diffex_deliverables/cuffdiff_results/{phenotype_name}/{comparison}.xlsx", 
                 zip,
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
                 phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
-        expand("{diffex_dir}/Deliverables/diffex/cummeRbund_results/{phenotype_name}_repRawCounts.txt", 
+        expand("{diffex_dir}/Deliverables/diffex_deliverables/cummeRbund_results/{phenotype_name}_repRawCounts.txt", 
                 diffex_dir=DIFFEX_DIR,
                 phenotype_name=sorted(config[COMPARISONS_KEY].keys())),
-        expand("{diffex_dir}/Deliverables/diffex/cummeRbund_results/{phenotype_name}_cummeRbund_plots",
+        expand("{diffex_dir}/Deliverables/diffex_deliverables/cummeRbund_results/{phenotype_name}_cummeRbund_plots",
                     diffex_dir=DIFFEX_DIR, 
                     phenotype_name=sorted(config[COMPARISONS_KEY].keys())),
 
@@ -308,6 +308,7 @@ rule cuffdiff:
         DIFFEX_DIR + "/08-cuffdiff/{pheno}/read_groups.info"
     params:
         output_dir = DIFFEX_DIR + "/08-cuffdiff/{pheno}/",
+        output_temp_dir = DIFFEX_DIR + "/08-cuffdiff/tmp_{pheno}/",
         labels = lambda wildcards : phenotypeManager.concatenated_comparison_values(',')[wildcards.pheno],
         samples = lambda wildcards : phenotypeManager.cuffdiff_samples(wildcards.pheno,
                                                                        ALIGNMENT_DIR + "/04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
@@ -322,13 +323,15 @@ rule cuffdiff:
         " -L {params.labels} "
         " --max-bundle-frags 999999999 "
         " --library-type {params.strand} "
-        " -o {params.output_dir} "
+        " -o {params.output_temp_dir} "
         " -b {input.fasta_file} "
         " -u -N "
         " --compatible-hits-norm "
         " {input.gtf_file} "
         " {params.samples} "
-        " 2>&1 | tee {log} "
+        " 2>&1 | tee {log} && "
+        
+        " mv {params.output_temp_dir}/* {params.output_dir} "
 
 rule diffex_flip:
     input:
@@ -544,50 +547,55 @@ rule diffex_excel:
         " {output} "
         " 2>&1 | tee {log} "
 
-rule deliverables_align_cuffdiff:
+rule alignment_deliverables:
     input:
         raw_fastqc = expand("{alignment_dir}/03-fastqc_reads/{sample}_trimmed_R1_fastqc.html",
                                  alignment_dir=ALIGNMENT_DIR, sample=config["samples"]),
         align_fastqc = expand("{alignment_dir}/05-fastqc_align/{sample}_accepted_hits_fastqc.html",
                                  alignment_dir=ALIGNMENT_DIR, sample=config["samples"]),
         alignment_stats = ALIGNMENT_DIR + "/06-qc_metrics/alignment_stats.txt",
+    output:
+        raw_fastqc = expand(DIFFEX_DIR + "/Deliverables/alignment_deliverables/raw_reads_fastqc/{sample}_trimmed_R1_fastqc.html",
+                            sample=config["samples"]),
+        align_fastqc = expand(DIFFEX_DIR + "/Deliverables/alignment_deliverables/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
+                            sample=config["samples"]),
+        alignment_stats = DIFFEX_DIR + "/Deliverables/alignment_deliverables/alignment_stats.txt",
+    params:
+        raw_fastqc_input_dir    =  ALIGNMENT_DIR + "/03-fastqc_reads",
+        raw_fastqc_output_dir   =  DIFFEX_DIR + "/Deliverables/alignment_deliverables/raw_reads_fastqc",
+        align_fastqc_input_dir  =  ALIGNMENT_DIR + "/05-fastqc_align",
+        align_fastqc_output_dir =  DIFFEX_DIR + "/Deliverables/alignment_deliverables/aligned_reads_fastqc",
+    shell:
+        " cp -r {params.raw_fastqc_input_dir}/* {params.raw_fastqc_output_dir} && "
+        " cp -r {params.align_fastqc_input_dir}/* {params.align_fastqc_output_dir} && "
+        " cp -r {input.alignment_stats} {output.alignment_stats} "
+
+rule cuffdiff_deliverables:
+    input:
         diffex_excel = expand("{diffex_dir}/16-diffex_excel/{phenotype_name}/{comparison}.xlsx", 
                                     zip,
                                     diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
                                     phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
     output:
-        raw_fastqc = expand(DIFFEX_DIR + "/Deliverables/qc/raw_reads_fastqc/{sample}_trimmed_R1_fastqc.html",
-                            sample=config["samples"]),
-        align_fastqc = expand(DIFFEX_DIR + "/Deliverables/qc/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
-                            sample=config["samples"]),
-        alignment_stats = DIFFEX_DIR + "/Deliverables/qc/alignment_stats.txt",
-        diffex_excel = expand("{diffex_dir}/Deliverables/diffex/cuffdiff_results/{phenotype_name}/{comparison}.xlsx", 
+        diffex_excel = expand("{diffex_dir}/Deliverables/diffex_deliverables/cuffdiff_results/{phenotype_name}/{comparison}.xlsx", 
                                     zip,
                                     diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
                                     phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
     params:
-        raw_fastqc_input_dir    =  ALIGNMENT_DIR + "/03-fastqc_reads",
-        raw_fastqc_output_dir   =  DIFFEX_DIR + "/Deliverables/qc/raw_reads_fastqc",
-        align_fastqc_input_dir  =  ALIGNMENT_DIR + "/05-fastqc_align",
-        align_fastqc_output_dir =  DIFFEX_DIR + "/Deliverables/qc/aligned_reads_fastqc",
         diffex_excel_input_dir  =  DIFFEX_DIR +  "/16-diffex_excel",
-        diffex_excel_output_dir =  DIFFEX_DIR + "/Deliverables/diffex/cuffdiff_results"
+        diffex_excel_output_dir =  DIFFEX_DIR + "/Deliverables/diffex_deliverables/cuffdiff_results"
     shell:
-        " cp -r {params.raw_fastqc_input_dir}/* {params.raw_fastqc_output_dir} && "
-        " cp -r {params.align_fastqc_input_dir}/* {params.align_fastqc_output_dir} && "
-        " cp -r {input.alignment_stats} {output.alignment_stats} && "
         " cp -r {params.diffex_excel_input_dir}/* {params.diffex_excel_output_dir} "
 
-
-rule deliverables_cummerbund:
+rule cummerbund_deliverables:
     input:
         diffex_raw_counts = "{diffex_dir}/13-cummerbund/{phenotype_name}/{phenotype_name}_repRawCounts.txt",
         plots = "{diffex_dir}/13-cummerbund/{phenotype_name}/Plots",
     output:
-        diffex_raw_counts = "{diffex_dir}/Deliverables/diffex/cummeRbund_results/{phenotype_name}_repRawCounts.txt",
-        plots = "{diffex_dir}/Deliverables/diffex/cummeRbund_results/{phenotype_name}_cummeRbund_plots"
+        diffex_raw_counts = "{diffex_dir}/Deliverables/diffex_deliverables/cummeRbund_results/{phenotype_name}_repRawCounts.txt",
+        plots = "{diffex_dir}/Deliverables/diffex_deliverables/cummeRbund_results/{phenotype_name}_cummeRbund_plots"
     params:
-        diffex_dir = "{diffex_dir}/Deliverables/diffex",
+        diffex_dir = "{diffex_dir}/Deliverables/diffex_deliverables",
     shell:
         " cp -r {input.diffex_raw_counts} {output.diffex_raw_counts} && "
         " find {output.diffex_raw_counts} | xargs -I ^ touch ^ && "

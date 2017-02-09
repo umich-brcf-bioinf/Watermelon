@@ -11,13 +11,11 @@ import hashlib
 import os
 from os.path import join
 from os.path import isfile
+import sys
 
-
-CONFIG_KEYS = Namespace(phenotypes='phenotypes',
-                        samples='samples',
-                        comparisons='comparisons')
-DEFAULT_COMPARISON_INFIX = '_v_'
-DEFAULT_PHENOTYPE_DELIM = '^'
+from scripts.watermelon_config import CONFIG_KEYS
+from scripts.watermelon_config import DEFAULT_COMPARISON_INFIX
+from scripts.watermelon_config import DEFAULT_PHENOTYPE_DELIM
 
 FILE_EXTENSION = '.watermelon.md5'
 '''Appended to all checksum filenames; must be very distinctive to ensure the module can
@@ -135,6 +133,8 @@ def init_references(config_references):
     os.chdir("..")
 
 class PhenotypeManager(object):
+    '''Interprets a subset of the config to help answer questions around how
+    samples map to phenotype labels and values and vice versa.'''
     def __init__(self,
                  config={},
                  delimiter=DEFAULT_PHENOTYPE_DELIM,
@@ -256,6 +256,7 @@ class PhenotypeManager(object):
             params.append(file_separator.join(sorted(group_sample_names[group])))
 
         return group_separator.join(params)
+
 
 
 def check_strand_option(library_type,strand_option):

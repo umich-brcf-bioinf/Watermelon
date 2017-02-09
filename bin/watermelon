@@ -5,19 +5,21 @@
 export WATERMELON_VERSION=0.1
 
 export SCRIPT_NAME=`basename $0 .sh`
-WATERMELON_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
+export WATERMELON_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
 export RUN_TIME=`date +"%Y%m%d_%H%M%S"`
 export LOG_DIR=logs/${RUN_TIME}
 export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
 export SNAKEFILE=${WATERMELON_ROOT_DIR}/rnaseq.snakefile
 export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
+
+export CONFIG_FILE='config.yaml'
 export CORES=40
 export DRYRUN=""
 export DAG=""
 export PASS_THROUGH_ARGS=()
 export MAIL_TO="${USER}@umich.edu"
 export MAIL_FROM='bfx-rnaseq-pipeline@umich.edu'
-export CONFIG_FILE='config.yaml'
+export SKIP_CONFIG_VALIDATION=""
 
 SNAKEMAKE_VERSION=$(snakemake --version 2>/dev/null)
 if ! [[ $SNAKEMAKE_VERSION ]]; then
@@ -94,6 +96,10 @@ function parse_args {
                 CONFIG_FILE="$2"
                 shift 2
                 ;;
+            --skip_config_validation)
+                SKIP_CONFIG_VALIDATION="SKIP_CONFIG_VALIDATION"
+                shift
+                ;;
             *)  # Pass this option/arg through
                 PASS_THROUGH_ARGS+=("$1")
                 shift
@@ -118,6 +124,15 @@ else
     export CONFIG_BASENAME=`basename ${CONFIG_FILE}`
 fi 
 
+if [[ ${SKIP_CONFIG_VALIDATION} == "" ]]; then
+    (   cd ${WATERMELON_ROOT_DIR}
+        python -m scripts.config_validator $CONFIG_FILEPATH
+    )
+    if [[ $? -ne 0 ]] ; then
+        exit 1
+    fi
+fi
+
 if [[ ! -f $SNAKEFILE ]]; then
     echo "ERROR: snakefile file [${SNAKEFILE}] cannot be read (contact bfxcore support for assistance)"
     exit 1
@@ -131,8 +146,8 @@ fi
 if [ "$DAG" ]; then
     export snakemake_command="snakemake --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} ${EXTRA_ARGUMENTS}"
     set -o pipefail
-    $snakemake_command --dag | dot -Tpdf > dag.pdf && \
-    $snakemake_command --rulegraph | dot -Tpdf > dag.rulegraph.pdf
+    $snakemake_command --dag | dot -Tpdf > dag.pdf 2>/dev/null && \
+    $snakemake_command --rulegraph | dot -Tpdf > dag.rulegraph.pdf 2>/dev/null
     #$snakemake_command --dag | dot > dag.dot && \
     #$snakemake_command --dag | dot -Tsvg > dag.svg && \
     #$snakemake_command --rulegraph | dot > dag.rulegraph.dot && \

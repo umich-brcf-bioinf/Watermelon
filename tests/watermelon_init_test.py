@@ -254,7 +254,7 @@ class WatermelonInitTest(unittest.TestCase):
         self.assertEqual({}, actual_samples)
         self.assertEqual(0, file_count)
 
-    def test_make_config(self):
+    def test_make_config_dict(self):
         template_config = yaml.load(\
 '''foo1:
     bar1: baz1
@@ -284,7 +284,7 @@ references:
                          'genome', 'references',
                          'phenotypes','samples', 'comparisons']
         self.assertEquals(sorted(expected_keys), sorted(actual_config.keys()))
-        self.assertEqual('"' + input_dir + '"', actual_config['input_dir'])
+        self.assertEqual(input_dir, actual_config['input_dir'])
         self.assertEqual(template_config['foo1'], actual_config['foo1'])
         self.assertEqual(template_config['foo2'], actual_config['foo2'])
         self.assertEqual(genome_references['genome'], actual_config['genome'])

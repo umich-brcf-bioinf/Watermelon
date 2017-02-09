@@ -182,7 +182,7 @@ def _build_phenotypes_samples_comparisons(samples):
 
 def _make_config_dict(template_config, genome_references, input_dir, samples):
     config = dict(template_config)
-    config[_CONFIG_KEYS.input_dir] = '"{}"'.format(input_dir)
+    config[_CONFIG_KEYS.input_dir] = '{}'.format(input_dir)
     config.update(genome_references)
     config.update(_build_phenotypes_samples_comparisons(samples))
     return config

@@ -17,8 +17,8 @@ in the pipeline (e.g. cutadapt, tophat, etc.).
 
 There are two executables:
 
-# waterlemon-init: Creates template config.yaml file and initializes directory structure.
-# watermelon: Interprets the config file and executes the RNA-seq workflow.
+ * waterlemon-init: Creates template config.yaml file and initializes directory structure.
+ * watermelon: Interprets the config file and executes the RNA-seq workflow.
               Facilitates validation, logging, and sets basic default options.
 
 Watermelon workflow consists of two main steps:

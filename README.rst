@@ -93,7 +93,7 @@ watermelon help
 
 ====
 
-Email bfx-connor@umich.edu for support and questions.
+Email bfx-rnaseq-pipeline@umich.edu for support and questions.
 
 UM BRCF Bioinformatics Core
 

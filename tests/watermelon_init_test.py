@@ -168,44 +168,106 @@ class WatermelonInitTest(unittest.TestCase):
                              actual_dirs)
 
 
-    def test_populate_inputs_dir(self):
+    def test_run_dir(self):
+        j = os.path.join
+        self.assertEqual('a-b', watermelon_init._build_run_dir(j('a', 'b', 'c')))
+        self.assertEqual('a', watermelon_init._build_run_dir(j('a', 'b-c')))
+        self.assertEqual('a-b', watermelon_init._build_run_dir(j('a', 'b-', 'c')))
+        self.assertEqual('a-b', watermelon_init._build_run_dir(j('-a', 'b', 'c')))
+
+
+    def test_populate_inputs_source_dir(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             source_fastq_dir = os.path.join(temp_dir_path, 'source_fastq_dir')
             os.mkdir(source_fastq_dir)
             os.mkdir(os.path.join(source_fastq_dir, 'Sample_A'))
             touch(os.path.join(source_fastq_dir, 'Sample_A','SA_1.fastq.gz'))
+            touch(os.path.join(source_fastq_dir, 'Sample_A','SA_2.fastq.gz'))
             os.mkdir(os.path.join(source_fastq_dir, 'Sample_B'))
             touch(os.path.join(source_fastq_dir, 'Sample_B','SB_1.fastq.gz'))
+            touch(os.path.join(source_fastq_dir, 'Sample_B','SB_2.fastq.gz'))
             os.mkdir(os.path.join(source_fastq_dir, 'Sample_C'))
             touch(os.path.join(source_fastq_dir, 'Sample_C','SC_1.fastq.gz'))
+            touch(os.path.join(source_fastq_dir, 'Sample_C','SC_2.fastq.gz'))
 
             os.mkdir(os.path.join(temp_dir_path, 'working_dir'))
-            inputs_dir = os.path.join(temp_dir_path, 'working_dir', 'inputs', '00-multiplexed')
+            inputs_source_dir = os.path.join(temp_dir_path, 'working_dir', 'inputs', '00-source')
             os.mkdir(os.path.join(temp_dir_path, 'working_dir', 'inputs'))
-            os.mkdir(inputs_dir)
+            os.mkdir(inputs_source_dir)
+            samples = {'Sample_A' : os.path.join(source_fastq_dir, 'Sample_A'),
+                       'Sample_B' : os.path.join(source_fastq_dir, 'Sample_B'),
+                       'Sample_C' : os.path.join(source_fastq_dir, 'Sample_C'),}
+            run_samples = {'a_b_c': samples}
+
+            watermelon_init._populate_inputs_source_dir(inputs_source_dir, run_samples)
+
+            def assertINodesMatch(dirA, dirB, filename):
+                self.assertEqual(os.stat(os.path.join(dirA, filename)).st_ino,
+                                 os.stat(os.path.join(dirB, filename)).st_ino)
+            def is_link(o):
+                return os.path.islink(os.path.join(temp_dir_path, inputs_source_dir, o))
+
+
+            input_run_dirs = os.listdir(inputs_source_dir)
+            self.assertEqual(1, len(input_run_dirs))
+            self.assertEqual('a_b_c', input_run_dirs[0])
+            inputs_source_run_dir = os.path.join(inputs_source_dir, input_run_dirs[0])
+            actual_dirs = sorted([o for o in os.listdir(inputs_source_run_dir) if not is_link(o)])
+            self.assertEqual(['Sample_A', 'Sample_B' ,'Sample_C'], actual_dirs)
+            self.assertEqual(['SA_1.fastq.gz', 'SA_2.fastq.gz'],
+                             os.listdir(os.path.join(inputs_source_run_dir, 'Sample_A')))
+            assertINodesMatch(source_fastq_dir, inputs_source_run_dir, 'Sample_A/SA_1.fastq.gz')
+            self.assertEqual(['SB_1.fastq.gz', 'SB_2.fastq.gz'],
+                             os.listdir(os.path.join(inputs_source_run_dir, 'Sample_B')))
+            assertINodesMatch(source_fastq_dir, inputs_source_run_dir, 'Sample_B/SB_1.fastq.gz')
+            self.assertEqual(['SC_1.fastq.gz', 'SC_2.fastq.gz'],
+                             os.listdir(os.path.join(inputs_source_run_dir, 'Sample_C')))
+            assertINodesMatch(source_fastq_dir, inputs_source_run_dir, 'Sample_C/SC_1.fastq.gz')
+
+
+    def Xtest_populate_inputs_merged_dir(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            source_fastq_dir = os.path.join(temp_dir_path, 'source_fastq_dir')
+            os.mkdir(source_fastq_dir)
+            os.mkdir(os.path.join(source_fastq_dir, 'Sample_A'))
+            touch(os.path.join(source_fastq_dir, 'Sample_A','SA_1.fastq.gz'))
+            touch(os.path.join(source_fastq_dir, 'Sample_A','SA_2.fastq.gz'))
+            os.mkdir(os.path.join(source_fastq_dir, 'Sample_B'))
+            touch(os.path.join(source_fastq_dir, 'Sample_B','SB_1.fastq.gz'))
+            touch(os.path.join(source_fastq_dir, 'Sample_B','SB_2.fastq.gz'))
+            os.mkdir(os.path.join(source_fastq_dir, 'Sample_C'))
+            touch(os.path.join(source_fastq_dir, 'Sample_C','SC_1.fastq.gz'))
+            touch(os.path.join(source_fastq_dir, 'Sample_C','SC_2.fastq.gz'))
+
+            os.mkdir(os.path.join(temp_dir_path, 'working_dir'))
+            inputs_merged_dir = os.path.join(temp_dir_path, 'working_dir', 'inputs', '00-merged')
+            os.mkdir(os.path.join(temp_dir_path, 'working_dir', 'inputs'))
+            os.mkdir(inputs_source_dir)
             samples = {'Sample_A' : os.path.join(source_fastq_dir, 'Sample_A'),
                        'Sample_B' : os.path.join(source_fastq_dir, 'Sample_B'),
                        'Sample_C' : os.path.join(source_fastq_dir, 'Sample_C'),}
 
-            watermelon_init._populate_inputs_dir(inputs_dir, samples)
+            watermelon_init._populate_inputs_source_dir(inputs_merged_dir, samples)
 
+            def assertINodesMatch(dirA, dirB, filename):
+                self.assertEqual(os.stat(os.path.join(dirA, filename)).st_ino,
+                                 os.stat(os.path.join(dirB, filename)).st_ino)
             def is_link(o):
-                return os.path.islink(os.path.join(temp_dir_path, inputs_dir, o))
-            actual_dirs = sorted([o for o in os.listdir(inputs_dir) if not is_link(o)])
+                return os.path.islink(os.path.join(temp_dir_path, inputs_source_dir, o))
+            actual_dirs = sorted([o for o in os.listdir(inputs_source_dir) if not is_link(o)])
             self.assertEqual(['Sample_A', 'Sample_B' ,'Sample_C'], actual_dirs)
-            self.assertEqual(['SA_1.fastq.gz'],
-                             os.listdir(os.path.join(inputs_dir, 'Sample_A')))
-            self.assertEqual(os.stat(os.path.join(source_fastq_dir, 'Sample_A', 'SA_1.fastq.gz')).st_ino,
-                             os.stat(os.path.join(inputs_dir, 'Sample_A', 'SA_1.fastq.gz')).st_ino)
-            self.assertEqual(['SB_1.fastq.gz'],
-                             os.listdir(os.path.join(inputs_dir, 'Sample_B')))
-            self.assertEqual(os.stat(os.path.join(source_fastq_dir, 'Sample_B', 'SB_1.fastq.gz')).st_ino,
-                             os.stat(os.path.join(inputs_dir, 'Sample_B', 'SB_1.fastq.gz')).st_ino)
-            self.assertEqual(['SC_1.fastq.gz'],
-                             os.listdir(os.path.join(inputs_dir, 'Sample_C')))
-            self.assertEqual(os.stat(os.path.join(source_fastq_dir, 'Sample_C', 'SC_1.fastq.gz')).st_ino,
-                             os.stat(os.path.join(inputs_dir, 'Sample_C', 'SC_1.fastq.gz')).st_ino)
+            self.assertEqual(['SA_1.fastq.gz', 'SA_2.fastq.gz'],
+                             os.listdir(os.path.join(inputs_source_dir, 'Sample_A')))
+            assertINodesMatch(source_fastq_dir, inputs_source_dir, 'Sample_A/SA_1.fastq.gz')
+            self.assertEqual(['SB_1.fastq.gz', 'SB_2.fastq.gz'],
+                             os.listdir(os.path.join(inputs_source_dir, 'Sample_B')))
+            assertINodesMatch(source_fastq_dir, inputs_source_dir, 'Sample_B/SB_1.fastq.gz')
+            self.assertEqual(['SC_1.fastq.gz', 'SC_2.fastq.gz'],
+                             os.listdir(os.path.join(inputs_source_dir, 'Sample_C')))
+            assertINodesMatch(source_fastq_dir, inputs_source_dir, 'Sample_C/SC_1.fastq.gz')
+
 
 
     def test_initialize_samples(self):

@@ -29,6 +29,7 @@ import functools
 import glob
 import itertools
 import os
+import re
 import sys
 import time
 import traceback
@@ -37,6 +38,8 @@ import yaml
 
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
+
+_FASTQ_PATTERN = re.compile(r'.*\.fastq(\.gz)?$')
 
 class _UsageError(Exception):
     '''Raised for malformed command or invalid arguments.'''
@@ -164,7 +167,13 @@ def _is_source_fastq_external(source_fastq_dir, working_dir=os.getcwd()):
 
 def _populate_inputs_dir(inputs_dir, samples):
     for sample_name, sample_dir_target in samples.items():
-        os.symlink(sample_dir_target, os.path.join(inputs_dir, sample_name))
+        dest_sample_dir = os.path.join(inputs_dir, sample_name)
+        os.mkdir(dest_sample_dir)
+        fastqs = [fn for fn in os.listdir(sample_dir_target) if _FASTQ_PATTERN.search(fn)]
+        for fastq in fastqs:
+            target_name = os.path.join(sample_dir_target, fastq)
+            link_name = os.path.join(dest_sample_dir, os.path.basename(fastq))
+            os.link(target_name, link_name)
 
 def _build_phenotypes_samples_comparisons(samples):
     config = {}

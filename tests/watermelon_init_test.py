@@ -168,35 +168,44 @@ class WatermelonInitTest(unittest.TestCase):
                              actual_dirs)
 
 
-    def test_populate_input_dir(self):
+    def test_populate_inputs_dir(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             source_fastq_dir = os.path.join(temp_dir_path, 'source_fastq_dir')
             os.mkdir(source_fastq_dir)
             os.mkdir(os.path.join(source_fastq_dir, 'Sample_A'))
+            touch(os.path.join(source_fastq_dir, 'Sample_A','SA_1.fastq.gz'))
             os.mkdir(os.path.join(source_fastq_dir, 'Sample_B'))
+            touch(os.path.join(source_fastq_dir, 'Sample_B','SB_1.fastq.gz'))
             os.mkdir(os.path.join(source_fastq_dir, 'Sample_C'))
+            touch(os.path.join(source_fastq_dir, 'Sample_C','SC_1.fastq.gz'))
 
             os.mkdir(os.path.join(temp_dir_path, 'working_dir'))
             inputs_dir = os.path.join(temp_dir_path, 'working_dir', 'inputs', '00-multiplexed')
             os.mkdir(os.path.join(temp_dir_path, 'working_dir', 'inputs'))
             os.mkdir(inputs_dir)
-            samples = {'sA' : os.path.join(source_fastq_dir, 'Sample_A'),
-                       'sB' : os.path.join(source_fastq_dir, 'Sample_B'),
-                       'sC' : os.path.join(source_fastq_dir, 'Sample_C'),}
+            samples = {'Sample_A' : os.path.join(source_fastq_dir, 'Sample_A'),
+                       'Sample_B' : os.path.join(source_fastq_dir, 'Sample_B'),
+                       'Sample_C' : os.path.join(source_fastq_dir, 'Sample_C'),}
 
             watermelon_init._populate_inputs_dir(inputs_dir, samples)
 
             def is_link(o):
                 return os.path.islink(os.path.join(temp_dir_path, inputs_dir, o))
-            actual_links = sorted([o for o in os.listdir(inputs_dir) if is_link(o)])
-            self.assertEqual(['sA', 'sB' ,'sC'], actual_links)
-            self.assertEqual(os.path.join(source_fastq_dir, 'Sample_A'),
-                             os.readlink(os.path.join(inputs_dir, 'sA')))
-            self.assertEqual(os.path.join(source_fastq_dir, 'Sample_B'),
-                             os.readlink(os.path.join(inputs_dir, 'sB')))
-            self.assertEqual(os.path.join(source_fastq_dir, 'Sample_C'),
-                             os.readlink(os.path.join(inputs_dir, 'sC')))
+            actual_dirs = sorted([o for o in os.listdir(inputs_dir) if not is_link(o)])
+            self.assertEqual(['Sample_A', 'Sample_B' ,'Sample_C'], actual_dirs)
+            self.assertEqual(['SA_1.fastq.gz'],
+                             os.listdir(os.path.join(inputs_dir, 'Sample_A')))
+            self.assertEqual(os.stat(os.path.join(source_fastq_dir, 'Sample_A', 'SA_1.fastq.gz')).st_ino,
+                             os.stat(os.path.join(inputs_dir, 'Sample_A', 'SA_1.fastq.gz')).st_ino)
+            self.assertEqual(['SB_1.fastq.gz'],
+                             os.listdir(os.path.join(inputs_dir, 'Sample_B')))
+            self.assertEqual(os.stat(os.path.join(source_fastq_dir, 'Sample_B', 'SB_1.fastq.gz')).st_ino,
+                             os.stat(os.path.join(inputs_dir, 'Sample_B', 'SB_1.fastq.gz')).st_ino)
+            self.assertEqual(['SC_1.fastq.gz'],
+                             os.listdir(os.path.join(inputs_dir, 'Sample_C')))
+            self.assertEqual(os.stat(os.path.join(source_fastq_dir, 'Sample_C', 'SC_1.fastq.gz')).st_ino,
+                             os.stat(os.path.join(inputs_dir, 'Sample_C', 'SC_1.fastq.gz')).st_ino)
 
 
     def test_initialize_samples(self):

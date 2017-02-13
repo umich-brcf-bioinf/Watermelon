@@ -2,7 +2,7 @@
 # Launches snakemake
 # 9/27/2016 abhasi/cgates
 
-export WATERMELON_VERSION=0.1
+export WATERMELON_VERSION=0.1.1
 
 export SCRIPT_NAME=`basename $0 .sh`
 export WATERMELON_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"

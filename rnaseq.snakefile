@@ -307,8 +307,8 @@ rule cuffdiff:
         DIFFEX_DIR + "/08-cuffdiff/{pheno}/isoform_exp.diff",
         DIFFEX_DIR + "/08-cuffdiff/{pheno}/read_groups.info"
     params:
-        output_dir = DIFFEX_DIR + "/08-cuffdiff/{pheno}/",
-        output_temp_dir = DIFFEX_DIR + "/08-cuffdiff/tmp_{pheno}/",
+        output_dir = DIFFEX_DIR + "/08-cuffdiff/{pheno}",
+        output_temp_dir = DIFFEX_DIR + "/08-cuffdiff/tmp_{pheno}",
         labels = lambda wildcards : phenotypeManager.concatenated_comparison_values(',')[wildcards.pheno],
         samples = lambda wildcards : phenotypeManager.cuffdiff_samples(wildcards.pheno,
                                                                        ALIGNMENT_DIR + "/04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
@@ -331,7 +331,7 @@ rule cuffdiff:
         " {params.samples} "
         " 2>&1 | tee {log} && "
         
-        " mv {params.output_temp_dir}/* {params.output_dir} "
+        " rmdir {params.output_dir}; mv {params.output_temp_dir} {params.output_dir} "
 
 rule diffex_flip:
     input:

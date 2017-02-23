@@ -138,7 +138,7 @@ rule cutadapt:
         ALIGNMENT_DIR + "/02-cutadapt/log/{sample}_cutadapt.log"
     shell:
         "module load rnaseq && "
-        " echo \"trimming options: {params.trimming_options}\" && "
+#        " echo \"trimming options: {params.trimming_options}\" && "
         "if [[ {params.trimming_options} > 0 ]]; then "
         "(cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} "
         " -u {params.trim_length_5prime} "

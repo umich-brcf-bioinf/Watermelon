@@ -283,7 +283,8 @@ def cutadapt_options(trim_params):
             msg_format = "ERROR: config:trimming_options '{}={}' must be integer"
             msg = msg_format.format(option, value)
             raise ValueError(msg)
-        run_trimming_options = 1
+        if value != 0:
+            run_trimming_options = 1
     return run_trimming_options
 
 

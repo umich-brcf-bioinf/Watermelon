@@ -1,11 +1,13 @@
 '''Functions that support DESeq2.
 '''
 from __future__ import print_function, absolute_import, division
+import os
 
-from scripts.watermelon_config import CONFIG_KEYS, DEFAULT_PHENOTYPE_DELIM, MAIN_FACTOR_TRUE
+from scripts.watermelon_config import CONFIG_KEYS, DEFAULT_PHENOTYPE_DELIM, MAIN_FACTOR_TRUE, DEFAULT_COMPARISON_INFIX
 
-SAMPLE_METADATA_HEADER = 'phenotype'
-COMBINATORIC_GROUP = 'combinatoric_group'
+_COMBINATORIC_GROUP = 'combinatoric_group'
+_CONTRASTS_HEADER = ['factor','test_level','reference_level','file_name']
+_SAMPLE_METADATA_HEADER = 'phenotype'
 
 def _split_config_list(config_string):
     config_list = []
@@ -26,9 +28,9 @@ def _build_sample_metadata_list(config):
     lines = []
     main_factors = _split_config_list(config[CONFIG_KEYS.main_factors])
     phenotype_labels = _split_config_list(config[CONFIG_KEYS.phenotypes])
-    header = [SAMPLE_METADATA_HEADER]
+    header = [_SAMPLE_METADATA_HEADER]
     header.extend(phenotype_labels)
-    header.append(COMBINATORIC_GROUP)
+    header.append(_COMBINATORIC_GROUP)
     lines.append(header)
     for sample_name, phenotype_values_string in sorted(config[CONFIG_KEYS.samples].items()):
         sample_line = [sample_name]
@@ -42,14 +44,23 @@ def _build_sample_metadata_list(config):
     return lines
 
 def _build_contrasts_list(config, output_base_path):
-    return []
+    lines = []
+    lines.append(_CONTRASTS_HEADER)
+    for pheno_label, comparison_strings in sorted(config[CONFIG_KEYS.comparisons].items()):
+        comparisons = sorted([x.split(DEFAULT_COMPARISON_INFIX) for x in comparison_strings])
+        for test_level, reference_level in comparisons:
+            comparison_name = test_level + DEFAULT_COMPARISON_INFIX + reference_level
+            output_file_name = os.path.join(output_base_path, pheno_label, comparison_name)
+            lines.append([pheno_label, test_level, reference_level, output_file_name])
+    return lines
 
-def build_sample_metadata(config, sample_metadata_file_name):
-    with open(sample_metadata_file_name, 'w') as metadata_file:
-        lines = _build_sample_metadata_list(config)
+def _write_tab_delim_file(lines, output_filename):
+    with open(output_filename, 'w') as output_file:
         for line in lines:
-            print('\t'.join(line), file=metadata_file)
+            print('\t'.join(line), file=output_file)
 
-def build_contrasts_file(config, output_base_path, sample_metadata_file):
-    pass
+def build_sample_metadata(config, sample_metadata_filename):
+    _write_tab_delim_file(_build_sample_metadata_list(config), sample_metadata_filename)
 
+def build_contrasts(config, comparison_file_prefix, contrasts_filename):
+    _write_tab_delim_file(_build_contrasts_list(config, comparison_file_prefix), contrasts_filename)

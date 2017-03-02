@@ -41,9 +41,10 @@ rnaseq_snakefile_helper.checksum_reset_all("config_checksums",
 
 rule all:
     input:
-        expand("{alignment_dir}/03-fastqc_reads/{sample}_trimmed_R1_fastqc.html",
+        expand("{alignment_dir}/03-fastqc_reads/{sample}_trimmed_{read}_fastqc.html",
                 alignment_dir=ALIGNMENT_DIR,
-                sample=config["samples"]),
+                sample=config["samples"],
+                read=["R1", "R2"]),
         expand("{alignment_dir}/04-tophat/{sample}/{sample}_accepted_hits.bam",
                 alignment_dir=ALIGNMENT_DIR,
                 sample=config["samples"]),
@@ -161,17 +162,19 @@ rule cutadapt:
     
 rule fastqc_trimmed_reads:
     input:
-        ALIGNMENT_DIR + "/02-cutadapt/{sample}_trimmed_R1.fastq.gz"
+       ALIGNMENT_DIR + "/02-cutadapt/{sample}_trimmed_{read}.fastq.gz"
     output:         
         touch(ALIGNMENT_DIR + "/03-fastqc_reads/reads_fastq.done"),
-        ALIGNMENT_DIR + "/03-fastqc_reads/{sample}_trimmed_R1_fastqc.html"
+        ALIGNMENT_DIR + "/03-fastqc_reads/{sample}_trimmed_{read}_fastqc.html",
+        ALIGNMENT_DIR + "/03-fastqc_reads/{sample}_trimmed_{read}_fastqc.html"
     log:
-        ALIGNMENT_DIR + "/03-fastqc_reads/log/{sample}_fastqc_trimmed_reads.log"
+        ALIGNMENT_DIR + "/03-fastqc_reads/log/{sample}_fastqc_trimmed_{read}.log",
+
     params:
         fastqc_dir = ALIGNMENT_DIR + "/03-fastqc_reads"
     shell:
         " module load rnaseq && "
-        "fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log}"
+        " fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log} "
 
 rule create_transcriptome_index:
     input:
@@ -207,7 +210,8 @@ rule tophat:
         reference_checksum = "config_checksums/config-references.watermelon.md5",
         transcriptome_fasta = ALIGNMENT_DIR + "/04-tophat/transcriptome_index/transcriptome.fa",
         bowtie2_index_dir = "references/bowtie2_index",
-        fastq = ALIGNMENT_DIR + "/02-cutadapt/{sample}_trimmed_R1.fastq.gz"
+        R1_fastq = ALIGNMENT_DIR + "/02-cutadapt/{sample}_trimmed_R1.fastq.gz",
+        R2_fastq = ALIGNMENT_DIR + "/02-cutadapt/{sample}_trimmed_R2.fastq.gz"
     output:
         ALIGNMENT_DIR + "/04-tophat/{sample}/{sample}_accepted_hits.bam",
         ALIGNMENT_DIR + "/04-tophat/{sample}/{sample}_align_summary.txt"
@@ -231,7 +235,8 @@ rule tophat:
             " {params.tophat_options} "
             " -o {params.tophat_dir}/{params.sample} "
             " {input.bowtie2_index_dir}/genome "
-            " {input.fastq} "
+            " {input.R1_fastq} "
+            " {input.R2_fastq} "
             " 2>&1 | tee {log} && "
             " mv {params.tophat_dir}/{params.sample}/accepted_hits.bam {params.tophat_dir}/{params.sample}/{params.sample}_accepted_hits.bam && "
             " mv {params.tophat_dir}/{params.sample}/align_summary.txt {params.tophat_dir}/{params.sample}/{params.sample}_align_summary.txt "

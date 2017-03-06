@@ -2,6 +2,9 @@
 '''
 from __future__ import print_function, absolute_import, division
 import os
+import sys
+
+import yaml
 
 from scripts.watermelon_config import CONFIG_KEYS, DEFAULT_PHENOTYPE_DELIM, MAIN_FACTOR_TRUE, DEFAULT_COMPARISON_INFIX
 
@@ -64,3 +67,17 @@ def build_sample_metadata(config, sample_metadata_filename):
 
 def build_contrasts(config, comparison_file_prefix, contrasts_filename):
     _write_tab_delim_file(_build_contrasts_list(config, comparison_file_prefix), contrasts_filename)
+
+def main(config_filename, sample_metadata_filename, comparison_file_prefix, contrasts_filename):
+    with open(config_filename, 'r') as config_file:
+        config = yaml.load(config_file)
+    build_sample_metadata(config, sample_metadata_filename)
+    build_contrasts(config, comparison_file_prefix, contrasts_filename)
+
+if __name__ == '__main__':
+    config_file = sys.argv[1]
+    sample_metadata_filename = sys.argv[2]
+    contrast_comparison_file_prefix = sys.argv[3]
+    contrasts_filename = sys.argv[4]
+    main(config_file, sample_metadata_filename, contrast_comparison_file_prefix, contrasts_filename)
+    print('done', file=sys.stderr)

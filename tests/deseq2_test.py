@@ -15,17 +15,19 @@ class Deseq2Test(unittest.TestCase):
                       'sampleB' : 'LF   ^ female ^',
                       'sampleC' : '     ^ male   ^ ',
                       'sampleD' : 'HF   ^        ^ ',
-                      'sampleE' : '     ^        ^ '}}
+                      'sampleE' : '     ^        ^ ',
+                      'sampleF' : '     ^        ^ '}}
 
         lines = deseq2._build_sample_metadata_list(config)
 
         line = iter(lines)
-        self.assertEqual(['phenotype', 'diet', 'diet^replicate', 'gender', 'gender^replicate', 'male.diet', 'male.diet^replicate', 'combinatoric_group'], next(line))
-        self.assertEqual(['sampleA',   'HF', '1', 'male',   '1',  'HF', '1', 'HF^male'], next(line))
-        self.assertEqual(['sampleB',   'LF', '1', 'female', '1',  '',    '', 'LF^female'], next(line))
-        self.assertEqual(['sampleC',   '',   '',  'male',   '2',  '',    '', '^male'], next(line))
-        self.assertEqual(['sampleD',   'HF', '2', '', '',         '',    '', 'HF^'], next(line))
-        self.assertEqual(['sampleE',   '', '',    '', '',         '',    '', '^'], next(line))
+        self.assertEqual(['sample_name', 'diet', 'diet^replicate', 'gender', 'gender^replicate', 'male.diet', 'male.diet^replicate', 'combinatoric_group', 'combinatoric_group^replicate'], next(line))
+        self.assertEqual(['sampleA',   'HF', '1', 'male',   '1',  'HF', '1', 'HF^male',  '1'], next(line))
+        self.assertEqual(['sampleB',   'LF', '1', 'female', '1',  '',    '', 'LF^female', '1'], next(line))
+        self.assertEqual(['sampleC',   '',   '',  'male',   '2',  '',    '', '^male',     '1'], next(line))
+        self.assertEqual(['sampleD',   'HF', '2', '', '',         '',    '', 'HF^',       '1'], next(line))
+        self.assertEqual(['sampleE',   '', '',    '', '',         '',    '', '^' ,        '1'], next(line))
+        self.assertEqual(['sampleF',   '', '',    '', '',         '',    '', '^' ,        '2'], next(line))
         self.assertRaises(StopIteration, next, line)
 
     def test_build_sample_metadata_basecase(self):
@@ -42,8 +44,8 @@ class Deseq2Test(unittest.TestCase):
                 lines = actual_file.readlines()
 
         line = iter(lines)
-        self.assertEqual('phenotype\tdiet\tdiet^replicate\tgender\tgender^replicate\tcombinatoric_group\n', next(line))
-        self.assertEqual('sampleA\tHF\t1\tmale\t1\tHF^male\n', next(line))
+        self.assertEqual('sample_name\tdiet\tdiet^replicate\tgender\tgender^replicate\tcombinatoric_group\tcombinatoric_group^replicate\n', next(line))
+        self.assertEqual('sampleA\tHF\t1\tmale\t1\tHF^male\t1\n', next(line))
         self.assertRaises(StopIteration, next, line)
 
     def test_build_contrasts_list_basecase(self):

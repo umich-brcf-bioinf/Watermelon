@@ -11,7 +11,8 @@ from scripts.watermelon_config import CONFIG_KEYS, DEFAULT_PHENOTYPE_DELIM, MAIN
 
 _COMBINATORIC_GROUP = 'combinatoric_group'
 _CONTRASTS_HEADER = ['factor','test_level','reference_level','directory_name', 'base_file_name']
-_SAMPLE_METADATA_HEADER = 'phenotype'
+_SAMPLE_METADATA_HEADER = 'sample_name'
+_REPLICATE_SUFFIX = '^replicate'
 
 def _split_config_list(config_string):
     config_list = []
@@ -45,8 +46,10 @@ def _build_sample_metadata_list(config):
     header = [_SAMPLE_METADATA_HEADER]
     for label in phenotype_labels:
         header.append(label)
-        header.append(label + '^replicate')
+        header.append(label + _REPLICATE_SUFFIX)
     header.append(_COMBINATORIC_GROUP)
+    header.append(_COMBINATORIC_GROUP + _REPLICATE_SUFFIX)
+    
     lines.append(header)
     for sample_name, phenotype_values_string in sorted(config[CONFIG_KEYS.samples].items()):
         sample_line = [sample_name]
@@ -58,6 +61,7 @@ def _build_sample_metadata_list(config):
                                                                    main_factors,
                                                                    phenotype_values)
         sample_line.append(combinatoric_group_value)
+        sample_line.append(_replicate_number(_COMBINATORIC_GROUP, combinatoric_group_value))
         lines.append(sample_line)
     return lines
 

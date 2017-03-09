@@ -132,7 +132,7 @@ pdf(file = paste0('plots/PCA.pdf'), onefile = TRUE)
 p.all <- plotPCA(rld, intgroup = 'Name')
 CombinatoricGroup <- factor(colData$combinatoric_group)
 SampleName <- factor(colData$Name)
-gp <- ggplot(p.all$data, aes(x = PC1, y = PC2, color = SampleName, shape = CombinatoricGroup)) + scale_shape_manual(values=1:nlevels(CombinatoricGroup)) + geom_point(size=2) + ggtitle(label = as.character('All samples')) + theme(plot.title = element_text(hjust = 0.5)) + guides(colour=guide_legend(nrow=12), legend.key = element_rect(size = 1), legend.key.size = unit(0, 'cm')) + theme_classic(base_size = 10) + theme(legend.margin=margin(t = 0, unit='mm')) 
+gp <- ggplot(p.all$data, aes(x = PC1, y = PC2, color = SampleName, shape = CombinatoricGroup)) + scale_shape_manual(values=1:nlevels(CombinatoricGroup), name = "Combinatoric Group") + geom_point(size=2) + ggtitle(label = as.character('All samples')) + theme(plot.title = element_text(hjust = 0.5)) + guides(colour=guide_legend(nrow=12, title = "Sample"), legend.key = element_rect(size = 1), legend.key.size = unit(0, 'cm')) + theme_classic(base_size = 10) + theme(legend.margin=margin(t = 0, unit='mm')) 
 plot(gp)
 
 #get replicate df and sample df
@@ -157,8 +157,8 @@ dev.off()
 dds <- DESeq(dds, betaPrior = TRUE, parallel = TRUE)
 
 #get raw counts values for later
-rawCounts <- counts(dds)
-normCounts <- counts(dds, normalized = TRUE)
+rawCounts <- counts(dds) #raw
+normCounts <- counts(dds, normalized = TRUE) #raw/lib size factors
 idx.nz <- apply(rawCounts, 1, function(x) { all(x > 0)})
 
 #plot dispersions
@@ -184,13 +184,13 @@ colors <- colorRampPalette(brewer.pal(9, "Blues"))(255)
 select <- order(rowVars(assay(rld)), decreasing=TRUE)[1:500]
 df <- data.frame(Group = colData(rld)[,c("combinatoric_group")], row.names = rownames(colData(dds)))
 pdf(file = paste0('plots/TopVarHeatmap.pdf'), onefile = FALSE)
-pheatmap(assay(rld)[select,], cluster_rows=FALSE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors)
+pheatmap(assay(rld)[select,], cluster_rows=FALSE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors, main = '500 Top Variably Expressed Genes Heatmap')
 dev.off()
 
 select <- order(rowMeans(assay(rld)), decreasing=TRUE)[1:500]
 df <- data.frame(Group = colData(rld)[,c("combinatoric_group")], row.names = rownames(colData(dds)))
 pdf(file = paste0('plots/TopExpHeatmap.pdf'), onefile = FALSE)
-pheatmap(assay(rld)[select,], cluster_rows=FALSE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors)
+pheatmap(assay(rld)[select,], cluster_rows=FALSE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors, main = '500 Top Expressed Genes Heatmap')
 dev.off()
 
 #boxplot of non-normalized and normalized data
@@ -198,12 +198,17 @@ pdf(file = paste0('plots/Boxplot.pdf'), onefile = TRUE)
 rawCountsDf <- as.data.frame(rawCounts)
 df <- melt(log2(rawCountsDf), variable.name = "Samples", value.name = "count") # reshape the matrix 
 df$Condition <- colData$combinatoric_group[match(df$Samples,colData$Name)]
-ggplot(df, aes(x = df$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Non-normalized Counts') + xlab("") + ylab(expression(log[2](count + 1))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+ggplot(df, aes(x = df$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Non-normalized Counts') + xlab("") + ylab(expression(paste(Log[2]," counts"))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+
+normCountsDf <- as.data.frame(normCounts)
+dfn <- melt(log2(normCountsDf), variable.name = "Samples", value.name = "count") # reshape the matrix 
+dfn$Condition <- colData$combinatoric_group[match(dfn$Samples,colData$Name)]
+ggplot(dfn, aes(x = dfn$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Depth-normalized Counts') + xlab("") + ylab(expression(paste(Log[2]," depth-normalized counts"))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 
 rldDf <- as.data.frame(assay(rld))
-dfn <- melt(rldDf, variable.name = "Samples", value.name = "count") # reshape the matrix 
-dfn$Condition <- colData$combinatoric_group[match(dfn$Samples,colData$Name)]
-ggplot(dfn, aes(x = dfn$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Normalized Counts') + xlab("") + ylab(expression(log[2](count + 1))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+dfr <- melt(rldDf, variable.name = "Samples", value.name = "count") # reshape the matrix 
+dfr$Condition <- colData$combinatoric_group[match(dfr$Samples,colData$Name)]
+ggplot(dfr, aes(x = dfr$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Rlog-normalized Counts') + xlab("") + ylab(expression(paste(Regularized-Log[2]," normalized counts"))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 dev.off()
 
 #raw and normalized count density, removing rows with 0 values
@@ -212,13 +217,19 @@ df <- as.data.frame(log2(rawCounts[idx.nz,])) # raw counts, removed 0s
 df <- melt(df, variable.name = "Samples", value.name = "count") # reshape the matrix 
 ggplot(df, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = "right") + xlab(expression(log[2](count + 1))) + ggtitle('Non-normalized Counts') + theme_classic()
+  theme(legend.position = "right") + ylab('Density') + xlab(expression(paste(Log[2]," counts"))) + ggtitle('Non-normalized Counts') + theme_classic()
 
 dfn <- as.data.frame(log2(normCounts[idx.nz,])) #normalized counts (counts/size factors)
 dfn <- melt(dfn, variable.name = "Samples", value.name = "count") # reshape the matrix 
 ggplot(dfn, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = "right") + xlab(expression(log[2](count + 1))) + ggtitle('Normalized Counts') + theme_classic()
+  theme(legend.position = "right") + ylab('Density') + xlab(expression(paste(Log[2]," depth-normalized counts"))) + ggtitle('Depth-normalized Counts') + theme_classic()
+
+dfr <- as.data.frame(rldDf[idx.nz,]) #normalized counts (counts/size factors)
+dfr <- melt(dfr, variable.name = "Samples", value.name = "count") # reshape the matrix 
+ggplot(dfr, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
+  geom_density(alpha = 0.5, size = 0.25)  +
+  theme(legend.position = "right") + ylab('Density') + xlab(expression(paste(Regularized-Log[2]," normalized counts"))) + ggtitle('Rlog-normalized Counts') + theme_classic()
 dev.off()
 
 #correlation plot between samples 
@@ -235,7 +246,7 @@ dev.off()
 
 #write out normalized values, rlog normalized
 setDT(rldDf, keep.rownames = TRUE)[] #set rownames to valid column
-write.table(x = rldDf, file=paste0('normalizedData/normalizedExpData.txt'), append = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
+write.table(x = rldDf, file=paste0('normalizedData/RlogNormalizedExpData.txt'), append = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
 
 ####
 # Diffex analysis in loop
@@ -284,7 +295,7 @@ for (i in 1:nrow(contrastData)){
   
   #MA plot
   pdf(file = paste0('plots/MAplot_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
-  p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange)) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2]," average expression"))) + ylab(expression(paste(Log[2]," Fold-Change")))
+  p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange)) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2]," mean normalized expression"))) + ylab(expression(paste(Log[2]," fold-change")))
   p <- p + scale_color_manual(name = '', values=c("#B31B21", "#1465AC", "darkgray"))
   p <- p + scale_x_continuous(breaks=seq(0, max(log2(df$baseMean+1)), 2)) + geom_hline(yintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c("black", "black", "black"))
   p <- p + geom_label_repel(label = df$label, force = 3, segment.alpha = 0.4) + ggtitle(as.character(contrastData$base_file_name[i]))
@@ -293,9 +304,9 @@ for (i in 1:nrow(contrastData)){
   
   #Volcano plot
   pdf(file = paste0('plots/Volcano_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
-  p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2]," Fold-Change"))) + ylab(expression(paste(-Log[10]," Adjusted P-value")))
+  p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2]," fold-change"))) + ylab(expression(paste(-Log[10]," adjusted p-value")))
   p <- p + scale_color_manual(name = '', values=c("#B31B21", "#1465AC", "darkgray"))
-  p <- p + scale_x_continuous(breaks=seq(0, max(df$log2FoldChange), 2)) + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c("black", "black", "black")) + geom_hline(yintercept = -log10(pval), linetype = 2, color = "black")
+  p <- p + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c("black", "black", "black")) + geom_hline(yintercept = -log10(pval), linetype = 2, color = "black")
   p <- p + geom_label_repel(label = df$label, force = 3, segment.alpha = 0.4) + ggtitle(as.character(contrastData$base_file_name[i]))
   print(p)
   dev.off()

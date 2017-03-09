@@ -2,11 +2,14 @@
 '''
 from __future__ import print_function, absolute_import, division
 import os
+import sys
+
+import yaml
 
 from scripts.watermelon_config import CONFIG_KEYS, DEFAULT_PHENOTYPE_DELIM, MAIN_FACTOR_TRUE, DEFAULT_COMPARISON_INFIX
 
 _COMBINATORIC_GROUP = 'combinatoric_group'
-_CONTRASTS_HEADER = ['factor','test_level','reference_level','file_name']
+_CONTRASTS_HEADER = ['factor','test_level','reference_level','directory_name', 'base_file_name']
 _SAMPLE_METADATA_HEADER = 'phenotype'
 
 def _split_config_list(config_string):
@@ -50,8 +53,9 @@ def _build_contrasts_list(config, output_base_path):
         comparisons = sorted([x.split(DEFAULT_COMPARISON_INFIX) for x in comparison_strings])
         for test_level, reference_level in comparisons:
             comparison_name = test_level + DEFAULT_COMPARISON_INFIX + reference_level
-            output_file_name = os.path.join(output_base_path, pheno_label, comparison_name)
-            lines.append([pheno_label, test_level, reference_level, output_file_name])
+            directory_name = os.path.join(output_base_path, pheno_label)
+            base_file_name = comparison_name
+            lines.append([pheno_label, test_level, reference_level, directory_name, base_file_name])
     return lines
 
 def _write_tab_delim_file(lines, output_filename):
@@ -64,3 +68,17 @@ def build_sample_metadata(config, sample_metadata_filename):
 
 def build_contrasts(config, comparison_file_prefix, contrasts_filename):
     _write_tab_delim_file(_build_contrasts_list(config, comparison_file_prefix), contrasts_filename)
+
+def main(config_filename, sample_metadata_filename, comparison_file_prefix, contrasts_filename):
+    with open(config_filename, 'r') as config_file:
+        config = yaml.load(config_file)
+    build_sample_metadata(config, sample_metadata_filename)
+    build_contrasts(config, comparison_file_prefix, contrasts_filename)
+
+if __name__ == '__main__':
+    config_file = sys.argv[1]
+    sample_metadata_filename = sys.argv[2]
+    contrast_comparison_file_prefix = sys.argv[3]
+    contrasts_filename = sys.argv[4]
+    main(config_file, sample_metadata_filename, contrast_comparison_file_prefix, contrasts_filename)
+    print('done', file=sys.stderr)

@@ -57,13 +57,13 @@ class Deseq2Test(unittest.TestCase):
         lines = deseq2._build_contrasts_list(config, '/tmp')
 
         line = iter(lines)
-        self.assertEqual(['factor', 'test_level', 'reference_level', 'file_name'], next(line))
-        self.assertEqual(['diet', 'HF', 'DRG', '/tmp/diet/HF_v_DRG'], next(line))
-        self.assertEqual(['diet', 'HF', 'ND', '/tmp/diet/HF_v_ND'], next(line))
-        self.assertEqual(['female.diet', 'HF', 'ND', '/tmp/female.diet/HF_v_ND'], next(line))
-        self.assertEqual(['gender', 'male', 'female', '/tmp/gender/male_v_female'], next(line))
-        self.assertEqual(['male.diet', 'DRG', 'ND', '/tmp/male.diet/DRG_v_ND'], next(line))
-        self.assertEqual(['male.diet', 'HF', 'ND', '/tmp/male.diet/HF_v_ND'], next(line))
+        self.assertEqual(['factor', 'test_level', 'reference_level', 'directory_name', 'base_file_name'], next(line))
+        self.assertEqual(['diet', 'HF', 'DRG', '/tmp/diet', 'HF_v_DRG'], next(line))
+        self.assertEqual(['diet', 'HF', 'ND', '/tmp/diet', 'HF_v_ND'], next(line))
+        self.assertEqual(['female.diet', 'HF', 'ND', '/tmp/female.diet', 'HF_v_ND'], next(line))
+        self.assertEqual(['gender', 'male', 'female', '/tmp/gender', 'male_v_female'], next(line))
+        self.assertEqual(['male.diet', 'DRG', 'ND', '/tmp/male.diet', 'DRG_v_ND'], next(line))
+        self.assertEqual(['male.diet', 'HF', 'ND', '/tmp/male.diet', 'HF_v_ND'], next(line))
         self.assertRaises(StopIteration, next, line)
 
     def test_build_contrasts_basecase(self):
@@ -78,6 +78,6 @@ class Deseq2Test(unittest.TestCase):
                 lines = actual_file.readlines()
 
         line = iter(lines)
-        self.assertEqual('factor\ttest_level\treference_level\tfile_name\n', next(line))
-        self.assertEqual('gender\tmale\tfemale\tanalysis_02_27/diffex_results/16-deseq2/gender/male_v_female\n', next(line))
+        self.assertEqual('factor\ttest_level\treference_level\tdirectory_name\tbase_file_name\n', next(line))
+        self.assertEqual('gender\tmale\tfemale\tanalysis_02_27/diffex_results/16-deseq2/gender\tmale_v_female\n', next(line))
         self.assertRaises(StopIteration, next, line)

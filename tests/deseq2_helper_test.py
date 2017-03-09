@@ -3,7 +3,7 @@ from __future__ import print_function, absolute_import, division
 import os
 import unittest
 from testfixtures.tempdirectory import TempDirectory
-import scripts.deseq2 as deseq2
+import scripts.deseq2_helper as deseq2_helper
 
 
 class Deseq2Test(unittest.TestCase):
@@ -18,7 +18,7 @@ class Deseq2Test(unittest.TestCase):
                       'sampleE' : '     ^        ^ ',
                       'sampleF' : '     ^        ^ '}}
 
-        lines = deseq2._build_sample_metadata_list(config)
+        lines = deseq2_helper._build_sample_metadata_list(config)
 
         line = iter(lines)
         self.assertEqual(['sample_name', 'diet', 'diet^replicate', 'gender', 'gender^replicate', 'male.diet', 'male.diet^replicate', 'combinatoric_group', 'combinatoric_group^replicate'], next(line))
@@ -39,7 +39,7 @@ class Deseq2Test(unittest.TestCase):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             sample_metadata_file_name = os.path.join(temp_dir_path, 'sample_metadata.txt')
-            deseq2.build_sample_metadata(config, sample_metadata_file_name)
+            deseq2_helper.build_sample_metadata(config, sample_metadata_file_name)
             with open(sample_metadata_file_name, 'r') as actual_file:
                 lines = actual_file.readlines()
 
@@ -56,7 +56,7 @@ class Deseq2Test(unittest.TestCase):
                                 'female.diet': ['HF_v_ND']}}
         
 
-        lines = deseq2._build_contrasts_list(config, '/tmp')
+        lines = deseq2_helper._build_contrasts_list(config, '/tmp')
 
         line = iter(lines)
         self.assertEqual(['factor', 'test_level', 'reference_level', 'directory_name', 'base_file_name'], next(line))
@@ -75,7 +75,7 @@ class Deseq2Test(unittest.TestCase):
             contrast_file_name = os.path.join(temp_dir_path, 'deseq2_contrast.txt')
             comparison_file_prefix = 'analysis_02_27/diffex_results/16-deseq2'
 
-            deseq2.build_contrasts(config, comparison_file_prefix, contrast_file_name)
+            deseq2_helper.build_contrasts(config, comparison_file_prefix, contrast_file_name)
             with open(contrast_file_name, 'r') as actual_file:
                 lines = actual_file.readlines()
 

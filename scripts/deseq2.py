@@ -1,6 +1,7 @@
 '''Functions that support DESeq2.
 '''
 from __future__ import print_function, absolute_import, division
+from collections import defaultdict
 import os
 import sys
 
@@ -27,18 +28,32 @@ def _build_combinatoric_group_value(phenotype_labels, main_factors, phenotype_va
     combinatoric_string = DEFAULT_PHENOTYPE_DELIM.join(main_factor_phenotype_values)
     return combinatoric_string
 
+
+
 def _build_sample_metadata_list(config):
+    replicate_count = defaultdict(int)
+    def _replicate_number(label, value):
+        if value == '':
+            return ''
+        label_value = (label, value)
+        replicate_count[label_value] += 1
+        return str(replicate_count[label_value])
+
     lines = []
     main_factors = _split_config_list(config[CONFIG_KEYS.main_factors])
-    phenotype_labels = _split_config_list(config[CONFIG_KEYS.phenotypes])
+    phenotype_labels = _split_config_list(config[CONFIG_KEYS.phenotypes]) 
     header = [_SAMPLE_METADATA_HEADER]
-    header.extend(phenotype_labels)
+    for label in phenotype_labels:
+        header.append(label)
+        header.append(label + '^replicate')
     header.append(_COMBINATORIC_GROUP)
     lines.append(header)
     for sample_name, phenotype_values_string in sorted(config[CONFIG_KEYS.samples].items()):
         sample_line = [sample_name]
         phenotype_values = _split_config_list(phenotype_values_string)
-        sample_line.extend(phenotype_values)
+        for label, value in zip(phenotype_labels, phenotype_values):
+            sample_line.append(value)
+            sample_line.append(_replicate_number(label, value))
         combinatoric_group_value = _build_combinatoric_group_value(phenotype_labels,
                                                                    main_factors,
                                                                    phenotype_values)

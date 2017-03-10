@@ -613,10 +613,8 @@ rule deseq2_metadata_contrasts:
     output:
         sample_metadata = DIFFEX_DIR + "/deseq2/02-metadata_contrasts/sample_metadata.txt",
         contrasts = DIFFEX_DIR + "/deseq2/02-metadata_contrasts/contrasts.txt"
-    params:
-        output_dir =DIFFEX_DIR + "/deseq2/03-deseq2_diffex"
     run:
         deseq2_helper.build_sample_metadata(config, output.sample_metadata)
-        deseq2_helper.build_contrasts(config, params.output_dir, output.contrasts)
+        deseq2_helper.build_contrasts(config, output.contrasts)
 
         

@@ -133,7 +133,7 @@ rule cutadapt:
     log:
         ALIGNMENT_DIR + "/02-cutadapt/log/{sample}_cutadapt.log"
     shell:
-        "module load rnaseq && "
+        "module load watermelon_rnaseq && "
         "if [[ {params.trimming_options} > 0 ]]; then "
         "(cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} "
         " -u {params.trim_length_5prime} "
@@ -158,7 +158,7 @@ rule fastqc_trimmed_reads:
     params:
         fastqc_dir = ALIGNMENT_DIR + "/03-fastqc_reads"
     shell:
-        " module load rnaseq && "
+        " module load watermelon_rnaseq && "
         "fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log}"
 
 rule create_transcriptome_index:
@@ -179,7 +179,7 @@ rule create_transcriptome_index:
     shell:
         "mkdir -p {params.temp_dir} && "
         " rm -rf {params.temp_dir}/* && "
-        " module load rnaseq && "
+        " module load watermelon_rnaseq && "
         " tophat -G {input.gtf} "
         " --library-type {params.strand} "
         " --transcriptome-index={params.temp_dir}/transcriptome_index/transcriptome "
@@ -209,7 +209,7 @@ rule tophat:
         ALIGNMENT_DIR + "/04-tophat/log/{sample}_tophat.log"
     threads: 8
     shell: 
-            " module load rnaseq && "
+            " module load watermelon_rnaseq && "
             " tophat -p {threads} "
             " --b2-very-sensitive "
             " --no-coverage-search "
@@ -235,7 +235,7 @@ rule fastqc_tophat_align:
     log:
         ALIGNMENT_DIR + "/05-fastqc_align/log/{sample}_fastqc_tophat_align.log"
     shell:
-        " module load rnaseq && "
+        " module load watermelon_rnaseq && "
         "fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log} "
 
 rule align_qc_metrics:
@@ -268,7 +268,7 @@ rule htseq_per_sample:
     log:
         DIFFEX_DIR + "/deseq2/01-htseq/log/{sample}_htseq_per_sample.log"
     shell:
-        " module load rnaseq &&"
+        " module load watermelon_rnaseq &&"
         " python -m HTSeq.scripts.count "
         " -f bam "
         " -s {params.strand} "
@@ -319,7 +319,7 @@ rule cuffdiff:
     log:
         DIFFEX_DIR + "/08-cuffdiff/log/{pheno}_cuffdiff.log"
     shell:
-        " module load rnaseq && "
+        " module load watermelon_rnaseq && "
         " cuffdiff -q "
         " -p {threads} "
         " -L {params.labels} "
@@ -457,7 +457,7 @@ rule cummerbund:
     log:
          DIFFEX_DIR + "/13-cummerbund/log/{pheno}_cummerbund.log"
     shell:
-        "module load rnaseq && "
+        "module load watermelon_rnaseq && "
         "mkdir -p {params.output_dir}/Plots && "
         "Rscript {WATERMELON_SCRIPTS_DIR}/Run_cummeRbund.R "
         " baseDir={params.output_dir} "
@@ -521,7 +521,7 @@ rule build_run_info:
         DIFFEX_DIR + "/15-run_info/glossary.txt"
 
     run:
-        command = 'module load rnaseq; module list -t 2> {}'.format(output[0])
+        command = 'module load watermelon_rnaseq; module list -t 2> {}'.format(output[0])
         subprocess.call(command, shell=True)
         with open(output[0], 'a') as run_info_file: 
             print('\n\nConfig\n', file=run_info_file)

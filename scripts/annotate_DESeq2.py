@@ -76,9 +76,8 @@ def get_taxid(genome):
 
 tax_id = get_taxid(args.genome)
 
-outfile_tag = os.path.basename(gene_expr.replace('.csv', '.annot.csv'))
+outfile_tag = os.path.basename(gene_expr.replace('.txt', '.annot.txt'))
 outfile_name = os.path.join(outdir, outfile_tag)
-
 log('reading entrez gene info')
 
 
@@ -91,22 +90,20 @@ with open(gene_info,'r') as geneinfo_file:
 
     for row in reader:
         (geneinfo_tax_id, geneinfo_gene_id, geneinfo_gene_symbol, geneinfo_gene_description) = (row[0], row[1], row[2], row[8])
-
         if geneinfo_tax_id == tax_id:
             gene_details[geneinfo_gene_symbol] = [geneinfo_gene_id, geneinfo_gene_description]
-
 
 all_lines = 0
 matching_gene_symbol_count = 0
 with open(gene_expr, 'r') as file_to_annotate, open(outfile_name, 'w') as annotated_file: 
-    reader=csv.reader(file_to_annotate,delimiter=',')
+    reader=csv.reader(file_to_annotate,delimiter='\t')
     for row in reader:
         all_lines += 1
         row = [col.strip() for col in row]
         if row[0] == 'id':
             row[0] = 'gene_symbol'
-            row.insert(2, 'gene_id')
-            row.insert(3, 'gene_desc')
+            row.insert(1, 'gene_id')
+            row.insert(2, 'gene_desc')
             print('\t'.join(row), file=annotated_file)
         else:
             left = row[:1]
@@ -118,7 +115,7 @@ with open(gene_expr, 'r') as file_to_annotate, open(outfile_name, 'w') as annota
                 matching_gene_symbol_count += 1
             else:
                 gene_id_symbol = ['.','.']
-            outline = ",".join(left + gene_id_symbol + right)  
+            outline = "\t".join(left + gene_id_symbol + right)  
             print(outline, file=annotated_file)
 
 check_geneinfo_matches(all_lines, matching_gene_symbol_count)

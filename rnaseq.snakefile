@@ -13,6 +13,7 @@ import subprocess
 import yaml
 
 import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
+import scripts.deseq2_helper as deseq2_helper
 
 WATERMELON_SCRIPTS_DIR = os.environ.get('WATERMELON_SCRIPTS_DIR', 'scripts')
 
@@ -51,7 +52,6 @@ rule all:
                 alignment_dir=ALIGNMENT_DIR,
                 sample=config["samples"]),
         ALIGNMENT_DIR + "/06-qc_metrics/alignment_stats.txt",
-        DIFFEX_DIR + "/07-htseq/HTSeq_counts.txt",
         expand("{diffex_dir}/08-cuffdiff/{phenotype}/gene_exp.diff",
                 diffex_dir=DIFFEX_DIR, 
                 phenotype=sorted(config[COMPARISONS_KEY].keys())),
@@ -104,6 +104,12 @@ rule all:
         expand("{diffex_dir}/Deliverables/diffex_deliverables/cummeRbund_results/{phenotype_name}_cummeRbund_plots",
                     diffex_dir=DIFFEX_DIR, 
                     phenotype_name=sorted(config[COMPARISONS_KEY].keys())),
+        DIFFEX_DIR + "/deseq2/01-htseq/HTSeq_counts.txt",
+        DIFFEX_DIR + "/deseq2/02-metadata_contrasts/sample_metadata.txt",
+        DIFFEX_DIR + "/deseq2/02-metadata_contrasts/contrasts.txt",
+        DIFFEX_DIR + "/deseq2/04-annotation/diet/diffExpData.HF_v_DRG.annot.txt"
+        
+        
 
 
 rule concat_reads:
@@ -260,11 +266,11 @@ rule htseq_per_sample:
         bams = ALIGNMENT_DIR + "/04-tophat/{sample}/{sample}_accepted_hits.bam",
         gtf = "references/gtf"
     output:
-        DIFFEX_DIR + "/07-htseq/{sample}_counts.txt"
+        DIFFEX_DIR + "/deseq2/01-htseq/{sample}_counts.txt"
     params:
         strand = rnaseq_snakefile_helper.check_strand_option("htseq", config["alignment_options"]["library_type"])
     log:
-        DIFFEX_DIR + "/07-htseq/log/{sample}_htseq_per_sample.log"
+        DIFFEX_DIR + "/deseq2/01-htseq/log/{sample}_htseq_per_sample.log"
     shell:
         " module load rnaseq &&"
         " python -m HTSeq.scripts.count "
@@ -280,15 +286,15 @@ rule htseq_per_sample:
 rule htseq_merge:
     input:
         sample_checksum = "config_checksums/config-samples.watermelon.md5",
-        sample_count_files = expand("{diffex_dir}/07-htseq/{sample}_counts.txt",
+        sample_count_files = expand("{diffex_dir}/deseq2/01-htseq/{sample}_counts.txt",
                                     diffex_dir=DIFFEX_DIR, sample=config["samples"])
     output:
-        DIFFEX_DIR + "/07-htseq/HTSeq_counts.txt"
+        DIFFEX_DIR + "/deseq2/01-htseq/HTSeq_counts.txt"
     params:
-        output_dir = DIFFEX_DIR + "/07-htseq",
-        input_dir = DIFFEX_DIR + "/07-htseq"
+        output_dir = DIFFEX_DIR + "/deseq2/01-htseq",
+        input_dir = DIFFEX_DIR + "/deseq2/01-htseq"
     log:
-        DIFFEX_DIR + "/07-htseq/log/htseq_merge.log"
+        DIFFEX_DIR + "/deseq2/01-htseq/log/htseq_merge.log"
     shell:
        " perl {WATERMELON_SCRIPTS_DIR}/mergeHTSeqCountFiles.pl {params.input_dir} 2>&1 | tee {log}"
 
@@ -601,3 +607,38 @@ rule cummerbund_deliverables:
         " find {output.diffex_raw_counts} | xargs -I ^ touch ^ && "
         " cp -r {input.plots}  {output.plots} && "
         " find {output.plots} | xargs -I ^ touch ^ "
+
+rule deseq2_metadata_contrasts:
+    input:
+        sample_checksum      = "config_checksums/config-samples.watermelon.md5",
+        comparison_checksum  = "config_checksums/config-comparisons.watermelon.md5",
+        phenotype_checksum   = "config_checksums/config-phenotypes.watermelon.md5",
+        main_factor_checksum = "config_checksums/config-main_factors.watermelon.md5"
+    output:
+        sample_metadata = DIFFEX_DIR + "/deseq2/02-metadata_contrasts/sample_metadata.txt",
+        contrasts = DIFFEX_DIR + "/deseq2/02-metadata_contrasts/contrasts.txt"
+    run:
+        deseq2_helper.build_sample_metadata(config, output.sample_metadata)
+        deseq2_helper.build_contrasts(config, output.contrasts)
+
+rule deseq2_diffex:
+    input:
+        DIFFEX_DIR + "/deseq2/02-metadata_contrasts/sample_metadata.txt",
+        DIFFEX_DIR + "/deseq2/02-metadata_contrasts/contrasts.txt"
+    output:touch(DIFFEX_DIR + "deseq2/03-deseq2_diffex/diet/diffExpData.HF_v_DRG.txt")
+    
+rule deseq2_annotation:
+    input:
+        diffex_file= DIFFEX_DIR + "/deseq2/03-deseq2_diffex/diet/diffExpData.HF_v_DRG.txt",
+        gene_info = "/ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info",
+    output:
+        DIFFEX_DIR + "/deseq2/04-annotation/diet/diffExpData.HF_v_DRG.annot.txt"
+    params:
+        output_dir = DIFFEX_DIR + "/deseq2/04-annotation/diet",
+        genome = config["genome"]
+    shell:
+        " python /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/scripts/annotate_DESeq2.py "
+        " -i {input.gene_info} "
+        " -e {input.diffex_file} "
+        " -g {params.genome} "
+        " -o {params.output_dir} "

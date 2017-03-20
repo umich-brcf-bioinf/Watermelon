@@ -3,7 +3,7 @@ from __future__ import print_function, absolute_import, division
 import os
 import unittest
 from testfixtures.tempdirectory import TempDirectory
-import scripts.deseq2 as deseq2
+import scripts.deseq2_helper as deseq2_helper
 
 
 class Deseq2Test(unittest.TestCase):
@@ -15,17 +15,19 @@ class Deseq2Test(unittest.TestCase):
                       'sampleB' : 'LF   ^ female ^',
                       'sampleC' : '     ^ male   ^ ',
                       'sampleD' : 'HF   ^        ^ ',
-                      'sampleE' : '     ^        ^ '}}
+                      'sampleE' : '     ^        ^ ',
+                      'sampleF' : '     ^        ^ '}}
 
-        lines = deseq2._build_sample_metadata_list(config)
+        lines = deseq2_helper._build_sample_metadata_list(config)
 
         line = iter(lines)
-        self.assertEqual(['phenotype', 'diet', 'gender', 'male.diet', 'combinatoric_group'], next(line))
-        self.assertEqual(['sampleA', 'HF', 'male', 'HF', 'HF^male'], next(line))
-        self.assertEqual(['sampleB','LF','female', '', 'LF^female'], next(line))
-        self.assertEqual(['sampleC','','male', '', '^male'], next(line))
-        self.assertEqual(['sampleD','HF','', '', 'HF^'], next(line))
-        self.assertEqual(['sampleE','','', '', '^'], next(line))
+        self.assertEqual(['sample_name', 'diet', 'diet^replicate', 'gender', 'gender^replicate', 'male.diet', 'male.diet^replicate', 'combinatoric_group', 'combinatoric_group^replicate'], next(line))
+        self.assertEqual(['sampleA',   'HF', '1', 'male',   '1',  'HF', '1', 'HF^male',  '1'], next(line))
+        self.assertEqual(['sampleB',   'LF', '1', 'female', '1',  '',    '', 'LF^female', '1'], next(line))
+        self.assertEqual(['sampleC',   '',   '',  'male',   '2',  '',    '', '^male',     '1'], next(line))
+        self.assertEqual(['sampleD',   'HF', '2', '', '',         '',    '', 'HF^',       '1'], next(line))
+        self.assertEqual(['sampleE',   '', '',    '', '',         '',    '', '^' ,        '1'], next(line))
+        self.assertEqual(['sampleF',   '', '',    '', '',         '',    '', '^' ,        '2'], next(line))
         self.assertRaises(StopIteration, next, line)
 
     def test_build_sample_metadata_basecase(self):
@@ -37,13 +39,13 @@ class Deseq2Test(unittest.TestCase):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             sample_metadata_file_name = os.path.join(temp_dir_path, 'sample_metadata.txt')
-            deseq2.build_sample_metadata(config, sample_metadata_file_name)
+            deseq2_helper.build_sample_metadata(config, sample_metadata_file_name)
             with open(sample_metadata_file_name, 'r') as actual_file:
                 lines = actual_file.readlines()
 
         line = iter(lines)
-        self.assertEqual('phenotype\tdiet\tgender\tcombinatoric_group\n', next(line))
-        self.assertEqual('sampleA\tHF\tmale\tHF^male\n', next(line))
+        self.assertEqual('sample_name\tdiet\tdiet^replicate\tgender\tgender^replicate\tcombinatoric_group\tcombinatoric_group^replicate\n', next(line))
+        self.assertEqual('sampleA\tHF\t1\tmale\t1\tHF^male\t1\n', next(line))
         self.assertRaises(StopIteration, next, line)
 
     def test_build_contrasts_list_basecase(self):
@@ -54,16 +56,16 @@ class Deseq2Test(unittest.TestCase):
                                 'female.diet': ['HF_v_ND']}}
         
 
-        lines = deseq2._build_contrasts_list(config, '/tmp')
+        lines = deseq2_helper._build_contrasts_list(config)
 
         line = iter(lines)
-        self.assertEqual(['factor', 'test_level', 'reference_level', 'directory_name', 'base_file_name'], next(line))
-        self.assertEqual(['diet', 'HF', 'DRG', '/tmp/diet', 'HF_v_DRG'], next(line))
-        self.assertEqual(['diet', 'HF', 'ND', '/tmp/diet', 'HF_v_ND'], next(line))
-        self.assertEqual(['female.diet', 'HF', 'ND', '/tmp/female.diet', 'HF_v_ND'], next(line))
-        self.assertEqual(['gender', 'male', 'female', '/tmp/gender', 'male_v_female'], next(line))
-        self.assertEqual(['male.diet', 'DRG', 'ND', '/tmp/male.diet', 'DRG_v_ND'], next(line))
-        self.assertEqual(['male.diet', 'HF', 'ND', '/tmp/male.diet', 'HF_v_ND'], next(line))
+        self.assertEqual(['factor', 'test_level', 'reference_level', 'base_file_name'], next(line))
+        self.assertEqual(['diet', 'HF', 'DRG',  'HF_v_DRG'], next(line))
+        self.assertEqual(['diet', 'HF', 'ND',  'HF_v_ND'], next(line))
+        self.assertEqual(['female.diet', 'HF', 'ND', 'HF_v_ND'], next(line))
+        self.assertEqual(['gender', 'male', 'female', 'male_v_female'], next(line))
+        self.assertEqual(['male.diet', 'DRG', 'ND', 'DRG_v_ND'], next(line))
+        self.assertEqual(['male.diet', 'HF', 'ND', 'HF_v_ND'], next(line))
         self.assertRaises(StopIteration, next, line)
 
     def test_build_contrasts_basecase(self):
@@ -71,13 +73,12 @@ class Deseq2Test(unittest.TestCase):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             contrast_file_name = os.path.join(temp_dir_path, 'deseq2_contrast.txt')
-            comparison_file_prefix = 'analysis_02_27/diffex_results/16-deseq2'
 
-            deseq2.build_contrasts(config, comparison_file_prefix, contrast_file_name)
+            deseq2_helper.build_contrasts(config, contrast_file_name)
             with open(contrast_file_name, 'r') as actual_file:
                 lines = actual_file.readlines()
 
         line = iter(lines)
-        self.assertEqual('factor\ttest_level\treference_level\tdirectory_name\tbase_file_name\n', next(line))
-        self.assertEqual('gender\tmale\tfemale\tanalysis_02_27/diffex_results/16-deseq2/gender\tmale_v_female\n', next(line))
+        self.assertEqual('factor\ttest_level\treference_level\tbase_file_name\n', next(line))
+        self.assertEqual('gender\tmale\tfemale\tmale_v_female\n', next(line))
         self.assertRaises(StopIteration, next, line)

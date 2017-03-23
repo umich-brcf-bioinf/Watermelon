@@ -103,13 +103,6 @@ if (is.null(opt$countDataFile)) {
 } else
   print("countDataFile, metaDataFile, contrastFile, foldChange, and adjustedPValue detected. Continue.")
 
-opt$countDataFile <- "HTSeq_counts.txt"
-opt$metaDataFile <- "sample_metadata.txt"
-opt$contrastFile <- "contrastsNew.txt"
-opt$outDir <- "this/is/a/test"
-opt$foldChange <- 1.5
-opt$adjustedPValue <- 0.05
-  
 outDir <- opt$outDir
 plotsDir <- paste0(outDir,'/plots')
 normDataDir <- paste0(outDir,'/normalizedData')

@@ -62,21 +62,30 @@ def _calc_mean(read_data):
     read_data['Tot'] = read_data[_LHIST_LENGTH]*read_data[_LHIST_COUNT]
     return read_data['Tot'].sum() / read_data[_LHIST_COUNT].sum()
 
-def _get_mean_stdev_from_ihist(insert_data):
-    # insert_data = ['#Foo	1', '#Bar	2']
-    # for line in insert_data:
-    #     field, value = line.split()
-    #     if field == '#Mean' or '#STDev':
+_IHIST_REQUIRED_LABELS = set(['#Mean', '#STDev'])
 
-    header_values = dict([x.split() for x in insert_data if x.startswith('#')])
+def _get_mean_stdev_from_ihist(filename, insert_data):
+    def is_float(x):
+        try:
+            float(x.split()[1])
+            return True
+        except:
+            return False
 
-    return header_values['#Mean'], header_values['#Stdev']
+    def is_valid_pair(x):
+        return x.startswith('#') and len(x.split()) == 2 and is_float(x)
 
-def _build_read_stats(read_data_df, insert_data_df):
-    #define insert mean and sd
-    ins_mean = round(float(insert_data_df[1][0]))
-    ins_sd = round(float(insert_data_df[1][3]))
+    header_values = dict([x.split() for x in insert_data if is_valid_pair(x)])
 
+    missing_labels = _IHIST_REQUIRED_LABELS - set(header_values.keys())
+    if missing_labels:
+        msg_fmt = 'File [{}] is missing label or invalid value for [{}]'
+        msg = msg_fmt.format(filename, ', '.join(sorted(missing_labels)))
+        raise ValueError(msg)
+
+    return float(header_values['#Mean']), float(header_values['#STDev'])
+
+def _build_read_stats(ins_mean, ins_sd, read_data_df):
     #calc_mean
     m = _calc_mean(read_data_df)
 
@@ -117,7 +126,10 @@ def main(sys_argv):
                               sep='\t',
                               header=None)
 
-    read_stats_df = _build_read_stats(read_data, insert_data)
+    with open(in_file_name_2, 'r') as insert_file:
+        (ins_mean, ins_sd) = _get_mean_stdev_from_ihist(in_file_name_2,
+                                                            insert_file)
+    read_stats_df = _build_read_stats(ins_mean, ins_sd, read_data)
 
     read_stats_df.to_csv(os.path.join(out_path,out_file_name),
                          sep='\t',

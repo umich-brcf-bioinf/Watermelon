@@ -5,24 +5,7 @@
 ####
 
 #load
-library(plotly)
 library(optparse)
-library(DESeq2)
-library(data.table)
-library(BiocParallel)
-register(MulticoreParam(6))
-options(java.parameters = "-Xmx16000m")
-library(xlsx)
-library(genefilter)
-library(geneplotter)
-library(ggfortify)
-library(ggplot2)
-library(calibrate)
-library(GGally)
-library(reshape2)
-library(ggrepel)
-library(pheatmap)
-library(RColorBrewer)
 
 #######
 # Perform differential expression analysis using DESeq2
@@ -95,13 +78,32 @@ if (is.null(opt$countDataFile)) {
 } else if (is.null(opt$foldChange)) {
   print_help(opt$parser)
   stop("The output directory has not been supplied (outDir).", call.=FALSE)
-} else if (is.null(opt$foldChange)) {
+} else if (is.null(opt$outDir)) {
   print_help(opt_parser)
   stop("The fold-change cutoff is not specified (foldChange)", call.=FALSE)
 } else if (is.null(opt$adjustedPValue)) {
   print_help(opt_parser)
 } else
   print("countDataFile, metaDataFile, contrastFile, foldChange, and adjustedPValue detected. Continue.")
+
+#load libs
+library(plotly)
+library(DESeq2)
+library(data.table)
+library(BiocParallel)
+register(MulticoreParam(6))
+options(java.parameters = "-Xmx16000m")
+library(xlsx)
+library(genefilter)
+library(geneplotter)
+library(ggfortify)
+library(ggplot2)
+library(calibrate)
+library(GGally)
+library(reshape2)
+library(ggrepel)
+library(pheatmap)
+library(RColorBrewer)
 
 outDir <- opt$outDir
 plotsDir <- paste0(outDir,'/plots')

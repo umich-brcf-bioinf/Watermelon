@@ -321,10 +321,14 @@ for (i in 1:length(uniqGroups)){
   htmlwidgets::saveWidget(gcp, file = path_name)
 }
 
-acp <- ggpairs(data = rldDf[1:ncol(rldDf)],upper = list(continuous = wrap(ggally_cor, use = "pairwise.complete.obs", method = "spearman")), title = 'All samples') + theme_bw()
-acp <- ggplotly(acp)
-path_name <- file.path(getwd(),plotsDir,"CorrelMatrix_All.html")
-htmlwidgets::saveWidget(acp, file = path_name)
+if(length(1:ncol(rldDf)) < 10){
+  acp <- ggpairs(data = rldDf[1:ncol(rldDf)],upper = list(continuous = wrap(ggally_cor, use = "pairwise.complete.obs", method = "spearman")), title = 'All samples') + theme_bw()
+  acp <- ggplotly(acp)
+  path_name <- file.path(getwd(),plotsDir,"CorrelMatrix_All.html")
+  htmlwidgets::saveWidget(acp, file = path_name)
+}else{
+  message("Too many samples for all vs all CorrelMatrix. Skipping...")
+}
 
 #write out normalized values, rlog normalized
 setDT(rldDf, keep.rownames = TRUE)[] #set rownames to valid column

@@ -19,9 +19,9 @@ Specifically this does three things:
 
 3) read_stats_bbmap accepts a sample_id, for which the calculations will be run.
 '''
-
-import argparse
 import os
+import sys
+import argparse
 import numpy as np
 import pandas as pd
 
@@ -85,7 +85,7 @@ def _get_mean_stdev_from_ihist(filename, insert_data):
 
     return float(header_values['#Mean']), float(header_values['#STDev'])
 
-def _build_read_stats(ins_mean, ins_sd, read_data_df):
+def _build_read_stats(sample_id, ins_mean, ins_sd, read_data_df):
     #calc_mean
     m = _calc_mean(read_data_df)
 
@@ -93,7 +93,7 @@ def _build_read_stats(ins_mean, ins_sd, read_data_df):
     im = ins_mean - (2 * m)
 
     #collect information into dictionary, format to dataframe
-    d = {'#sample': args.sample_id,
+    d = {'#sample': sample_id,
          'insert_mean': ins_mean,
          'insert_std_dev': ins_sd ,
          'read_mean': m,
@@ -110,7 +110,7 @@ def main(sys_argv):
 
     #define names and paths
     in_file_name_1 = args.sample_id + '_lhist.txt'
-    in_file_name_2 = args.sample_id + '_ihist.txt'
+    in_file_name_2 = os.path.join(args.input_dir, args.sample_id + '_ihist.txt')
     out_file_name = args.sample_id + '_read_stats.txt'
     in_path = args.input_dir
     out_path = args.output_dir
@@ -122,14 +122,14 @@ def main(sys_argv):
     read_data.columns = list(map(lambda x: x.lstrip('#'),
                              read_data.columns.values))
 
-    insert_data = pd.read_csv(os.path.join(in_path,in_file_name_2),
-                              sep='\t',
-                              header=None)
+    # insert_data = pd.read_csv(os.path.join(in_path,in_file_name_2),
+    #                           sep='\t',
+    #                           header=None)
 
     with open(in_file_name_2, 'r') as insert_file:
         (ins_mean, ins_sd) = _get_mean_stdev_from_ihist(in_file_name_2,
                                                             insert_file)
-    read_stats_df = _build_read_stats(ins_mean, ins_sd, read_data)
+    read_stats_df = _build_read_stats(args.sample_id, ins_mean, ins_sd, read_data)
 
     read_stats_df.to_csv(os.path.join(out_path,out_file_name),
                          sep='\t',

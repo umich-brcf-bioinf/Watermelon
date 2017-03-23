@@ -1,6 +1,7 @@
 #pylint: disable=too-many-public-methods, invalid-name, no-self-use
 from __future__ import print_function, absolute_import, division
 
+import sys
 import unittest
 
 try:
@@ -13,6 +14,15 @@ import pandas as pd
 from scripts import read_stats_bbmap_single
 
 class ReadStatsBbmapSingleTest(unittest.TestCase):
+
+    def setUp(self):
+        self.stderr_saved = sys.stderr
+        self.stderr = StringIO()
+        sys.stderr = self.stderr
+
+    def tearDown(self):
+        sys.stderr = self.stderr_saved
+
 
     def test_parse_command_line_args(self):
         actual_args = read_stats_bbmap_single._parse_command_line_args('--sample_id sampleA --output_dir out_dir --input_dir in_dir'.split())

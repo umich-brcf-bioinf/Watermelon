@@ -103,10 +103,10 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
         self.check_command(command, "1.8.1", "wrong cutadapt version")
 
         command = self.build_command("Rscript --version 2>&1")
-        self.check_command(command, "version 3.2", "wrong R version")
+        self.check_command(command, "version 3.3", "wrong R version")
 
-        command = self.build_command("echo $R_LIBS_USER")
-        self.check_command(command, "3.2", "wrong R Packages version")
+#         command = self.build_command("echo $R_LIBS_USER")
+#         self.check_command(command, "3.2", "wrong R Packages version")
 
         
         command = self.build_command("(samtools 2>&1 | grep 'Version') || echo -e samtools not loaded")
@@ -176,8 +176,10 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
                 'ggrepel',
                 'optparse',
                 'pheatmap',
+                'plotly',
                 'RColorBrewer',
                 'reshape2',
+                'xlsx',
                 ]
         for lib_name in libs:
             rscript = ("Rscript --vanilla -e "

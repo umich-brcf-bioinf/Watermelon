@@ -55,6 +55,22 @@ class ReadStatsBbmapSingleTest(unittest.TestCase):
 
         self.assertEqual(4.9, actual_mean)
 
+    def test_get_mean_stdev_from_ihist_basecase(self):
+        insert_data = \
+'''
+#Mean	214.904
+#Median	176
+#Mode	151
+#STDev	147.733
+#PercentOfPairs	99.958
+#InsertSize	Count
+'''
+        (actual_mean, actual_stdev) = read_stats_bbmap_single._get_mean_stdev_from_ihist(StringIO(insert_data))
+
+        self.assertEqual(214.904, actual_mean)
+        self.assertEqual(147.733, actual_stdev)
+
+
     # def test_main_lhistEmpty(self):
     #     self.assertEqual(1, 2)
     #

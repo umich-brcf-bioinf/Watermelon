@@ -62,9 +62,15 @@ def _calc_mean(read_data):
     read_data['Tot'] = read_data[_LHIST_LENGTH]*read_data[_LHIST_COUNT]
     return read_data['Tot'].sum() / read_data[_LHIST_COUNT].sum()
 
-def _calc_inner(insert_data, m):
-    inner_mate_dist = ins_mean - (2*m)
-    return(inner_mate_dist)
+def _get_mean_stdev_from_ihist(insert_data):
+    # insert_data = ['#Foo	1', '#Bar	2']
+    # for line in insert_data:
+    #     field, value = line.split()
+    #     if field == '#Mean' or '#STDev':
+
+    header_values = dict([x.split() for x in insert_data if x.startswith('#')])
+
+    return header_values['#Mean'], header_values['#Stdev']
 
 def _build_read_stats(read_data_df, insert_data_df):
     #define insert mean and sd
@@ -75,10 +81,14 @@ def _build_read_stats(read_data_df, insert_data_df):
     m = _calc_mean(read_data_df)
 
     #calc_inner_mate
-    im = _calc_inner(insert_data_df, m)
+    im = ins_mean - (2 * m)
 
     #collect information into dictionary, format to dataframe
-    d = {'#sample': args.sample_id,'insert_mean': ins_mean,'insert_std_dev':ins_sd ,'read_mean':m,'inner_mate_dist':im}
+    d = {'#sample': args.sample_id,
+         'insert_mean': ins_mean,
+         'insert_std_dev': ins_sd ,
+         'read_mean': m,
+         'inner_mate_dist': im}
     df = pd.DataFrame(list(d.items())).transpose() #convert dictionary to dataframe, transpose
     df.columns = df.iloc[0] #create header row from index 0 values
     df = df.reindex(df.index.drop(0))#drop index 0
@@ -97,14 +107,23 @@ def main(sys_argv):
     out_path = args.output_dir
 
     #read in files
-    read_data = pd.read_csv(os.path.join(in_path,in_file_name_1), sep='\t', header = 0)
-    read_data.columns = list(map(lambda x: x.lstrip('#'), read_data.columns.values))
+    read_data = pd.read_csv(os.path.join(in_path,in_file_name_1),
+                            sep='\t',
+                            header=0)
+    read_data.columns = list(map(lambda x: x.lstrip('#'),
+                             read_data.columns.values))
 
-    insert_data = pd.read_csv(os.path.join(in_path,in_file_name_2), sep='\t', header = None)
+    insert_data = pd.read_csv(os.path.join(in_path,in_file_name_2),
+                              sep='\t',
+                              header=None)
 
     read_stats_df = _build_read_stats(read_data, insert_data)
 
-    read_stats_df.to_csv(os.path.join(out_path,out_file_name), sep='\t', encoding='utf-8', header = True, index = False)
+    read_stats_df.to_csv(os.path.join(out_path,out_file_name),
+                         sep='\t',
+                         encoding='utf-8',
+                         header=True,
+                         index=False)
 
 if __name__ == '__main__':
     main(sys.argv[1:])

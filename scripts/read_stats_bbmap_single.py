@@ -28,6 +28,11 @@ import pandas as pd
 DESCRIPTION = \
 '''Calculates and compiles read and insert statistics from bbmap output files on a per sample basis.'''
 
+_IHIST_LABELS = argparse.Namespace(mean='#Mean', sd='#STDev')
+_IHIST_REQUIRED_LABELS = set([_IHIST_LABELS.mean, _IHIST_LABELS.sd])
+
+_LHIST_FIELDS = argparse.Namespace(length='Length', count='Count')
+
 #set definitions
 
 def _parse_command_line_args(sys_argv):
@@ -55,14 +60,9 @@ def _parse_command_line_args(sys_argv):
 
     return args
 
-_LHIST_LENGTH = 'Length'
-_LHIST_COUNT = 'Count'
-
 def _calc_mean(read_data):
-    read_data['Tot'] = read_data[_LHIST_LENGTH]*read_data[_LHIST_COUNT]
-    return read_data['Tot'].sum() / read_data[_LHIST_COUNT].sum()
-
-_IHIST_REQUIRED_LABELS = set(['#Mean', '#STDev'])
+    read_data['Tot'] = read_data[_LHIST_FIELDS.length]*read_data[_LHIST_FIELDS.count]
+    return read_data['Tot'].sum() / read_data[_LHIST_FIELDS.count].sum()
 
 def _get_mean_stdev_from_ihist(filename, insert_data):
     def is_float(x):
@@ -83,7 +83,7 @@ def _get_mean_stdev_from_ihist(filename, insert_data):
         msg = msg_fmt.format(filename, ', '.join(sorted(missing_labels)))
         raise ValueError(msg)
 
-    return float(header_values['#Mean']), float(header_values['#STDev'])
+    return float(header_values[_IHIST_LABELS.mean]), float(header_values[_IHIST_LABELS.sd])
 
 def _build_read_stats(sample_id, ins_mean, ins_sd, read_data_df):
     #calc_mean
@@ -92,16 +92,18 @@ def _build_read_stats(sample_id, ins_mean, ins_sd, read_data_df):
     #calc_inner_mate
     im = ins_mean - (2 * m)
 
+    d = [['#sample', 'insert_mean', 'insert_std_dev','read_mean', 'inner_mate_dist'],
+        [sample_id, ins_mean, ins_sd, m, im]]
     #collect information into dictionary, format to dataframe
-    d = {'#sample': sample_id,
-         'insert_mean': ins_mean,
-         'insert_std_dev': ins_sd ,
-         'read_mean': m,
-         'inner_mate_dist': im}
-    df = pd.DataFrame(list(d.items())).transpose() #convert dictionary to dataframe, transpose
-    df.columns = df.iloc[0] #create header row from index 0 values
-    df = df.reindex(df.index.drop(0))#drop index 0
-    return df
+    #d = {'#sample': sample_id,
+    #     'insert_mean': ins_mean,
+    #     'insert_std_dev': ins_sd ,
+    #     'read_mean': m,
+    #     'inner_mate_dist': im}
+    #df = pd.DataFrame(list(d.items())).transpose() #convert dictionary to dataframe, transpose
+    #df.columns = df.iloc[0] #create header row from index 0 values
+    #df = df.reindex(df.index.drop(0))#drop index 0
+    return d
 
 
 def main(sys_argv):

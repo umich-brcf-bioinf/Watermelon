@@ -118,7 +118,7 @@ countData <- read.table(file=opt$countDataFile, header = TRUE, sep = "\t", row.n
 countData <- round(countData)
 
 #read in metaDataFile
-colData <- read.table(file =opt$metaDataFile , header = TRUE, sep = "\t", stringsAsFactors = FALSE, na.strings = '')
+colData <- read.table(file =opt$metaDataFile , header = TRUE, sep = "\t", stringsAsFactors = FALSE, na.strings = '', check.names = FALSE)
 colData[is.na(colData)] <- "other" # repliace NA values with 'other'
 
 #read in contrastFile
@@ -136,7 +136,7 @@ dir.create(path = normDataDir, showWarnings = TRUE, recursive = TRUE, mode = "07
 dds <- DESeqDataSetFromMatrix(countData = countData, colData = colData, design = ~combinatoric_group) #want to account for all factors/interactions
 dds <- dds[ rowSums(counts(dds)) > 1, ]
 
-#rlog normalization and PCA plot, shape based on groups, color bas
+#rlog normalization and PCA plot
 rld <- rlog(dds, blind = FALSE)
 pdf(file = paste0(plotsDir,'/PCA.pdf'), onefile = TRUE)
 
@@ -352,11 +352,13 @@ for (i in 1:nrow(contrastData)){
   
   #diffex analysis use generic name, subset DEGs
   testSamples <- subset(x = colData, subset = colData[,factorName] == testName & !duplicated(colData$combinatoric_group), select = combinatoric_group) #collect test samples in a list, from groups column
-  testSamples$combinatoric_group <- sub("^", "combinatoric_group", testSamples$combinatoric_group)
-  testSamples$combinatoric_group <- gsub("^", ".", testSamples$combinatoric_group, fixed = TRUE)
+  testSamples$combinatoric_group <- sub("^", "combinatoric_group", testSamples$combinatoric_group) # put 'combinatoric_group' at beginning of name
+  testSamples$combinatoric_group <- gsub("^", ".", testSamples$combinatoric_group, fixed = TRUE) # replace '^' with '.' to match name in deseq obj
+  testSamples$combinatoric_group <- gsub("-", ".", testSamples$combinatoric_group, fixed = TRUE) # replace '-' with '.' to match name in deseq obj
   referenceSamples <- subset(x = colData, subset = colData[,factorName] == referenceName & !duplicated(colData$combinatoric_group), select = combinatoric_group) #collect reference samples in a list
-  referenceSamples$combinatoric_group <- sub("^", "combinatoric_group", referenceSamples$combinatoric_group)
-  referenceSamples$combinatoric_group <- gsub("^", ".", referenceSamples$combinatoric_group, fixed = TRUE)
+  referenceSamples$combinatoric_group <- sub("^", "combinatoric_group", referenceSamples$combinatoric_group) # put 'combinatoric_group' at beginning of name
+  referenceSamples$combinatoric_group <- gsub("^", ".", referenceSamples$combinatoric_group, fixed = TRUE) # replace '^' with '.' to match name in deseq obj
+  referenceSamples$combinatoric_group <- gsub("-", ".", referenceSamples$combinatoric_group, fixed = TRUE)# replace '-' with '.' to match name in deseq obj
   res <- results(dds, parallel = TRUE, contrast = list(c(unlist(testSamples)), c(unlist(referenceSamples))), listValues = c(1/nrow(testSamples), -1/nrow(referenceSamples)))
   res <- res[order(res$padj),] #order by adjusted p-value
   diffexData <- as.data.frame(res)
@@ -435,6 +437,6 @@ for (i in 1:nrow(contrastData)){
   write.table(x = diffexData, file=paste0(getwd(),'/',newDir,'/',contrastData$base_file_name[i], ".csv"), append = FALSE, sep = ",", na = 'NA', row.names = FALSE, quote = FALSE)
   
   #write to an excel file, named "diffExpData.[comparison].txt"
-  write.xlsx2(x = diffexData, file=paste0(getwd(), '/',newDir,'/',contrastData$base_file_name[i], ".xlsx"), append = TRUE, sheetName = paste(contrastData$base_file_name[i], sep = ""), col.names = TRUE, row.names = FALSE)
-  write.xlsx2(x = diffexDataDEG, file=paste0(getwd(),'/',newDir,'/',contrastData$base_file_name[i], ".xlsx"), append = TRUE, sheetName = paste(contrastData$base_file_name[i], "DEG",sep = ""), col.names = TRUE, row.names = FALSE)
+  write.xlsx2(x = diffexData, file=paste0(getwd(), '/',newDir,'/',contrastData$base_file_name[i], ".xlsx"), append = TRUE, sheetName = "all", col.names = TRUE, row.names = FALSE)
+  write.xlsx2(x = diffexDataDEG, file=paste0(getwd(),'/',newDir,'/',contrastData$base_file_name[i], ".xlsx"), append = TRUE, sheetName = "DEGs", col.names = TRUE, row.names = FALSE)
 }

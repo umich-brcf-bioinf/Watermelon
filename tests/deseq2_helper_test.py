@@ -56,16 +56,16 @@ class Deseq2Test(unittest.TestCase):
                                 'female.diet': ['HF_v_ND']}}
         
 
-        lines = deseq2_helper._build_contrasts_list(config, '/tmp')
+        lines = deseq2_helper._build_contrasts_list(config)
 
         line = iter(lines)
-        self.assertEqual(['factor', 'test_level', 'reference_level', 'directory_name', 'base_file_name'], next(line))
-        self.assertEqual(['diet', 'HF', 'DRG', '/tmp/diet', 'HF_v_DRG'], next(line))
-        self.assertEqual(['diet', 'HF', 'ND', '/tmp/diet', 'HF_v_ND'], next(line))
-        self.assertEqual(['female.diet', 'HF', 'ND', '/tmp/female.diet', 'HF_v_ND'], next(line))
-        self.assertEqual(['gender', 'male', 'female', '/tmp/gender', 'male_v_female'], next(line))
-        self.assertEqual(['male.diet', 'DRG', 'ND', '/tmp/male.diet', 'DRG_v_ND'], next(line))
-        self.assertEqual(['male.diet', 'HF', 'ND', '/tmp/male.diet', 'HF_v_ND'], next(line))
+        self.assertEqual(['factor', 'test_level', 'reference_level', 'base_file_name'], next(line))
+        self.assertEqual(['diet', 'HF', 'DRG',  'HF_v_DRG'], next(line))
+        self.assertEqual(['diet', 'HF', 'ND',  'HF_v_ND'], next(line))
+        self.assertEqual(['female.diet', 'HF', 'ND', 'HF_v_ND'], next(line))
+        self.assertEqual(['gender', 'male', 'female', 'male_v_female'], next(line))
+        self.assertEqual(['male.diet', 'DRG', 'ND', 'DRG_v_ND'], next(line))
+        self.assertEqual(['male.diet', 'HF', 'ND', 'HF_v_ND'], next(line))
         self.assertRaises(StopIteration, next, line)
 
     def test_build_contrasts_basecase(self):
@@ -73,13 +73,12 @@ class Deseq2Test(unittest.TestCase):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             contrast_file_name = os.path.join(temp_dir_path, 'deseq2_contrast.txt')
-            comparison_file_prefix = 'analysis_02_27/diffex_results/16-deseq2'
 
-            deseq2_helper.build_contrasts(config, comparison_file_prefix, contrast_file_name)
+            deseq2_helper.build_contrasts(config, contrast_file_name)
             with open(contrast_file_name, 'r') as actual_file:
                 lines = actual_file.readlines()
 
         line = iter(lines)
-        self.assertEqual('factor\ttest_level\treference_level\tdirectory_name\tbase_file_name\n', next(line))
-        self.assertEqual('gender\tmale\tfemale\tanalysis_02_27/diffex_results/16-deseq2/gender\tmale_v_female\n', next(line))
+        self.assertEqual('factor\ttest_level\treference_level\tbase_file_name\n', next(line))
+        self.assertEqual('gender\tmale\tfemale\tmale_v_female\n', next(line))
         self.assertRaises(StopIteration, next, line)

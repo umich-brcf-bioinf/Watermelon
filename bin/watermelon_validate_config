@@ -1,0 +1,11 @@
+#!/bin/bash
+
+export CONFIG_FILEPATH=$1
+
+export WATERMELON_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
+
+(   cd ${WATERMELON_ROOT_DIR}
+    python -m scripts.config_validator $CONFIG_FILEPATH
+)
+
+exit $?

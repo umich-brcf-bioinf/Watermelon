@@ -35,6 +35,8 @@ import traceback
 
 import yaml
 
+import scripts.watermelon_config as watermelon_config
+
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
 
@@ -88,14 +90,8 @@ _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, 'genome_references.yaml')
 
 _FASTQ_GLOBS = ['*.fastq', '*.fastq.gz']
 
-_CONFIG_KEYS = argparse.Namespace(comparisons='comparisons',
-                                  genome='genome',
-                                  input_dir='input_dir',
-                                  phenotypes='phenotypes',
-                                  references='references',
-                                  samples='samples')
-_PHENOTYPE_DELIM = ' ^ '
-_DEFAULT_PHENOTYPE_LABELS = 'gender ^ genotype'
+_DEFAULT_MAIN_FACTORS =     'yes    | yes      | no'.replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
+_DEFAULT_PHENOTYPE_LABELS = 'gender | genotype | gender.genotype'.replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
 _DEFAULT_GENDER_VALUES = ['female', 'male']
 _DEFAULT_GENOTYPE_VALUES = ['MutA', 'MutB', 'WT']
 _DEFAULT_COMPARISONS = {'gender'   : ['male_v_female'],
@@ -168,21 +164,28 @@ def _populate_inputs_dir(inputs_dir, samples):
 
 def _build_phenotypes_samples_comparisons(samples):
     config = {}
-    config[_CONFIG_KEYS.phenotypes] = _DEFAULT_PHENOTYPE_LABELS
+    config[watermelon_config.CONFIG_KEYS.main_factors] = _DEFAULT_MAIN_FACTORS
+    config[watermelon_config.CONFIG_KEYS.phenotypes] = _DEFAULT_PHENOTYPE_LABELS
 
-    gender_value = itertools.cycle(_DEFAULT_GENDER_VALUES)
-    genotype_value = itertools.cycle(_DEFAULT_GENOTYPE_VALUES)
-    pheno_value_items = [(next(gender_value), next(genotype_value)) for _ in samples]
-    pheno_value_strings = [_PHENOTYPE_DELIM.join(values) for values in sorted(pheno_value_items)]
+    gender_values = itertools.cycle(_DEFAULT_GENDER_VALUES)
+    genotype_values = itertools.cycle(_DEFAULT_GENOTYPE_VALUES)
+    pheno_value_items = []
+    for _ in samples:
+        gender_value = next(gender_values)
+        genotype_value = next(genotype_values)
+        gender_genotype_value = '.'.join([gender_value, genotype_value])
+        pheno_value_items.append((gender_value, genotype_value, gender_genotype_value))
+    pheno_fmt = "{0:7}| {1:8} | {2}".replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
+    pheno_value_strings = [pheno_fmt.format(*values) for values in sorted(pheno_value_items)]
     samples_dict = dict([(s, v) for s, v in zip(sorted(samples), pheno_value_strings)])
-    config[_CONFIG_KEYS.samples] = samples_dict
+    config[watermelon_config.CONFIG_KEYS.samples] = samples_dict
 
-    config[_CONFIG_KEYS.comparisons] = _DEFAULT_COMPARISONS
+    config[watermelon_config.CONFIG_KEYS.comparisons] = _DEFAULT_COMPARISONS
     return config
 
 def _make_config_dict(template_config, genome_references, input_dir, samples):
     config = dict(template_config)
-    config[_CONFIG_KEYS.input_dir] = '{}'.format(input_dir)
+    config[watermelon_config.CONFIG_KEYS.input_dir] = '{}'.format(input_dir)
     config.update(genome_references)
     config.update(_build_phenotypes_samples_comparisons(samples))
     return config
@@ -195,11 +198,12 @@ watermelon_init.README
 
 Created files and dirs
 ----------------------
-    {inputs_dir}
+{working_dir}/
+    {inputs_relative}/
         source fastq dir | sample count | fastq file count
         {source_fastq_dir} | {sample_count} samples | {file_count} files
-    {analysis_dir}
-    {config_file}
+    {analysis_relative}/
+    {config_relative}
 
 You need to review config file: {config_file}:
 -------------------------------
@@ -220,12 +224,15 @@ $ screen -S watermelon{job_suffix}
 $ watermelon --dry-run -c {config_basename}
 # to run:
 $ watermelon -c {config_basename}
-'''.format(inputs_dir=args.inputs_dir,
+'''.format(working_dir=args.x_working_dir,
+           inputs_relative=os.path.relpath(args.inputs_dir, args.x_working_dir),
            source_fastq_dir=args.source_fastq_dir,
            sample_count=sample_count,
            file_count=file_count,
            analysis_dir=args.analysis_dir,
+           analysis_relative=os.path.relpath(args.analysis_dir, args.x_working_dir),
            config_file=args.config_file,
+           config_relative=os.path.relpath(args.config_file, args.x_working_dir),
            config_basename=os.path.basename(args.config_file),
            job_suffix=args.job_suffix,)
     return postlude
@@ -238,12 +245,13 @@ def _make_top_level_dirs(args):
 def _write_config_file(config_filename, config_dict):
     tmp_config_dict = dict(config_dict)
     ordered_config_dict = OrderedDict()
-    named_keys = [_CONFIG_KEYS.input_dir,
-                  _CONFIG_KEYS.phenotypes,
-                  _CONFIG_KEYS.samples,
-                  _CONFIG_KEYS.comparisons,
-                  _CONFIG_KEYS.genome,
-                  _CONFIG_KEYS.references]
+    named_keys = [watermelon_config.CONFIG_KEYS.input_dir,
+                  watermelon_config.CONFIG_KEYS.main_factors,
+                  watermelon_config.CONFIG_KEYS.phenotypes,
+                  watermelon_config.CONFIG_KEYS.samples,
+                  watermelon_config.CONFIG_KEYS.comparisons,
+                  watermelon_config.CONFIG_KEYS.genome,
+                  watermelon_config.CONFIG_KEYS.references]
     for key in named_keys:
         if key in tmp_config_dict:
             ordered_config_dict[key] = tmp_config_dict.pop(key)

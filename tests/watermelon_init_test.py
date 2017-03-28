@@ -4,7 +4,7 @@ from __future__ import print_function, absolute_import, division
 from argparse import Namespace
 import functools
 import os
-import os.path
+import subprocess
 import sys
 import unittest
 try:
@@ -20,6 +20,7 @@ import scripts.watermelon_init as watermelon_init
 _TESTS_DIR = os.path.realpath(os.path.dirname(__file__))
 _WATERMELON_ROOT = os.path.dirname(_TESTS_DIR)
 _CONFIG_DIR = os.path.join(_WATERMELON_ROOT, 'config')
+_BIN_DIR = os.path.join(_WATERMELON_ROOT, 'bin')
 
 def touch(fname, times=None):
     with open(fname, 'a'):
@@ -59,7 +60,8 @@ class WatermelonInitTest(unittest.TestCase):
                          source_fastq_dir='SOURCE_FASTQ_DIR',
                          analysis_dir='ANALYSIS_DIR',
                          config_file='CONFIG_FILE',
-                         job_suffix='_JOB_SUFFIX')
+                         job_suffix='_JOB_SUFFIX',
+                         x_working_dir='WORKING_DIR')
         sample_count = 42
         file_count = 168
         actual_postlude = watermelon_init._build_postlude(args, sample_count, file_count)
@@ -282,20 +284,22 @@ references:
         expected_keys = ['input_dir',
                          'foo1', 'foo2',
                          'genome', 'references',
-                         'phenotypes','samples', 'comparisons']
+                         'main_factors', 'phenotypes','samples', 'comparisons']
         self.assertEquals(sorted(expected_keys), sorted(actual_config.keys()))
         self.assertEqual(input_dir, actual_config['input_dir'])
         self.assertEqual(template_config['foo1'], actual_config['foo1'])
         self.assertEqual(template_config['foo2'], actual_config['foo2'])
         self.assertEqual(genome_references['genome'], actual_config['genome'])
         self.assertEqual(genome_references['references'], actual_config['references'])
-        self.assertEqual(      'gender ^ genotype', actual_config['phenotypes'])
-        self.assertEqual({'sA':'female ^ MutA',
-                          'sB':'female ^ MutB',
-                          'sC':'female ^ WT',
-                          'sD':'male ^ MutA',
-                          'sE':'male ^ MutB',
-                          'sF':'male ^ WT',
+        self.assertEqual(      'yes    ^ yes      ^ no', actual_config['main_factors'])
+        self.assertEqual(      'gender ^ genotype ^ gender.genotype', actual_config['phenotypes'])
+        self.maxDiff = None
+        self.assertEqual({'sA':'female ^ MutA     ^ female.MutA',
+                          'sB':'female ^ MutB     ^ female.MutB',
+                          'sC':'female ^ WT       ^ female.WT',
+                          'sD':'male   ^ MutA     ^ male.MutA',
+                          'sE':'male   ^ MutB     ^ male.MutB',
+                          'sF':'male   ^ WT       ^ male.WT',
                           },
                          actual_config['samples'])
         self.assertEqual(['male_v_female'],
@@ -314,17 +318,21 @@ references:
                            'references' : 'REFERENCES',
                            'templateA' : {'TEMPLATE_A1': 'A1', 'TEMPLATE_A2': 'A2'},
                            'templateB' : 'TEMPLATE_B',
-                           'templateC' : 'TEMPLATE_C'}
+                           'templateC' : 'TEMPLATE_C',
+                           'phenotypes' :   'PHENOLABEL1 ^ PHENOLABEL2',
+                           'main_factors' : 'yes ^ no'}
             watermelon_init._write_config_file(config_filename, config_dict)
 
             with open(config_filename, 'r') as config_file:
                 config_lines = [line.strip('\n') for line in config_file.readlines()]
         config_prelude = watermelon_init._CONFIG_PRELUDE.split('\n')
-        self.assertEqual(10 + len(config_prelude), len(config_lines))
+        self.assertEqual(12 + len(config_prelude), len(config_lines))
         line_iter = iter(config_lines)
         for prelude in config_prelude:
             next(line_iter)
         self.assertEqual('input_dir: INPUT_DIR', next(line_iter))
+        self.assertEqual('main_factors: yes ^ no', next(line_iter))
+        self.assertEqual('phenotypes: PHENOLABEL1 ^ PHENOLABEL2', next(line_iter))
         self.assertEqual('samples: SAMPLES', next(line_iter))
         self.assertEqual('comparisons: COMPARISONS', next(line_iter))
         self.assertEqual('genome: GENOME', next(line_iter))
@@ -400,25 +408,25 @@ class CommandValidatorTest(unittest.TestCase):
                                     args)
 
 
-# class WatermelonInitFunctoinalTest(unittest.TestCase):
-#     def execute(self, command):
-#         exit_code = 0
-#         try:
-#             actual_output = subprocess.check_output(command, shell=True)
-#         except subprocess.CalledProcessError as e:
-#             exit_code = e.returncode
-#             actual_output = e.output
-#         return exit_code, str(actual_output)
-# 
-#     def test_commandReturnsCorrectRowAndColumnCount(self):
-#         with TempDirectory() as temp_dir:
-#             temp_dir_path = temp_dir.path
-#             os.
-#             script_name = os.path.join(SCRIPTS_DIR, 'watermelon_init.py')
-# 
-#             redirect_output = '2>/dev/null'
-#             command = 'python {} {}'.format(script_name, redirect_output)
-#             exit_code, command_output = self.execute(command)
-# 
-#         self.assertEqual(0, exit_code, command)
-#         self.assertEqual('foo', command_output)
+class WatermelonInitFunctoinalTest(unittest.TestCase):
+    def execute(self, command):
+        exit_code = 0
+        try:
+            actual_output = subprocess.check_output(command, shell=True)
+        except subprocess.CalledProcessError as e:
+            exit_code = e.returncode
+            actual_output = e.output
+        return exit_code, str(actual_output)
+
+    def test_commandPresentUsageIfMissingOptions(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            
+            script_name = os.path.join(_BIN_DIR, 'watermelon_init')
+
+            redirect_output = ' 2>&1 '
+            command = '{} {}'.format(script_name, redirect_output)
+            exit_code, command_output = self.execute(command)
+
+        self.assertEqual(2, exit_code, command)
+        self.assertRegexpMatches(command_output, 'usage',command)

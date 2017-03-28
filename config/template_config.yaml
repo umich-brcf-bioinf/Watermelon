@@ -6,6 +6,9 @@ diffex_output_dir:
 fold_change:
     1.5
 
+deseq2_adjustedPValue:
+    0.05
+
 trimming_options:
     base_quality_5prime: 0
     base_quality_3prime: 13

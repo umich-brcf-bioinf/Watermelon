@@ -15,6 +15,9 @@ ROOT_DIR = os.path.realpath(os.path.join(TEST_DIR, '..', '..', '..'))
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 SNAKEFILE_PATH = os.path.join(ROOT_DIR, 'rnaseq.snakefile')
 
+DEBUG = 'WATERMELON_DEBUG' in os.environ
+REDIRECT_OUTPUT = ' ' if DEBUG else ' 2>/dev/null '
+
 def _all_left_only_files(dircmp):
     left_only = sorted(dircmp.left_only)
     for dir_name, dc in sorted(dircmp.subdirs.items()):
@@ -50,12 +53,11 @@ class FlipDiffexTest(unittest.TestCase):
 
             os.chdir(tmp_actual_dir)
             os.symlink(SCRIPTS_DIR, 'scripts')
-            redirect_output = '2>/dev/null'
             command = '''snakemake -p --cores 2 \
      --snakefile {} \
      --configfile {} \
      --force diffex_results/09-diffex_flip/pLabel/gene_exp.flip.diff diffex_results/09-diffex_flip/pLabel/isoform_exp.flip.diff {}
-'''.format(SNAKEFILE_PATH, configfile_path, redirect_output)
+'''.format(SNAKEFILE_PATH, configfile_path, REDIRECT_OUTPUT)
             subprocess.check_output(command, shell=True)
 
             anomalies = missing_or_different_from_expected(tmp_expected_dir,

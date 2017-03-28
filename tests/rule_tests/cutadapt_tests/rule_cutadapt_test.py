@@ -12,6 +12,8 @@ from testfixtures import TempDirectory
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SNAKEFILE_PATH = os.path.join(TEST_DIR, '..', '..', '..', 'rnaseq.snakefile')
+DEBUG = 'WATERMELON_DEBUG' in os.environ
+REDIRECT_OUTPUT = ' ' if DEBUG else ' 2>/dev/null '
 
 
 def gunzip(source_file_pattern):
@@ -43,12 +45,11 @@ class CutadaptTest(unittest.TestCase):
             shutil.copytree(source_working_dir, tmp_actual_dir) 
 
             os.chdir(tmp_actual_dir)
-            redirect_output = "2>/dev/null "
             command = '''snakemake --cores 2 \
      --snakefile {0} \
      --configfile {1} \
      --force alignment_results/02-cutadapt/Sample_0_trimmed_R1.fastq.gz alignment_results/02-cutadapt/Sample_1_trimmed_R1.fastq.gz {2}
-'''.format(SNAKEFILE_PATH, configfile_path, redirect_output)
+'''.format(SNAKEFILE_PATH, configfile_path, REDIRECT_OUTPUT)
             subprocess.check_output(command, shell=True)
 
             gunzip(tmp_expected_dir + '/alignment_results/02-cutadapt/*.gz')

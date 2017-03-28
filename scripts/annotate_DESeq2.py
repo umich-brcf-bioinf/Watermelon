@@ -33,7 +33,7 @@ def parse_command_line_args():
     parser.add_argument(
         '-g', '--genome', type=str, help='organism taxonomy ID', required=True)  
     parser.add_argument(
-        '-o', '--outdir', type=str, help='output directory name', required=True)
+        '-o', '--output_filename', type=str, help='path and file name of annotated output', required=True)
     args = parser.parse_args()
     return args
 
@@ -54,7 +54,7 @@ def check_geneinfo_matches(all_lines,
 args = parse_command_line_args()
 gene_info = args.geneinfo
 gene_expr = args.diffexp
-outdir = args.outdir
+output_filename = args.output_filename
 
 taxonomy = {'hg19': '9606', 'GRCh37': '9606',   # human
             'mm10': '10090', 'mm9': '10090',    # mouse
@@ -76,8 +76,6 @@ def get_taxid(genome):
 
 tax_id = get_taxid(args.genome)
 
-outfile_tag = os.path.basename(gene_expr.replace('.txt', '.annot.txt'))
-outfile_name = os.path.join(outdir, outfile_tag)
 log('reading entrez gene info')
 
 
@@ -95,7 +93,7 @@ with open(gene_info,'r') as geneinfo_file:
 
 all_lines = 0
 matching_gene_symbol_count = 0
-with open(gene_expr, 'r') as file_to_annotate, open(outfile_name, 'w') as annotated_file: 
+with open(gene_expr, 'r') as file_to_annotate, open(output_filename, 'w') as annotated_file: 
     reader=csv.reader(file_to_annotate,delimiter='\t')
     for row in reader:
         all_lines += 1

@@ -19,6 +19,7 @@ entrez_gene_info:
 genome:
 comparisons:
 fold_change:
+deseq2_adjustedPValue:
 references:
 alignment_options:
     library_type: fr-unstranded

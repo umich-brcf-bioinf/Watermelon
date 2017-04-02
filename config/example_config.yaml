@@ -5,6 +5,7 @@ alignment_output_dir:
 diffex_output_dir:
     "diffex_results"
 
+main_factors:  yes     ^  yes   ^    no          ^   no
 phenotypes:    gender  ^  diet  ^    male.diet   ^   female.diet
 samples:
     Sample_61483: Me     ^   HF   ^      HF        ^             

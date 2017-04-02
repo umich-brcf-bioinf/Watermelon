@@ -275,6 +275,25 @@ class _ConfigValidator(object):
             raise _WatermelonConfigWarning(msg_fmt,
                                            ','.join(missing_samples))
 
+    def _check_main_factors_malformed(self):
+        main_factors = len(watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.main_factors]))
+        phenotype_labels = len(watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes]))
+        if main_factors != phenotype_labels:
+            msg_fmt = 'Number of values in [main_factors] and [phenotypes] must match ({}!={})';
+            raise _WatermelonConfigFailure(msg_fmt, main_factors, phenotype_labels)
+
+    def _check_main_factors_illegal_values(self):
+        actual_values = set(watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.main_factors]))
+        legal_values = watermelon_config.MAIN_FACTOR_VALID_VALUES
+        illegal_values = sorted(actual_values - legal_values)
+        illegal_values = ['<blank>' if v=='' else v for v in illegal_values]
+        if illegal_values:
+            msg_fmt = 'Expected [main_factor] values to be ({}) but found ({})';
+            raise _WatermelonConfigFailure(msg_fmt,
+                                           ', '.join(sorted(legal_values)),
+                                           ', '.join(illegal_values))
+
+
 def prompt_to_override():
     value = input('Should Watermelon ignore these problems and proceed? (yes/no): ')
     return value.lower().strip() == 'yes'

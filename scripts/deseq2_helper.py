@@ -8,17 +8,12 @@ import sys
 import yaml
 
 from scripts.watermelon_config import CONFIG_KEYS, DEFAULT_PHENOTYPE_DELIM, MAIN_FACTOR_TRUE, DEFAULT_COMPARISON_INFIX
+from scripts.watermelon_config import split_config_list
 
 _COMBINATORIC_GROUP = 'combinatoric_group'
 _CONTRASTS_HEADER = ['factor','test_level','reference_level', 'base_file_name']
 _SAMPLE_METADATA_HEADER = 'sample_name'
 _REPLICATE_SUFFIX = '^replicate'
-
-def _split_config_list(config_string):
-    config_list = []
-    for i in config_string.split(DEFAULT_PHENOTYPE_DELIM):
-        config_list.append(i.strip())
-    return config_list
 
 def _build_combinatoric_group_value(phenotype_labels, main_factors, phenotype_values):
     main_factors = [label for label, main_factor in zip(phenotype_labels, main_factors) if main_factor == MAIN_FACTOR_TRUE]
@@ -41,8 +36,8 @@ def _build_sample_metadata_list(config):
         return str(replicate_count[label_value])
 
     lines = []
-    main_factors = _split_config_list(config[CONFIG_KEYS.main_factors])
-    phenotype_labels = _split_config_list(config[CONFIG_KEYS.phenotypes]) 
+    main_factors = split_config_list(config[CONFIG_KEYS.main_factors])
+    phenotype_labels = split_config_list(config[CONFIG_KEYS.phenotypes]) 
     header = [_SAMPLE_METADATA_HEADER]
     for label in phenotype_labels:
         header.append(label)
@@ -53,7 +48,7 @@ def _build_sample_metadata_list(config):
     lines.append(header)
     for sample_name, phenotype_values_string in sorted(config[CONFIG_KEYS.samples].items()):
         sample_line = [sample_name]
-        phenotype_values = _split_config_list(phenotype_values_string)
+        phenotype_values = split_config_list(phenotype_values_string)
         for label, value in zip(phenotype_labels, phenotype_values):
             sample_line.append(value)
             sample_line.append(_replicate_number(label, value))

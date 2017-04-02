@@ -196,7 +196,8 @@ class ConfigValidatorTest(unittest.TestCase):
 
     def test_check_missing_required_field_ok(self):
         config_string = \
-'''phenotypes: X
+'''main_factors: X
+phenotypes: X
 samples: X
 comparisons: X
 '''
@@ -213,7 +214,7 @@ comparisons: X
         validator = _ConfigValidator(config, log)
         self.assertRaisesRegex(_WatermelonConfigFailure,
                                (r'Some required fields were missing from config: '
-                                r'\(comparisons, phenotypes, samples\); '
+                                r'\(comparisons, main_factors, phenotypes, samples\); '
                                 r'review config and try again.'),
                                validator._check_missing_required_field)
 
@@ -623,6 +624,63 @@ comparisons:
                                expected_message,
                                validator._check_comparison_references_unknown_phenotype_value)
 
+    def test_main_factors_malformed_ok(self):
+        config_string = \
+'''
+main_factors: yes ^ no
+phenotypes:   foo ^ bar
+'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        validator._check_main_factors_malformed()
+        self.ok()
+
+    def test_main_factors_malformed_wrongNumberValues(self):
+        config_string = \
+'''
+main_factors: yes ^ no ^ yes
+phenotypes:   foo ^ bar
+'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = (r'Number of values .* must match \(3!=2\)')
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_message,
+                               validator._check_main_factors_malformed)
+
+    def test_main_factors_illegal_values_ok(self):
+        config_string = \
+'''
+main_factors: yes ^ no
+phenotypes:   foo ^ bar
+'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        validator._check_main_factors_illegal_values()
+        self.ok()
+
+    def test_main_factors_blank_values(self):
+        config_string = \
+'''
+main_factors:     ^ nope
+phenotypes:   foo ^ bar
+'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = (r'Expected \[main_factor\] values .* found \(<blank>, nope\)')
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_message,
+                               validator._check_main_factors_illegal_values)
+
+    def test_main_factors_illegal_values(self):
+        config_string = \
+'''
+main_factors: yep ^ nope
+phenotypes:   foo ^ bar
+'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = (r'Expected \[main_factor\] values .* found \(nope, yep\)')
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_message,
+                               validator._check_main_factors_illegal_values)
+
+
 
     def test_init_validationsAreIncluded(self):
         validator = _ConfigValidator(config={}, log=StringIO())
@@ -788,7 +846,8 @@ class ValidationCollectorTest(unittest.TestCase):
         mock_override = MockPromptOverride(False)
         log = StringIO()
         config_contents = \
-'''phenotypes: diet ^ gender
+'''main_factors: yes ^ no
+phenotypes: diet ^ gender
 samples:
     s1: HD ^ M
     s2: LD ^ F
@@ -842,7 +901,8 @@ comparisons:
         mock_override = MockPromptOverride(False)
         log = StringIO()
         config_contents = \
-'''phenotypes: diet ^ gender
+'''main_factors: yes ^ no
+phenotypes: diet ^ gender
 samples:
     s1: HD ^ M
     s2: LD ^ F
@@ -870,7 +930,8 @@ comparisons:
         mock_override = MockPromptOverride(True)
         log = StringIO()
         config_contents = \
-'''phenotypes: diet ^ gender
+'''main_factors: yes ^ no
+phenotypes: diet ^ gender
 samples:
     s1: HD ^ M
     s2: LD ^ F

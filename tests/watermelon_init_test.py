@@ -59,7 +59,7 @@ class WatermelonInitTest(unittest.TestCase):
         args = Namespace(inputs_dir='INPUTS_DIR',
                          source_fastq_dir='SOURCE_FASTQ_DIR',
                          analysis_dir='ANALYSIS_DIR',
-                         config_file='CONFIG_FILE',
+                         config_file='path/to/CONFIG_FILE',
                          job_suffix='_JOB_SUFFIX',
                          x_working_dir='WORKING_DIR')
         sample_count = 42
@@ -71,6 +71,8 @@ class WatermelonInitTest(unittest.TestCase):
                                  r'SOURCE_FASTQ_DIR \| 42 samples \| 168 files')
         self.assertRegexpMatches(actual_postlude,
                                  r'ANALYSIS_DIR')
+        self.assertRegexpMatches(actual_postlude,
+                                 r'    CONFIG_FILE')
         self.assertRegexpMatches(actual_postlude,
                                  r'screen -S watermelon_JOB_SUFFIX')
         self.assertRegexpMatches(actual_postlude,

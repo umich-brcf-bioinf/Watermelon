@@ -200,16 +200,16 @@ Created files and dirs
 ----------------------
 {working_dir}/
     {inputs_relative}/
-        source fastq dir | sample count | fastq file count
-        {source_fastq_dir} | {sample_count} samples | {file_count} files
+        | source fastq dir | sample count | fastq file count
+        | {source_fastq_dir} | {sample_count} samples | {file_count} files
     {analysis_relative}/
-    {config_relative}
+        {config_basename}
 
-You need to review config file: {config_file}:
+You need to review config file: {config_relative}:
 -------------------------------
 1) Review/adjust samples names
     Note: if you change names in config, also change the sample dir names in the input dir
-2) Add a sample group for each sample
+2) Review sample phenotypes/labels for each sample
 3) Add comparisons
 4) Review genome and references
 5) Review alignment options
@@ -312,10 +312,12 @@ def _parse_command_line_args(sys_argv):
     args.analysis_dir = realpath('analysis{}'.format(args.job_suffix))
     args.config_file = os.path.join(args.analysis_dir,
                                     'config{}.yaml'.format(args.job_suffix))
-    args.inputs_dir = realpath('inputs', '00-multiplexed_reads')
     args.is_source_fastq_external = _is_source_fastq_external(args.source_fastq_dir,
                                                               args.x_working_dir)
-
+    if args.is_source_fastq_external:
+        args.inputs_dir = realpath('inputs', '00-multiplexed_reads')
+    else:
+        args.inputs_dir = os.path.relpath(args.source_fastq_dir, args.x_working_dir)
     return args
 
 def main(sys_argv):

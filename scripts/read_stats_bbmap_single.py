@@ -22,6 +22,7 @@ Specifically this does three things:
 import os
 import sys
 import argparse
+import csv
 import numpy as np
 import pandas as pd
 
@@ -94,17 +95,7 @@ def _build_read_stats(sample_id, ins_mean, ins_sd, read_data_df):
 
     d = [['#sample', 'insert_mean', 'insert_std_dev','read_mean', 'inner_mate_dist'],
         [sample_id, ins_mean, ins_sd, m, im]]
-    #collect information into dictionary, format to dataframe
-    #d = {'#sample': sample_id,
-    #     'insert_mean': ins_mean,
-    #     'insert_std_dev': ins_sd ,
-    #     'read_mean': m,
-    #     'inner_mate_dist': im}
-    #df = pd.DataFrame(list(d.items())).transpose() #convert dictionary to dataframe, transpose
-    #df.columns = df.iloc[0] #create header row from index 0 values
-    #df = df.reindex(df.index.drop(0))#drop index 0
     return d
-
 
 def main(sys_argv):
     #args
@@ -124,20 +115,16 @@ def main(sys_argv):
     read_data.columns = list(map(lambda x: x.lstrip('#'),
                              read_data.columns.values))
 
-    # insert_data = pd.read_csv(os.path.join(in_path,in_file_name_2),
-    #                           sep='\t',
-    #                           header=None)
-
     with open(in_file_name_2, 'r') as insert_file:
         (ins_mean, ins_sd) = _get_mean_stdev_from_ihist(in_file_name_2,
                                                             insert_file)
     read_stats_df = _build_read_stats(args.sample_id, ins_mean, ins_sd, read_data)
 
-    read_stats_df.to_csv(os.path.join(out_path,out_file_name),
-                         sep='\t',
-                         encoding='utf-8',
-                         header=True,
-                         index=False)
+    #write out file
+    with open(os.path.join(out_path,out_file_name), "w") as output:
+        wr = csv.writer(output, lineterminator='\n', delimiter='\t')
+        wr.writerows(read_stats_df)
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])

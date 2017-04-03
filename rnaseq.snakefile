@@ -109,7 +109,11 @@ rule all:
         DESEQ2_DIR + "/01-htseq/HTSeq_counts.txt",
         DESEQ2_DIR + "/02-metadata_contrasts/sample_metadata.txt",
         DESEQ2_DIR + "/02-metadata_contrasts/contrasts.txt",
-        DESEQ2_DIR + "/03-deseq2_diffex/deseq2.done",
+        expand("{deseq2_dir}/03-deseq2_diffex/{phenotype_name}/{comparison}.txt",
+               zip,
+               deseq2_dir=repeat(DESEQ2_DIR, len(PHENOTYPE_NAMES)),
+               phenotype_name=PHENOTYPE_NAMES, 
+               comparison=COMPARISON_GROUPS),
         expand("{deseq2_dir}/04-annotation/{phenotype_name}/{comparison}.annot.txt",
                zip,
                deseq2_dir=repeat(DESEQ2_DIR, len(PHENOTYPE_NAMES)),
@@ -548,12 +552,14 @@ rule cuffdiff_deliverables:
         diffex_excel = expand("{diffex_dir}/16-diffex_excel/{phenotype_name}/{comparison}.xlsx", 
                                     zip,
                                     diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
-                                    phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
+                                    phenotype_name=PHENOTYPE_NAMES,
+                                    comparison=COMPARISON_GROUPS),
     output:
         diffex_excel = expand("{diffex_dir}/Deliverables/diffex_deliverables/cuffdiff_results/{phenotype_name}/{comparison}.xlsx", 
                                     zip,
                                     diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
-                                    phenotype_name=PHENOTYPE_NAMES, comparison=COMPARISON_GROUPS),
+                                    phenotype_name=PHENOTYPE_NAMES,
+                                    comparison=COMPARISON_GROUPS),
     params:
         diffex_excel_input_dir  =  DIFFEX_DIR +  "/16-diffex_excel",
         diffex_excel_output_dir =  DIFFEX_DIR + "/Deliverables/diffex_deliverables/cuffdiff_results"
@@ -582,12 +588,16 @@ rule htseq_per_sample:
         gtf = "references/gtf"
     output:
         DESEQ2_DIR + "/01-htseq/{sample}_counts.txt"
+    threads: 2
     params:
         strand = rnaseq_snakefile_helper.check_strand_option("htseq", config["alignment_options"]["library_type"])
     log:
         DESEQ2_DIR + "/01-htseq/log/{sample}_htseq_per_sample.log"
     shell:
         "module load watermelon_rnaseq && "
+        "export MKL_NUM_THREADS={threads} && " #these exports throttle numpy processes
+        "export NUMEXPR_NUM_THREADS={threads} && "
+        "export OMP_NUM_THREADS={threads} && "
         "python -m HTSeq.scripts.count "
         "   -f bam "
         "   -s {params.strand} "
@@ -601,8 +611,8 @@ rule htseq_per_sample:
 rule htseq_merge:
     input:
         sample_checksum = "config_checksums/config-samples.watermelon.md5",
-        sample_count_files = expand("{diffex_dir}/deseq2/01-htseq/{sample}_counts.txt",
-                                    diffex_dir=DIFFEX_DIR, sample=config["samples"])
+        sample_count_files = expand("{deseq2_dir}/01-htseq/{sample}_counts.txt",
+                                    deseq2_dir=DESEQ2_DIR, sample=config["samples"])
     output:
         DESEQ2_DIR + "/01-htseq/HTSeq_counts.txt"
     params:
@@ -633,25 +643,34 @@ rule deseq2_diffex:
         sample_metadata = DESEQ2_DIR + "/02-metadata_contrasts/sample_metadata.txt",
         contrasts = DESEQ2_DIR + "/02-metadata_contrasts/contrasts.txt",
     output:
-        dir = DESEQ2_DIR + "/03-deseq2_diffex/",
-        done = touch(DESEQ2_DIR + "/03-deseq2_diffex/deseq2.done"),
+        dir = DESEQ2_DIR + "/03-deseq2_diffex",
+        files = expand("{deseq2_dir}/03-deseq2_diffex/{phenotype}/{comparison}.txt",
+                       zip,
+                       deseq2_dir=repeat(DESEQ2_DIR, len(PHENOTYPE_NAMES)),
+                       phenotype=PHENOTYPE_NAMES,
+                       comparison=COMPARISON_GROUPS),
+    threads: 8
     params:
         fold_change = config["fold_change"],
         adjusted_pvalue = config["deseq2_adjustedPValue"],
     shell:
+        "module load watermelon_rnaseq && "
         "{WATERMELON_SCRIPTS_DIR}/DESeq2Diffex.R "
         "    -c {input.htseq_counts} "
         "    -m {input.sample_metadata} "
         "    -f {input.contrasts} "
-        "    -o {output.dir} "
+        "    -o {output.dir}/.tmp "
         "    --foldChange={params.fold_change} "
         "    --adjustedPValue={params.adjusted_pvalue} "
+        "    --threads={threads} "
+        "    --memoryInGb=16 && "
+        "mv {output.dir}/.tmp/* {output.dir} && "
+        "rm -f Rplots.pdf " #Some part of R generates this empty (nuisance) plot
 
 rule deseq2_annotation:
    input:
        diffex_file= DESEQ2_DIR + "/03-deseq2_diffex/{phenotype}/{comparison}.txt",
        gene_info = "references/entrez_gene_info",
-       #gene_info = "/ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info",
    output:
        DESEQ2_DIR + "/04-annotation/{phenotype}/{comparison}.annot.txt",
    params:

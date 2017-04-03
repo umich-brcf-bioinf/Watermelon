@@ -1,12 +1,5 @@
 #!/usr/bin/env Rscript
 
-####
-#Load some libraries, read in and parse files, create directory for output
-####
-
-#load
-library(optparse)
-
 #######
 # Perform differential expression analysis using DESeq2
 # Can be single or multi-factor, and multi-level (will use combined factor approach)
@@ -46,6 +39,19 @@ library(optparse)
 #     - A sheet containing only data for differentially expressed genes is created
 #######
 
+DEFAULT_MEMORY_IN_GB = 8
+DEFAULT_THREADS = 4
+
+print_options <- function(opt) {
+    opt_df <- data.frame(matrix(unlist(opt), byrow=T),stringsAsFactors=FALSE)
+    row.names(opt_df)<-names(opt)
+    names(opt_df) <- NULL
+    print('options:')
+    opt_df
+}
+
+library(optparse)
+
 #create parser object
 option_list = list(
   make_option(c("-c", "--countDataFile"), type = "character", default = NULL,
@@ -59,7 +65,12 @@ option_list = list(
   make_option(c("--foldChange"), type = "character", default = NULL,
               help = "Absolute numeric value above which a gene is considered for differential expression."),
   make_option(c("--adjustedPValue"), type = "character", default = NULL,
-              help = "Adjusted p-value below which a genes is considered for differential expression.")
+              help = "Adjusted p-value below which a genes is considered for differential expression."),
+  make_option(c("--threads"), type = "integer", default = DEFAULT_THREADS,
+              help = "Number of parallel processes (CPUs) to use."),
+  make_option(c("--memoryInGb"), type = "integer", default = DEFAULT_MEMORY_IN_GB,
+              help = "Max memory (Gb) allocated to Java VM (-Xmx).")
+
 );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -86,24 +97,32 @@ if (is.null(opt$countDataFile)) {
 } else
   print("countDataFile, metaDataFile, contrastFile, foldChange, and adjustedPValue detected. Continue.")
 
-#load libs
-library(plotly)
-library(DESeq2)
-library(data.table)
-library(BiocParallel)
-register(MulticoreParam(6))
-options(java.parameters = "-Xmx16000m")
-library(xlsx)
-library(genefilter)
-library(geneplotter)
-library(ggfortify)
-library(ggplot2)
-library(calibrate)
-library(GGally)
-library(reshape2)
-library(ggrepel)
-library(pheatmap)
-library(RColorBrewer)
+options(java.parameters = paste0("-Xmx",opt$memoryInGb,"g"))
+threads <- opt$threads
+
+print_options(opt)
+
+message("loading libraries begins")
+suppressPackageStartupMessages(library('plotly', character.only=TRUE))
+suppressPackageStartupMessages(library('DESeq2', character.only=TRUE))
+suppressPackageStartupMessages(library('data.table', character.only=TRUE))
+suppressPackageStartupMessages(library('BiocParallel', character.only=TRUE))
+suppressPackageStartupMessages(library('xlsx', character.only=TRUE))
+suppressPackageStartupMessages(library('genefilter', character.only=TRUE))
+suppressPackageStartupMessages(library('geneplotter', character.only=TRUE))
+suppressPackageStartupMessages(library('ggfortify', character.only=TRUE))
+suppressPackageStartupMessages(library('ggplot2', character.only=TRUE))
+suppressPackageStartupMessages(library('calibrate', character.only=TRUE))
+suppressPackageStartupMessages(library('GGally', character.only=TRUE))
+suppressPackageStartupMessages(library('reshape2', character.only=TRUE))
+suppressPackageStartupMessages(library('ggrepel', character.only=TRUE))
+suppressPackageStartupMessages(library('pheatmap', character.only=TRUE))
+suppressPackageStartupMessages(library('RColorBrewer', character.only=TRUE))
+
+multicore_param <- MulticoreParam(workers=opt$threads)
+register(multicore_param, default=TRUE)
+
+message("loading libraries complete")
 
 outDir <- opt$outDir
 plotsDir <- paste0(outDir,'/plots')

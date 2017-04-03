@@ -1,7 +1,10 @@
 #!/bin/bash
 
-while getopts "f:m:s:t:" opt; do
+while getopts "c:f:m:s:t:" opt; do
   case $opt in
+    c) 
+      CC_FLAG_ADDRESS=" -c ${OPTARG}"
+      ;;
     f)
       mail_from=$OPTARG
       ;;
@@ -24,4 +27,4 @@ while getopts "f:m:s:t:" opt; do
   esac
 done
 
-export EMAIL=${mail_from}; echo -e "${mail_message}" | mutt -s "${mail_subject}" ${mail_to}
+export EMAIL=${mail_from}; echo -e "${mail_message}" | mutt -s "${mail_subject}" ${CC_FLAG_ADDRESS} ${mail_to}

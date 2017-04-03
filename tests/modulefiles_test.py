@@ -81,6 +81,9 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
         self.check_command(command, "Python 2.7.9", "wrong python version")
 
     def test_module_loads_correct_versions(self):
+        command = self.build_command("mutt -v | head -1")
+        self.check_command(command, "\d*\.\d+", "mutt not installed")
+
         command = self.build_command("perl -e 'print $];'")
         self.check_command(command, "5.022002", "wrong perl version")
 
@@ -105,10 +108,6 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
         command = self.build_command("Rscript --version 2>&1")
         self.check_command(command, "version 3.3", "wrong R version")
 
-#         command = self.build_command("echo $R_LIBS_USER")
-#         self.check_command(command, "3.2", "wrong R Packages version")
-
-        
         command = self.build_command("(samtools 2>&1 | grep 'Version') || echo -e samtools not loaded")
         self.check_command(command, "Version: 0.1.19", "wrong samtools version")
 

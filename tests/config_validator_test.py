@@ -59,13 +59,13 @@ class ConfigValidatorTest(unittest.TestCase):
     def ok(self):
         self.assertEqual(1, 1)
 
-    def test_validate_primary_ok(self):
+    def test_validate_parsingValidationsOk(self):
         validator = _ConfigValidator({})
         validation1 = MockValidation()
         validation2 = MockValidation()
-        validator._PRIMARY_VALIDATIONS = [validation1.validate,
+        validator._PARSING_VALIDATIONS = [validation1.validate,
                                           validation2.validate]
-        validator._SECONDARY_VALIDATIONS = []
+        validator._CONTENT_VALIDATIONS = []
 
         validation_result = validator.validate()
 
@@ -75,7 +75,7 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual([], validation_result.failures)
         self.assertEqual([], validation_result.warnings)
 
-    def test_validate_primaryFailureFailsFast(self):
+    def test_validate_parsingValidationFailureFailsFast(self):
         log = StringIO()
         validator = _ConfigValidator({}, log)
         failure =_WatermelonConfigFailure("I'm angry")
@@ -83,9 +83,9 @@ class ConfigValidatorTest(unittest.TestCase):
         primaryValidation2 = MockValidation()
         secondaryValidation1 = MockValidation()
 
-        validator._PRIMARY_VALIDATIONS = [primaryValidation1.validate,
+        validator._PARSING_VALIDATIONS = [primaryValidation1.validate,
                                           primaryValidation2.validate]
-        validator._SECONDARY_VALIDATIONS = [secondaryValidation1.validate]
+        validator._CONTENT_VALIDATIONS = [secondaryValidation1.validate]
 
         validation_result = validator.validate()
 
@@ -97,13 +97,13 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual([failure], validation_result.failures)
 
 
-    def test_validate_secondary_ok(self):
+    def test_validate_contentValidationsOk(self):
         validator = _ConfigValidator({})
         validation1 = MockValidation()
         validation2 = MockValidation()
-        validator._PRIMARY_VALIDATIONS = []
-        validator._SECONDARY_VALIDATIONS = [validation1.validate,
-                                            validation2.validate]
+        validator._PARSING_VALIDATIONS = []
+        validator._CONTENT_VALIDATIONS = [validation1.validate,
+                                          validation2.validate]
 
         validation_result = validator.validate()
 
@@ -113,15 +113,15 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual([], validation_result.failures)
         self.assertEqual([], validation_result.warnings)
 
-    def test_validate_secondary_warning(self):
+    def test_validate_contentWarning(self):
         log = StringIO()
         validator = _ConfigValidator({}, log)
         validation1 = MockValidation()
         warning =_WatermelonConfigWarning("I'm angry")
         validation2 = MockValidation(warning)
-        validator._PRIMARY_VALIDATIONS = []
-        validator._SECONDARY_VALIDATIONS = [validation1.validate,
-                                            validation2.validate]
+        validator._PARSING_VALIDATIONS = []
+        validator._CONTENT_VALIDATIONS = [validation1.validate,
+                                          validation2.validate]
 
         validation_result = validator.validate()
 
@@ -132,15 +132,15 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual([], validation_result.failures)
 
 
-    def test_validate_secondaryWarningContinuesProcessingValidations(self):
+    def test_validate_contentWarningContinuesProcessingValidations(self):
         log = StringIO()
         validator = _ConfigValidator({}, log)
         warning =_WatermelonConfigWarning("I'm angry")
         validation1 = MockValidation(warning)
         validation2 = MockValidation()
-        validator._PRIMARY_VALIDATIONS = []
-        validator._SECONDARY_VALIDATIONS = [validation1.validate,
-                                            validation2.validate]
+        validator._PARSING_VALIDATIONS = []
+        validator._CONTENT_VALIDATIONS = [validation1.validate,
+                                          validation2.validate]
 
         validation_result = validator.validate()
 
@@ -150,15 +150,15 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual([warning], validation_result.warnings)
         self.assertEqual([], validation_result.failures)
 
-    def test_validate_secondaryFailure(self):
+    def test_validate_contentFailure(self):
         log = StringIO()
         validator = _ConfigValidator({}, log)
         validation1 = MockValidation()
         error =_WatermelonConfigFailure("I'm angry")
         validation2 = MockValidation(error)
-        validator._PRIMARY_VALIDATIONS = []
-        validator._SECONDARY_VALIDATIONS = [validation1.validate,
-                                            validation2.validate]
+        validator._PARSING_VALIDATIONS = []
+        validator._CONTENT_VALIDATIONS = [validation1.validate,
+                                          validation2.validate]
 
         validation_result = validator.validate()
 
@@ -169,22 +169,22 @@ class ConfigValidatorTest(unittest.TestCase):
         self.assertEqual([error], validation_result.failures)
 
 
-    def test_validate_secondaryMixOfWarningsAndErrors(self):
+    def test_validate_contentMixOfWarningsAndErrors(self):
         log = StringIO()
         validator = _ConfigValidator({}, log)
         problem1 =_WatermelonConfigFailure("I'm angry")
         validation1 = MockValidation(problem1)
-        problem2 =_WatermelonConfigWarning("I'm angry")
+        problem2 =_WatermelonConfigWarning("I'm sullen")
         validation2 = MockValidation(problem2)
-        problem3 =_WatermelonConfigWarning("I'm angry")
+        problem3 =_WatermelonConfigWarning("I'm sullen")
         validation3 = MockValidation(problem3)
         problem4 =_WatermelonConfigFailure("I'm angry")
         validation4 = MockValidation(problem4)
-        validator._PRIMARY_VALIDATIONS = []
-        validator._SECONDARY_VALIDATIONS = [validation1.validate,
-                                            validation2.validate,
-                                            validation3.validate,
-                                            validation4.validate]
+        validator._PARSING_VALIDATIONS = []
+        validator._CONTENT_VALIDATIONS = [validation1.validate,
+                                          validation2.validate,
+                                          validation3.validate,
+                                          validation4.validate]
 
         validation_result = validator.validate()
 
@@ -351,6 +351,38 @@ comparisons: X
                                (r'\[comparisons\] are not paired: \(\[empty comparison\], '
                                 r'_v_, a_v_b_v_c, bar_foo, x_v_\);'),
                                validator._check_comparisons_not_a_pair)
+
+    def test_check_phenotype_labels_blank_ok(self):
+        config_string = 'phenotypes: a ^ b'
+        config = yaml.load(config_string)
+        validator = _ConfigValidator(config, log=StringIO())
+        validator._check_phenotype_labels_blank()
+        self.ok()
+
+    def test_check_phenotype_labels_blank(self):
+        config_string = 'phenotypes: a ^ ^ c ^ '
+        config = yaml.load(config_string)
+        validator = _ConfigValidator(config, log=StringIO())
+        expected_msg = r'\[phenotypes\] labels cannot be blank'
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_msg,
+                               validator._check_phenotype_labels_blank)
+
+    def test_check_phenotype_labels_not_unique_ok(self):
+        config_string = 'phenotypes: a ^ b ^ c'
+        config = yaml.load(config_string)
+        validator = _ConfigValidator(config, log=StringIO())
+        validator._check_phenotype_labels_not_unique()
+        self.ok()
+
+    def test_check_phenotype_labels_not_unique(self):
+        config_string = 'phenotypes: a ^ b ^ a ^ c ^ b'
+        config = yaml.load(config_string)
+        validator = _ConfigValidator(config, log=StringIO())
+        expected_msg = r'\[phenotypes\] labels must be unique; review/revise \[a, b\]'
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_msg,
+                               validator._check_phenotype_labels_not_unique)
 
     def test_check_phenotypes_samples_not_rectangular_ok(self):
         config_string = \
@@ -624,7 +656,7 @@ comparisons:
                                expected_message,
                                validator._check_comparison_references_unknown_phenotype_value)
 
-    def test_main_factors_malformed_ok(self):
+    def test_check_main_factors_malformed_ok(self):
         config_string = \
 '''
 main_factors: yes ^ no
@@ -634,7 +666,7 @@ phenotypes:   foo ^ bar
         validator._check_main_factors_malformed()
         self.ok()
 
-    def test_main_factors_malformed_wrongNumberValues(self):
+    def test_check_main_factors_malformed_wrongNumberValues(self):
         config_string = \
 '''
 main_factors: yes ^ no ^ yes
@@ -646,7 +678,7 @@ phenotypes:   foo ^ bar
                                expected_message,
                                validator._check_main_factors_malformed)
 
-    def test_main_factors_illegal_values_ok(self):
+    def test_check_main_factors_illegal_values_ok(self):
         config_string = \
 '''
 main_factors: yes ^ no
@@ -656,7 +688,7 @@ phenotypes:   foo ^ bar
         validator._check_main_factors_illegal_values()
         self.ok()
 
-    def test_main_factors_blank_values(self):
+    def test_check_main_factors_blank_values(self):
         config_string = \
 '''
 main_factors:     ^ nope
@@ -668,7 +700,7 @@ phenotypes:   foo ^ bar
                                expected_message,
                                validator._check_main_factors_illegal_values)
 
-    def test_main_factors_illegal_values(self):
+    def test_check_main_factors_illegal_values(self):
         config_string = \
 '''
 main_factors: yep ^ nope
@@ -680,20 +712,133 @@ phenotypes:   foo ^ bar
                                expected_message,
                                validator._check_main_factors_illegal_values)
 
+    def test_check_phenotype_labels_illegal_values_ok(self):
+        config_string = 'phenotypes:   a ^ b-c ^ d_e ^ f.g ^ h0i'
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        validator._check_phenotype_labels_illegal_values()
+        self.ok()
 
+    def test_check_phenotype_labels_illegal_values_containsIllegalChars(self):
+        config_string = 'phenotypes:   a/b ^ c d ^ e|f'
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = (r'\[phenotypes\] labels must .*; review/revise these '
+                             'labels \[a/b, c d, e|f\].')
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_message,
+                               validator._check_phenotype_labels_illegal_values)
+
+    def test_check_phenotype_labels_illegal_values_startNonAlpha(self):
+        config_string = 'phenotypes:   a1 ^ 2b ^ .c ^ -d ^ _e'
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = (r'\[phenotypes\] labels must .*; review/revise these '
+                            r'labels \[-d, .c, 2b, _e\]')
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_message,
+                               validator._check_phenotype_labels_illegal_values)
+
+    def test_check_phenotype_labels_illegal_values_blank(self):
+        config_string = 'phenotypes:   a1 ^    ^ c3 ^    ^'
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = (r'\[phenotypes\] labels must .*; review/revise these '
+                            r'labels \[<blank>\]')
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_message,
+                               validator._check_phenotype_labels_illegal_values)
+
+    def test_check_phenotype_labels_reserved_name(self):
+        config_string = 'phenotypes:   t ^ T  ^ f ^  F ^ nan ^ NAN'
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = (r'\[phenotypes\] labels cannot .*; review/revise these '
+                            r'labels \[F, NAN, T\]')
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_message,
+                               validator._check_phenotype_labels_reserved_name)
+
+    def test_check_phenotype_values_illegal_values_ok(self):
+        config_string = '''
+phenotypes: diet ^ gender
+samples:
+        s1: HD   ^ Y
+        s2: LD   ^ X
+        s3:      ^ Y
+        s4:      ^ X'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        validator._check_phenotype_values_illegal_values()
+        self.ok()
+
+    def test_check_phenotype_values_illegal_values_containsIllegalChars(self):
+        config_string = '''
+phenotypes: diet ^ gender
+samples:
+        s1: HD   ^ Y
+        s2: L/D  ^ X+Z
+        s3:      ^ Y|Z
+        s4:      ^ X+Z'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = (r'\[sample\] phenotype values must .*; review/revise these '
+                            r'values \[diet:L/D, gender:X+Z, gender:Y|Z\]')
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_message,
+                               validator._check_phenotype_values_illegal_values)
+
+    def test_check_phenotype_values_illegal_values_startNonAlpha(self):
+        config_string = '''
+phenotypes: diet ^ gender
+samples:
+        s1: HD   ^ Y
+        s2: 5LD  ^ _X
+        s3:      ^ .Y
+        s4:      ^ _X'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = (r'\[sample\] phenotype values must .*; review/revise these '
+                            r'values \[diet:5LD, gender:.Y, gender:_X\]')
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_message,
+                               validator._check_phenotype_values_illegal_values)
+
+    def test_check_phenotype_values_reserved_name_ok(self):
+        config_string = '''
+phenotypes: diet ^ gender
+samples:
+        s1: HD  ^ Y
+        s2: LD  ^ N'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        validator._check_phenotype_values_reserved_name()
+        self.ok()
+
+    def test_check_phenotype_values_reserved_name(self):
+        config_string = '''
+phenotypes: diet ^ gender
+samples:
+        s1: HD ^ Y
+        s2: T  ^ T
+        s3:    ^ F
+        s4:    ^ T'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = (r'\[sample\] phenotype values cannot .*; review/revise these '
+                            r'values \[diet:T, gender:F, gender:T\]')
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_message,
+                               validator._check_phenotype_values_reserved_name)
 
     def test_init_validationsAreIncluded(self):
         validator = _ConfigValidator(config={}, log=StringIO())
-        primary_validation_names = [f.__name__ for f in validator._PRIMARY_VALIDATIONS]
+        primary_validation_names = [f.__name__ for f in validator._PARSING_VALIDATIONS]
         self.assertEqual(['_check_missing_required_field',
+                          '_check_phenotype_labels_blank',
+                          '_check_phenotype_labels_not_unique',
                           '_check_samples_malformed',
                           '_check_samples_not_stringlike',
                           '_check_comparisons_malformed',
                           '_check_comparisons_not_a_pair',
                           '_check_phenotypes_samples_not_rectangular'],
                          primary_validation_names)
-        secondary_validation_names = [f.__name__ for f in validator._SECONDARY_VALIDATIONS]
-        self.assertEqual(['_check_comparison_missing_phenotype_value',
+        secondary_validation_names = [f.__name__ for f in validator._CONTENT_VALIDATIONS]
+        self.assertEqual(['_check_phenotype_labels_illegal_values',
+                          '_check_phenotype_labels_reserved_name',
+                          '_check_phenotype_values_illegal_values',
+                          '_check_phenotype_values_reserved_name',
+                          '_check_comparison_missing_phenotype_value',
                           '_check_comparison_missing_phenotype_label',
                           '_check_comparison_references_unknown_phenotype_label',
                           '_check_comparison_references_unknown_phenotype_value',
@@ -849,13 +994,13 @@ class ValidationCollectorTest(unittest.TestCase):
 '''main_factors: yes ^ no
 phenotypes: diet ^ gender
 samples:
-    s1: HD ^ M
-    s2: LD ^ F
+    s1: HD ^ Male
+    s2: LD ^ Female
 comparisons:
     diet:
     - HD_v_LD
     gender:
-    - M_v_F
+    - Male_v_Female
 '''
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
@@ -904,8 +1049,8 @@ comparisons:
 '''main_factors: yes ^ no
 phenotypes: diet ^ gender
 samples:
-    s1: HD ^ M
-    s2: LD ^ F
+    s1: HD ^ Male
+    s2: LD ^ Female
 comparisons:
     diet:
     - HD_v_LD
@@ -933,8 +1078,8 @@ comparisons:
 '''main_factors: yes ^ no
 phenotypes: diet ^ gender
 samples:
-    s1: HD ^ M
-    s2: LD ^ F
+    s1: HD ^ Male
+    s2: LD ^ Female
 comparisons:
     diet:
     - HD_v_LD

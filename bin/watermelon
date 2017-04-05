@@ -125,19 +125,16 @@ else
     export CONFIG_BASENAME=`basename ${CONFIG_FILE}`
 fi 
 
-if [[ ${SKIP_CONFIG_VALIDATION} == "" ]]; then
-    (   cd ${WATERMELON_ROOT_DIR}
-        python -m scripts.config_validator $CONFIG_FILEPATH
-    )
-    if [[ $? -ne 0 ]] ; then
-        exit 1
-    fi
-fi
-
 if [[ ! -f $SNAKEFILE ]]; then
     echo "ERROR: snakefile file [${SNAKEFILE}] cannot be read (contact bfxcore support for assistance)"
     exit 1
 fi 
+
+if [[ ${SKIP_CONFIG_VALIDATION} == "" ]]; then
+    ${WATERMELON_ROOT_DIR}/watermelon_config_validator-runner.py $CONFIG_FILE || exit 1
+fi
+
+${WATERMELON_ROOT_DIR}/unlocker-runner.py || exit 1
 
 export EXTRA_ARGUMENTS=""
 if [[ ${#PASS_THROUGH_ARGS[@]} -gt 0 ]]; then

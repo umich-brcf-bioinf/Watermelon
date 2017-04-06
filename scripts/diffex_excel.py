@@ -46,6 +46,8 @@ class _Formatter(object):
 
     @staticmethod
     def _is_number(value):
+        if not value:
+            return False
         try:
             value = float(value)
             return not (math.isinf(value) or math.isnan(value)) 
@@ -196,7 +198,7 @@ def _parse_command_line_args(sys_argv):
         '-i',
         '--isoform_filepath',
         type=str,
-        required=True,
+        required=False,
         help='path to annotated isoform tab-separated text file')
     parser.add_argument(
         '--glossary_filepath',
@@ -221,7 +223,8 @@ def main(sys_argv):
     workbook = Workbook(args.output_filepath, {'strings_to_numbers': True})
     formatter = _Formatter(workbook)
     _add_worksheet(workbook, formatter, 'genes', args.gene_filepath)
-    _add_worksheet(workbook, formatter, 'isoforms', args.isoform_filepath)
+    if args.isoform_filepath:
+        _add_worksheet(workbook, formatter, 'isoforms', args.isoform_filepath)
     if args.glossary_filepath:
         _add_glossary(workbook, formatter, 'glossary', args.glossary_filepath)
     if args.info_filepath:

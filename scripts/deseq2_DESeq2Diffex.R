@@ -126,7 +126,7 @@ message("loading libraries complete")
 
 outDir <- opt$outDir
 plotsDir <- paste0(outDir,'/plots')
-normDataDir <- paste0(outDir,'/normalized_data')
+normDataDir <- paste0(outDir,'/normalizedData')
 
 #convert fc and padj options to numeric values
 fc <- as.numeric(opt$foldChange)
@@ -361,7 +361,7 @@ write.table(x = rldDf, file=paste0(normDataDir,'/RlogNormalizedExpData.txt'), ap
 
 for (i in 1:nrow(contrastData)){
   #newDir creation
-  newDir <- paste0(outDir,'/diffex_gene_lists/', as.character(contrastData$factor[i])) #create directory with date and time
+  newDir <- paste0(outDir,'/diffex_genes/', as.character(contrastData$factor[i])) #create directory with date and time
   dir.create(newDir, showWarnings = TRUE, recursive = TRUE, mode = "0777") #create directory for output
   
   #collect references, etc

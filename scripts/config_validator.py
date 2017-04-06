@@ -80,7 +80,7 @@ class _ValidationCollector(object):
 
     def log_results(self):
         self._log.write(_HEADER_RULE)
-        self._log.write('config validation: {}\n'.format(self.summary_result))
+        self._log.write('Config validation: {}\n'.format(self.summary_result))
         if not self.passed:
             self._log.write(_SECTION_RULE)
         for failure in self.failures:
@@ -406,7 +406,7 @@ def main(config_filename,
             exit_code = 0
     except yaml.YAMLError:
         log.write(_HEADER_RULE)
-        log.write('config validation: ERROR\n')
+        log.write('Config validation: ERROR\n')
         log.write(('Could not parse this config file [{}]; '
                    'is it valid YAML?\n').format(config_filename))
     return exit_code

@@ -91,11 +91,12 @@ rule all:
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
                 phenotype_name=PHENOTYPE_NAMES, 
                 comparison=COMPARISON_GROUPS),
+
         expand(DIFFEX_DIR + "/Deliverables/alignment_deliverables/raw_reads_fastqc/{sample}_trimmed_R1_fastqc.html",
                 sample=config["samples"]),
         expand(DIFFEX_DIR + "/Deliverables/alignment_deliverables/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
                 sample=config["samples"]),
-         DIFFEX_DIR + "/Deliverables/alignment_deliverables/alignment_stats.txt",
+        DIFFEX_DIR + "/Deliverables/alignment_deliverables/alignment_stats.txt",
         expand("{diffex_dir}/Deliverables/diffex_deliverables/cuffdiff_results/{phenotype_name}/{comparison}.xlsx", 
                 zip,
                 diffex_dir=repeat(DIFFEX_DIR, len(PHENOTYPE_NAMES)),
@@ -106,10 +107,11 @@ rule all:
         expand("{diffex_dir}/Deliverables/diffex_deliverables/cummeRbund_results/{phenotype_name}_cummeRbund_plots",
                     diffex_dir=DIFFEX_DIR, 
                     phenotype_name=sorted(config[COMPARISONS_KEY].keys())),
+
         DESEQ2_DIR + "/01-htseq/HTSeq_counts.txt",
         DESEQ2_DIR + "/02-metadata_contrasts/sample_metadata.txt",
         DESEQ2_DIR + "/02-metadata_contrasts/contrasts.txt",
-        expand("{deseq2_dir}/03-deseq2_diffex/{phenotype_name}/{comparison}.txt",
+        expand("{deseq2_dir}/03-deseq2_diffex/diffex_gene_lists/{phenotype_name}/{comparison}.txt",
                zip,
                deseq2_dir=repeat(DESEQ2_DIR, len(PHENOTYPE_NAMES)),
                phenotype_name=PHENOTYPE_NAMES, 
@@ -119,6 +121,11 @@ rule all:
                deseq2_dir=repeat(DESEQ2_DIR, len(PHENOTYPE_NAMES)),
                phenotype_name=PHENOTYPE_NAMES, 
                comparison=COMPARISON_GROUPS),
+        expand("{deseq2_dir}/06-excel/{phenotype_name}/{comparison}.xlsx",
+                zip,
+                deseq2_dir=repeat(DESEQ2_DIR, len(PHENOTYPE_NAMES)),
+                phenotype_name=PHENOTYPE_NAMES, 
+                comparison=COMPARISON_GROUPS),
 
 
 rule concat_reads:
@@ -489,20 +496,19 @@ rule last_split:
 rule build_run_info:
     input: 
         DIFFEX_DIR + "/14-diffex_split/last_split",
-        glossary = WATERMELON_SCRIPTS_DIR + "/glossary.txt"
-        
+        glossary = WATERMELON_SCRIPTS_DIR + "/tuxedo_glossary.txt"
     output: 
-        DIFFEX_DIR + "/15-run_info/run_info.txt",
-        DIFFEX_DIR + "/15-run_info/glossary.txt"
-
+        run_info=DIFFEX_DIR + "/15-run_info/run_info.txt",
+        glossary=DIFFEX_DIR + "/15-run_info/glossary.txt"
     run:
-        command = 'module load watermelon_rnaseq; module list -t 2> {}'.format(output[0])
+        command = ('module load watermelon_rnaseq && '
+                   'module list -t 2> {}').format(output['run_info'])
         subprocess.call(command, shell=True)
-        with open(output[0], 'a') as run_info_file: 
+        with open(output['run_info'], 'a') as run_info_file: 
             print('\n\nConfig\n', file=run_info_file)
-            print(yaml.dump(config, default_flow_style=False), file=run_info_file)
-        
-        copyfile(WATERMELON_SCRIPTS_DIR + '/glossary.txt', DIFFEX_DIR + '/15-run_info/glossary.txt')
+            print(yaml.dump(config, default_flow_style=False),
+                  file=run_info_file)
+        copyfile(input['glossary'], output['glossary'])
  
 rule diffex_excel:
     input:
@@ -621,7 +627,7 @@ rule htseq_merge:
     log:
         DESEQ2_DIR + "/01-htseq/log/htseq_merge.log"
     shell:
-       " perl {WATERMELON_SCRIPTS_DIR}/mergeHTSeqCountFiles.pl {params.input_dir} 2>&1 | tee {log}"
+       " perl {WATERMELON_SCRIPTS_DIR}/deseq2_mergeHTSeqCountFiles.pl {params.input_dir} 2>&1 | tee {log}"
 
 
 rule deseq2_metadata_contrasts:
@@ -644,7 +650,7 @@ rule deseq2_diffex:
         contrasts = DESEQ2_DIR + "/02-metadata_contrasts/contrasts.txt",
     output:
         dir = DESEQ2_DIR + "/03-deseq2_diffex",
-        files = expand("{deseq2_dir}/03-deseq2_diffex/{phenotype}/{comparison}.txt",
+        files = expand("{deseq2_dir}/03-deseq2_diffex/diffex_gene_lists/{phenotype}/{comparison}.txt",
                        zip,
                        deseq2_dir=repeat(DESEQ2_DIR, len(PHENOTYPE_NAMES)),
                        phenotype=PHENOTYPE_NAMES,
@@ -655,7 +661,10 @@ rule deseq2_diffex:
         adjusted_pvalue = config["deseq2_adjustedPValue"],
     shell:
         "module load watermelon_rnaseq && "
-        "{WATERMELON_SCRIPTS_DIR}/DESeq2Diffex.R "
+        "rm -rf {output.dir}/normalized_data && "
+        "rm -rf {output.dir}/plots && "
+        "rm -rf {output.dir}/diffex_genes && "
+        "{WATERMELON_SCRIPTS_DIR}/deseq2_DESeq2Diffex.R "
         "    -c {input.htseq_counts} "
         "    -m {input.sample_metadata} "
         "    -f {input.contrasts} "
@@ -669,7 +678,7 @@ rule deseq2_diffex:
 
 rule deseq2_annotation:
    input:
-       diffex_file= DESEQ2_DIR + "/03-deseq2_diffex/{phenotype}/{comparison}.txt",
+       diffex_file= DESEQ2_DIR + "/03-deseq2_diffex/diffex_gene_lists/{phenotype}/{comparison}.txt",
        gene_info = "references/entrez_gene_info",
    output:
        DESEQ2_DIR + "/04-annotation/{phenotype}/{comparison}.annot.txt",
@@ -678,9 +687,45 @@ rule deseq2_annotation:
        output_dir = DESEQ2_DIR + "/04-annotation/{comparison}",
    shell:
        "mkdir -p {params.output_dir}.tmp && "
-       "python {WATERMELON_SCRIPTS_DIR}/annotate_DESeq2.py "
+       "python {WATERMELON_SCRIPTS_DIR}/deseq2_annotate.py "
        "    -i {input.gene_info} "
        "    -e {input.diffex_file} "
        "    -g {params.genome} "
        "    -o {output}.tmp && "
        "mv {output}.tmp {output} "
+
+rule deseq2_run_info:
+    input: 
+        glossary = WATERMELON_SCRIPTS_DIR + "/deseq2_glossary.txt",
+        sample_metadata = DESEQ2_DIR + "/02-metadata_contrasts/sample_metadata.txt",
+        contrasts = DESEQ2_DIR + "/02-metadata_contrasts/contrasts.txt"
+    output: 
+        run_info = DESEQ2_DIR + "/05-run_info/run_info.txt",
+        glossary = DESEQ2_DIR + "/05-run_info/glossary.txt"
+    run:
+        command = ('module load watermelon_rnaseq && '
+                   'module list -t 2> {}').format(output['run_info'])
+        subprocess.call(command, shell=True)
+        with open(output['run_info'], 'a') as run_info_file: 
+            print('\n\nConfig\n', file=run_info_file)
+            print(yaml.dump(config, default_flow_style=False),
+                  file=run_info_file)
+        copyfile(input['glossary'], output['glossary'])
+
+rule deseq2_excel:
+    input:
+        gene = DESEQ2_DIR + "/04-annotation/{phenotype}/{comparison}.annot.txt",
+        glossary = DESEQ2_DIR + "/05-run_info/glossary.txt",
+        run_info = DESEQ2_DIR + "/05-run_info/run_info.txt"
+    output: 
+        DESEQ2_DIR + "/06-excel/{phenotype}/{comparison}.xlsx"
+    log:
+        DESEQ2_DIR + "/06-excel/log/{phenotype}_diffex_excel.log"
+    shell:
+        "module purge && module load python/3.4.3 && "
+        " python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py "
+        " -g {input.gene}"
+        " --glossary {input.glossary} "
+        " --info_filepath {input.run_info} "
+        " {output} "
+        " 2>&1 | tee {log} "

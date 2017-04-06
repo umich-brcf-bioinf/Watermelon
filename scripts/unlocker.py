@@ -13,6 +13,8 @@ If you are sure that no other instances of snakemake are running on this directo
 the remaining lock was likely caused by a kill signal or a power loss.
 '''
 
+_HEADER_RULE = '=' * 70 + '\n'
+
 def _get_locks_dir(working_dir):
     return join(working_dir, '.snakemake', 'locks')
 
@@ -48,6 +50,7 @@ def main(working_dir=getcwd(),
         exit_code = _clear_locks(working_dir, log, prompt_to_unlock)
     else:
         log.write('OK\n')
+    log.write(_HEADER_RULE)
     return exit_code
 
 if __name__ == '__main__':

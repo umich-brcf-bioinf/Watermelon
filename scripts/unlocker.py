@@ -43,7 +43,7 @@ def _clear_locks(working_dir, log, prompt_to_unlock):
 def main(working_dir=getcwd(),
          log=sys.stderr,
          prompt_to_unlock=_prompt_to_unlock):
-    log.write('Checking for locks: ')
+    log.write('checking for locks: ')
     exit_code = 0
     if _is_dir_locked(working_dir):
         log.write(_LOCK_WARNING)

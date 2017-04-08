@@ -75,7 +75,10 @@ class UnlockerTest(unittest.TestCase):
                       log=log,
                       prompt_to_unlock=mock_prompt.prompt)
 
-        self.assertEqual('Checking for locks: OK\n', log.getvalue())
+        log_lines = iter(log.getvalue().strip('\n').split('\n'))
+        self.assertEqual('checking for locks: OK', next(log_lines))
+        self.assertRegexpMatches(next(log_lines), '===')
+        self.assertRaises(StopIteration, next, log_lines)
         self.assertEqual(False, mock_prompt.prompt_was_called)
         self.assertEqual(True, isdir(locks_dir))
 
@@ -95,10 +98,11 @@ class UnlockerTest(unittest.TestCase):
                                   log=log,
                                   prompt_to_unlock=mock_prompt.prompt)
         log_lines = iter(log.getvalue().strip().split('\n'))
-        self.assertRegex(next(log_lines), r'Checking .*WARNING: .* locked.')
+        self.assertRegex(next(log_lines), r'checking .*WARNING: .* locked.')
         self.assertRegex(next(log_lines), r'If you are sure.*')
         self.assertRegex(next(log_lines), r'.* remaining lock.* power loss')
         self.assertRegex(next(log_lines), r'Attempting.*OK')
+        self.assertRegexpMatches(next(log_lines), '===')
         self.assertRaises(StopIteration, next, log_lines)
         self.assertEqual(True, mock_prompt.prompt_was_called)
         self.assertEqual(False, isdir(locks_dir))
@@ -119,10 +123,11 @@ class UnlockerTest(unittest.TestCase):
                                   log=log,
                                   prompt_to_unlock=mock_prompt.prompt)
         log_lines = iter(log.getvalue().strip().split('\n'))
-        self.assertRegex(next(log_lines), r'Checking .*WARNING: .* locked.')
+        self.assertRegex(next(log_lines), r'checking .*WARNING: .* locked.')
         self.assertRegex(next(log_lines), r'If you are sure.*')
         self.assertRegex(next(log_lines), r'.* remaining lock.* power loss')
         self.assertRegex(next(log_lines), r'Watermelon stopped')
+        self.assertRegexpMatches(next(log_lines), '===')
         self.assertRaises(StopIteration, next, log_lines)
         self.assertEqual(True, mock_prompt.prompt_was_called)
         self.assertEqual(True, isdir(locks_dir))

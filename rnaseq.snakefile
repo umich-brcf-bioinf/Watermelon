@@ -111,7 +111,7 @@ rule all:
         DESEQ2_DIR + "/01-htseq/HTSeq_counts.txt",
         DESEQ2_DIR + "/02-metadata_contrasts/sample_metadata.txt",
         DESEQ2_DIR + "/02-metadata_contrasts/contrasts.txt",
-        expand("{deseq2_dir}/03-deseq2_diffex/diffex_gene_lists/{phenotype_name}/{comparison}.txt",
+        expand("{deseq2_dir}/03-deseq2_diffex/diffex_genes/{phenotype_name}/{comparison}.txt",
                zip,
                deseq2_dir=repeat(DESEQ2_DIR, len(PHENOTYPE_NAMES)),
                phenotype_name=PHENOTYPE_NAMES, 
@@ -650,7 +650,7 @@ rule deseq2_diffex:
         contrasts = DESEQ2_DIR + "/02-metadata_contrasts/contrasts.txt",
     output:
         dir = DESEQ2_DIR + "/03-deseq2_diffex",
-        files = expand("{deseq2_dir}/03-deseq2_diffex/diffex_gene_lists/{phenotype}/{comparison}.txt",
+        files = expand("{deseq2_dir}/03-deseq2_diffex/diffex_genes/{phenotype}/{comparison}.txt",
                        zip,
                        deseq2_dir=repeat(DESEQ2_DIR, len(PHENOTYPE_NAMES)),
                        phenotype=PHENOTYPE_NAMES,
@@ -678,7 +678,7 @@ rule deseq2_diffex:
 
 rule deseq2_annotation:
    input:
-       diffex_file= DESEQ2_DIR + "/03-deseq2_diffex/diffex_gene_lists/{phenotype}/{comparison}.txt",
+       diffex_file= DESEQ2_DIR + "/03-deseq2_diffex/diffex_genes/{phenotype}/{comparison}.txt",
        gene_info = "references/entrez_gene_info",
    output:
        DESEQ2_DIR + "/04-annotation/{phenotype}/{comparison}.annot.txt",

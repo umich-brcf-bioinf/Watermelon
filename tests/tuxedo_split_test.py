@@ -14,7 +14,7 @@ except ImportError:
 import pandas as pd
 from testfixtures.tempdirectory import TempDirectory
 
-import scripts.diffex_split as diffex_split
+import scripts.tuxedo_split as tuxedo_split
 
 class MockHandler(object):
     def __init__(self):
@@ -28,7 +28,7 @@ class MockHandler(object):
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SCRIPTS_DIR = os.path.join(os.path.dirname(TEST_DIR), 'scripts')
-class SplitDiffexTest(unittest.TestCase):
+class TuxedoSplitTest(unittest.TestCase):
     def test_raisesValueErrorIfMissingRequiredColumns(self):
         args = Namespace(input_filepath='input.txt')
         df_contents = StringIO('field1\n')
@@ -37,7 +37,7 @@ class SplitDiffexTest(unittest.TestCase):
                                 (r'Input file \[input.txt\] is missing required '
                                  r'field\(s\) \[diff_exp,log2\(fold_change\),sample_1,'
                                  r'sample_2,significant,status\].'),
-                                 diffex_split._validate_required_fields,
+                                 tuxedo_split._validate_required_fields,
                                  df,
                                  args)
 
@@ -65,7 +65,7 @@ class SplitDiffexTest(unittest.TestCase):
 1|OK|yes|yes|-1
 0|OK|yes|yes|Inf''')
         df = pd.read_csv(df_contents, sep='|')
-        actual_df = diffex_split._sort(df)
+        actual_df = tuxedo_split._sort(df)
 
         expected_row = 0
         for index, row in actual_df.iterrows():
@@ -81,8 +81,8 @@ class SplitDiffexTest(unittest.TestCase):
             return df.iloc[0]
 
         def assertLessThan(rowA, rowB):
-            sortA = diffex_split._get_sort_value(rowA)
-            sortB = diffex_split._get_sort_value(rowB)
+            sortA = tuxedo_split._get_sort_value(rowA)
+            sortB = tuxedo_split._get_sort_value(rowB)
             self.assertTrue(sortA < sortB, str(sortA) + ' not < ' + str(sortB))
 
         base = row('OK', 'yes', 'yes', 2)
@@ -92,8 +92,8 @@ class SplitDiffexTest(unittest.TestCase):
         lesser_significant = row('OK', 'no', 'yes', 2)
         lesser_status = row('FAIL', 'yes', 'yes', 2)
 
-        self.assertEqual(diffex_split._get_sort_value(base),
-                         diffex_split._get_sort_value(equals))
+        self.assertEqual(tuxedo_split._get_sort_value(base),
+                         tuxedo_split._get_sort_value(equals))
         assertLessThan(base, lesser_fold_change)
         assertLessThan(base, lesser_diff_exp)
         assertLessThan(base, lesser_significant)
@@ -114,7 +114,7 @@ E|F|1|2''')
         mock_handler = MockHandler()
         mock_logger = lambda x: None
         group_by_cols = ['sample_1', 'sample_2']
-        diffex_split._split_comparisons('_', df, group_by_cols, mock_handler, mock_logger)
+        tuxedo_split._split_comparisons('_', df, group_by_cols, mock_handler, mock_logger)
 
         self.assertEqual(3, len(mock_handler._comparisons))
         self.assertEqual((1,4), mock_handler._comparisons['A_B'].shape)
@@ -132,7 +132,7 @@ A|B''')
         self.assertRaisesRegexp(ValueError,
                                 (r'Input file \[input.txt\] is missing requested '
                                  r'comparison\(s\) \[C_D,E_F\].'),
-                                 diffex_split._validate_included_comparisons_present,
+                                 tuxedo_split._validate_included_comparisons_present,
                                  df,
                                  args)
 
@@ -141,7 +141,7 @@ class FilteringHandlerTest(unittest.TestCase):
         df = 'data_frame'
         base_handler = MockHandler()
         mock_log = []
-        handler = diffex_split._FilteringHandler(['A_B'], base_handler, mock_log.append)
+        handler = tuxedo_split._FilteringHandler(['A_B'], base_handler, mock_log.append)
 
         handler.handle('A_B', df)
 
@@ -154,7 +154,7 @@ class FilteringHandlerTest(unittest.TestCase):
         df = pd.DataFrame()
         base_handler = MockHandler()
         mock_log = []
-        handler = diffex_split._FilteringHandler(['A_B'], base_handler, mock_log.append)
+        handler = tuxedo_split._FilteringHandler(['A_B'], base_handler, mock_log.append)
 
         handler.handle('C_D', df)
 
@@ -175,7 +175,7 @@ A|B|3|4''')
             temp_dir_path = temp_dir.path
             group_name = 'foo'
             suffix = '.suffix.txt'
-            handler = diffex_split._ComparisonHandler(temp_dir_path, suffix)
+            handler = tuxedo_split._ComparisonHandler(temp_dir_path, suffix)
             handler.handle(group_name, df)
 
             expected_filename = os.path.join(temp_dir_path, 'foo.suffix.txt')
@@ -200,7 +200,7 @@ class SplitDiffexFunctoinalTest(unittest.TestCase):
     def test_commandReturnsCorrectRowAndColumnCount(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            script_name = os.path.join(SCRIPTS_DIR, 'diffex_split.py')
+            script_name = os.path.join(SCRIPTS_DIR, 'tuxedo_split.py')
             input_filename = os.path.join(temp_dir_path, 'input.txt')
             output_dir = temp_dir_path
 

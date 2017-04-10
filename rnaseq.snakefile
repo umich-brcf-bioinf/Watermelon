@@ -338,13 +338,13 @@ rule tuxedo_flip:
         TUXEDO_DIR + "02-flip/.log/{pheno}_flip.log"
     shell:
         "module purge && module load python/3.4.3 && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_flip.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_flip.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " {input.gene_cuffdiff} "
         " {output.gene_flip} "
         " {params.comparisons} "
         " 2>&1 | tee {log} && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_flip.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_flip.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " {input.isoform_cuffdiff} "
         " {output.isoform_flip} "
@@ -362,16 +362,16 @@ rule tuxedo_flag:
     params:
         fold_change = config["fold_change"]
     log:
-        TUXEDO_DIR + "03-flag/.log/{pheno}_diffex_flag.log"
+        TUXEDO_DIR + "03-flag/.log/{pheno}_tuxedo_flag.log"
     shell: 
         "module purge && "
         "module load python/3.4.3 && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_flag.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_flag.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_gene_exp} "
         " {output.gene_flagged} "
         " 2>&1 | tee {log} && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_flag.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_flag.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_isoform_exp} "
         " {output.isoform_flagged} "
@@ -393,14 +393,14 @@ rule tuxedo_annotate:
     log:
         TUXEDO_DIR + "04-annotate/.log/{pheno}_annotate.log"
     shell:
-        "python {WATERMELON_SCRIPTS_DIR}/annotate_entrez_gene_info.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_annotate.py "
         " -i {input.entrez_gene_info} "
         " -e {input.gene_diff_exp} "
         " -g {params.genome} "
         " -o {params.output_dir} "
         " 2>&1 | tee {log} && "
         
-        "python {WATERMELON_SCRIPTS_DIR}/annotate_entrez_gene_info.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_annotate.py "
         " -i {input.entrez_gene_info} "
         " -e {input.isoform_diff_exp} "
         " -g {params.genome} "
@@ -467,10 +467,10 @@ rule tuxedo_split:
         output_dir = TUXEDO_DIR + "07-split/{phenotype_name}",
         user_specified_comparison_list = lambda wildcards: phenotypeManager.separated_comparisons(',')[wildcards.phenotype_name],
     log:
-        TUXEDO_DIR + "07-split/.log/{phenotype_name}_diffex_split.log"
+        TUXEDO_DIR + "07-split/.log/{phenotype_name}_tuxedo_split.log"
     shell:
         "module purge && module load python/3.4.3 && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_split.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_split.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " -o _gene.txt "
         " {input.gene} "
@@ -479,7 +479,7 @@ rule tuxedo_split:
         " 2>&1 | tee {log} && "
 
         "module purge && module load python/3.4.3 && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_split.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_split.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " -o _isoform.txt "
         " {input.isoform} "

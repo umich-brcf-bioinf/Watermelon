@@ -48,16 +48,16 @@ rnaseq_snakefile_helper.checksum_reset_all(CONFIG_CHECKSUMS_DIR,
 rule all:
     input:
         expand(ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_R1_fastqc.html",
-                sample=config["samples"]),
+                sample=config[SAMPLES_KEY]),
         expand(ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_accepted_hits.bam",
-                sample=config["samples"]),
+                sample=config[SAMPLES_KEY]),
         expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
-                sample=config["samples"]),
+                sample=config[SAMPLES_KEY]),
         ALIGNMENT_DIR + "06-qc_metrics/alignment_stats.txt",
         expand(DELIVERABLES_DIR + "alignment/raw_reads_fastqc/{sample}_trimmed_R1_fastqc.html",
-                sample=config["samples"]),
+                sample=config[SAMPLES_KEY]),
         expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
-                sample=config["samples"]),
+                sample=config[SAMPLES_KEY]),
         DELIVERABLES_DIR + "alignment/alignment_stats.txt",
 
         expand(TUXEDO_DIR + "01-cuffdiff/{phenotype}/gene_exp.diff",
@@ -96,6 +96,8 @@ rule all:
         expand(DELIVERABLES_DIR + "tuxedo/cummeRbund_results/{phenotype_name}_cummeRbund_plots",
                phenotype_name=sorted(config[COMPARISONS_KEY].keys())),
 
+        expand(DESEQ2_DIR + "01-htseq/{sample}_counts.txt",
+               sample=config[SAMPLES_KEY]),
         DESEQ2_DIR + "01-htseq/HTSeq_counts.txt",
         DESEQ2_DIR + "02-metadata_contrasts/sample_metadata.txt",
         DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt",
@@ -295,13 +297,13 @@ rule tuxedo_cuffdiff:
         fasta_file = "references/bowtie2_index/genome.fa",
         gtf_file = "references/gtf",
         bam_files = expand(ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_accepted_hits.bam",
-                           sample=config["samples"])
+                           sample=config[SAMPLES_KEY])
     output:
         TUXEDO_DIR + "01-cuffdiff/{pheno}/gene_exp.diff",
         TUXEDO_DIR + "01-cuffdiff/{pheno}/isoform_exp.diff",
         TUXEDO_DIR + "01-cuffdiff/{pheno}/read_groups.info"
     params:
-        output_dir = TUXEDO_DIR + "01-cuffdiff/{pheno}/",
+        output_dir = TUXEDO_DIR + "01-cuffdiff/{pheno}",
         labels = lambda wildcards : phenotypeManager.concatenated_comparison_values(',')[wildcards.pheno],
         samples = lambda wildcards : phenotypeManager.cuffdiff_samples(wildcards.pheno,
                                                                        ALIGNMENT_DIR + "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
@@ -310,7 +312,7 @@ rule tuxedo_cuffdiff:
     log:
         TUXEDO_DIR + "01-cuffdiff/.log/{pheno}_cuffdiff.log"
     shell:
-        "rm -rf {output_dir} &&"
+        "rm -rf {params.output_dir} &&"
         "module load watermelon_rnaseq && "
         "cuffdiff -q "
         " -p {threads} "
@@ -433,7 +435,7 @@ rule tuxedo_cummerbund:
     input:
         genome_checksum = CONFIG_CHECKSUMS_DIR + "config-genome.watermelon.md5",
         reference_checksum = CONFIG_CHECKSUMS_DIR + "config-references.watermelon.md5",
-        group_replicates = TUXEDO_DIR + "12-group_replicates/{pheno}/group_replicates.txt",
+        group_replicates = TUXEDO_DIR + "05-group_replicates/{pheno}/group_replicates.txt",
         gtf_file = "references/gtf"
     output:
         TUXEDO_DIR + "06-cummerbund/{pheno}/Plots",
@@ -491,9 +493,8 @@ rule tuxedo_split:
 
 rule tuxedo_last_split:
     input: 
-        expand("{tuxedo_dir}/07-split/{phenotype_name}/{comparison}_gene.txt",
+        expand(TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_gene.txt",
                 zip,
-                tuxedo_dir=repeat(TUXEDO_DIR, len(PHENOTYPE_NAMES)),
                 phenotype_name=PHENOTYPE_NAMES,
                 comparison=COMPARISON_GROUPS)
     output:
@@ -629,8 +630,8 @@ rule deseq2_htseq:
 rule deseq2_htseq_merge:
     input:
         sample_checksum = CONFIG_CHECKSUMS_DIR + "config-samples.watermelon.md5",
-        sample_count_files = expand("{deseq2_dir}/01-htseq/{sample}_counts.txt",
-                                    deseq2_dir=DESEQ2_DIR, sample=config["samples"])
+        sample_count_files = expand(DESEQ2_DIR + "01-htseq/{sample}_counts.txt",
+                                    sample=config[SAMPLES_KEY])
     output:
         DESEQ2_DIR + "01-htseq/HTSeq_counts.txt"
     params:
@@ -733,7 +734,7 @@ rule deseq2_excel:
         gene = DESEQ2_DIR + "04-annotation/{phenotype}/{comparison}.annot.txt",
         glossary = DESEQ2_DIR + "05-run_info/glossary.txt",
         run_info = DESEQ2_DIR + "05-run_info/run_info.txt"
-    output: 
+    output:
         annotated_file = DESEQ2_DIR + "06-excel/{phenotype}/{comparison}.xlsx",
     log:
         DESEQ2_DIR + "06-excel/.log/{phenotype}_diffex_excel.log"
@@ -746,8 +747,7 @@ rule deseq2_excel:
         " --glossary {input.glossary} "
         " --info_filepath {input.run_info} "
         " {output.annotated_file} "
-        " 2>&1 | tee {log} && "
-        "touch {params.output_dir}"
+        " 2>&1 | tee {log} "
 
 rule deseq2_summary:
     input:
@@ -778,7 +778,6 @@ rule deseq2_summary:
 rule deliverables_deseq2:
     input:
         diffex_dir = DESEQ2_DIR + "03-deseq2_diffex",
-        diffex_genes_dir = DESEQ2_DIR + "06-excel/",
         gene_lists = expand(DESEQ2_DIR + "06-excel/{phenotype_name}/{comparison}.xlsx",
                             zip,
                             phenotype_name=PHENOTYPE_NAMES, 
@@ -790,6 +789,6 @@ rule deliverables_deseq2:
         "rm -rf {output.deliverables_dir}/normalized_data {output.deliverables_dir}/plots {output.deliverables_dir}/gene_lists && "
         "cp -r {input.diffex_dir}/normalized_data {output.deliverables_dir} && "
         "cp -r {input.diffex_dir}/plots {output.deliverables_dir} && "
-        "cp -r {input.diffex_genes_dir} {output.deliverables_dir}/gene_lists && "
+        "cp -r {input.diffex_dir} {output.deliverables_dir}/gene_lists && "
         "cp -r {input.summary_xlsx} {output.deliverables_dir}/gene_lists && "
         "touch {output.deliverables_dir} "

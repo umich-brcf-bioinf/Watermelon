@@ -56,7 +56,7 @@ class FlipDiffexTest(unittest.TestCase):
             command = '''snakemake -p --cores 2 \
      --snakefile {} \
      --configfile {} \
-     --force diffex_results/09-diffex_flip/pLabel/gene_exp.flip.diff diffex_results/09-diffex_flip/pLabel/isoform_exp.flip.diff {}
+     --force diffex_results/tuxedo/02-flip/pLabel/gene_exp.flip.diff diffex_results/tuxedo/02-flip/pLabel/isoform_exp.flip.diff {}
 '''.format(SNAKEFILE_PATH, configfile_path, REDIRECT_OUTPUT)
             subprocess.check_output(command, shell=True)
 

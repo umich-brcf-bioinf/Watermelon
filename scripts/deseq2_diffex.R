@@ -46,7 +46,7 @@ print_options <- function(opt) {
     opt_df <- data.frame(matrix(unlist(opt), byrow=T),stringsAsFactors=FALSE)
     row.names(opt_df)<-names(opt)
     names(opt_df) <- NULL
-    print('options:')
+    message('options:')
     opt_df
 }
 
@@ -95,7 +95,7 @@ if (is.null(opt$countDataFile)) {
 } else if (is.null(opt$adjustedPValue)) {
   print_help(opt_parser)
 } else
-  print("countDataFile, metaDataFile, contrastFile, foldChange, and adjustedPValue detected. Continue.")
+  message("countDataFile, metaDataFile, contrastFile, foldChange, and adjustedPValue detected. Continue.")
 
 options(java.parameters = paste0("-Xmx",opt$memoryInGb,"g"))
 threads <- opt$threads
@@ -126,7 +126,7 @@ message("loading libraries complete")
 
 outDir <- opt$outDir
 plotsDir <- paste0(outDir,'/plots')
-normDataDir <- paste0(outDir,'/normalizedData')
+normDataDir <- paste0(outDir,'/normalized_data')
 
 #convert fc and padj options to numeric values
 fc <- as.numeric(opt$foldChange)
@@ -151,10 +151,12 @@ dir.create(path = normDataDir, showWarnings = TRUE, recursive = TRUE, mode = "07
 # Create dds, normalize and produce PCA plot, dispersion, and heatmap for checking
 ####
 
+cat('initializing DESeq2 result\n')
 #create DESeqDataSet from matrix and filter lowly expressed genes
 dds <- DESeqDataSetFromMatrix(countData = countData, colData = colData, design = ~combinatoric_group) #want to account for all factors/interactions
 dds <- dds[ rowSums(counts(dds)) > 1, ]
 
+cat('building PCA plots\n')
 #rlog normalization and PCA plot
 rld <- rlog(dds, blind = FALSE)
 pdf(file = paste0(plotsDir,'/PCA.pdf'), onefile = TRUE)
@@ -201,6 +203,7 @@ for (i in names(sampleColData[1:length(sampleColData)])) {
   z <- z + 1
 }
 
+cat('calculating dispersion\n')
 #Normalize and calculate dispersions
 dds <- DESeq(dds, betaPrior = TRUE, parallel = TRUE)
 
@@ -209,11 +212,14 @@ rawCounts <- counts(dds) #raw
 normCounts <- counts(dds, normalized = TRUE) #raw/lib size factors
 idx.nz <- apply(rawCounts, 1, function(x) { all(x > 0)})
 
+cat('building plots\n')
+cat('\tdispersions\n')
 #plot dispersions
 pdf(file = paste0(plotsDir,'/Dispersion.pdf'), onefile = FALSE)
 disp <- plotDispEsts(dds)
 dev.off()
 
+cat('\tcorrelation heatmap\n')
 #heatmap of normalized data, sample distibution matrix
 sampleDists <- dist(t(assay(rld))) #rlog normalized data
 sampleDistMatrix <- as.matrix(sampleDists)
@@ -227,6 +233,7 @@ pheatmap(sampleDistMatrix,
          col=colors)
 dev.off()
 
+cat('\ttop variant heatmap\n')
 #heatmap with top 500 variant or expressed genes, rlog normalized data
 colors <- colorRampPalette(brewer.pal(9, "Blues"))(255)
 select <- order(rowVars(assay(rld)), decreasing=TRUE)[1:500]
@@ -241,6 +248,7 @@ pdf(file = paste0(plotsDir,'/TopExpHeatmap.pdf'), onefile = FALSE)
 pheatmap(assay(rld)[select,], cluster_rows=FALSE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors, main = '500 Top Expressed Genes Heatmap')
 dev.off()
 
+cat('\tbox plots\n')
 #boxplot of non-normalized and normalized data
 pdf(file = paste0(plotsDir,'/Boxplot.pdf'), onefile = TRUE)
 rawCountsDf <- as.data.frame(rawCounts)
@@ -275,6 +283,7 @@ bpr <- ggplotly(bpr)
 path_name <- file.path(getwd(),plotsDir,"BoxPlot_RlogNormalizedCounts.html")
 htmlwidgets::saveWidget(bpr, file = path_name)
 
+cat('\tdensity plots\n')
 #raw and normalized count density, removing rows with 0 values
 pdf(file = paste0(plotsDir,'/Density.pdf'), onefile = TRUE)
 df <- as.data.frame(log2(rawCounts[idx.nz,])) # raw counts, removed 0s
@@ -318,6 +327,7 @@ dpr <- ggplotly(dpr)
 path_name <- file.path(getwd(),plotsDir,"DensityPlot_RlogNormalizedCounts.html")
 htmlwidgets::saveWidget(dpr, file = path_name)
 
+cat('\tcorrelation plots\n')
 #correlation plot between samples 
 uniqGroups <- unique(colData$combinatoric_group) # identify unique groups
 pdf(file = paste0(plotsDir,'/RLEmatrix.pdf'), onefile = TRUE, compress = TRUE)
@@ -351,7 +361,7 @@ if(length(1:ncol(rldDf)) < 10){
   message("Too many samples for all vs all CorrelMatrix. Skipping...")
 }
 
-#write out normalized values, rlog normalized
+cat('\twriting normalized data\n')
 setDT(rldDf, keep.rownames = TRUE)[] #set rownames to valid column
 write.table(x = rldDf, file=paste0(normDataDir,'/RlogNormalizedExpData.txt'), append = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
 
@@ -362,13 +372,14 @@ write.table(x = rldDf, file=paste0(normDataDir,'/RlogNormalizedExpData.txt'), ap
 for (i in 1:nrow(contrastData)){
   #newDir creation
   newDir <- paste0(outDir,'/diffex_genes/', as.character(contrastData$factor[i])) #create directory with date and time
+  cat('creating ', newDir, '\n')
   dir.create(newDir, showWarnings = TRUE, recursive = TRUE, mode = "0777") #create directory for output
   
   #collect references, etc
   referenceName <- contrastData$reference_level[i] 
   testName <- contrastData$test_level[i]
   factorName <- contrastData$factor[i]
-  
+  cat('\tcontrasting\n')
   #diffex analysis use generic name, subset DEGs
   testSamples <- subset(x = colData, subset = colData[,factorName] == testName & !duplicated(colData$combinatoric_group), select = combinatoric_group) #collect test samples in a list, from groups column
   testSamples$combinatoric_group <- sub("^", "combinatoric_group", testSamples$combinatoric_group) # put 'combinatoric_group' at beginning of name
@@ -386,6 +397,7 @@ for (i in 1:nrow(contrastData)){
   diffexData$Condition <- testName
   diffexData$Control <- referenceName
   
+  cat('\tMA plot\n')
   #### MA plot and volcano plot
   #assign an calculate values based upon logFC and padj
   df <- diffexData
@@ -424,6 +436,7 @@ for (i in 1:nrow(contrastData)){
   path_name <- file.path(paste0(getwd(),'/',plotsDir,"/MAplot_",contrastData$factor[i],'.',contrastData$base_file_name[i],".html"))
   htmlwidgets::saveWidget(mp, file = path_name)
   
+  cat('\tvolcano plot\n')
   #Volcano plot
   pdf(file = paste0(plotsDir,'/Volcano_',contrastData$factor[i],'.',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
   p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2]," fold-change"))) + ylab(expression(paste(-Log[10]," adjusted p-value")))
@@ -446,6 +459,7 @@ for (i in 1:nrow(contrastData)){
   path_name <- file.path(paste0(getwd(),'/',plotsDir,"/Volcano_",contrastData$factor[i],'.',contrastData$base_file_name[i],".html"))
   htmlwidgets::saveWidget(vp, file = path_name)
   
+  cat('\twriting diffex genes\n')
   #make DEG calls and select DEGs
   diffexData$Call <- rep("NO", nrow(df))
   diffexData$Call[which(diffexData$padj <= pval & abs(diffexData$log2FoldChange) >= log2(fc))] = 'YES'

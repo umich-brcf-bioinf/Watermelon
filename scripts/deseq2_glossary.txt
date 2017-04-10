@@ -4,7 +4,7 @@ gene_symbol	Xist	NCBI Gene Symbol (from Entrez gene_info)
 gene_id	213742	NCBI Gene ID (from Entrez gene_info)
 gene_desc	inactive X specific transcripts	Gene Description (from Entrez gene_info)
 baseMean	1763.488	the average of the normalized count values, divided by the size factors, taken over all samples
-log2FoldChange	-9.248	Effect size estimate. It tells us how much the gene’s expression seems to have changed comparing test to control samples.
+log2FoldChange	-9.248	Effect size estimate. It tells us how much the gene's expression seems to have changed comparing test to control samples.
 lfcSE	0.141	the standard error estimate for the log2 fold change estimate.
 stat	-65.406	Wald statistic for condition vs control
 pvalue	0.002	Wald test p-value for condition vs control. (Note: Excel formats these values with low precision but the exact value is stored.)

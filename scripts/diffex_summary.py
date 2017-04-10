@@ -2,6 +2,7 @@
 from __future__ import print_function, absolute_import, division
 
 import argparse
+from collections import OrderedDict
 import datetime
 import os
 import re
@@ -20,20 +21,21 @@ def _time_stamp():
     return(st)
 
 def _log(message):
-    print('{}|diffex_summarize|{}'.format(_time_stamp(), message), file=sys.stderr)
+    print('{}|diffex_summary|{}'.format(_time_stamp(), message), file=sys.stderr)
 
 def _get_stats(args, df, name):
     count_annotated = _count_annotated(args.annotation_column,
                                                  args.annotation_null,
                                                  df)
-    stats = {'comparison': name,
-             'total_count': len(df),
-             'count_diff_expressed': _count_diffex_pass(args.diffex_call_column,
-                                                        args.diffex_call_pass,
-                                                        df),
-             'count_annotated': count_annotated,
-             'percent_annotated': round(100.0 * count_annotated / len(df), 2),
-             }
+    count_diffex_pass = _count_diffex_pass(args.diffex_call_column,
+                                           args.diffex_call_pass,
+                                           df)
+    percent_annotated = round(100.0 * count_annotated / len(df), 2)
+    stats = OrderedDict([('comparison', name),
+                         ('total_count', len(df)),
+                         ('count_diff_expressed', count_diffex_pass),
+                         ('count_annotated', count_annotated),
+                         ('percent_annotated', percent_annotated),])
     return stats
 
 def _count_diffex_pass(diffex_call_column, diffex_call_pass, df):
@@ -70,19 +72,26 @@ def _parse_command_line_args(sys_argv):
     parser.add_argument(
         '--diffex_call_column',
         type=str,
+        required=True,
         help='column to check for diffex call passed')
     parser.add_argument(
         '--diffex_call_pass',
         type=str,
+        required=True,
         help='column value indicates diffex call passed')
     parser.add_argument(
         '--output_file',
         type=str,
+        required=True,
         help='output path and filename')
+    parser.add_argument(
+        '--output_xlsx',
+        type=str,
+        help='optional Excel output filename')
     parser.add_argument(
         '--trim_suffix',
         type=str,
-        help='={} output will remove this string when listing the file names'.format(DEFAULT_TRIM_SUFFIX),
+        help='={} Output will remove this string when listing the file names'.format(DEFAULT_TRIM_SUFFIX),
         default=DEFAULT_TRIM_SUFFIX)
     parser.add_argument(
         'input_files',
@@ -93,8 +102,6 @@ def _parse_command_line_args(sys_argv):
     args = parser.parse_args(sys_argv)
     return args 
 
-
-
 def main(sys_argv, log=_log):
     args = _parse_command_line_args(sys_argv)
     log('summarizing {} diffex files'.format(len(args.input_files)))
@@ -104,8 +111,10 @@ def main(sys_argv, log=_log):
         input_df = pd.read_table(input_file, header=0)
         stats = _get_stats(args, input_df, names[input_file])
         all_stats.append(stats)
-    output_df = pd.DataFrame.from_dict(all_stats)
-    output_df.to_csv(args.output_file,sep='\t')
+    output_df = pd.DataFrame(all_stats, columns=stats.keys())
+    output_df.to_csv(args.output_file, sep='\t', index=False)
+    if args.output_xlsx:
+        output_df.to_excel(args.output_xlsx, index=False)
     log('done')
 
 if __name__ == '__main__':

@@ -21,10 +21,10 @@ COMPARISON_INFIX = '_v_'
 INPUT_DIR = config.get("input_dir", "inputs")
 ALIGNMENT_DIR = config.get("alignment_output_dir", "alignment_results") + "/"
 DIFFEX_DIR = config.get("diffex_output_dir", "diffex_results") + "/"
+DELIVERABLES_DIR = config.get("deliverables_output_dir", "deliverables")+"/"
 DESEQ2_DIR = os.path.join(DIFFEX_DIR, 'deseq2/')
 TUXEDO_DIR = os.path.join(DIFFEX_DIR, 'tuxedo/')
 CONFIG_CHECKSUMS_DIR = ".config_checksums/"
-DELIVERABLES_DIR = config.get("deliverables_output_dir", "deliverables")+"/"
 
 DELIMITER = '^'
 SAMPLES_KEY = 'samples'

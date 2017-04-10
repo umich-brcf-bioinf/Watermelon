@@ -1,9 +1,9 @@
 alignment_output_dir:
-    "alignment_results"
+    "alignment_results/"
 diffex_output_dir:
-    "diffex_results"
+    "diffex_results/"
 deliverables_output_dir:
-    "deliverables"
+    "deliverables/"
 
 fold_change:
     1.5

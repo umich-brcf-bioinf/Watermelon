@@ -126,7 +126,7 @@ message("loading libraries complete")
 
 outDir <- opt$outDir
 plotsDir <- paste0(outDir,'/plots')
-normDataDir <- paste0(outDir,'/normalized_data')
+normDataDir <- paste0(outDir,'/counts')
 
 #convert fc and padj options to numeric values
 fc <- as.numeric(opt$foldChange)
@@ -361,9 +361,15 @@ if(length(1:ncol(rldDf)) < 10){
   message("Too many samples for all vs all CorrelMatrix. Skipping...")
 }
 
-cat('\twriting normalized data\n')
+cat('\twriting counts files\n')
+setDT(rawCountsDf, keep.rownames = TRUE)[] #set rownames to valid column
+write.table(x = rawCountsDf, file=paste0(normDataDir,'/raw_counts.txt'), append = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
+
+setDT(normCountsDf, keep.rownames = TRUE)[] #set rownames to valid column
+write.table(x = normCountsDf, file=paste0(normDataDir,'/depth_normalized_counts.txt'), append = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
+
 setDT(rldDf, keep.rownames = TRUE)[] #set rownames to valid column
-write.table(x = rldDf, file=paste0(normDataDir,'/RlogNormalizedExpData.txt'), append = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
+write.table(x = rldDf, file=paste0(normDataDir,'/rlog_normalized_counts.txt'), append = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
 
 ####
 # Diffex analysis in loop

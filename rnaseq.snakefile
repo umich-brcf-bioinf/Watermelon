@@ -70,9 +70,9 @@ rule all:
                 phenotype=sorted(config[COMPARISONS_KEY].keys())),
         expand(TUXEDO_DIR + "04-annotate/{phenotype}/{phenotype}_isoform.flagged.annot.txt",
                 phenotype=sorted(config[COMPARISONS_KEY].keys())),
-        expand(TUXEDO_DIR + "07-cummerbund/{pheno}/Plots/{pheno}_boxplot.pdf",
+        expand(TUXEDO_DIR + "06-cummerbund/{pheno}/Plots/{pheno}_boxplot.pdf",
                 pheno=sorted(config[COMPARISONS_KEY].keys())),
-        expand(TUXEDO_DIR + "07-cummerbund/{pheno}/{pheno}_repRawCounts.txt",
+        expand(TUXEDO_DIR + "06-cummerbund/{pheno}/{pheno}_repRawCounts.txt",
                 pheno=sorted(config[COMPARISONS_KEY].keys())),
         expand(TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_gene.txt",
                 zip,
@@ -87,10 +87,10 @@ rule all:
                 zip,
                 phenotype_name=PHENOTYPE_NAMES, 
                 comparison=COMPARISON_GROUPS),
-        expand(DELIVERABLES_DIR + "tuxedo/cuffdiff_results/{phenotype_name}/{comparison}.xlsx", 
-                zip,
-                phenotype_name=PHENOTYPE_NAMES,
-                comparison=COMPARISON_GROUPS),
+        TUXEDO_DIR + "10-summary/summary.txt",
+        TUXEDO_DIR + "10-summary/summary.xlsx",
+        
+        expand(DELIVERABLES_DIR + "tuxedo/cuffdiff_results"),
         expand(DELIVERABLES_DIR + "tuxedo/cummeRbund_results/{phenotype_name}_repRawCounts.txt", 
                 phenotype_name=sorted(config[COMPARISONS_KEY].keys())),
         expand(DELIVERABLES_DIR + "tuxedo/cummeRbund_results/{phenotype_name}_cummeRbund_plots",
@@ -111,8 +111,9 @@ rule all:
                 zip,
                 phenotype_name=PHENOTYPE_NAMES, 
                 comparison=COMPARISON_GROUPS),
-
-        expand(DELIVERABLES_DIR + "deseq2")
+        DESEQ2_DIR + "07-summary/summary.txt",
+        DESEQ2_DIR + "07-summary/summary.xlsx",
+        expand(DELIVERABLES_DIR + "deseq2"),
 
 rule concat_reads:
     input:
@@ -338,13 +339,13 @@ rule tuxedo_flip:
         TUXEDO_DIR + "02-flip/.log/{pheno}_flip.log"
     shell:
         "module purge && module load python/3.4.3 && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_flip.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_flip.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " {input.gene_cuffdiff} "
         " {output.gene_flip} "
         " {params.comparisons} "
         " 2>&1 | tee {log} && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_flip.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_flip.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " {input.isoform_cuffdiff} "
         " {output.isoform_flip} "
@@ -362,16 +363,16 @@ rule tuxedo_flag:
     params:
         fold_change = config["fold_change"]
     log:
-        TUXEDO_DIR + "03-flag/.log/{pheno}_diffex_flag.log"
+        TUXEDO_DIR + "03-flag/.log/{pheno}_tuxedo_flag.log"
     shell: 
         "module purge && "
         "module load python/3.4.3 && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_flag.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_flag.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_gene_exp} "
         " {output.gene_flagged} "
         " 2>&1 | tee {log} && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_flag.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_flag.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_isoform_exp} "
         " {output.isoform_flagged} "
@@ -393,14 +394,14 @@ rule tuxedo_annotate:
     log:
         TUXEDO_DIR + "04-annotate/.log/{pheno}_annotate.log"
     shell:
-        "python {WATERMELON_SCRIPTS_DIR}/annotate_entrez_gene_info.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_annotate.py "
         " -i {input.entrez_gene_info} "
         " -e {input.gene_diff_exp} "
         " -g {params.genome} "
         " -o {params.output_dir} "
         " 2>&1 | tee {log} && "
         
-        "python {WATERMELON_SCRIPTS_DIR}/annotate_entrez_gene_info.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_annotate.py "
         " -i {input.entrez_gene_info} "
         " -e {input.isoform_diff_exp} "
         " -g {params.genome} "
@@ -467,10 +468,10 @@ rule tuxedo_split:
         output_dir = TUXEDO_DIR + "07-split/{phenotype_name}",
         user_specified_comparison_list = lambda wildcards: phenotypeManager.separated_comparisons(',')[wildcards.phenotype_name],
     log:
-        TUXEDO_DIR + "07-split/.log/{phenotype_name}_diffex_split.log"
+        TUXEDO_DIR + "07-split/.log/{phenotype_name}_tuxedo_split.log"
     shell:
         "module purge && module load python/3.4.3 && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_split.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_split.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " -o _gene.txt "
         " {input.gene} "
@@ -479,7 +480,7 @@ rule tuxedo_split:
         " 2>&1 | tee {log} && "
 
         "module purge && module load python/3.4.3 && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_split.py "
+        "python {WATERMELON_SCRIPTS_DIR}/tuxedo_split.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " -o _isoform.txt "
         " {input.isoform} "
@@ -536,6 +537,37 @@ rule tuxedo_excel:
         " {output} "
         " 2>&1 | tee {log} "
 
+rule tuxedo_summary:
+    input:
+        input_files = expand(TUXEDO_DIR + "07-split/{phenotype}/{comparison}_gene.txt",
+                             zip,
+                             phenotype=PHENOTYPE_NAMES,
+                             comparison=COMPARISON_GROUPS) +
+                       expand(TUXEDO_DIR + "07-split/{phenotype}/{comparison}_isoform.txt",
+                              zip,
+                              phenotype=PHENOTYPE_NAMES,
+                              comparison=COMPARISON_GROUPS)
+    output: 
+        summary_txt = TUXEDO_DIR + "10-summary/summary.txt",
+        summary_xlsx = TUXEDO_DIR + "10-summary/summary.xlsx",
+    log:
+        TUXEDO_DIR + "10-summary/.log/summary.log"
+    params:
+        output_dir = TUXEDO_DIR + "10-summary/",
+    shell:
+        "module purge && module load python/3.4.3 && "
+        "python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py "
+        " --annotation_column gene_id"
+        " --annotation_null . "
+        " --diffex_call_column diff_exp "
+        " --diffex_call_pass Yes "
+        " --trim_suffix .txt "
+        " --output_file {output.summary_txt} "
+        " --output_xlsx {output.summary_xlsx} "
+        " {input.input_files} "
+        " 2>&1 | tee {log} && "
+        "touch {params.output_dir}"
+
 
 rule deliverables_tuxedo_cuffdiff:
     input:
@@ -543,21 +575,21 @@ rule deliverables_tuxedo_cuffdiff:
                        zip,
                        phenotype_name=PHENOTYPE_NAMES,
                        comparison=COMPARISON_GROUPS),
+        summary_xlsx = TUXEDO_DIR + "10-summary/summary.xlsx"
     output:
-        excel = expand(DELIVERABLES_DIR + "tuxedo/cuffdiff_results/{phenotype_name}/{comparison}.xlsx", 
-                       zip,
-                       phenotype_name=PHENOTYPE_NAMES,
-                       comparison=COMPARISON_GROUPS),
+        deliverables_dir = DELIVERABLES_DIR + "tuxedo/cuffdiff_results"
     params:
         excel_input_dir  =  TUXEDO_DIR +  "/09-excel",
-        excel_output_dir =  DELIVERABLES_DIR + "tuxedo/cuffdiff_results"
     shell:
-        "cp -r {params.excel_input_dir}/* {params.diffex_excel_output_dir} "
+        "rm -rf {output.deliverables_dir}/../cuffdiff_results && "
+        "cp -r {params.excel_input_dir} {output.deliverables_dir} && "
+        "cp {input.summary_xlsx} {output.deliverables_dir} && "
+        "touch {output.deliverables_dir} "
 
 rule deliverables_tuxedo_cummerbund:
     input:
-        diffex_raw_counts = TUXEDO_DIR + "07-cummerbund/{phenotype_name}/{phenotype_name}_repRawCounts.txt",
-        plots = TUXEDO_DIR + "07-cummerbund/{phenotype_name}/Plots",
+        diffex_raw_counts = TUXEDO_DIR + "06-cummerbund/{phenotype_name}/{phenotype_name}_repRawCounts.txt",
+        plots = TUXEDO_DIR + "06-cummerbund/{phenotype_name}/Plots",
     output:
         diffex_raw_counts = DELIVERABLES_DIR + "tuxedo/cummeRbund_results/{phenotype_name}_repRawCounts.txt",
         plots = DELIVERABLES_DIR + "tuxedo/cummeRbund_results/{phenotype_name}_cummeRbund_plots"
@@ -715,7 +747,33 @@ rule deseq2_excel:
         " --info_filepath {input.run_info} "
         " {output.annotated_file} "
         " 2>&1 | tee {log} && "
-        "touch {params.outyput_dir}"
+        "touch {params.output_dir}"
+
+rule deseq2_summary:
+    input:
+        input_files = expand(DESEQ2_DIR + "04-annotation/{phenotype}/{comparison}.annot.txt",
+                             zip,
+                             phenotype=PHENOTYPE_NAMES,
+                             comparison=COMPARISON_GROUPS),
+    output: 
+        summary_txt = DESEQ2_DIR + "07-summary/summary.txt",
+        summary_xlsx = DESEQ2_DIR + "07-summary/summary.xlsx",
+    log:
+        DESEQ2_DIR + "07-summary/.log/summary.log"
+    params:
+        output_dir = DESEQ2_DIR + "07-summary/",
+    shell:
+        "module purge && module load python/3.4.3 && "
+        "python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py "
+        " --annotation_column gene_id"
+        " --annotation_null . "
+        " --diffex_call_column Call "
+        " --diffex_call_pass YES "
+        " --output_file {output.summary_txt} "
+        " --output_xlsx {output.summary_xlsx} "
+        " {input.input_files} "
+        " 2>&1 | tee {log} && "
+        "touch {params.output_dir}"
 
 rule deliverables_deseq2:
     input:
@@ -725,6 +783,7 @@ rule deliverables_deseq2:
                             zip,
                             phenotype_name=PHENOTYPE_NAMES, 
                             comparison=COMPARISON_GROUPS),
+        summary_xlsx = DESEQ2_DIR + "07-summary/summary.xlsx",
     output:
         deliverables_dir = DELIVERABLES_DIR + "deseq2",
     shell:
@@ -732,4 +791,5 @@ rule deliverables_deseq2:
         "cp -r {input.diffex_dir}/normalized_data {output.deliverables_dir} && "
         "cp -r {input.diffex_dir}/plots {output.deliverables_dir} && "
         "cp -r {input.diffex_genes_dir} {output.deliverables_dir}/gene_lists && "
+        "cp -r {input.summary_xlsx} {output.deliverables_dir}/gene_lists && "
         "touch {output.deliverables_dir} "

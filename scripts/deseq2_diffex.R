@@ -86,10 +86,10 @@ if (is.null(opt$countDataFile)) {
 } else if (is.null(opt$contrastFile)) {
   print_help(opt_parser)
   stop("The tab-delimited file specifying constats to be performed must supplied (contrastFile).", call.=FALSE)
-} else if (is.null(opt$foldChange)) {
+} else if (is.null(opt$outDir)) {
   print_help(opt$parser)
   stop("The output directory has not been supplied (outDir).", call.=FALSE)
-} else if (is.null(opt$outDir)) {
+} else if (is.null(opt$foldChange)) {
   print_help(opt_parser)
   stop("The fold-change cutoff is not specified (foldChange)", call.=FALSE)
 } else if (is.null(opt$adjustedPValue)) {

@@ -146,7 +146,7 @@ contrastData <- read.table(file =opt$contrastFile, header=TRUE, sep = "\t", stri
 
 #create directories for plots and normalized data
 dir.create(path = plotsDir_comparison, showWarnings = TRUE, recursive = TRUE, mode = "0777") #create directory for output
-dir.creat(path = plotsDir_contrasts, showWarnings = TRUE, recursive = TRUE, mode = "0777") #create directory for output
+dir.create(path = plotsDir_contrasts, showWarnings = TRUE, recursive = TRUE, mode = "0777") #create directory for output
 dir.create(path = normDataDir, showWarnings = TRUE, recursive = TRUE, mode = "0777") #create directory for output
 
 ####
@@ -169,7 +169,6 @@ CombinatoricGroup <- factor(colData$combinatoric_group)
 SampleName <- factor(colData$sample_name)
 gp <- ggplot(p.all$data, aes(x = PC1, y = PC2, color = SampleName, shape = CombinatoricGroup)) + scale_shape_manual(values=1:nlevels(CombinatoricGroup), name = "Combinatoric Group") + geom_point(size=2) + ggtitle(label = as.character('All samples')) + theme(plot.title = element_text(hjust = 0.5)) + guides(colour=guide_legend(nrow=12, title = "Sample"), legend.key = element_rect(size = 1), legend.key.size = unit(0, 'cm')) + theme_classic(base_size = 10) + theme(legend.margin=margin(t = 0, unit='mm'))
 plot(gp)
-dev.off()
 
 #get replicate df and sample df
 replicateColData <- colData[,grep(".replicate", colnames(colData))]
@@ -178,7 +177,6 @@ sampleColData <- colData[,-grep(".replicate", colnames(colData))]
 sampleColData <- sampleColData[,2:ncol(sampleColData)]
 
 #PCA plot for all contrasts
-pdf(file = paste0(plotsDir_contrasts,'/PCA.pdf'), onefile = TRUE)
 z <- 1
 for (i in names(sampleColData[1:length(sampleColData)])) {
   p <- plotPCA(rld, intgroup = i) #get PCA components
@@ -202,7 +200,7 @@ for (i in names(sampleColData[1:length(sampleColData)])) {
   Replicates <- factor(unlist(replicateColData[z]))
   g <- ggplot(p$data, aes(x = PC1, y = PC2, color = Replicates, shape = Group)) + scale_shape_manual(values=1:nlevels(Group)) + geom_point(size=2) + ggtitle(label = as.character(i)) + theme(plot.title = element_text(hjust = 0.5)) + theme_classic()
   g <- ggplotly(g)
-  path_name <- file.path(paste0(getwd(),'/',plotsDir_contrasts,"/PCAplot_",as.character(i),".html"))
+  path_name <- file.path(paste0(getwd(),'/',plotsDir_comparison,"/PCAplot_",as.character(i),".html"))
   htmlwidgets::saveWidget(g,file = path_name)
   z <- z + 1
 }
@@ -381,10 +379,13 @@ write.table(x = rldDf, file=paste0(normDataDir,'/rlog_normalized_counts.txt'), a
 
 for (i in 1:nrow(contrastData)){
   #newDir creation
-  newDir <- paste0(outDir,'/diffex_genes/', as.character(contrastData$factor[i])) #create directory with date and time
+  newDir <- paste0(outDir,'/diffex_genes/', as.character(contrastData$factor[i])) #create directory for diffex_genes
+  newDir_plots <- paste0(plotsDir_contrasts,'/',as.character(contrastData$factor[i])) #create directory for contrast specific plots
   cat('creating ', newDir, '\n')
   dir.create(newDir, showWarnings = TRUE, recursive = TRUE, mode = "0777") #create directory for output
-
+  cat('creating ', newDir_plots, '\n')
+  dir.create(newDir_plots, showWarnings = TRUE, recursive = TRUE, mode = "0777")
+  
   #collect references, etc
   referenceName <- contrastData$reference_level[i]
   testName <- contrastData$test_level[i]
@@ -425,7 +426,7 @@ for (i in 1:nrow(contrastData)){
   df$dot <- factor(df$dot,levels = c(1,2,3), labels = c(paste0("Up: ", sum(df$dot == 1)),paste0("Down: ", sum(df$dot == 2)),"NS"))
 
   #MA plot
-  pdf(file = paste0(plotsDir_contrasts,'/MAplot_',contrastData$factor[i],".",contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
+  pdf(file = paste0(plotsDir_contrasts,'/',as.character(contrastData$factor[i]),'/MAplot_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
   p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange)) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2]," mean normalized expression"))) + ylab(expression(paste(Log[2]," fold-change")))
   p <- p + scale_color_manual(name = '', values=c("#B31B21", "#1465AC", "darkgray"))
   p <- p + scale_x_continuous(breaks=seq(0, max(log2(df$baseMean+1)), 2)) + geom_hline(yintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c("black", "black", "black"))
@@ -443,12 +444,12 @@ for (i in 1:nrow(contrastData)){
   p <- p + scale_x_continuous(breaks=seq(0, max(log2(df$baseMean+1)), 2)) + geom_hline(yintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c("black", "black", "black"))
   p <- p + ggtitle(as.character(contrastData$base_file_name[i]))
   mp <- ggplotly(p)
-  path_name <- file.path(paste0(getwd(),'/',plotsDir_contrasts,"/MAplot_",contrastData$factor[i],'.',contrastData$base_file_name[i],".html"))
+  path_name <- file.path(paste0(getwd(),'/',plotsDir_contrasts,'/',contrastData$factor[i],"/MAplot_",contrastData$base_file_name[i],".html"))
   htmlwidgets::saveWidget(mp, file = path_name)
 
   cat('\tvolcano plot\n')
   #Volcano plot
-  pdf(file = paste0(plotsDir_contrasts,'/Volcano_',contrastData$factor[i],'.',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
+  pdf(file = paste0(plotsDir_contrasts,'/',as.character(contrastData$factor[i]),'/Volcano_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
   p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2]," fold-change"))) + ylab(expression(paste(-Log[10]," adjusted p-value")))
   p <- p + scale_color_manual(name = '', values=c("#B31B21", "#1465AC", "darkgray"))
   p <- p + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c("black", "black", "black")) + geom_hline(yintercept = -log10(pval), linetype = 2, color = "black")
@@ -466,7 +467,7 @@ for (i in 1:nrow(contrastData)){
   p <- p + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c("black", "black", "black")) + geom_hline(yintercept = -log10(pval), linetype = 2, color = "black")
   p <- p + ggtitle(as.character(contrastData$base_file_name[i]))
   vp <- ggplotly(p)
-  path_name <- file.path(paste0(getwd(),'/',plotsDir_contrasts,"/Volcano_",contrastData$factor[i],'.',contrastData$base_file_name[i],".html"))
+  path_name <- file.path(paste0(getwd(),'/',plotsDir_contrasts,'/',contrastData$factor[i],"/Volcano_",contrastData$base_file_name[i],".html"))
   htmlwidgets::saveWidget(vp, file = path_name)
 
   cat('\twriting diffex genes\n')

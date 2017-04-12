@@ -54,22 +54,22 @@ library(optparse)
 
 #create parser object
 option_list = list(
-  make_option(c("-c", "--countDataFile"), type = "character", default = NULL,
-              help = "Name of file containing tab-delimited RAW counts."),
-  make_option(c("-m", "--metaDataFile"), type = "character", default = NULL,
-              help = "Name of file containing tab-delimited sample information, ie. factors, levels, etc."),
-  make_option(c("-f", "--contrastFile"), type = "character", default = NULL,
-              help = "Factor to compare from metaDataFile, must be a column name from metaDataFile"),
-  make_option(c("-o", "--outDir"), type = "character", default = NULL,
-              help = "Output directory to write all generated subdirectories."),
-  make_option(c("--foldChange"), type = "character", default = NULL,
-              help = "Absolute numeric value above which a gene is considered for differential expression."),
-  make_option(c("--adjustedPValue"), type = "character", default = NULL,
-              help = "Adjusted p-value below which a genes is considered for differential expression."),
-  make_option(c("--threads"), type = "integer", default = DEFAULT_THREADS,
-              help = "Number of parallel processes (CPUs) to use."),
-  make_option(c("--memoryInGb"), type = "integer", default = DEFAULT_MEMORY_IN_GB,
-              help = "Max memory (Gb) allocated to Java VM (-Xmx).")
+  make_option(c('-c', '--countDataFile'), type = 'character', default = NULL,
+              help = 'Name of file containing tab-delimited RAW counts.'),
+  make_option(c('-m', '--metaDataFile'), type = 'character', default = NULL,
+              help = 'Name of file containing tab-delimited sample information, ie. factors, levels, etc.'),
+  make_option(c('-f', '--contrastFile'), type = 'character', default = NULL,
+              help = 'Factor to compare from metaDataFile, must be a column name from metaDataFile'),
+  make_option(c('-o', '--outDir'), type = 'character', default = NULL,
+              help = 'Output directory to write all generated subdirectories.'),
+  make_option(c('--foldChange'), type = 'character', default = NULL,
+              help = 'Absolute numeric value above which a gene is considered for differential expression.'),
+  make_option(c('--adjustedPValue'), type = 'character', default = NULL,
+              help = 'Adjusted p-value below which a genes is considered for differential expression.'),
+  make_option(c('--threads'), type = 'integer', default = DEFAULT_THREADS,
+              help = 'Number of parallel processes (CPUs) to use.'),
+  make_option(c('--memoryInGb'), type = 'integer', default = DEFAULT_MEMORY_IN_GB,
+              help = 'Max memory (Gb) allocated to Java VM (-Xmx).')
 
 );
 
@@ -79,30 +79,30 @@ opt = parse_args(opt_parser)
 #check for necessary files
 if (is.null(opt$countDataFile)) {
   print_help(opt_parser)
-  stop("A tab-delimited raw counts file must be supplied (countDataFile).", call.=FALSE)
+  stop('A tab-delimited raw counts file must be supplied (countDataFile).', call.=FALSE)
 } else if (is.null(opt$metaDataFile)) {
   print_help(opt_parser)
-  stop("A tab-delimited sample information file must be supplied (metaDataFile).", call.=FALSE)
+  stop('A tab-delimited sample information file must be supplied (metaDataFile).', call.=FALSE)
 } else if (is.null(opt$contrastFile)) {
   print_help(opt_parser)
-  stop("The tab-delimited file specifying constats to be performed must supplied (contrastFile).", call.=FALSE)
+  stop('The tab-delimited file specifying constats to be performed must supplied (contrastFile).', call.=FALSE)
 } else if (is.null(opt$outDir)) {
   print_help(opt$parser)
-  stop("The output directory has not been supplied (outDir).", call.=FALSE)
+  stop('The output directory has not been supplied (outDir).', call.=FALSE)
 } else if (is.null(opt$foldChange)) {
   print_help(opt_parser)
-  stop("The fold-change cutoff is not specified (foldChange)", call.=FALSE)
+  stop('The fold-change cutoff is not specified (foldChange)', call.=FALSE)
 } else if (is.null(opt$adjustedPValue)) {
   print_help(opt_parser)
 } else
-  message("countDataFile, metaDataFile, contrastFile, foldChange, and adjustedPValue detected. Continue.")
+  message('countDataFile, metaDataFile, contrastFile, foldChange, and adjustedPValue detected. Continue.')
 
-options(java.parameters = paste0("-Xmx",opt$memoryInGb,"g"))
+options(java.parameters = paste0('-Xmx',opt$memoryInGb,'g'))
 threads <- opt$threads
 
 print_options(opt)
 
-message("loading libraries begins")
+message('loading libraries begins')
 suppressPackageStartupMessages(library('plotly', character.only=TRUE))
 suppressPackageStartupMessages(library('DESeq2', character.only=TRUE))
 suppressPackageStartupMessages(library('data.table', character.only=TRUE))
@@ -122,32 +122,49 @@ suppressPackageStartupMessages(library('RColorBrewer', character.only=TRUE))
 multicore_param <- MulticoreParam(workers=opt$threads)
 register(multicore_param, default=TRUE)
 
-message("loading libraries complete")
-
-outDir <- opt$outDir
-plotsDir_comparison <- paste0(outDir,'/plots/comparison_plots')
-plotsDir_contrasts <- paste0(outDir,'/plots/contrasts')
-normDataDir <- paste0(outDir,'/counts')
+message('loading libraries complete')
 
 #convert fc and padj options to numeric values
 fc <- as.numeric(opt$foldChange)
 pval <- as.numeric(opt$adjustedPValue)
 
 #read in countDataFile, convert to integers if not already converted
-countData <- read.table(file=opt$countDataFile, header = TRUE, sep = "\t", row.names = 1, strip.white = TRUE, stringsAsFactors = FALSE)
+countData <- read.table(file=opt$countDataFile, header = TRUE, sep = '\t', row.names = 1, strip.white = TRUE, stringsAsFactors = FALSE)
 countData <- round(countData)
 
 #read in metaDataFile
-colData <- read.table(file =opt$metaDataFile , header = TRUE, sep = "\t", stringsAsFactors = FALSE, na.strings = '', check.names = FALSE)
-colData[is.na(colData)] <- "other" # repliace NA values with 'other'
+colData <- read.table(file =opt$metaDataFile , header = TRUE, sep = '\t', stringsAsFactors = FALSE, na.strings = '', check.names = FALSE)
+colData[is.na(colData)] <- 'other' # repliace NA values with 'other'
 
 #read in contrastFile
-contrastData <- read.table(file =opt$contrastFile, header=TRUE, sep = "\t", stringsAsFactors = FALSE, strip.white = TRUE)
+contrastData <- read.table(file =opt$contrastFile, header=TRUE, sep = '\t', stringsAsFactors = FALSE, strip.white = TRUE)
 
-#create directories for plots and normalized data
-dir.create(path = plotsDir_comparison, showWarnings = TRUE, recursive = TRUE, mode = "0777") #create directory for output
-dir.create(path = plotsDir_contrasts, showWarnings = TRUE, recursive = TRUE, mode = "0777") #create directory for output
-dir.create(path = normDataDir, showWarnings = TRUE, recursive = TRUE, mode = "0777") #create directory for output
+####
+# Create output directories
+####
+
+outDir <- opt$outDir
+plotsDir_comparison <- paste0(outDir,'/plots/comparison_plots')
+plotsDir_contrasts <- paste0(outDir,'/plots/contrasts')
+countsDir <- paste0(outDir,'/counts')
+diffexDir <- paste0(outDir,'/diffex_genes')
+
+cat('creating parent output directories\n')
+dir.create(path = countsDir, showWarnings = TRUE, recursive = TRUE, mode = '0777') # counts directory
+dir.create(path = diffexDir, showWarnings = TRUE, recursive = TRUE, mode = '0777') # diffex_genes directory
+dir.create(path = plotsDir_comparison, showWarnings = TRUE, recursive = TRUE, mode = '0777') # plots/comparison_plots directory
+dir.create(path = plotsDir_contrasts, showWarnings = TRUE, recursive = TRUE, mode = '0777') # plots/contrasts directory
+
+cat('creating contrast-specific output directories\n')
+for (i in 1:nrow(contrastData)){
+  #dir creation
+  contrastDir_diffex <- paste0(diffexDir,'/', as.character(contrastData$factor[i])) 
+  contrastDir_plots <- paste0(plotsDir_contrasts,'/',as.character(contrastData$factor[i])) 
+  cat('creating ', contrastDir_diffex, '\n')
+  dir.create(contrastDir_diffex, showWarnings = FALSE, recursive = TRUE, mode = '0777') # diffex_gene/contrast-specific directory
+  cat('creating ', contrastDir_plots, '\n')
+  dir.create(contrastDir_plots, showWarnings = FALSE, recursive = TRUE, mode = '0777') # plots/contrasts/contrast-specific directory
+}
 
 ####
 # Create dds, normalize and produce PCA plot, dispersion, and heatmap for checking
@@ -161,48 +178,64 @@ dds <- dds[ rowSums(counts(dds)) > 1, ]
 cat('building PCA plots\n')
 #rlog normalization and PCA plot
 rld <- rlog(dds, blind = FALSE)
-pdf(file = paste0(plotsDir_comparison,'/PCA.pdf'), onefile = TRUE)
+pdf(file = paste0(plotsDir_comparison,'/PCAplot_All.pdf'), onefile = TRUE)
 
 #PCA plot for all samples
 p.all <- plotPCA(rld, intgroup = 'sample_name')
 CombinatoricGroup <- factor(colData$combinatoric_group)
 SampleName <- factor(colData$sample_name)
-gp <- ggplot(p.all$data, aes(x = PC1, y = PC2, color = SampleName, shape = CombinatoricGroup)) + scale_shape_manual(values=1:nlevels(CombinatoricGroup), name = "Combinatoric Group") + geom_point(size=2) + ggtitle(label = as.character('All samples')) + theme(plot.title = element_text(hjust = 0.5)) + guides(colour=guide_legend(nrow=12, title = "Sample"), legend.key = element_rect(size = 1), legend.key.size = unit(0, 'cm')) + theme_classic(base_size = 10) + theme(legend.margin=margin(t = 0, unit='mm'))
+gp <- ggplot(p.all$data, aes(x = PC1, y = PC2, color = SampleName, shape = CombinatoricGroup)) + scale_shape_manual(values=1:nlevels(CombinatoricGroup), name = 'Combinatoric Group') + geom_point(size=2) + ggtitle(label = as.character('All samples')) + theme(plot.title = element_text(hjust = 0.5)) + guides(colour=guide_legend(nrow=12, title = 'Sample'), legend.key = element_rect(size = 1), legend.key.size = unit(0, 'cm')) + theme_classic(base_size = 10) + theme(legend.margin=margin(t = 0, unit='mm'))
 plot(gp)
+dev.off()
 
 #get replicate df and sample df
-replicateColData <- colData[,grep(".replicate", colnames(colData))]
+replicateColData <- colData[,grep('.replicate', colnames(colData))]
 colnames(replicateColData) <- gsub('.replicate$','', colnames(replicateColData))
-sampleColData <- colData[,-grep(".replicate", colnames(colData))]
+sampleColData <- colData[,-grep('.replicate', colnames(colData))]
 sampleColData <- sampleColData[,2:ncol(sampleColData)]
 
 #PCA plot for all contrasts
 z <- 1
 for (i in names(sampleColData[1:length(sampleColData)])) {
-  p <- plotPCA(rld, intgroup = i) #get PCA components
-  Group <- factor(unlist(sampleColData[z]))
-  Replicates <- factor(unlist(replicateColData[z]))
-  g <- ggplot(p$data, aes(x = PC1, y = PC2, color = Replicates, shape = Group)) + scale_shape_manual(values=1:nlevels(Group)) + geom_point(size=2) + ggtitle(label = as.character(i)) + theme(plot.title = element_text(hjust = 0.5)) + theme_classic()
-  plot(g)
-  z <- z + 1
+  if (i != 'combinatoric_group'){
+    pdf(file = paste0(plotsDir_contrasts,'/',as.character(i),'/PCAplot.pdf'))
+    p <- plotPCA(rld, intgroup = i) #get PCA components
+    Group <- factor(unlist(sampleColData[z]))
+    Replicates <- factor(unlist(replicateColData[z]))
+    g <- ggplot(p$data, aes(x = PC1, y = PC2, color = Replicates, shape = Group)) + scale_shape_manual(values=1:nlevels(Group)) + geom_point(size=2) + ggtitle(label = as.character(i)) + theme(plot.title = element_text(hjust = 0.5)) + theme_classic()
+    plot(g)
+    z <- z + 1
+    dev.off()
+  }
+  else{
+    message('Skipping combinatoric_group...')
+  }
 }
-dev.off()
 
 #interactive html plots
 gp <- ggplotly(gp)
-path_name <- file.path(getwd(),plotsDir_comparison,"PCAplot_All.html")
-htmlwidgets::saveWidget(gp, file = path_name)
+path_name <- file.path(getwd(),plotsDir_comparison,'PCAplot_All.html')
+htmlwidgets::saveWidget(gp, file = path_name, selfcontained = TRUE)
+delDir <- file.path(getwd(),plotsDir_comparison,'PCAplot_All_files')
+unlink(x = delDir, recursive = TRUE, force = TRUE)
 
 z <- 1
 for (i in names(sampleColData[1:length(sampleColData)])) {
-  p <- plotPCA(rld, intgroup = i) #get PCA components
-  Group <- factor(unlist(sampleColData[z]))
-  Replicates <- factor(unlist(replicateColData[z]))
-  g <- ggplot(p$data, aes(x = PC1, y = PC2, color = Replicates, shape = Group)) + scale_shape_manual(values=1:nlevels(Group)) + geom_point(size=2) + ggtitle(label = as.character(i)) + theme(plot.title = element_text(hjust = 0.5)) + theme_classic()
-  g <- ggplotly(g)
-  path_name <- file.path(paste0(getwd(),'/',plotsDir_comparison,"/PCAplot_",as.character(i),".html"))
-  htmlwidgets::saveWidget(g,file = path_name)
-  z <- z + 1
+  if (i != 'combinatoric_group'){
+    p <- plotPCA(rld, intgroup = i) #get PCA components
+    Group <- factor(unlist(sampleColData[z]))
+    Replicates <- factor(unlist(replicateColData[z]))
+    g <- ggplot(p$data, aes(x = PC1, y = PC2, color = Replicates, shape = Group)) + scale_shape_manual(values=1:nlevels(Group)) + geom_point(size=2) + ggtitle(label = as.character(i)) + theme(plot.title = element_text(hjust = 0.5)) + theme_classic()
+    g <- ggplotly(g)
+    path_name <- file.path(paste0(getwd(),'/',plotsDir_contrasts,'/',as.character(i),'/PCAplot.html'))
+    htmlwidgets::saveWidget(g,file = path_name)
+    delDir <- file.path(paste0(getwd(),'/',plotsDir_contrasts,'/',as.character(i),'/PCAplot_files'))
+    unlink(x = delDir, recursive = TRUE, force = TRUE)
+    z <- z + 1
+  }
+  else{
+    message('Skipping combinatoric_group...')
+  }
 }
 
 cat('calculating dispersion\n')
@@ -221,14 +254,14 @@ pdf(file = paste0(plotsDir_comparison,'/Dispersion.pdf'), onefile = FALSE)
 disp <- plotDispEsts(dds)
 dev.off()
 
-cat('\tcorrelation heatmap\n')
+cat('\tsample heatmap\n')
 #heatmap of normalized data, sample distibution matrix
 sampleDists <- dist(t(assay(rld))) #rlog normalized data
 sampleDistMatrix <- as.matrix(sampleDists)
-rownames(sampleDistMatrix) <- paste(rld$combinatoric_group, sep="-")
+rownames(sampleDistMatrix) <- paste(rld$combinatoric_group, sep='-')
 colnames(sampleDistMatrix) <- NULL
-colors <- colorRampPalette(rev(brewer.pal(9, "Blues")))(255)
-pdf(file = paste0(plotsDir_comparison,'/CorrelHeatmap.pdf'), onefile = FALSE)
+colors <- colorRampPalette(rev(brewer.pal(9, 'Blues')))(255)
+pdf(file = paste0(plotsDir_comparison,'/SampleHeatmap.pdf'), onefile = FALSE)
 pheatmap(sampleDistMatrix,
          clustering_distance_rows=sampleDists,
          clustering_distance_cols=sampleDists,
@@ -237,15 +270,15 @@ dev.off()
 
 cat('\ttop variant heatmap\n')
 #heatmap with top 500 variant or expressed genes, rlog normalized data
-colors <- colorRampPalette(brewer.pal(9, "Blues"))(255)
+colors <- colorRampPalette(brewer.pal(9, 'Blues'))(255)
 select <- order(rowVars(assay(rld)), decreasing=TRUE)[1:500]
-df <- data.frame(Group = colData(rld)[,c("combinatoric_group")], row.names = rownames(colData(dds)))
+df <- data.frame(Group = colData(rld)[,c('combinatoric_group')], row.names = rownames(colData(dds)))
 pdf(file = paste0(plotsDir_comparison,'/TopVarHeatmap.pdf'), onefile = FALSE)
 pheatmap(assay(rld)[select,], cluster_rows=FALSE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors, main = '500 Top Variably Expressed Genes Heatmap')
 dev.off()
 
 select <- order(rowMeans(assay(rld)), decreasing=TRUE)[1:500]
-df <- data.frame(Group = colData(rld)[,c("combinatoric_group")], row.names = rownames(colData(dds)))
+df <- data.frame(Group = colData(rld)[,c('combinatoric_group')], row.names = rownames(colData(dds)))
 pdf(file = paste0(plotsDir_comparison,'/TopExpHeatmap.pdf'), onefile = FALSE)
 pheatmap(assay(rld)[select,], cluster_rows=FALSE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors, main = '500 Top Expressed Genes Heatmap')
 dev.off()
@@ -254,93 +287,105 @@ cat('\tbox plots\n')
 #boxplot of non-normalized and normalized data
 pdf(file = paste0(plotsDir_comparison,'/Boxplot.pdf'), onefile = TRUE)
 rawCountsDf <- as.data.frame(rawCounts)
-df <- melt(log2(rawCountsDf), variable.name = "Samples", value.name = "count") # reshape the matrix
+df <- melt(log2(rawCountsDf), variable.name = 'Samples', value.name = 'count') # reshape the matrix
 df$Condition <- colData$combinatoric_group[match(df$Samples,colData$sample_name)]
-ggplot(df, aes(x = df$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Non-normalized Counts') + xlab("") + ylab(expression(paste(Log[2]," counts"))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+ggplot(df, aes(x = df$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Non-normalized Counts') + xlab('') + ylab(expression(paste(Log[2],' counts'))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 
 normCountsDf <- as.data.frame(normCounts)
-dfn <- melt(log2(normCountsDf), variable.name = "Samples", value.name = "count") # reshape the matrix
+dfn <- melt(log2(normCountsDf), variable.name = 'Samples', value.name = 'count') # reshape the matrix
 dfn$Condition <- colData$combinatoric_group[match(dfn$Samples,colData$sample_name)]
-ggplot(dfn, aes(x = dfn$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Depth-normalized Counts') + xlab("") + ylab(expression(paste(Log[2]," depth-normalized counts"))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+ggplot(dfn, aes(x = dfn$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Depth-normalized Counts') + xlab('') + ylab(expression(paste(Log[2],' depth-normalized counts'))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 
 rldDf <- as.data.frame(assay(rld))
-dfr <- melt(rldDf, variable.name = "Samples", value.name = "count") # reshape the matrix
+dfr <- melt(rldDf, variable.name = 'Samples', value.name = 'count') # reshape the matrix
 dfr$Condition <- colData$combinatoric_group[match(dfr$Samples,colData$sample_name)]
-ggplot(dfr, aes(x = dfr$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Rlog-normalized Counts') + xlab("") + ylab(expression(paste(Regularized-Log[2]," normalized counts"))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+ggplot(dfr, aes(x = dfr$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Rlog-normalized Counts') + xlab('') + ylab(expression(paste(Regularized-Log[2],' normalized counts'))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 dev.off()
 
 #interactive boxplots
-bp <- ggplot(df, aes(x = df$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Non-normalized Counts') + xlab("") + ylab(expression(paste(Log[2]," counts"))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+bp <- ggplot(df, aes(x = df$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Non-normalized Counts') + xlab('') + ylab(expression(paste(Log[2],' counts'))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 bp <- ggplotly(bp)
-path_name <- file.path(getwd(),plotsDir_comparison,"BoxPlot_RawCounts.html")
+path_name <- file.path(getwd(),plotsDir_comparison,'BoxPlot_RawCounts.html')
 htmlwidgets::saveWidget(bp, file = path_name)
+delDir <- file.path(getwd(),plotsDir_comparison,'BoxPlot_RawCounts_files')
+unlink(x = delDir, recursive = TRUE, force = TRUE)
 
-bpn <- ggplot(dfn, aes(x = dfn$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Depth-normalized Counts') + xlab("") + ylab(expression(paste(Log[2]," depth-normalized counts"))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+bpn <- ggplot(dfn, aes(x = dfn$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Depth-normalized Counts') + xlab('') + ylab(expression(paste(Log[2],' depth-normalized counts'))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 bpn <- ggplotly(bpn)
-path_name <- file.path(getwd(),plotsDir_comparison,"BoxPlot_DepthNormalizedCounts.html")
+path_name <- file.path(getwd(),plotsDir_comparison,'BoxPlot_DepthNormalizedCounts.html')
 htmlwidgets::saveWidget(bpn, file = path_name)
+delDir <- file.path(getwd(),plotsDir_comparison,'BoxPlot_DepthNormalizedCounts_files')
+unlink(x = delDir, recursive = TRUE, force = TRUE)
 
-bpr <- ggplot(dfr, aes(x = dfr$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Rlog-normalized Counts') + xlab("") + ylab(expression(paste(Regularized-Log[2]," normalized counts"))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+bpr <- ggplot(dfr, aes(x = dfr$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Rlog-normalized Counts') + xlab('') + ylab(expression(paste(Regularized-Log[2],' normalized counts'))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 bpr <- ggplotly(bpr)
-path_name <- file.path(getwd(),plotsDir_comparison,"BoxPlot_RlogNormalizedCounts.html")
+path_name <- file.path(getwd(),plotsDir_comparison,'BoxPlot_RlogNormalizedCounts.html')
 htmlwidgets::saveWidget(bpr, file = path_name)
+delDir <- file.path(getwd(),plotsDir_comparison,'BoxPlot_RlogNormalizedCounts_files')
+unlink(x = delDir, recursive = TRUE, force = TRUE)
 
 cat('\tdensity plots\n')
 #raw and normalized count density, removing rows with 0 values
 pdf(file = paste0(plotsDir_comparison,'/Density.pdf'), onefile = TRUE)
 df <- as.data.frame(log2(rawCounts[idx.nz,])) # raw counts, removed 0s
-df <- melt(df, variable.name = "Samples", value.name = "count") # reshape the matrix
+df <- melt(df, variable.name = 'Samples', value.name = 'count') # reshape the matrix
 ggplot(df, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = "right") + ylab('Density') + xlab(expression(paste(Log[2]," counts"))) + ggtitle('Non-normalized Counts') + theme_classic()
+  theme(legend.position = 'right') + ylab('Density') + xlab(expression(paste(Log[2],' counts'))) + ggtitle('Non-normalized Counts') + theme_classic()
 
 dfn <- as.data.frame(log2(normCounts[idx.nz,])) #normalized counts (counts/size factors)
-dfn <- melt(dfn, variable.name = "Samples", value.name = "count") # reshape the matrix
+dfn <- melt(dfn, variable.name = 'Samples', value.name = 'count') # reshape the matrix
 ggplot(dfn, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = "right") + ylab('Density') + xlab(expression(paste(Log[2]," depth-normalized counts"))) + ggtitle('Depth-normalized Counts') + theme_classic()
+  theme(legend.position = 'right') + ylab('Density') + xlab(expression(paste(Log[2],' depth-normalized counts'))) + ggtitle('Depth-normalized Counts') + theme_classic()
 
 dfr <- as.data.frame(rldDf[idx.nz,]) #normalized counts (counts/size factors)
-dfr <- melt(dfr, variable.name = "Samples", value.name = "count") # reshape the matrix
+dfr <- melt(dfr, variable.name = 'Samples', value.name = 'count') # reshape the matrix
 ggplot(dfr, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = "right") + ylab('Density') + xlab(expression(paste(Regularized-Log[2]," normalized counts"))) + ggtitle('Rlog-normalized Counts') + theme_classic()
+  theme(legend.position = 'right') + ylab('Density') + xlab(expression(paste(Regularized-Log[2],' normalized counts'))) + ggtitle('Rlog-normalized Counts') + theme_classic()
 dev.off()
 
 #interactive density plots
 dp <- ggplot(df, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = "right") + ylab('Density') + xlab(expression(paste(Log[2]," counts"))) + ggtitle('Non-normalized Counts') + theme_classic()
+  theme(legend.position = 'right') + ylab('Density') + xlab(expression(paste(Log[2],' counts'))) + ggtitle('Non-normalized Counts') + theme_classic()
 dp <- ggplotly(dp)
-path_name <- file.path(getwd(),plotsDir_comparison,"DensityPlot_RawCounts.html")
+path_name <- file.path(getwd(),plotsDir_comparison,'DensityPlot_RawCounts.html')
 htmlwidgets::saveWidget(dp, file = path_name)
+delDir <- file.path(getwd(),plotsDir_comparison,'DensityPlot_RawCounts_files')
+unlink(x = delDir, recursive = TRUE, force = TRUE)
 
 dpn <- ggplot(dfn, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = "right") + ylab('Density') + xlab(expression(paste(Log[2]," depth-normalized counts"))) + ggtitle('Depth-normalized Counts') + theme_classic()
+  theme(legend.position = 'right') + ylab('Density') + xlab(expression(paste(Log[2],' depth-normalized counts'))) + ggtitle('Depth-normalized Counts') + theme_classic()
 dpn <- ggplotly(dpn)
-path_name <- file.path(getwd(),plotsDir_comparison,"DensityPlot_DepthNormalizedCounts.html")
+path_name <- file.path(getwd(),plotsDir_comparison,'DensityPlot_DepthNormalizedCounts.html')
 htmlwidgets::saveWidget(dpn, file = path_name)
+delDir <- file.path(getwd(),plotsDir_comparison,'DensityPlot_DepthNormalizedCounts_files')
+unlink(x = delDir, recursive = TRUE, force = TRUE)
 
 dpr <- ggplot(dfr, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = "right") + ylab('Density') + xlab(expression(paste(Regularized-Log[2]," normalized counts"))) + ggtitle('Rlog-normalized Counts') + theme_classic()
+  theme(legend.position = 'right') + ylab('Density') + xlab(expression(paste(Regularized-Log[2],' normalized counts'))) + ggtitle('Rlog-normalized Counts') + theme_classic()
 dpr <- ggplotly(dpr)
-path_name <- file.path(getwd(),plotsDir_comparison,"DensityPlot_RlogNormalizedCounts.html")
+path_name <- file.path(getwd(),plotsDir_comparison,'DensityPlot_RlogNormalizedCounts.html')
 htmlwidgets::saveWidget(dpr, file = path_name)
+delDir <- file.path(getwd(),plotsDir_comparison,'DensityPlot_RlogNormalizedCounts_files')
+unlink(x = delDir, recursive = TRUE, force = TRUE)
 
 cat('\tcorrelation plots\n')
 #correlation plot between samples
 uniqGroups <- unique(colData$combinatoric_group) # identify unique groups
-pdf(file = paste0(plotsDir_comparison,'/RLEmatrix.pdf'), onefile = TRUE, compress = TRUE)
+pdf(file = paste0(plotsDir_comparison,'/CorrelMatrix.pdf'), onefile = TRUE, compress = TRUE)
 for (i in 1:length(uniqGroups)){
   g <- colData[colData$combinatoric_group %in% uniqGroups[i], 'sample_name'] # collect sample names in those groups
   if (length(g) < 2) next
   gc <- rldDf[, colnames(rldDf) %in% g] # pull out columns for those groups
-  gcp <- ggpairs(data = gc[1:ncol(gc)], upper = list(continuous = wrap(ggally_cor, use = "pairwise.complete.obs", method = "spearman")), title = as.character(uniqGroups[i])) + theme_bw()
+  gcp <- ggpairs(data = gc[1:ncol(gc)], upper = list(continuous = wrap(ggally_cor, use = 'pairwise.complete.obs', method = 'spearman')), title = as.character(uniqGroups[i])) + theme_bw()
   print(gcp)
 }
-ggpairs(data = rldDf[1:ncol(rldDf)], upper = list(continuous = wrap(ggally_cor, use = "pairwise.complete.obs", method = "spearman")), title = 'All samples') + theme_bw()
+ggpairs(data = rldDf[1:ncol(rldDf)], upper = list(continuous = wrap(ggally_cor, use = 'pairwise.complete.obs', method = 'spearman')), title = 'All samples') + theme_bw()
 dev.off()
 
 #interactive correlation plots
@@ -348,63 +393,67 @@ for (i in 1:length(uniqGroups)){
   g <- colData[colData$combinatoric_group %in% uniqGroups[i], 'sample_name'] # collect sample names in those groups
   if (length(g) < 2) next
   gc <- rldDf[, colnames(rldDf) %in% g] # pull out columns for those groups
-  gcp <- ggpairs(data = gc[1:ncol(gc)], upper = list(continuous = wrap(ggally_cor, use = "pairwise.complete.obs", method = "spearman")), title = as.character(uniqGroups[i])) + theme_bw()
+  gcp <- ggpairs(data = gc[1:ncol(gc)], upper = list(continuous = wrap(ggally_cor, use = 'pairwise.complete.obs', method = 'spearman')), title = as.character(uniqGroups[i])) + theme_bw()
   gcp <- ggplotly(gcp)
-  path_name <- file.path(paste0(getwd(),'/',plotsDir_comparison,"/CorrelMatrix_",uniqGroups[i],".html"))
+  path_name <- file.path(paste0(getwd(),'/',plotsDir_comparison,'/CorrelMatrix_',uniqGroups[i],'.html'))
   htmlwidgets::saveWidget(gcp, file = path_name)
+  delDir <- file.path(paste0(getwd(),'/',plotsDir_comparison,'/CorrelMatrix_',uniqGroups[i],'_files'))
+  unlink(x = delDir, recursive = TRUE, force = TRUE)
 }
 
 if(length(1:ncol(rldDf)) < 10){
-  acp <- ggpairs(data = rldDf[1:ncol(rldDf)],upper = list(continuous = wrap(ggally_cor, use = "pairwise.complete.obs", method = "spearman")), title = 'All samples') + theme_bw()
+  acp <- ggpairs(data = rldDf[1:ncol(rldDf)],upper = list(continuous = wrap(ggally_cor, use = 'pairwise.complete.obs', method = 'spearman')), title = 'All samples') + theme_bw()
   acp <- ggplotly(acp)
-  path_name <- file.path(getwd(),plotsDir_comparison,"CorrelMatrix_All.html")
+  path_name <- file.path(getwd(),plotsDir_comparison,'CorrelMatrix_All.html')
   htmlwidgets::saveWidget(acp, file = path_name)
+  delDir <- file.path(getwd(),plotsDir_comparison,'CorrelMatrix_All_files')
+  unlink(x = delDir, recursive = TRUE, force = TRUE)
 }else{
-  message("Too many samples for all vs all CorrelMatrix. Skipping...")
+  message('Too many samples for all vs all CorrelMatrix. Skipping...')
 }
 
 cat('\twriting counts files\n')
 setDT(rawCountsDf, keep.rownames = TRUE)[] #set rownames to valid column
-write.table(x = rawCountsDf, file=paste0(normDataDir,'/raw_counts.txt'), append = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
+setnames(rawCountsDf, 'rn', 'id')
+write.table(x = rawCountsDf, file=paste0(countsDir,'/raw_counts.txt'), append = FALSE, sep = '\t', col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
 
 setDT(normCountsDf, keep.rownames = TRUE)[] #set rownames to valid column
-write.table(x = normCountsDf, file=paste0(normDataDir,'/depth_normalized_counts.txt'), append = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
+setnames(normCountsDf, 'rn', 'id')
+write.table(x = normCountsDf, file=paste0(countsDir,'/depth_normalized_counts.txt'), append = FALSE, sep = '\t', col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
 
 setDT(rldDf, keep.rownames = TRUE)[] #set rownames to valid column
-write.table(x = rldDf, file=paste0(normDataDir,'/rlog_normalized_counts.txt'), append = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
+setnames(rldDf, 'rn', 'id')
+write.table(x = rldDf, file=paste0(countsDir,'/rlog_normalized_counts.txt'), append = FALSE, sep = '\t', col.names = TRUE, row.names = FALSE, quote = FALSE) #write file
 
 ####
 # Diffex analysis in loop
 ####
 
 for (i in 1:nrow(contrastData)){
-  #newDir creation
-  newDir <- paste0(outDir,'/diffex_genes/', as.character(contrastData$factor[i])) #create directory for diffex_genes
-  newDir_plots <- paste0(plotsDir_contrasts,'/',as.character(contrastData$factor[i])) #create directory for contrast specific plots
-  cat('creating ', newDir, '\n')
-  dir.create(newDir, showWarnings = TRUE, recursive = TRUE, mode = "0777") #create directory for output
-  cat('creating ', newDir_plots, '\n')
-  dir.create(newDir_plots, showWarnings = TRUE, recursive = TRUE, mode = "0777")
-  
+  #dir assignment
+  contrastDir_diffex <- paste0(diffexDir,'/', as.character(contrastData$factor[i])) 
+  contrastDir_plots <- paste0(plotsDir_contrasts,'/',as.character(contrastData$factor[i])) 
+
   #collect references, etc
   referenceName <- contrastData$reference_level[i]
   testName <- contrastData$test_level[i]
   factorName <- contrastData$factor[i]
+  
   cat('\tcontrasting\n')
   #diffex analysis use generic name, subset DEGs
   testSamples <- subset(x = colData, subset = colData[,factorName] == testName & !duplicated(colData$combinatoric_group), select = combinatoric_group) #collect test samples in a list, from groups column
-  testSamples$combinatoric_group <- sub("^", "combinatoric_group", testSamples$combinatoric_group) # put 'combinatoric_group' at beginning of name
-  testSamples$combinatoric_group <- gsub("^", ".", testSamples$combinatoric_group, fixed = TRUE) # replace '^' with '.' to match name in deseq obj
-  testSamples$combinatoric_group <- gsub("-", ".", testSamples$combinatoric_group, fixed = TRUE) # replace '-' with '.' to match name in deseq obj
+  testSamples$combinatoric_group <- sub('^', 'combinatoric_group', testSamples$combinatoric_group) # put 'combinatoric_group' at beginning of name
+  testSamples$combinatoric_group <- gsub('^', '.', testSamples$combinatoric_group, fixed = TRUE) # replace '^' with '.' to match name in deseq obj
+  testSamples$combinatoric_group <- gsub('-', '.', testSamples$combinatoric_group, fixed = TRUE) # replace '-' with '.' to match name in deseq obj
   referenceSamples <- subset(x = colData, subset = colData[,factorName] == referenceName & !duplicated(colData$combinatoric_group), select = combinatoric_group) #collect reference samples in a list
-  referenceSamples$combinatoric_group <- sub("^", "combinatoric_group", referenceSamples$combinatoric_group) # put 'combinatoric_group' at beginning of name
-  referenceSamples$combinatoric_group <- gsub("^", ".", referenceSamples$combinatoric_group, fixed = TRUE) # replace '^' with '.' to match name in deseq obj
-  referenceSamples$combinatoric_group <- gsub("-", ".", referenceSamples$combinatoric_group, fixed = TRUE)# replace '-' with '.' to match name in deseq obj
+  referenceSamples$combinatoric_group <- sub('^', 'combinatoric_group', referenceSamples$combinatoric_group) # put 'combinatoric_group' at beginning of name
+  referenceSamples$combinatoric_group <- gsub('^', '.', referenceSamples$combinatoric_group, fixed = TRUE) # replace '^' with '.' to match name in deseq obj
+  referenceSamples$combinatoric_group <- gsub('-', '.', referenceSamples$combinatoric_group, fixed = TRUE)# replace '-' with '.' to match name in deseq obj
   res <- results(dds, parallel = TRUE, contrast = list(c(unlist(testSamples)), c(unlist(referenceSamples))), listValues = c(1/nrow(testSamples), -1/nrow(referenceSamples)))
   res <- res[order(res$padj),] #order by adjusted p-value
   diffexData <- as.data.frame(res)
   setDT(diffexData, keep.rownames = TRUE)[] #set rownames to valid column
-  colnames(diffexData) <- c("id","baseMean","log2FoldChange","lfcSE","stat","pvalue","padj") #rename first column
+  colnames(diffexData) <- c('id','baseMean','log2FoldChange','lfcSE','stat','pvalue','padj') #rename first column
   diffexData$Condition <- testName
   diffexData$Control <- referenceName
 
@@ -423,13 +472,13 @@ for (i in 1:nrow(contrastData)){
   df$label[which(df$id %in% top$id)] = df$id
 
   #count the number of significan up and down genes, assign value for legend
-  df$dot <- factor(df$dot,levels = c(1,2,3), labels = c(paste0("Up: ", sum(df$dot == 1)),paste0("Down: ", sum(df$dot == 2)),"NS"))
+  df$dot <- factor(df$dot,levels = c(1,2,3), labels = c(paste0('Up: ', sum(df$dot == 1)),paste0('Down: ', sum(df$dot == 2)),'NS'))
 
   #MA plot
-  pdf(file = paste0(plotsDir_contrasts,'/',as.character(contrastData$factor[i]),'/MAplot_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
-  p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange)) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2]," mean normalized expression"))) + ylab(expression(paste(Log[2]," fold-change")))
-  p <- p + scale_color_manual(name = '', values=c("#B31B21", "#1465AC", "darkgray"))
-  p <- p + scale_x_continuous(breaks=seq(0, max(log2(df$baseMean+1)), 2)) + geom_hline(yintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c("black", "black", "black"))
+  pdf(file = paste0(contrastDir_plots,'/MAplot_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
+  p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange)) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2],' mean normalized expression'))) + ylab(expression(paste(Log[2],' fold-change')))
+  p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
+  p <- p + scale_x_continuous(breaks=seq(0, max(log2(df$baseMean+1)), 2)) + geom_hline(yintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c('black', 'black', 'black'))
   if (sum(df$label == '') < nrow(df)) {
     p <- p + geom_label_repel(label = df$label, force = 3, segment.alpha = 0.4) + ggtitle(as.character(contrastData$base_file_name[i]))
   } else {
@@ -439,20 +488,22 @@ for (i in 1:nrow(contrastData)){
   dev.off()
 
   #interactive MA plot
-  p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange, colour = df$dot, label = id)) + geom_point(size = 1) + theme_classic() + xlab(expression(paste(Log[2]," mean normalized expression"))) + ylab(expression(paste(Log[2]," fold-change")))
-  p <- p + scale_color_manual(name = '', values=c("#B31B21", "#1465AC", "darkgray"))
-  p <- p + scale_x_continuous(breaks=seq(0, max(log2(df$baseMean+1)), 2)) + geom_hline(yintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c("black", "black", "black"))
+  p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange, colour = df$dot, label = id)) + geom_point(size = 1) + theme_classic() + xlab(expression(paste(Log[2],' mean normalized expression'))) + ylab(expression(paste(Log[2],' fold-change')))
+  p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
+  p <- p + scale_x_continuous(breaks=seq(0, max(log2(df$baseMean+1)), 2)) + geom_hline(yintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c('black', 'black', 'black'))
   p <- p + ggtitle(as.character(contrastData$base_file_name[i]))
   mp <- ggplotly(p)
-  path_name <- file.path(paste0(getwd(),'/',plotsDir_contrasts,'/',contrastData$factor[i],"/MAplot_",contrastData$base_file_name[i],".html"))
+  path_name <- file.path(paste0(getwd(),'/',contrastDir_plots,'/MAplot_',contrastData$base_file_name[i],'.html'))
   htmlwidgets::saveWidget(mp, file = path_name)
+  delDir <- file.path(paste0(getwd(),'/',contrastDir_plots,'/MAplot_',contrastData$base_file_name[i],'_files'))
+  unlink(x = delDir, recursive = TRUE, force = TRUE)
 
   cat('\tvolcano plot\n')
   #Volcano plot
-  pdf(file = paste0(plotsDir_contrasts,'/',as.character(contrastData$factor[i]),'/Volcano_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
-  p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2]," fold-change"))) + ylab(expression(paste(-Log[10]," adjusted p-value")))
-  p <- p + scale_color_manual(name = '', values=c("#B31B21", "#1465AC", "darkgray"))
-  p <- p + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c("black", "black", "black")) + geom_hline(yintercept = -log10(pval), linetype = 2, color = "black")
+  pdf(file = paste0(contrastDir_plots,'/Volcano_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
+  p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2],' fold-change'))) + ylab(expression(paste(-Log[10],' adjusted p-value')))
+  p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
+  p <- p + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c('black', 'black', 'black')) + geom_hline(yintercept = -log10(pval), linetype = 2, color = 'black')
   if (sum(df$label == '') < nrow(df)) {
     p <- p + geom_label_repel(label = df$label, force = 3, segment.alpha = 0.4) + ggtitle(as.character(contrastData$base_file_name[i]))
   } else {
@@ -462,20 +513,22 @@ for (i in 1:nrow(contrastData)){
   dev.off()
 
   #interactive Volcano plot
-  p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj), colour = df$dot, label = id)) + geom_point(size = 1) + theme_classic() + xlab(expression(paste(Log[2]," fold-change"))) + ylab(expression(paste(-Log[10]," adjusted p-value")))
-  p <- p + scale_color_manual(name = '', values=c("#B31B21", "#1465AC", "darkgray"))
-  p <- p + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c("black", "black", "black")) + geom_hline(yintercept = -log10(pval), linetype = 2, color = "black")
+  p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj), colour = df$dot, label = id)) + geom_point(size = 1) + theme_classic() + xlab(expression(paste(Log[2],' fold-change'))) + ylab(expression(paste(-Log[10],' adjusted p-value')))
+  p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
+  p <- p + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c('black', 'black', 'black')) + geom_hline(yintercept = -log10(pval), linetype = 2, color = 'black')
   p <- p + ggtitle(as.character(contrastData$base_file_name[i]))
   vp <- ggplotly(p)
-  path_name <- file.path(paste0(getwd(),'/',plotsDir_contrasts,'/',contrastData$factor[i],"/Volcano_",contrastData$base_file_name[i],".html"))
+  path_name <- file.path(paste0(getwd(),'/',contrastDir_plots,'/Volcano_',contrastData$base_file_name[i],'.html'))
   htmlwidgets::saveWidget(vp, file = path_name)
+  delDir <- file.path(paste0(getwd(),'/',contrastDir_plots,'/Volcano_',contrastData$base_file_name[i],'_files'))
+  unlink(x = delDir, recursive = TRUE, force = TRUE)
 
   cat('\twriting diffex genes\n')
   #make DEG calls and select DEGs
-  diffexData$Call <- rep("NO", nrow(df))
+  diffexData$Call <- rep('NO', nrow(df))
   diffexData$Call[which(diffexData$padj <= pval & abs(diffexData$log2FoldChange) >= log2(fc))] = 'YES'
   diffexData <- diffexData[order(-rank(diffexData$Call), diffexData$pvalue), ]
 
   #write to individual tab-delimited txt files
-  write.table(x = diffexData, file=paste0(getwd(),'/',newDir,'/',contrastData$base_file_name[i], ".txt"), append = FALSE, sep = "\t", na = 'NA', row.names = FALSE, quote = FALSE)
+  write.table(x = diffexData, file=paste0(getwd(),'/',contrastDir_diffex,'/',contrastData$base_file_name[i], '.txt'), append = FALSE, sep = '\t', na = 'NA', row.names = FALSE, quote = FALSE)
 }

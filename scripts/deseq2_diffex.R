@@ -326,7 +326,7 @@ unlink(x = delDir, recursive = TRUE, force = TRUE)
 
 cat('\tdensity plots\n')
 #raw and normalized count density, removing rows with 0 values
-pdf(file = paste0(plotsDir_comparison,'/Density.pdf'), onefile = TRUE)
+pdf(file = paste0(plotsDir_comparison,'/DensityPlot.pdf'), onefile = TRUE)
 df <- as.data.frame(log2(rawCounts[idx.nz,])) # raw counts, removed 0s
 df <- melt(df, variable.name = 'Samples', value.name = 'count') # reshape the matrix
 ggplot(df, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
@@ -500,7 +500,7 @@ for (i in 1:nrow(contrastData)){
 
   cat('\tvolcano plot\n')
   #Volcano plot
-  pdf(file = paste0(contrastDir_plots,'/Volcano_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
+  pdf(file = paste0(contrastDir_plots,'/VolcanoPlot_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
   p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2],' fold-change'))) + ylab(expression(paste(-Log[10],' adjusted p-value')))
   p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
   p <- p + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c('black', 'black', 'black')) + geom_hline(yintercept = -log10(pval), linetype = 2, color = 'black')
@@ -518,9 +518,9 @@ for (i in 1:nrow(contrastData)){
   p <- p + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c('black', 'black', 'black')) + geom_hline(yintercept = -log10(pval), linetype = 2, color = 'black')
   p <- p + ggtitle(as.character(contrastData$base_file_name[i]))
   vp <- ggplotly(p)
-  path_name <- file.path(paste0(getwd(),'/',contrastDir_plots,'/Volcano_',contrastData$base_file_name[i],'.html'))
+  path_name <- file.path(paste0(getwd(),'/',contrastDir_plots,'/VolcanoPlot_',contrastData$base_file_name[i],'.html'))
   htmlwidgets::saveWidget(vp, file = path_name)
-  delDir <- file.path(paste0(getwd(),'/',contrastDir_plots,'/Volcano_',contrastData$base_file_name[i],'_files'))
+  delDir <- file.path(paste0(getwd(),'/',contrastDir_plots,'/VolcanoPlot_',contrastData$base_file_name[i],'_files'))
   unlink(x = delDir, recursive = TRUE, force = TRUE)
 
   cat('\twriting diffex genes\n')

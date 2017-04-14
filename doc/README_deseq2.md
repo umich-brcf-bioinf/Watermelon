@@ -8,7 +8,7 @@ This document describes:
 
 
 Example output
-=======
+==============
 This document gives and example directory/file structure.
 ```
 $ tree deseq2_diffex/
@@ -73,7 +73,7 @@ deseq2_diffex/
 
 
 General structure
-====================
+=============================
 The output directory (*deseq2_diffex* in this example) contains 3 sub-directories:  
 **`deseq2_diffex/`**  
 - **`counts/`** - contains count data  
@@ -82,7 +82,7 @@ The output directory (*deseq2_diffex* in this example) contains 3 sub-directorie
 
 
 `counts/` directory structure
-===============
+=============================
 **`counts/`**  
 - **`depth_normalized_counts.txt`** - raw counts normalized by read depth per sample  
 - **`raw_counts.txt`** - raw counts per sample, used in DESeq2 differential expression calculations  
@@ -101,7 +101,7 @@ Adora2a	273.431	70.000
 ```
 
 `gene_lists directory/` structure
-==================
+=================================
 **`gene_lists/`**
 - **`phenotype_directory/`** - a phenotype of interest (i.e., 'diet', 'cell', 'gender')  
    - **`condition_v_control.txt`** - differential expression data file for the comparison 'condition' vs 'control' (i.e., samples where phenotype 'gender' is 'male' vs samples where phenotype 'gender' is 'female')
@@ -126,8 +126,8 @@ Column descriptions:
 - `Control` - status value considered 'control', used as denominator in fold change calculations
 - `Call` - whether gene is considered differentially expressed (YES or NO) based upon input log2FoldChange and padj cutoffs (must pass both cutoffs)
 
-plots directory structure
-=============
+`plots/` directory structure
+============================
 
 The plots in the plots directory fall into 2 sub-directories:
 

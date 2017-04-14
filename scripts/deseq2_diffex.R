@@ -85,7 +85,7 @@ if (is.null(opt$countDataFile)) {
   stop('A tab-delimited sample information file must be supplied (metaDataFile).', call.=FALSE)
 } else if (is.null(opt$contrastFile)) {
   print_help(opt_parser)
-  stop('The tab-delimited file specifying constats to be performed must supplied (contrastFile).', call.=FALSE)
+  stop('The tab-delimited file specifying contrasts to be performed must supplied (contrastFile).', call.=FALSE)
 } else if (is.null(opt$outDir)) {
   print_help(opt$parser)
   stop('The output directory has not been supplied (outDir).', call.=FALSE)
@@ -144,16 +144,16 @@ contrastData <- read.table(file =opt$contrastFile, header=TRUE, sep = '\t', stri
 ####
 
 outDir <- opt$outDir
-plotsDir_comparison <- paste0(outDir,'/plots/comparison_plots')
-plotsDir_contrasts <- paste0(outDir,'/plots/contrasts')
+plotsDir_comparison <- paste0(outDir,'/plots/summary_plots')
+plotsDir_contrasts <- paste0(outDir,'/plots/comparison_plots')
 countsDir <- paste0(outDir,'/counts')
-diffexDir <- paste0(outDir,'/diffex_genes')
+diffexDir <- paste0(outDir,'/gene_lists')
 
 cat('creating parent output directories\n')
 dir.create(path = countsDir, showWarnings = TRUE, recursive = TRUE, mode = '0777') # counts directory
-dir.create(path = diffexDir, showWarnings = TRUE, recursive = TRUE, mode = '0777') # diffex_genes directory
-dir.create(path = plotsDir_comparison, showWarnings = TRUE, recursive = TRUE, mode = '0777') # plots/comparison_plots directory
-dir.create(path = plotsDir_contrasts, showWarnings = TRUE, recursive = TRUE, mode = '0777') # plots/contrasts directory
+dir.create(path = diffexDir, showWarnings = TRUE, recursive = TRUE, mode = '0777') # gene_lists directory
+dir.create(path = plotsDir_comparison, showWarnings = TRUE, recursive = TRUE, mode = '0777') # plots/summary_plots directory
+dir.create(path = plotsDir_contrasts, showWarnings = TRUE, recursive = TRUE, mode = '0777') # plots/comparison_plots directory
 
 cat('creating contrast-specific output directories\n')
 for (i in 1:nrow(contrastData)){
@@ -161,9 +161,9 @@ for (i in 1:nrow(contrastData)){
   contrastDir_diffex <- paste0(diffexDir,'/', as.character(contrastData$factor[i])) 
   contrastDir_plots <- paste0(plotsDir_contrasts,'/',as.character(contrastData$factor[i])) 
   cat('creating ', contrastDir_diffex, '\n')
-  dir.create(contrastDir_diffex, showWarnings = FALSE, recursive = TRUE, mode = '0777') # diffex_gene/contrast-specific directory
+  dir.create(contrastDir_diffex, showWarnings = FALSE, recursive = TRUE, mode = '0777') # gene_lists/contrast-specific directory
   cat('creating ', contrastDir_plots, '\n')
-  dir.create(contrastDir_plots, showWarnings = FALSE, recursive = TRUE, mode = '0777') # plots/contrasts/contrast-specific directory
+  dir.create(contrastDir_plots, showWarnings = FALSE, recursive = TRUE, mode = '0777') # plots/comparison_plots/contrast-specific directory
 }
 
 ####
@@ -261,7 +261,7 @@ sampleDistMatrix <- as.matrix(sampleDists)
 rownames(sampleDistMatrix) <- paste(rld$combinatoric_group, sep='-')
 colnames(sampleDistMatrix) <- NULL
 colors <- colorRampPalette(rev(brewer.pal(9, 'Blues')))(255)
-pdf(file = paste0(plotsDir_comparison,'/SampleHeatmap.pdf'), onefile = FALSE)
+pdf(file = paste0(plotsDir_comparison,'/Heatmap_Samples.pdf'), onefile = FALSE)
 pheatmap(sampleDistMatrix,
          clustering_distance_rows=sampleDists,
          clustering_distance_cols=sampleDists,
@@ -273,19 +273,19 @@ cat('\ttop variant heatmap\n')
 colors <- colorRampPalette(brewer.pal(9, 'Blues'))(255)
 select <- order(rowVars(assay(rld)), decreasing=TRUE)[1:500]
 df <- data.frame(Group = colData(rld)[,c('combinatoric_group')], row.names = rownames(colData(dds)))
-pdf(file = paste0(plotsDir_comparison,'/TopVarHeatmap.pdf'), onefile = FALSE)
+pdf(file = paste0(plotsDir_comparison,'/Heatmap_TopVar.pdf'), onefile = FALSE)
 pheatmap(assay(rld)[select,], cluster_rows=FALSE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors, main = '500 Top Variably Expressed Genes Heatmap')
 dev.off()
 
 select <- order(rowMeans(assay(rld)), decreasing=TRUE)[1:500]
 df <- data.frame(Group = colData(rld)[,c('combinatoric_group')], row.names = rownames(colData(dds)))
-pdf(file = paste0(plotsDir_comparison,'/TopExpHeatmap.pdf'), onefile = FALSE)
+pdf(file = paste0(plotsDir_comparison,'/Heatmap_TopExp.pdf'), onefile = FALSE)
 pheatmap(assay(rld)[select,], cluster_rows=FALSE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors, main = '500 Top Expressed Genes Heatmap')
 dev.off()
 
 cat('\tbox plots\n')
 #boxplot of non-normalized and normalized data
-pdf(file = paste0(plotsDir_comparison,'/Boxplot.pdf'), onefile = TRUE)
+pdf(file = paste0(plotsDir_comparison,'/BoxPlot.pdf'), onefile = TRUE)
 rawCountsDf <- as.data.frame(rawCounts)
 df <- melt(log2(rawCountsDf), variable.name = 'Samples', value.name = 'count') # reshape the matrix
 df$Condition <- colData$combinatoric_group[match(df$Samples,colData$sample_name)]

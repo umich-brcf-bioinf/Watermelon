@@ -91,17 +91,13 @@ The output directory (*deseq2_diffex* in this example) contains 3 sub-directorie
 _The_ *_counts.txt are tab-delimited, and contain the a single 'id' column, with the gene id, and 'Sample_XXX' for each sample._
 
 ```
-$ cat deseq2_diffex/counts/depth_normalized_counts.txt | head | awk 'BEGIN {FS = OFS = "\t"} {print $1, $2, $3}'
+$ cat deseq2_diffex/counts/depth_normalized_counts.txt | head -n 6| awk 'BEGIN {FS = OFS = "\t"} {print $1, $2, $3}'
 id	Sample_61483	Sample_61484
-4930547N16Rik	33.3268545915621	29.6157351920312
-6330406I15Rik	233.287982140935	359.876054909228
-6330527O06Rik	1107.360486656	1983.35681134512
-AU021092	97.7082782343526	98.7191173067708
-Adora2a	273.431693353498	70.0008286357102
-Aldh1a3	48.475424860454	17.9489304194129
-Alox12	65.1388521562351	63.7187029889157
-Alox12b	250.708837950161	230.643755889455
-Alox12e	4.54457108066756	3.58978608388257
+4930547N16Rik	33.326	29.615
+6330406I15Rik	233.287	359.876
+6330527O06Rik	1107.360	1983.356
+AU021092	97.708	98.719
+Adora2a	273.431	70.000
 ```
 
 `gene_lists directory/` structure
@@ -113,7 +109,7 @@ Alox12e	4.54457108066756	3.58978608388257
 _The differential expression *.txt files are tab-delimited and contain:_
 
 ```
-$ head deseq2_diffex/gene_lists/diet/HF_v_DRG.txt
+$ head -n 3 deseq2_diffex/gene_lists/diet/HF_v_DRG.txt
 id	baseMean	log2FoldChange	lfcSE	stat	pvalue	padj	Condition	Control	Call
 Egr2	458.291	2.894	1.025	2.838	0.004	0.360	HF	DRG NO
 Fos	2545.962	2.813	1.026	2.757	0.005	0.360	HF	DRG NO

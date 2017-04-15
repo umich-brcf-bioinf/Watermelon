@@ -209,11 +209,16 @@ You need to review config file: {config_relative}:
 -------------------------------
 1) Review/adjust samples names
     Note: if you change names in config, also change the sample dir names in the input dir
-2) Review sample phenotypes/labels for each sample
-3) Add comparisons
-4) Review genome and references
-5) Review alignment options
-6) Review trimming options
+2) Review sample phenotype labels and values for each sample.
+   Phenotype labels must be distinct.
+   Phenotype labels and values must be valid R column names, so each label/value must
+   be a letter followed alphanumerics or [-_.]. (So "A24-5" is ok, but "1hr+" is not.
+   Also the literals "T", "F", and "NAN" cannot be used as phenotype labels/values.
+3) Adjust the main_factors line to indicate whether a phenotype is main (yes) or derived (no).
+4) Add comparisons
+5) Review genome and references
+6) Review alignment options
+7) Review trimming options
 
 When the config file looks good:
 --------------------------------

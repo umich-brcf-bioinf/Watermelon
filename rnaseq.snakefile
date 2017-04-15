@@ -89,12 +89,8 @@ rule all:
                 comparison=COMPARISON_GROUPS),
         TUXEDO_DIR + "10-summary/summary.txt",
         TUXEDO_DIR + "10-summary/summary.xlsx",
-        
-        expand(DELIVERABLES_DIR + "tuxedo/cuffdiff_results"),
-        expand(DELIVERABLES_DIR + "tuxedo/cummeRbund_results/{phenotype_name}_repRawCounts.txt", 
-                phenotype_name=sorted(config[COMPARISONS_KEY].keys())),
-        expand(DELIVERABLES_DIR + "tuxedo/cummeRbund_results/{phenotype_name}_cummeRbund_plots",
-               phenotype_name=sorted(config[COMPARISONS_KEY].keys())),
+
+        expand(DELIVERABLES_DIR + "tuxedo"),
 
         expand(DESEQ2_DIR + "01-htseq/{sample}_counts.txt",
                sample=config[SAMPLES_KEY]),
@@ -569,36 +565,32 @@ rule tuxedo_summary:
         " 2>&1 | tee {log} && "
         "touch {params.output_dir}"
 
-
-rule deliverables_tuxedo_cuffdiff:
+rule deliverables_tuxedo:
     input:
         excel = expand(TUXEDO_DIR + "09-excel/{phenotype_name}/{comparison}.xlsx", 
                        zip,
                        phenotype_name=PHENOTYPE_NAMES,
                        comparison=COMPARISON_GROUPS),
-        summary_xlsx = TUXEDO_DIR + "10-summary/summary.xlsx"
+        diffex_raw_counts = expand(TUXEDO_DIR + "06-cummerbund/{phenotype_name}/{phenotype_name}_repRawCounts.txt",
+                                   phenotype_name=PHENOTYPE_NAMES),
+        plots = expand(TUXEDO_DIR + "06-cummerbund/{phenotype_name}/Plots",
+                       phenotype_name=PHENOTYPE_NAMES),
+        summary_xlsx = TUXEDO_DIR + "10-summary/summary.xlsx",
     output:
-        deliverables_dir = DELIVERABLES_DIR + "tuxedo/cuffdiff_results"
+        deliverables_dir = DELIVERABLES_DIR + "tuxedo",
     params:
-        excel_input_dir  =  TUXEDO_DIR +  "/09-excel",
+        tmp_dir = DELIVERABLES_DIR + "tuxedo.tmp",
+        source_gene_list_dir = TUXEDO_DIR +  "/09-excel",
+        source_counts_dir =  TUXEDO_DIR +  "/06-cummerbund",
+        source_plots_dir =  TUXEDO_DIR +  "/06-cummerbund",
     shell:
-        "rm -rf {output.deliverables_dir}/../cuffdiff_results && "
-        "cp -r {params.excel_input_dir} {output.deliverables_dir} && "
-        "cp {input.summary_xlsx} {output.deliverables_dir} && "
-        "touch {output.deliverables_dir} "
-
-rule deliverables_tuxedo_cummerbund:
-    input:
-        diffex_raw_counts = TUXEDO_DIR + "06-cummerbund/{phenotype_name}/{phenotype_name}_repRawCounts.txt",
-        plots = TUXEDO_DIR + "06-cummerbund/{phenotype_name}/Plots",
-    output:
-        diffex_raw_counts = DELIVERABLES_DIR + "tuxedo/cummeRbund_results/{phenotype_name}_repRawCounts.txt",
-        plots = DELIVERABLES_DIR + "tuxedo/cummeRbund_results/{phenotype_name}_cummeRbund_plots"
-    shell:
-        "cp -r {input.diffex_raw_counts} {output.diffex_raw_counts} && "
-        "find {output.diffex_raw_counts} | xargs -I ^ touch ^ && "
-        "cp -r {input.plots}  {output.plots} && "
-        "find {output.plots} | xargs -I ^ touch ^ "
+        "rm -rf {output.deliverables_dir} {params.tmp_dir} && "
+        "mkdir -p {params.tmp_dir}/counts {params.tmp_dir}/plots && "
+        "cp `find {params.source_counts_dir} -maxdepth 2 -name '*_repRawCounts.txt'` {params.tmp_dir}/counts && "
+        "(for phenotype in `ls {params.source_plots_dir}`; do cp -r {params.source_plots_dir}/${{phenotype}}/Plots {params.tmp_dir}/plots/$phenotype; done) && "
+        "cp -r {params.source_gene_list_dir} {params.tmp_dir}/gene_lists && "
+        "cp {input.summary_xlsx} {params.tmp_dir}/gene_lists && "
+        "mv {params.tmp_dir} {output.deliverables_dir} "
 
 rule deseq2_htseq:
     input:
@@ -785,10 +777,14 @@ rule deliverables_deseq2:
         summary_xlsx = DESEQ2_DIR + "07-summary/summary.xlsx",
     output:
         deliverables_dir = DELIVERABLES_DIR + "deseq2",
+    params:
+        tmp_dir = DELIVERABLES_DIR + "deseq2.tmp",
+        source_gene_list_dir = DESEQ2_DIR + "06-excel"
     shell:
-        "rm -rf {output.deliverables_dir}/normalized_data {output.deliverables_dir}/plots {output.deliverables_dir}/gene_lists && "
-        "cp -r {input.diffex_dir}/normalized_data {output.deliverables_dir} && "
-        "cp -r {input.diffex_dir}/plots {output.deliverables_dir} && "
-        "cp -r {input.diffex_dir} {output.deliverables_dir}/gene_lists && "
-        "cp -r {input.summary_xlsx} {output.deliverables_dir}/gene_lists && "
-        "touch {output.deliverables_dir} "
+        "rm -rf {output.deliverables_dir} {params.tmp_dir} && "
+        "mkdir -p {params.tmp_dir} && "
+        "cp -r {input.diffex_dir}/counts {params.tmp_dir} && "
+        "cp -r {input.diffex_dir}/plots {params.tmp_dir} && "
+        "cp -r {params.source_gene_list_dir} {params.tmp_dir}/gene_lists && "
+        "cp -r {input.summary_xlsx} {params.tmp_dir}/gene_lists && "
+        "mv {params.tmp_dir} {output.deliverables_dir} "

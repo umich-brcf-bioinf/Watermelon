@@ -308,7 +308,7 @@ rule tuxedo_cuffdiff:
     log:
         TUXEDO_DIR + "01-cuffdiff/.log/{pheno}_cuffdiff.log"
     shell:
-        "rm -rf {params.output_dir} &&"
+        "rm -rf {params.output_dir} {params.output_dir}.tmp &&"
         "module load watermelon_rnaseq && "
         "cuffdiff -q "
         " -p {threads} "

@@ -22,6 +22,8 @@ references:
 transcriptome_index:
 comparisons:
 fold_change:
+deseq2_adjustedPValue:
+
 alignment_options:
     library_type: fr-unstranded
 comparisons:

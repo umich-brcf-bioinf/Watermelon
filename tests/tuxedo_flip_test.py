@@ -14,11 +14,11 @@ except ImportError:
 import pandas as pd
 from testfixtures.tempdirectory import TempDirectory
 
-import scripts.diffex_flip as diffex_flip
+import scripts.tuxedo_flip as tuxedo_flip
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SCRIPTS_DIR = os.path.join(os.path.dirname(TEST_DIR), 'scripts')
-class FlipDiffexTest(unittest.TestCase):
+class TuxedoFlipTest(unittest.TestCase):
     def test_raisesValueErrorIfMissingRequiredColumns(self):
         args = Namespace(input_filepath='input.txt')
         df_contents = StringIO('field1\n')
@@ -27,7 +27,7 @@ class FlipDiffexTest(unittest.TestCase):
                                 (r'Input file \[input.txt\] is missing required '
                                  r'field\(s\) \[log2\(fold_change\),sample_1,'
                                  r'sample_2,test_stat,value_1,value_2\].'),
-                                 diffex_flip._validate_required_fields,
+                                 tuxedo_flip._validate_required_fields,
                                  df,
                                  args)
 
@@ -41,7 +41,7 @@ gene3|C|D|foo|1|4|-2|-3.5''')
         df = pd.read_csv(df_contents, sep='|')
     
         comparison_infix = '^'
-        diffex_flip._flip_comparisons(comparison_infix, df, ['B^A', 'D^C'])
+        tuxedo_flip._flip_comparisons(comparison_infix, df, ['B^A', 'D^C'])
 
         self.assertEquals(['gene0', 'B', 'A', 'foo', 1, 4, -2, -3.5], list(df.loc[0].values))
         self.assertEquals(['gene1', 'B', 'A', 'foo', 1, 3, -1.584962501, -3.5], list(df.loc[1].values))
@@ -57,7 +57,7 @@ gene2|C|D|foo|1|3|-1.584962501|-1
 gene3|C|D|foo|1|4|-2|-1''')
         df = pd.read_csv(df_contents, sep='|')
     
-        diffex_flip._flip_comparisons('_', df, ['B_A'])
+        tuxedo_flip._flip_comparisons('_', df, ['B_A'])
 
         self.assertEquals(['gene2', 'C', 'D', 'foo', 1, 3, -1.584962501, -1], list(df.loc[2].values))
         self.assertEquals(['gene3', 'C', 'D', 'foo', 1, 4, -2, -1], list(df.loc[3].values))
@@ -71,7 +71,7 @@ gene2|C|D|foo|1|3|-1.584962501|-1
 gene3|C|D|foo|1|4|-2|-1''')
         df = pd.read_csv(df_contents, sep='|')
     
-        diffex_flip._flip_comparisons('_', df, ['B_A,C_D'])
+        tuxedo_flip._flip_comparisons('_', df, ['B_A,C_D'])
 
         self.assertEquals(['gene2', 'C', 'D', 'foo', 1, 3, -1.584962501, -1], list(df.loc[2].values))
         self.assertEquals(['gene3', 'C', 'D', 'foo', 1, 4, -2, -1], list(df.loc[3].values))
@@ -90,7 +90,7 @@ class FlipDiffexFunctoinalTest(unittest.TestCase):
     def test_commandReturnsCorrectRowAndColumnCount(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            script_name = os.path.join(SCRIPTS_DIR, 'diffex_flip.py')
+            script_name = os.path.join(SCRIPTS_DIR, 'tuxedo_flip.py')
             input_filename = os.path.join(temp_dir_path, 'input.txt')
             output_filename = os.path.join(temp_dir_path, 'output.txt')
 

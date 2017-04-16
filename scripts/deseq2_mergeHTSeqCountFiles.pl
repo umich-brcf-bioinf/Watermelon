@@ -66,40 +66,49 @@ push(@{$countStats{"Total"}},@total_readcounts);
 #print Dumper %countStats;
 
 open (OUTFILE, "> $inDir/HTSeq_counts.txt") or die "Cannot open $inDir/HTSeq_counts.txt $!\n";
+my $header = "";
 foreach my $h (@header) {
-	print OUTFILE "$h\t";	
+    $header .= "$h\t"
 }
-print OUTFILE "\n";
+$header =~s/\t$//;
+print OUTFILE "$header\n";
+
 my @k = sort(keys%gene2count);
 foreach my $k (@k) {
-	print OUTFILE "$k\t";
+	print OUTFILE "$k";
 	foreach my $i (@{$gene2count{$k}}) {
-		print OUTFILE "$i\t";
+		print OUTFILE "\t$i";
 	}
 	print OUTFILE "\n";
 }
 close OUTFILE;
 
 open (OUTFILE2, "> $inDir/HTSeq_counts_stats.txt") or die "Cannot open $inDir/HTSeq_counts_stats.txt $!\n";
+
+$header = "";
 foreach my $h (@header2) {
-	print OUTFILE2 "$h\t";	
+    $header .= "$h\t"
 }
-print OUTFILE2 "\n";
+$header =~s/\t$//;
+print OUTFILE2 "$header\n";
+
 my @keys = sort(keys%countStats);
 foreach my $k (@keys) {
 	if($k ne "Total") {
-		print OUTFILE2 "$k\t";
+		print OUTFILE2 "$k";
 		foreach my $i (@{$countStats{$k}}) {
-			print OUTFILE2 "$i\t";
+			print OUTFILE2 "\t$i";
 		}
 		print OUTFILE2 "\n";
 	}
 }
 print OUTFILE2 "\n";
-print OUTFILE2 "Total\t";
+print OUTFILE2 "Total";
 foreach my $i (@{$countStats{"Total"}}) {
-	print OUTFILE2 "$i\t";
+	print OUTFILE2 "\t$i";
 }
+print OUTFILE2 "\n";
+
 close OUTFILE2;
 
 print "All done!\n";

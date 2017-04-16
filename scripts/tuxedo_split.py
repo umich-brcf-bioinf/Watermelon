@@ -32,7 +32,7 @@ def _time_stamp():
     return(st)
 
 def _log(message):
-    print('{}|split_diffex|{}'.format(_time_stamp(), message), file=sys.stderr)
+    print('{}|diffex_split|{}'.format(_time_stamp(), message), file=sys.stderr)
 
 def _mkdir(newdir):
     """works the way a good mkdir should :)

@@ -26,7 +26,7 @@ def _time_stamp():
     return(st)
 
 def _log(message):
-    print('{}|flip_diffex|{}'.format(_time_stamp(), message), file=sys.stderr)
+    print('{}|diffex_flip|{}'.format(_time_stamp(), message), file=sys.stderr)
 
 def _flip_comparisons(comparison_infix, dataframe, comparisons):
     _COMPARISON_NAME_FMT = '{group_1}{comparison_infix}{group_2}'

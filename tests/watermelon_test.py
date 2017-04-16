@@ -27,6 +27,11 @@ class WatermelonTest(unittest.TestCase):
     def tearDown(self):
         os.chdir(self.original_wd)
 
+    def setup_tmp_dir(self, temp_dir):
+        temp_dir_path = temp_dir.path  #'/tmp/foo' #
+        os.chdir(temp_dir_path)
+        return temp_dir_path
+
     def execute(self, command):
         exit_code = 0
         try:
@@ -65,7 +70,6 @@ class WatermelonTest(unittest.TestCase):
 
         self.assertEqual(['lineA\n'], actual_output_A)
         self.assertEqual(['lineB\n'], actual_output_B)
-
 
     def test_watermelon_logsResults(self):
         with TempDirectory() as temp_dir:

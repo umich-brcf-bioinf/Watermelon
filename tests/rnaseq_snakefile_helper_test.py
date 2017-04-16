@@ -489,8 +489,12 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
     def test_cutadapt_options_noOptionsReturns0(self):
         self.assertEqual(0, rnaseq_snakefile_helper.cutadapt_options({}))
 
-    def test_cutadapt_options_anyOptionsReturns1(self):
-        params = {'A': 0}
+    def test_cutadapt_options_all0OptionsReturns0(self):
+        params = {'A': 0, 'B' : 0}
+        self.assertEqual(0, rnaseq_snakefile_helper.cutadapt_options(params))
+
+    def test_cutadapt_options_anyNon0OptionsReturns1(self):
+        params = {'A': 0, 'B' : 1}
         self.assertEqual(1, rnaseq_snakefile_helper.cutadapt_options(params))
 
     def test_cutadapt_options_invalidOptionsRaises(self):

@@ -13,11 +13,11 @@ except ImportError:
 import pandas as pd
 from testfixtures.tempdirectory import TempDirectory
 
-import scripts.diffex_flag as diffex_flag
+import scripts.tuxedo_flag as tuxedo_flag
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SCRIPTS_DIR = os.path.join(os.path.dirname(TEST_DIR), 'scripts')
-class FlagDiffexTest(unittest.TestCase):
+class TuxedoFlagTest(unittest.TestCase):
     def execute(self, command):
         exit_code = 0
         try:
@@ -31,7 +31,7 @@ class FlagDiffexTest(unittest.TestCase):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
 
-            script_name = os.path.join(SCRIPTS_DIR, 'diffex_flag.py')
+            script_name = os.path.join(SCRIPTS_DIR, 'tuxedo_flag.py')
             linear_fold_change_threshold = 2
             input_filename = os.path.join(temp_dir_path, 'input.txt')
             output_filename = os.path.join(temp_dir_path, 'output.txt')
@@ -74,7 +74,7 @@ value2|2|1|OK
 valueInf|Inf|1|OK
 valueNegInf|-Inf|1|OK''')
         df = pd.read_csv(df_contents, sep='|')
-        actual_df = diffex_flag._add_columns(df, linear_fold_change=4)
+        actual_df = tuxedo_flag._add_columns(df, linear_fold_change=4)
 
         self.assertIn('linear_fold_change',
                       actual_df.columns.values.tolist())
@@ -101,7 +101,7 @@ overExpressed-infFC|OK|0.05|Inf
 underExpressed-infFC|OK|0.05|-Inf
 underExpressed-betterFDR|OK|0.04|-2''')
         df = pd.read_csv(df_contents, sep='|')
-        actual_df = diffex_flag._add_columns(df, linear_fold_change=4)
+        actual_df = tuxedo_flag._add_columns(df, linear_fold_change=4)
         self.assertIn('diff_exp',
                       actual_df.columns.values.tolist())
         actual_diff_exp = actual_df.set_index('test')['diff_exp'].to_dict()
@@ -123,7 +123,7 @@ underExpressed-infFDR|OK|Inf|-2
 underExpressed-badFC|OK|0.05|-1
 overExpressed-badFC|OK|0.05|1''')
         df = pd.read_csv(df_contents, sep='|')
-        actual_df = diffex_flag._add_columns(df, linear_fold_change = 4)
+        actual_df = tuxedo_flag._add_columns(df, linear_fold_change = 4)
         self.assertIn('diff_exp',
                       actual_df.columns.values.tolist())
         actual_diff_exp = actual_df.set_index('test')['diff_exp'].to_dict()
@@ -141,7 +141,7 @@ overExpressed-badFC|OK|0.05|1''')
         self.assertRaisesRegexp(ValueError,
                                 (r'Input file \[input.txt\] is missing required '
                                  r'field\(s\) \[log2\(fold_change\),q_value,status\].'),
-                                 diffex_flag._validate_inputs,
+                                 tuxedo_flag._validate_inputs,
                                  df,
                                  args)
 
@@ -158,7 +158,7 @@ E|OK|1|Inf''')
         self.assertRaisesRegexp(ValueError,
                                 (r'Input file \[input.txt\]: 2 log2\(fold_change\) '
                                  r'value\(s\) are not numeric: \[Hello:2,World:4\]'),
-                                diffex_flag._validate_inputs,
+                                tuxedo_flag._validate_inputs,
                                 df,
                                 args)
 
@@ -170,7 +170,7 @@ A|OK|1|5''')
         df = pd.read_csv(df_contents, sep='|')
         self.assertRaisesRegexp(ValueError,
                                 r'Specified foldchange cutoff \[0.75\] must be >= 1',
-                                diffex_flag._validate_inputs,
+                                tuxedo_flag._validate_inputs,
                                 df,
                                 args)
 

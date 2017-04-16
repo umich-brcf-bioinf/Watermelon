@@ -12,6 +12,8 @@ from testfixtures import TempDirectory
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SNAKEFILE_PATH = os.path.join(TEST_DIR, '..', '..', '..', 'rnaseq.snakefile')
+DEBUG = 'WATERMELON_DEBUG' in os.environ
+REDIRECT_OUTPUT = ' ' if DEBUG else ' 2>/dev/null '
 
 def gunzip(source_file_pattern):
     def _gunzip_file(source_file, dest_file):
@@ -44,12 +46,11 @@ class ConcatReadsTest(unittest.TestCase):
             shutil.copytree(source_working_dir, tmp_actual_dir) 
 
             os.chdir(tmp_actual_dir)
-            redirect_output = '2>/dev/null'
             command = '''snakemake --cores 2 \
      --snakefile {} \
      --configfile {} \
      --force alignment_results/01-raw_reads/Sample_0_R1.fastq.gz alignment_results/01-raw_reads/Sample_1_R1.fastq.gz {}
-'''.format(SNAKEFILE_PATH, configfile_path, redirect_output)
+'''.format(SNAKEFILE_PATH, configfile_path, REDIRECT_OUTPUT)
             subprocess.check_output(command, shell=True)
 
             for expected_filename in glob(tmp_expected_dir + '/01-raw_reads/*'):

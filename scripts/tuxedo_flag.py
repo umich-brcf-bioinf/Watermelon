@@ -30,7 +30,7 @@ def _time_stamp():
     return(st)
 
 def _log(message):
-    print('{}|flag_diffex|{}'.format(_time_stamp(), message), file=sys.stderr)
+    print('{}|diffex_flag|{}'.format(_time_stamp(), message), file=sys.stderr)
 
 def _add_columns(input_df, linear_fold_change):
     log2_fold_change = math.log(linear_fold_change, 2)

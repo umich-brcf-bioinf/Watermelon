@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.2 (4/15/2017)
+0.2 (4/17/2017)
 ---------------
 - Added DESeq2 diffex analysis
   - Adjusted config to include main_factor
@@ -13,9 +13,12 @@ Changelog
   - log dirs are hidden
   - simplified deliverable rules
 - Added diffex comparison gene summaries for tuxedo (cuffdiff) and DESeq2 results
-- Improved config validation check for well-formed (R friendly) phenotype labels,
-  and phenotype values
-- Improved handling of locked dir
+- Improved watermelon launch
+  - Config validation check for well-formed (R friendly) phenotype labels,
+    and phenotype values
+  - Improved handling of locked dir
+  - Instead of failing fast on error, watermelon will run the valid remainder of jobs
+    (--keep-going)
 - Separated legacy dependencies from watermelon dependencies
 - Bugfixes:
   - watermelon_init would show confusing result when fastq source was inside working dir

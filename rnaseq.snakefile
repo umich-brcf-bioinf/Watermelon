@@ -97,7 +97,7 @@ rule all:
         DESEQ2_DIR + "01-htseq/HTSeq_counts.txt",
         DESEQ2_DIR + "02-metadata_contrasts/sample_metadata.txt",
         DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt",
-        expand(DESEQ2_DIR + "03-deseq2_diffex/diffex_genes/{phenotype_name}/{comparison}.txt",
+        expand(DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype_name}/{comparison}.txt",
                zip,
                phenotype_name=PHENOTYPE_NAMES, 
                comparison=COMPARISON_GROUPS),
@@ -246,8 +246,8 @@ rule fastqc_tophat_align:
 rule align_qc_metrics:
     input:
         sample_checksum = CONFIG_CHECKSUMS_DIR + "config-samples.watermelon.md5",
-        align_summary_files = expand("{alignment_dir}/04-tophat/{sample}/{sample}_align_summary.txt", 
-                                        alignment_dir= ALIGNMENT_DIR, sample=config["samples"])
+        align_summary_files = expand(ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_align_summary.txt", 
+                                     sample=config["samples"])
     output:
         ALIGNMENT_DIR + "06-qc_metrics/alignment_stats.txt"
     params:
@@ -655,7 +655,7 @@ rule deseq2_diffex:
         contrasts = DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt",
     output:
         dir = DESEQ2_DIR + "03-deseq2_diffex",
-        files = expand(DESEQ2_DIR + "03-deseq2_diffex/diffex_genes/{phenotype}/{comparison}.txt",
+        files = expand(DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt",
                        zip,
                        phenotype=PHENOTYPE_NAMES,
                        comparison=COMPARISON_GROUPS),
@@ -669,7 +669,7 @@ rule deseq2_diffex:
         "module load watermelon_rnaseq && "
         "rm -rf {output.dir}/normalized_data && "
         "rm -rf {output.dir}/plots && "
-        "rm -rf {output.dir}/diffex_genes && "
+        "rm -rf {output.dir}/gene_lists && "
         "rm -rf {output.dir}/.tmp/* && "
         "{WATERMELON_SCRIPTS_DIR}/deseq2_diffex.R "
         "    -c {input.htseq_counts} "
@@ -686,7 +686,7 @@ rule deseq2_diffex:
 
 rule deseq2_annotation:
    input:
-       diffex_file= DESEQ2_DIR + "03-deseq2_diffex/diffex_genes/{phenotype}/{comparison}.txt",
+       diffex_file= DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt",
        gene_info = "references/entrez_gene_info",
    output:
        DESEQ2_DIR + "04-annotation/{phenotype}/{comparison}.annot.txt",

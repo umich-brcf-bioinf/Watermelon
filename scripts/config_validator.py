@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 from __future__ import print_function, absolute_import, division
 
-from collections import defaultdict
+from collections import Counter,defaultdict
 from functools import partial
+import os
+import re
 import sys
 
 import yaml
@@ -12,6 +14,19 @@ from scripts import watermelon_config
 
 _HEADER_RULE = '=' * 70 + '\n'
 _SECTION_RULE = '-' * 70 + '\n'
+
+_LEGAL_NAME_REGEX = r'^[A-Za-z][A-Za-z0-9\-_\.]*$'
+_RESERVED_NAMES = set(['T', 'F', 'NAN'])
+
+
+def _is_name_well_formed(name):
+    if not re.match(_LEGAL_NAME_REGEX, name):
+        return False
+    return True
+
+def _is_name_reserved(name):
+    return name in _RESERVED_NAMES
+
 
 class _WatermelonConfigFailure(Exception):
     def __init__(self, msg, *args):
@@ -95,29 +110,35 @@ class _ConfigValidator(object):
     def __init__(self, config, log=sys.stderr):
         self.config = config
         self._log = log
-        self._PRIMARY_VALIDATIONS = [self._check_missing_required_field,
+        self._PARSING_VALIDATIONS = [self._check_missing_required_field,
+                                     self._check_phenotype_labels_blank,
+                                     self._check_phenotype_labels_not_unique,
                                      self._check_samples_malformed,
                                      self._check_samples_not_stringlike,
                                      self._check_comparisons_malformed,
                                      self._check_comparisons_not_a_pair,
                                      self._check_phenotypes_samples_not_rectangular,
                                      ]
-        self._SECONDARY_VALIDATIONS = [self._check_comparison_missing_phenotype_value,
-                                       self._check_comparison_missing_phenotype_label,
-                                       self._check_comparison_references_unknown_phenotype_label,
-                                       self._check_comparison_references_unknown_phenotype_value,
-                                       self._check_samples_excluded_from_comparison,
+        self._CONTENT_VALIDATIONS = [self._check_phenotype_labels_illegal_values,
+                                     self._check_phenotype_labels_reserved_name,
+                                     self._check_phenotype_values_illegal_values,
+                                     self._check_phenotype_values_reserved_name,
+                                     self._check_comparison_missing_phenotype_value,
+                                     self._check_comparison_missing_phenotype_label,
+                                     self._check_comparison_references_unknown_phenotype_label,
+                                     self._check_comparison_references_unknown_phenotype_value,
+                                     self._check_samples_excluded_from_comparison,
                                       ]
 
     def validate(self):
         collector = _ValidationCollector(self._log)
 
-        for validation in self._PRIMARY_VALIDATIONS:
+        for validation in self._PARSING_VALIDATIONS:
             collector.check(validation)
             if not collector.passed:
                 return collector
 
-        for validation in self._SECONDARY_VALIDATIONS:
+        for validation in self._CONTENT_VALIDATIONS:
             collector.check(validation)
         return collector
 
@@ -177,6 +198,19 @@ class _ConfigValidator(object):
                    'review config and try again')
             malformed_str = ', '.join(sorted(malformed_comparisons))
             raise _WatermelonConfigFailure(msg, malformed_str)
+
+    def _check_phenotype_labels_blank(self):
+        pheno_labels = watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes])
+        for label in pheno_labels:
+            if not label:
+                raise _WatermelonConfigFailure('[phenotypes] labels cannot be blank')
+
+    def _check_phenotype_labels_not_unique(self):
+        pheno_labels = watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes])
+        duplicate_labels = sorted([label for label, freq in Counter(pheno_labels).items() if freq > 1])
+        if duplicate_labels:
+            msg = ('[phenotypes] labels must be unique; review/revise [{}]')
+            raise _WatermelonConfigFailure(msg, ', '.join(duplicate_labels))
 
     def _check_phenotypes_samples_not_rectangular(self):
         pheno_labels = self.config[watermelon_config.CONFIG_KEYS.phenotypes]
@@ -275,6 +309,85 @@ class _ConfigValidator(object):
             raise _WatermelonConfigWarning(msg_fmt,
                                            ','.join(missing_samples))
 
+    def _check_main_factors_malformed(self):
+        main_factors = len(watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.main_factors]))
+        phenotype_labels = len(watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes]))
+        if main_factors != phenotype_labels:
+            msg_fmt = 'Number of values in [main_factors] and [phenotypes] must match ({}!={})';
+            raise _WatermelonConfigFailure(msg_fmt, main_factors, phenotype_labels)
+
+    def _check_main_factors_illegal_values(self):
+        actual_values = set(watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.main_factors]))
+        legal_values = watermelon_config.MAIN_FACTOR_VALID_VALUES
+        illegal_values = sorted(actual_values - legal_values)
+        illegal_values = ['<blank>' if v=='' else v for v in illegal_values]
+        if illegal_values:
+            msg_fmt = 'Expected [main_factor] values to be ({}) but found ({})';
+            raise _WatermelonConfigFailure(msg_fmt,
+                                           ', '.join(sorted(legal_values)),
+                                           ', '.join(illegal_values))
+
+    def _check_phenotype_labels_illegal_values(self):
+        bad_labels = []
+        actual_labels = watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes])
+        for label in actual_labels:
+            if not _is_name_well_formed(label):
+                bad_labels.append(label)
+        bad_labels = sorted(set(['<blank>' if v=='' else v for v in bad_labels]))
+        if bad_labels:
+            msg_fmt = ('[phenotypes] labels must begin with a letter and can contain '
+                       'only (A-Za-z0-9-_.); review/revise these labels [{}]')
+            raise _WatermelonConfigFailure(msg_fmt, ', '.join(bad_labels))
+
+    def _check_phenotype_labels_reserved_name(self):
+        bad_labels = []
+        actual_labels = watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes])
+        for label in actual_labels:
+            if _is_name_reserved(label):
+                bad_labels.append(label)
+        bad_labels = sorted(set(bad_labels))
+        if bad_labels:
+            msg_fmt = ('[phenotypes] labels cannot be a reserved word ({}); '
+                       'review/revise these labels [{}]')
+            raise _WatermelonConfigFailure(msg_fmt,
+                                           ', '.join(_RESERVED_NAMES),
+                                           ', '.join(bad_labels))
+
+    def _check_phenotype_values_illegal_values(self):
+        label_values = []
+        phenotype_manager = PhenotypeManager(self.config)
+        for label, values in phenotype_manager.phenotype_sample_list.items():
+            for value in values:
+                label_values.append((label, value))
+        bad_label_values = []
+        for label,value in label_values:
+            if value and label and not _is_name_well_formed(value):
+                bad_label_values.append((label, value))
+        bad_label_value_strings = ['{}:{}'.format(l,v) for l,v in sorted(set(bad_label_values))]
+        if bad_label_value_strings:
+            msg_fmt = ('[sample] phenotype values must begin with a letter and can contain '
+                       'only (A-Za-z0-9-_.); review/revise these values [{}]')
+            raise _WatermelonConfigFailure(msg_fmt,
+                                           ', '.join(bad_label_value_strings))
+
+    def _check_phenotype_values_reserved_name(self):
+        label_values = []
+        phenotype_manager = PhenotypeManager(self.config)
+        for label, values in phenotype_manager.phenotype_sample_list.items():
+            for value in values:
+                label_values.append((label, value))
+        bad_label_values = []
+        for label,value in label_values:
+            if value and label and _is_name_reserved(value):
+                bad_label_values.append((label, value))
+        bad_label_value_strings = ['{}:{}'.format(l,v) for l,v in sorted(set(bad_label_values))]
+        if bad_label_value_strings:
+            msg_fmt = ('[sample] phenotype values cannot be a reserved word ({}); '
+                       'review/revise these values [{}]')
+            raise _WatermelonConfigFailure(msg_fmt,
+                                           ', '.join(_RESERVED_NAMES),
+                                           ', '.join(bad_label_value_strings))
+
 def prompt_to_override():
     value = input('Should Watermelon ignore these problems and proceed? (yes/no): ')
     return value.lower().strip() == 'yes'
@@ -299,6 +412,6 @@ def main(config_filename,
     return exit_code
 
 if __name__ == '__main__':
-    config_filepath = sys.argv[1]
+    config_filepath = os.path.realpath(sys.argv[1])
     exit_code = main(config_filepath)
     exit(exit_code)

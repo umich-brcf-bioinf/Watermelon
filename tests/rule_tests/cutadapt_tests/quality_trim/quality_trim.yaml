@@ -27,6 +27,7 @@ alignment_options:
 transcriptome_index:
 comparisons:
 fold_change:
+deseq2_adjustedPValue:
 
 comparisons:
     pLabel: pval1_v_pval2

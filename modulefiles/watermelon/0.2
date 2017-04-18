@@ -1,0 +1,21 @@
+#%Module 1.0
+#
+#  cmake  module for use with 'environment-modules' package:
+#
+
+module-whatis "watermelon: a UMBfxCore Snakemake-based rnaseq pipeline"
+
+set	version	0.2
+set	app		watermelon
+set modroot /nfs/med-bfx-common/pipelines/Watermelon/Watermelon
+
+prepend-path    PATH            $modroot/bin
+
+conflict $app
+
+module unload python
+module load python/3.4.3
+
+if { [ module-info mode load ] } {
+    puts stderr "loaded $app/$version"
+}

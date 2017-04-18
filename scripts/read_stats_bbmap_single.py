@@ -41,8 +41,9 @@ def _parse_command_line_args(sys_argv):
     parser.add_argument(
         '--sample_id',
         type=str,
-        help='Sample id, from which the Sample_ihist.txt and Sample_lhist.txt file '
-              'names will be derived. This id will also be used to identify the output.',
+        help=('Sample id, from which the {sample_id}_ihist.txt and '
+              '{sample_id}_lhist.txt file names will be derived. This id will '
+              'also be used to identify the output.'),
         required=True)
 
     parser.add_argument(
@@ -54,7 +55,8 @@ def _parse_command_line_args(sys_argv):
     parser.add_argument(
         '--input_dir',
         type=str,
-        help='Path to dir containing input files, Sample_ihist.txt and Sample_lhist.txt. ',
+        help=('Path to dir containing input files, Sample_ihist.txt and '
+              'Sample_lhist.txt. '),
         required=True)
 
     args = parser.parse_args(sys_argv)
@@ -102,26 +104,29 @@ def main(sys_argv):
     args = _parse_command_line_args(sys_argv)
 
     #define names and paths
-    in_file_name_1 = args.sample_id + '_lhist.txt'
-    in_file_name_2 = os.path.join(args.input_dir, args.sample_id + '_ihist.txt')
-    out_file_name = args.sample_id + '_read_stats.txt'
-    in_path = args.input_dir
-    out_path = args.output_dir
+    lhist_file_name = os.path.join(args.input_dir, args.sample_id + '_lhist.txt')
+    ihist_file_name = os.path.join(args.input_dir,
+                                   args.sample_id + '_ihist.txt')
+    out_file_name = os.path.join(args.input_dir,
+                                 args.sample_id + '_read_stats.txt')
+    # in_path = args.input_dir
+    # out_path = args.output_dir
 
     #read in files
-    read_data = pd.read_csv(os.path.join(in_path,in_file_name_1),
-                            sep='\t',
-                            header=0)
+    with open(lhist_file_name) as lhist_file:
+        read_data = pd.read_csv(lhist_file,
+                                sep='\t',
+                                header=0)
     read_data.columns = list(map(lambda x: x.lstrip('#'),
                              read_data.columns.values))
 
-    with open(in_file_name_2, 'r') as insert_file:
-        (ins_mean, ins_sd) = _get_mean_stdev_from_ihist(in_file_name_2,
-                                                            insert_file)
+    with open(ihist_file_name, 'r') as insert_file:
+        (ins_mean, ins_sd) = _get_mean_stdev_from_ihist(ihist_file_name,
+                                                        insert_file)
     read_stats_df = _build_read_stats(args.sample_id, ins_mean, ins_sd, read_data)
 
     #write out file
-    with open(os.path.join(out_path,out_file_name), "w") as output:
+    with open(out_file_name, "w") as output:
         wr = csv.writer(output, lineterminator='\n', delimiter='\t')
         wr.writerows(read_stats_df)
 

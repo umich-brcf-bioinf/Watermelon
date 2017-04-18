@@ -11,6 +11,8 @@ except ImportError:
 
 import pandas as pd
 
+from testfixtures.tempdirectory import TempDirectory
+
 from scripts import read_stats_bbmap_single
 
 class ReadStatsBbmapSingleTest(unittest.TestCase):
@@ -192,6 +194,54 @@ class ReadStatsBbmapSingleTest(unittest.TestCase):
                                read_stats_bbmap_single._get_mean_stdev_from_ihist,
                                'file.txt',
                                StringIO(insert_data))
+
+    def test_main_basecase(self):
+        ihist_data = \
+'''
+#Mean|214.904
+#Median|176
+#Mode|151
+#STDev|147.733
+#PercentOfPairs|99.958
+#InsertSize|Count
+'''.replace('|', '\t')
+        lhist_data = \
+'''Length|Count
+1|1
+2|2
+4|3
+8|4'''.replace('|', '\t')
+        with TempDirectory() as in_dir, TempDirectory() as out_dir:
+            in_dir.write('sampleA_ihist.txt', ihist_data.encode())
+            in_dir.write('sampleA_lhist.txt', lhist_data.encode())
+            args = ('--sample_id sampleA '
+                    '--output_dir {} '
+                    '--input_dir {}').format(out_dir.path, in_dir.path).split()
+            read_stats_bbmap_single.main(args)
+            output_content = out_dir.read('sampleA_read_stats.txt')
+        self.assertEqual('foo', output_content)
+
+
+    def test_main_missingLhist(self):
+        with TempDirectory() as temp_dir:
+            temp_dir.write('sampleA_ihist.txt', b'stuff')
+            args = '--sample_id sampleA --output_dir out_dir --input_dir {}'.format(temp_dir.path).split()
+            self.assertRaisesRegex(OSError,
+                                   r"No such file or directory.*/sampleA_lhist.txt",
+                                   read_stats_bbmap_single.main,
+                                   args)
+
+    def test_main_missingIhist(self):
+        with TempDirectory() as temp_dir:
+            temp_dir.write('sampleA_lhist.txt', b'stuff')
+            args = '--sample_id sampleA --output_dir out_dir --input_dir {}'.format(temp_dir.path).split()
+            self.assertRaisesRegex(OSError,
+                                   r"No such file or directory.*/sampleA_ihist.txt",
+                                   read_stats_bbmap_single.main,
+                                   args)
+
+
+
 
 
     # def test_main_lhistEmpty(self):

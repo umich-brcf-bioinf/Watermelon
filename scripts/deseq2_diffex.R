@@ -94,6 +94,7 @@ if (is.null(opt$countDataFile)) {
 } else
   message('Inputs detected: countDataFile, metaDataFile, contrastFile. Continue...')
 
+options(pandoc.stack.size = 4000000000)
 options(java.parameters = paste0('-Xmx',opt$memoryInGb,'g'))
 threads <- opt$threads
 

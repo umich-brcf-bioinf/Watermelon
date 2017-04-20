@@ -107,7 +107,7 @@ def main(sys_argv):
     lhist_file_name = os.path.join(args.input_dir, args.sample_id + '_lhist.txt')
     ihist_file_name = os.path.join(args.input_dir,
                                    args.sample_id + '_ihist.txt')
-    out_file_name = os.path.join(args.input_dir,
+    out_file_name = os.path.join(args.output_dir,
                                  args.sample_id + '_read_stats.txt')
     # in_path = args.input_dir
     # out_path = args.output_dir

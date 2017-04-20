@@ -218,8 +218,12 @@ class ReadStatsBbmapSingleTest(unittest.TestCase):
                     '--output_dir {} '
                     '--input_dir {}').format(out_dir.path, in_dir.path).split()
             read_stats_bbmap_single.main(args)
-            output_content = out_dir.read('sampleA_read_stats.txt')
-        self.assertEqual('foo', output_content)
+            actual_lines = out_dir.read('sampleA_read_stats.txt').split(b'\n')
+        line_iter = iter(actual_lines)
+        self.assertEqual(b'#sample\tinsert_mean\tinsert_std_dev\tread_mean\tinner_mate_dist', next(line_iter))
+        self.assertEqual(b'sampleA\t214.904\t147.733\t4.9\t205.104', next(line_iter))
+        self.assertEqual(b'', next(line_iter))
+        self.assertRaises(StopIteration, next, line_iter)
 
 
     def test_main_missingLhist(self):

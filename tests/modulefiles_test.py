@@ -81,6 +81,9 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
         self.check_command(command, "Python 2.7.9", "wrong python version")
 
     def test_module_loads_correct_versions(self):
+        command = self.build_command("bbmap.sh --version 2>&1 | grep 'BBMap version' || echo 'not installed'")
+        self.check_command(command, "37.02", "BBMap wrong version")
+
         command = self.build_command("mutt -v | head -1")
         self.check_command(command, "\d*\.\d+", "mutt not installed")
 
@@ -123,7 +126,7 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
                    "Getopt::Long",
                    "HTTP::Cookies",
                    "MIME::Lite",
-                   "SOAP::Lite"] 
+                   "SOAP::Lite"]
         for module_name in modules:
             command = self.build_command("perl -M{} -e 0".format(module_name))
             try:

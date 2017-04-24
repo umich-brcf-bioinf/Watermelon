@@ -151,7 +151,7 @@ class PhenotypeManager(object):
         Specifically {phenotype_label : {phenotype_value : [list of samples] } }
 
         Strips all surrounding white space.
-    
+
         phenotypes_string : delimited phenotype labels (columns)
         sample_phenotype_value_dict : {sample_id : delimited phenotype_value_string} (rows)
         '''
@@ -178,7 +178,7 @@ class PhenotypeManager(object):
         sorted_sample_phenotypes_items = sorted([(k, v) for k,v in self.sample_phenotype_value_dict.items()])
         for sample, phenotype_values in sorted_sample_phenotypes_items:
             sample_phenotype_values = list(map(str.strip, phenotype_values.split(self.delimiter)))
-            sample_phenotypes = dict(zip(phenotype_labels, sample_phenotype_values)) 
+            sample_phenotypes = dict(zip(phenotype_labels, sample_phenotype_values))
             check_labels_match_values(phenotype_labels,
                                       sample,
                                       sample_phenotype_values)
@@ -204,7 +204,7 @@ class PhenotypeManager(object):
             unique_conditions = set()
             for group in comparison_list:
                 unique_conditions.update(group.split(self.comparison_infix))
-            values = sorted(unique_conditions) 
+            values = sorted(unique_conditions)
             phenotype_label_values[phenotype] = values
         return phenotype_label_values
 
@@ -236,7 +236,7 @@ class PhenotypeManager(object):
         '''Returns a list of sample files grouped by phenotype value.
            Each sample group represents the comma separated samples for a phenotype value.
            Sample groups are separated by a space.
-           
+
            sample_file_format is format string with placeholder {sample_placeholder}'''
 
         group_separator = ' '
@@ -258,10 +258,9 @@ class PhenotypeManager(object):
         return group_separator.join(params)
 
 
-
-def check_strand_option(library_type,strand_option):
-    strand_config_param = { 'fr-unstranded' : {'tuxedo': 'fr-unstranded', 'htseq': 'no'}, 
-                            'fr-firststrand' : {'tuxedo' : 'fr-firststrand', 'htseq': 'yes'}, 
+def _get_strand_option(tuxedo_or_htseq, strand_option):
+    strand_config_param = { 'fr-unstranded' : {'tuxedo': 'fr-unstranded', 'htseq': 'no'},
+                            'fr-firststrand' : {'tuxedo' : 'fr-firststrand', 'htseq': 'yes2'},
                             'fr-secondstrand' : {'tuxedo' : 'fr-secondstrand', 'htseq': 'reverse'} }
 
     if not strand_option in strand_config_param.keys():
@@ -269,11 +268,14 @@ def check_strand_option(library_type,strand_option):
         msg = msg_format.format(strand_option)
         raise ValueError(msg)
 
-    try:
-        param_value = strand_config_param[strand_option][library_type]
-        return param_value
-    except KeyError:
-        raise KeyError('invalid library type option: ', library_type)
+    return strand_config_param[strand_option][tuxedo_or_htseq]
+
+def tuxedo_strand_option(config_strand_option):
+    return None
+
+def htseq_strand_option(config_strand_option):
+    return None
+
 
 
 def cutadapt_options(trim_params):

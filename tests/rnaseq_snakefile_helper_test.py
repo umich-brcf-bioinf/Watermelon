@@ -520,3 +520,20 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
                                r'config:alignment_options:transcriptome_only.*True.*False',
                                rnaseq_snakefile_helper.tophat_options,
                                config_alignment_options)
+
+    def test_check_strand_option_validTypesOptions(self):
+        check = rnaseq_snakefile_helper.check_strand_option
+        self.assertEqual('fr-unstranded', check('fr-unstranded', 'tophat'))
+        self.assertEqual('no', check('fr-unstranded', 'htseq'))
+        self.assertEqual('fr-firststrand', check('fr-firststrand', 'tophat'))
+        self.assertEqual('yes2', check('fr-fi    rststrand', 'htseq'))
+        self.assertEqual('fr-secondstrand', check('fr-secondstrand', 'tophat'))
+        self.assertEqual('reverse', check('fr-secondstrand', 'htseq'))
+
+    def test_check_strand_option_invalidOption(self):
+        check = rnaseq_snakefile_helper.check_strand_option
+        self.assertRaisesRegex(ValueError,
+                               'invalid option [foo]',
+                               check,
+                               'fr-unstranded',
+                               'foo')

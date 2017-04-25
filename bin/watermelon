@@ -178,7 +178,7 @@ echo 0 > .watermelon.exitcode
 echo "watermelon (v${WATERMELON_VERSION}) begins"
 set +e
 
-snakemake_command="snakemake --keep-going --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} --cores ${CORES} -T ${DRYRUN} ${EXTRA_ARGUMENTS}"
+snakemake_command="snakemake --printshellcmds --keep-going --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} --cores ${CORES} -T ${DRYRUN} ${EXTRA_ARGUMENTS}"
     echo $snakemake_command
 unbuffer $snakemake_command
 SNAKEMAKE_EXIT=$?

@@ -1,5 +1,9 @@
 Changelog
 =========
+0.2.1 (4/25/2017)
+-----------------
+- Corrected the way HTSeq process stranded data
+- Adjusted watermelon shell script to always print/log shell commands
 
 0.2 (4/17/2017)
 ---------------

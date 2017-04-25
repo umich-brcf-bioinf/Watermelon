@@ -21,6 +21,13 @@ FILE_EXTENSION = '.watermelon.md5'
 '''Appended to all checksum filenames; must be very distinctive to ensure the module can
 unambiguously identify and safely remove extraneous checksums.'''
 
+TOPHAT_NAME = 'tophat'
+HTSEQ_NAME = 'htseq'
+
+STRAND_CONFIG_PARAM = { 'fr-unstranded' : {TOPHAT_NAME: 'fr-unstranded', HTSEQ_NAME: 'no'},
+                        'fr-firststrand' : {TOPHAT_NAME : 'fr-firststrand', HTSEQ_NAME: 'reverse'},
+                        'fr-secondstrand' : {TOPHAT_NAME : 'fr-secondstrand', HTSEQ_NAME: 'yes'} }
+
 def _mkdir(newdir):
     """works the way a good mkdir should :)
         - already exists, silently complete
@@ -257,26 +264,19 @@ class PhenotypeManager(object):
 
         return group_separator.join(params)
 
-
-def _get_strand_option(tuxedo_or_htseq, strand_option):
-    strand_config_param = { 'fr-unstranded' : {'tuxedo': 'fr-unstranded', 'htseq': 'no'},
-                            'fr-firststrand' : {'tuxedo' : 'fr-firststrand', 'htseq': 'yes2'},
-                            'fr-secondstrand' : {'tuxedo' : 'fr-secondstrand', 'htseq': 'reverse'} }
-
-    if not strand_option in strand_config_param.keys():
-        msg_format = "ERROR: 'alignment_options:library_type' in config file is '{}'. Valid library_type options are: 'fr-unstranded', 'fr-firststrand', 'fr-secondstrand'."
-        msg = msg_format.format(strand_option)
+def _strand_option(tuxedo_or_htseq, strand_option):
+    if not strand_option in STRAND_CONFIG_PARAM:
+        msg_format = ('ERROR: config:alignment_options:library_type={} is '
+                      'not valid. Valid library_type options are: {}')
+        msg = msg_format.format(strand_option, ','.join(STRAND_CONFIG_PARAM.keys()))
         raise ValueError(msg)
+    return STRAND_CONFIG_PARAM[strand_option][tuxedo_or_htseq]
 
-    return strand_config_param[strand_option][tuxedo_or_htseq]
+def strand_option_tophat(config_strand_option):
+    return _strand_option(TOPHAT_NAME, config_strand_option)
 
-def tuxedo_strand_option(config_strand_option):
-    return None
-
-def htseq_strand_option(config_strand_option):
-    return None
-
-
+def strand_option_htseq(config_strand_option):
+    return _strand_option(HTSEQ_NAME, config_strand_option)
 
 def cutadapt_options(trim_params):
     run_trimming_options = 0
@@ -288,7 +288,6 @@ def cutadapt_options(trim_params):
         if value != 0:
             run_trimming_options = 1
     return run_trimming_options
-
 
 def tophat_options(alignment_options):
     options = ""

@@ -521,19 +521,26 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
                                rnaseq_snakefile_helper.tophat_options,
                                config_alignment_options)
 
-    def test_check_strand_option_validTypesOptions(self):
-        check = rnaseq_snakefile_helper.check_strand_option
-        self.assertEqual('fr-unstranded', check('fr-unstranded', 'tophat'))
-        self.assertEqual('no', check('fr-unstranded', 'htseq'))
-        self.assertEqual('fr-firststrand', check('fr-firststrand', 'tophat'))
-        self.assertEqual('yes2', check('fr-fi    rststrand', 'htseq'))
-        self.assertEqual('fr-secondstrand', check('fr-secondstrand', 'tophat'))
-        self.assertEqual('reverse', check('fr-secondstrand', 'htseq'))
+    def test_check_strand_option_htseq_validOptions(self):
+        check = rnaseq_snakefile_helper.strand_option_htseq
+        self.assertEqual('no', check('fr-unstranded'))
+        self.assertEqual('reverse', check('fr-firststrand'))
+        self.assertEqual('yes', check('fr-secondstrand'))
 
-    def test_check_strand_option_invalidOption(self):
-        check = rnaseq_snakefile_helper.check_strand_option
+    def test_check_strand_option_htseq_invalidOption(self):
         self.assertRaisesRegex(ValueError,
-                               'invalid option [foo]',
-                               check,
-                               'fr-unstranded',
+                               r'ERROR: .*=foo.*not valid',
+                               rnaseq_snakefile_helper.strand_option_htseq,
+                               'foo')
+
+    def test_check_strand_option_tophat_validOptions(self):
+        check = rnaseq_snakefile_helper.strand_option_tophat
+        self.assertEqual('fr-unstranded', check('fr-unstranded'))
+        self.assertEqual('fr-firststrand', check('fr-firststrand'))
+        self.assertEqual('fr-secondstrand', check('fr-secondstrand'))
+
+    def test_check_strand_option_tophat_invalidOption(self):
+        self.assertRaisesRegex(ValueError,
+                               r'ERROR: .*=foo.*not valid',
+                               rnaseq_snakefile_helper.strand_option_tophat,
                                'foo')

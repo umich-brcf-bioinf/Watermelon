@@ -193,7 +193,7 @@ rule create_transcriptome_index:
         transcriptome_dir = "transcriptome_index",
         temp_dir =  ALIGNMENT_DIR + "04-tophat/.tmp",
         output_dir = ALIGNMENT_DIR + "04-tophat",
-        strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"]) 
+        strand = rnaseq_snakefile_helper.strand_option_tophat(config["alignment_options"]["library_type"]) 
     log: 
         ALIGNMENT_DIR + "04-tophat/.log/create_transcriptome_index.log"
     shell:
@@ -225,7 +225,7 @@ rule tophat:
         tophat_dir = ALIGNMENT_DIR + "04-tophat",
         sample = lambda wildcards: wildcards.sample,
         tophat_options = lambda wildcards: rnaseq_snakefile_helper.tophat_options(config["alignment_options"]),
-        strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"])
+        strand = rnaseq_snakefile_helper.strand_option_tophat(config["alignment_options"]["library_type"])
     log:
         ALIGNMENT_DIR + "04-tophat/.log/{sample}_tophat.log"
     threads: 8
@@ -320,7 +320,7 @@ rule tuxedo_cuffdiff:
         labels = lambda wildcards : phenotypeManager.concatenated_comparison_values(',')[wildcards.pheno],
         samples = lambda wildcards : phenotypeManager.cuffdiff_samples(wildcards.pheno,
                                                                        ALIGNMENT_DIR + "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
-        strand = rnaseq_snakefile_helper.check_strand_option("tuxedo", config["alignment_options"]["library_type"])
+        strand = rnaseq_snakefile_helper.strand_option_tophat(config["alignment_options"]["library_type"])
     threads: 8
     log:
         TUXEDO_DIR + "01-cuffdiff/.log/{pheno}_cuffdiff.log"
@@ -618,7 +618,7 @@ rule deseq2_htseq:
         DESEQ2_DIR + "01-htseq/{sample}_counts.txt"
     threads: 2
     params:
-        strand = rnaseq_snakefile_helper.check_strand_option("htseq", config["alignment_options"]["library_type"])
+        strand = rnaseq_snakefile_helper.strand_option_htseq(config["alignment_options"]["library_type"])
     log:
         DESEQ2_DIR + "01-htseq/.log/{sample}_htseq_per_sample.log"
     shell:

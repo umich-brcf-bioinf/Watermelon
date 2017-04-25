@@ -21,6 +21,13 @@ FILE_EXTENSION = '.watermelon.md5'
 '''Appended to all checksum filenames; must be very distinctive to ensure the module can
 unambiguously identify and safely remove extraneous checksums.'''
 
+TOPHAT_NAME = 'tophat'
+HTSEQ_NAME = 'htseq'
+
+STRAND_CONFIG_PARAM = { 'fr-unstranded' : {TOPHAT_NAME: 'fr-unstranded', HTSEQ_NAME: 'no'},
+                        'fr-firststrand' : {TOPHAT_NAME : 'fr-firststrand', HTSEQ_NAME: 'reverse'},
+                        'fr-secondstrand' : {TOPHAT_NAME : 'fr-secondstrand', HTSEQ_NAME: 'yes'} }
+
 def _mkdir(newdir):
     """works the way a good mkdir should :)
         - already exists, silently complete
@@ -151,7 +158,7 @@ class PhenotypeManager(object):
         Specifically {phenotype_label : {phenotype_value : [list of samples] } }
 
         Strips all surrounding white space.
-    
+
         phenotypes_string : delimited phenotype labels (columns)
         sample_phenotype_value_dict : {sample_id : delimited phenotype_value_string} (rows)
         '''
@@ -178,7 +185,7 @@ class PhenotypeManager(object):
         sorted_sample_phenotypes_items = sorted([(k, v) for k,v in self.sample_phenotype_value_dict.items()])
         for sample, phenotype_values in sorted_sample_phenotypes_items:
             sample_phenotype_values = list(map(str.strip, phenotype_values.split(self.delimiter)))
-            sample_phenotypes = dict(zip(phenotype_labels, sample_phenotype_values)) 
+            sample_phenotypes = dict(zip(phenotype_labels, sample_phenotype_values))
             check_labels_match_values(phenotype_labels,
                                       sample,
                                       sample_phenotype_values)
@@ -204,7 +211,7 @@ class PhenotypeManager(object):
             unique_conditions = set()
             for group in comparison_list:
                 unique_conditions.update(group.split(self.comparison_infix))
-            values = sorted(unique_conditions) 
+            values = sorted(unique_conditions)
             phenotype_label_values[phenotype] = values
         return phenotype_label_values
 
@@ -236,7 +243,7 @@ class PhenotypeManager(object):
         '''Returns a list of sample files grouped by phenotype value.
            Each sample group represents the comma separated samples for a phenotype value.
            Sample groups are separated by a space.
-           
+
            sample_file_format is format string with placeholder {sample_placeholder}'''
 
         group_separator = ' '
@@ -257,24 +264,19 @@ class PhenotypeManager(object):
 
         return group_separator.join(params)
 
-
-
-def check_strand_option(library_type,strand_option):
-    strand_config_param = { 'fr-unstranded' : {'tuxedo': 'fr-unstranded', 'htseq': 'no'}, 
-                            'fr-firststrand' : {'tuxedo' : 'fr-firststrand', 'htseq': 'yes'}, 
-                            'fr-secondstrand' : {'tuxedo' : 'fr-secondstrand', 'htseq': 'reverse'} }
-
-    if not strand_option in strand_config_param.keys():
-        msg_format = "ERROR: 'alignment_options:library_type' in config file is '{}'. Valid library_type options are: 'fr-unstranded', 'fr-firststrand', 'fr-secondstrand'."
-        msg = msg_format.format(strand_option)
+def _strand_option(tuxedo_or_htseq, strand_option):
+    if not strand_option in STRAND_CONFIG_PARAM:
+        msg_format = ('ERROR: config:alignment_options:library_type={} is '
+                      'not valid. Valid library_type options are: {}')
+        msg = msg_format.format(strand_option, ','.join(STRAND_CONFIG_PARAM.keys()))
         raise ValueError(msg)
+    return STRAND_CONFIG_PARAM[strand_option][tuxedo_or_htseq]
 
-    try:
-        param_value = strand_config_param[strand_option][library_type]
-        return param_value
-    except KeyError:
-        raise KeyError('invalid library type option: ', library_type)
+def strand_option_tophat(config_strand_option):
+    return _strand_option(TOPHAT_NAME, config_strand_option)
 
+def strand_option_htseq(config_strand_option):
+    return _strand_option(HTSEQ_NAME, config_strand_option)
 
 def cutadapt_options(trim_params):
     run_trimming_options = 0
@@ -286,7 +288,6 @@ def cutadapt_options(trim_params):
         if value != 0:
             run_trimming_options = 1
     return run_trimming_options
-
 
 def tophat_options(alignment_options):
     options = ""

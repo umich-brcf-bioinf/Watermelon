@@ -1,5 +1,10 @@
 Changelog
 =========
+
+0.2.2 (5/3/2017)
+----------------
+- Corrected bug that crashed pipeline if only one phenotype specified 
+
 0.2.1 (4/25/2017)
 -----------------
 - Corrected the way HTSeq process stranded data

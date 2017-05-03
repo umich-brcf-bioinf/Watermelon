@@ -7,6 +7,12 @@ from scripts import watermelon_config
 
 class WatermelonConfigTest(unittest.TestCase):
 
+    def test_split_config_boolean_true(self):
+        self.assertEqual(['yes'], watermelon_config.split_config_list(True))
+
+    def test_split_config_boolean_false(self):
+        self.assertEqual(['no'], watermelon_config.split_config_list(False))
+
     def test_split_config_list(self):
         self.assertEqual(['A','B','C'], watermelon_config.split_config_list('A^B^C'))
 

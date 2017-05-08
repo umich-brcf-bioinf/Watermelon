@@ -679,7 +679,8 @@ rule deseq2_diffex:
         "    --foldChange={params.fold_change} "
         "    --adjustedPValue={params.adjusted_pvalue} "
         "    --threads={threads} "
-        "    --memoryInGb=16 2>&1 | tee {log} && "
+        "    --javaMemoryInGb=16 2>&1 "
+        "    --pandocMemoryInGb=16 2>&1 | tee {log} && "
         "mv {output.dir}/.tmp/* {output.dir} && "
         "touch {output.dir} && "
         "rm -f Rplots.pdf " #Some part of R generates this empty (nuisance) plot

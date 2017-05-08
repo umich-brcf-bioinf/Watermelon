@@ -39,7 +39,8 @@
 #     - A sheet containing only data for differentially expressed genes is created
 #######
 
-DEFAULT_MEMORY_IN_GB = 8
+DEFAULT_JAVA_MEMORY_IN_GB = 8
+DEFAULT_PANDOC_MEMORY_IN_GB = 8
 DEFAULT_THREADS = 4
 
 print_options <- function(opt) {
@@ -68,9 +69,10 @@ option_list = list(
               help = 'Adjusted p-value below which a genes is considered for differential expression.'),
   make_option(c('--threads'), type = 'integer', default = DEFAULT_THREADS,
               help = 'Number of parallel processes (CPUs) to use.'),
-  make_option(c('--memoryInGb'), type = 'integer', default = DEFAULT_MEMORY_IN_GB,
-              help = 'Max memory (Gb) allocated to Java VM (-Xmx).')
-
+  make_option(c('--javaMemoryInGb'), type = 'integer', default = DEFAULT_JAVA_MEMORY_IN_GB,
+              help = 'Max memory (Gb) allocated to Java VM (-Xmx).'),
+  make_option(c('--pandocMemoryInGb'), type = 'integer', default = DEFAULT_PANDOC_MEMORY_IN_GB,
+              help = 'Max memory (Gb) allocated to pandoc.')
 );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -97,7 +99,8 @@ if (is.null(opt$countDataFile)) {
 } else
   message('countDataFile, metaDataFile, contrastFile, foldChange, and adjustedPValue detected. Continue.')
 
-options(java.parameters = paste0('-Xmx',opt$memoryInGb,'g'))
+options(java.parameters = paste0('-Xmx',opt$javaMemoryInGb,'g'))
+options(pandoc.stack.size=paste0(opt$pandocMemoryInGb,'g'))
 threads <- opt$threads
 
 print_options(opt)
@@ -404,17 +407,17 @@ for (i in 1:length(uniqGroups)){
 }
 
 cat('\tcorrelation plots:SKIPPING all v all\n')
-# if(length(1:ncol(rldDf)) < 10){
-#   cat('\tcorrelation plots:all v all\n')
-#   acp <- ggpairs(data = rldDf[1:ncol(rldDf)],upper = list(continuous = wrap(ggally_cor, use = 'pairwise.complete.obs', method = 'spearman')), title = 'All samples') + theme_bw()
-#   acp <- ggplotly(acp)
-#   path_name <- file.path(getwd(),plotsDir_comparison,'CorrelMatrix_All.html')
-#   htmlwidgets::saveWidget(acp, file = path_name)
-#   delDir <- file.path(getwd(),plotsDir_comparison,'CorrelMatrix_All_files')
-#   unlink(x = delDir, recursive = TRUE, force = TRUE)
-# }else{
-#   message('Too many samples for all vs all CorrelMatrix. Skipping...')
-# }
+if(length(1:ncol(rldDf)) < 10){
+   cat('\tcorrelation plots:all v all\n')
+   acp <- ggpairs(data = rldDf[1:ncol(rldDf)],upper = list(continuous = wrap(ggally_cor, use = 'pairwise.complete.obs', method = 'spearman')), title = 'All samples') + theme_bw()
+   acp <- ggplotly(acp)
+   path_name <- file.path(getwd(),plotsDir_comparison,'CorrelMatrix_All.html')
+   htmlwidgets::saveWidget(acp, file = path_name)
+   delDir <- file.path(getwd(),plotsDir_comparison,'CorrelMatrix_All_files')
+   unlink(x = delDir, recursive = TRUE, force = TRUE)
+ } else{
+   message('Too many samples for all vs all CorrelMatrix. Skipping...')
+ }
 
 cat('\twriting counts files\n')
 setDT(rawCountsDf, keep.rownames = TRUE)[] #set rownames to valid column

@@ -99,7 +99,7 @@ class WatermelonTest(unittest.TestCase):
         self.assertRegexpMatches(actual_log, r'3 of 3 steps \(100%\) done')
         self.assertRegexpMatches(actual_log, r'elapsed seconds: \d+')
         self.assertRegexpMatches(actual_log, r'elapsed time: 0h:0m:\d+s')
-        self.assertRegexpMatches(actual_log, r'Watermelon complete')
+        self.assertRegexpMatches(actual_log, r'watermelon complete')
 
 
     def test_watermelon_skipsLogsOnDryrun(self):

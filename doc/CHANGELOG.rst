@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2.3 (5/8/2017)
+----------------
+- Corrected bug memory allocation probelm in deseq2/pandoc to prevents deseq2 from occasionally crashing
+- Adjusted watermelon to filter console logging to progress messages
+- Speed dry-run mode by skipping follow-on "summary detail" job   
+
 0.2.2 (5/3/2017)
 ----------------
 - Corrected bug that crashed pipeline if only one phenotype specified 

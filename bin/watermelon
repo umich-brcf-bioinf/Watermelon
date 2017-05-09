@@ -10,6 +10,9 @@ export LOG_DIR=logs/${RUN_TIME}
 export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
 export SNAKEFILE=${WATERMELON_ROOT_DIR}/rnaseq.snakefile
 export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
+export PROGRESS_FILTER='^watermelon|snakemake|rule.*:|wildcards|error|step|elapsed|Nothing to be done|^\t\w+\t\w+'
+export VERBOSE_FILTER='.*'
+export CONSOLE_LOG_FILTER=$PROGRESS_FILTER
 
 export CONFIG_FILE='config.yaml'
 export CORES=40
@@ -48,6 +51,7 @@ Options:
     --cores [N]      : =40, use at most N cores in parallel
     --dag            : create DAG files (in working dir) to visualize execution plan
     -n, --dryrun     : show plan without executing anything
+    -v, --verbose    : show verbose console log
     --help           : shows this message
 
 v${WATERMELON_VERSION}
@@ -100,6 +104,10 @@ function parse_args {
                 SKIP_CONFIG_VALIDATION="SKIP_CONFIG_VALIDATION"
                 shift
                 ;;
+            -v | --verbose)
+                CONSOLE_LOG_FILTER=$VERBOSE_FILTER
+                shift
+                ;;
             *)  # Pass this option/arg through
                 PASS_THROUGH_ARGS+=("$1")
                 shift
@@ -110,6 +118,7 @@ function parse_args {
     readonly DRYRUN
     readonly DAG
     readonly SNAKEFILE
+    readonly CONSOLE_LOG_FILTER
 }
 
 set_expanded_options "$@"
@@ -183,20 +192,23 @@ snakemake_command="snakemake --printshellcmds --keep-going --configfile ${CONFIG
 unbuffer $snakemake_command
 SNAKEMAKE_EXIT=$?
 
-snakemake --snakefile ${SNAKEFILE} --configfile ${CONFIG_FILE} -D > ${WATERMELON_DETAILED_SUMMARY}
+if [[ -z "$DRYRUN" ]]; then
+    echo "watermelon: generating result summary"
+    snakemake --snakefile ${SNAKEFILE} --configfile ${CONFIG_FILE} -D > ${WATERMELON_DETAILED_SUMMARY}
+fi
 
 printf 'elapsed seconds: %d\n' ${SECONDS}
 printf 'elapsed time: %dh:%dm:%ds\n' $((${SECONDS}/3600)) $((${SECONDS}%3600/60)) $((${SECONDS}%60))
 
 if [[ $SNAKEMAKE_EXIT != 0 ]]; then
-    mail_subject="Watermelon failed: ${CONFIG_FILEPATH}"
+    mail_subject="watermelon failed: ${CONFIG_FILEPATH}"
     mail_message="ERROR: Watermelon failed: ${CONFIG_FILEPATH}.\n"
     if [[ -z "$DRYRUN" ]]; then
-        mail_message="${mail_message}See logs for details: ${LOG_FILEPATH}"
+        mail_message="${mail_message}watermelon: See logs for details: ${LOG_FILEPATH}"
     fi
     echo ${SNAKEMAKE_EXIT} > .watermelon.exitcode
 else
-    mail_subject="Watermelon complete: ${CONFIG_FILEPATH} (No errors)"
+    mail_subject="watermelon complete: ${CONFIG_FILEPATH} (No errors)"
     mail_message=$mail_subject
 fi
 
@@ -211,7 +223,7 @@ if [[ "$WATERMELON_EMAIL_ENABLED" = true ]]; then
         -m "${mail_message}"
 fi
 
-) 2>&1 | tee ${LOG_FILE}
+) 2>&1 | tee ${LOG_FILE} | grep -Pi -e "${CONSOLE_LOG_FILTER}"
 
 EXIT_CODE=$(cat .watermelon.exitcode)
 exit ${EXIT_CODE}

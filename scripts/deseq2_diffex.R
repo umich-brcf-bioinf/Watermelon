@@ -205,7 +205,11 @@ sampleColData <- sampleColData[,2:ncol(sampleColData)]
 z <- 1
 for (i in names(sampleColData[1:length(sampleColData)])) {
   if (i != 'combinatoric_group'){
-    pdf(file = paste(plotsDir_comparison, i,'PCAplot.pdf', sep = '/'))
+    pca_dir <- paste(plotsDir_comparison, i, sep='/')
+    dir.create(pca_dir, recursive=TRUE)
+    pca_filename <- paste(pca_dir, 'PCAplot.pdf', sep = '/') 
+    cat(paste0('building plot: [', pca_filename, ']\n'))
+    pdf(file = pca_filename)
     p <- plotPCA(rld, intgroup = i) #get PCA components
     Group <- factor(unlist(sampleColData[z]))
     Replicates <- factor(unlist(replicateColData[z]))
@@ -219,7 +223,7 @@ for (i in names(sampleColData[1:length(sampleColData)])) {
   }
 }
 
-#interactive html plots
+message('Interactive html plots')
 gp <- ggplotly(gp)
 path_name <- file.path(plotsDir_summary, 'PCAplot_All.html')
 htmlwidgets::saveWidget(gp, file = path_name, selfcontained = TRUE)
@@ -235,6 +239,7 @@ for (i in names(sampleColData[1:length(sampleColData)])) {
     g <- ggplot(p$data, aes(x = PC1, y = PC2, color = Replicates, shape = Group)) + xlab(p$labels[2]) + ylab(p$labels[1]) + scale_shape_manual(values=1:nlevels(Group)) + geom_point(size=2) + ggtitle(label = as.character(i)) + theme(plot.title = element_text(hjust = 0.5)) + theme_classic()
     g <- ggplotly(g)
     path_name <- file.path(plotsDir_comparison, paste(i,'PCAplot.html', sep = '/'))
+    message(paste0('saving: [',path_name,']'))
     htmlwidgets::saveWidget(g,file = path_name)
     delDir <- gsub(pattern = '.html', replacement = '_files', x = path_name)
     unlink(x = delDir, recursive = TRUE, force = TRUE)
@@ -245,7 +250,7 @@ for (i in names(sampleColData[1:length(sampleColData)])) {
   }
 }
 
-cat('calculating dispersion\n')
+message('calculating dispersion')
 #Normalize and calculate dispersions
 dds <- DESeq(dds, betaPrior = TRUE, parallel = TRUE)
 

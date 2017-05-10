@@ -5,8 +5,8 @@ gene_symbol 	Xist	NCBI Gene Symbol (from Entrez gene_info)
 gene_id	213742	NCBI Gene ID (from Entrez gene_info)
 gene_desc 	inactive X specific transcripts	Gene Description (from Entrez gene_info)
 locus	chrX:103460372-103483233	Genomic coordinates for easy browsing to the genes or transcripts being tested
-sample 1	Treated	Label (or number if no labels provided) of the first sample being tested
-sample 2	Control	Label (or number if no labels provided) of the second sample being tested
+sample 1	Control	Label (or number if no labels provided)
+sample 2	Treated	Label (or number if no labels provided)
 status 	OK	Can be one of OK (test successful), NOTEST (not enough alignments for testing), LOWDATA (too complex or shallowly sequenced), HIDATA (too many fragments in locus), or FAIL, when an ill-conditioned covariance matrix or other numerical exception prevents testing
 value_1 	34.799	FPKM of the gene in sample_1
 value_2 	11260.700	FPKM of the gene in sample_2

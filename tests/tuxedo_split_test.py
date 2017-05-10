@@ -29,6 +29,9 @@ class MockHandler(object):
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 SCRIPTS_DIR = os.path.join(os.path.dirname(TEST_DIR), 'scripts')
 class TuxedoSplitTest(unittest.TestCase):
+    def test_TEST_CONTROL_COLUMNS(self):
+        self.assertEqual(['sample_2', 'sample_1'], tuxedo_split._TEST_CONTROL_COLUMNS)
+
     def test_raisesValueErrorIfMissingRequiredColumns(self):
         args = Namespace(input_filepath='input.txt')
         df_contents = StringIO('field1\n')
@@ -102,18 +105,18 @@ class TuxedoSplitTest(unittest.TestCase):
     def test_split_comparisons_callsHandleForEachDistinctSetOfValues(self):
         df_contents = StringIO(\
 '''sample_1|sample_2|foo|bar
-E|F|1|2
-A|B|1|2
-C|D|1|2
-E|F|1|2
-E|F|1|2
-C|D|1|2
-E|F|1|2''')
+F|E|1|2
+B|A|1|2
+D|C|1|2
+F|E|1|2
+F|E|1|2
+D|C|1|2
+F|E|1|2''')
         df = pd.read_csv(df_contents, sep='|')
-    
+
         mock_handler = MockHandler()
         mock_logger = lambda x: None
-        group_by_cols = ['sample_1', 'sample_2']
+        group_by_cols = ['sample_2', 'sample_1']
         tuxedo_split._split_comparisons('_', df, group_by_cols, mock_handler, mock_logger)
 
         self.assertEqual(3, len(mock_handler._comparisons))
@@ -127,7 +130,7 @@ E|F|1|2''')
                          comparison_infix='_')
         df_contents = StringIO(\
 '''sample_1|sample_2
-A|B''')
+B|A''')
         df = pd.read_csv(df_contents, sep='|')
         self.assertRaisesRegexp(ValueError,
                                 (r'Input file \[input.txt\] is missing requested '
@@ -206,13 +209,13 @@ class SplitDiffexFunctoinalTest(unittest.TestCase):
 
             input_file_contents = \
 '''sample_1|sample_2|status|significant|diff_exp|log2(fold_change)
-E|F|OK|yes|yes|2
-A|B|OK|yes|yes|2
-C|D|OK|yes|yes|2
-E|F|OK|yes|yes|2
-E|F|OK|yes|yes|2
-C|D|OK|yes|yes|2
-E|F|OK|yes|yes|2'''.replace('|', '\t')
+F|E|OK|yes|yes|2
+B|A|OK|yes|yes|2
+D|C|OK|yes|yes|2
+F|E|OK|yes|yes|2
+F|E|OK|yes|yes|2
+D|C|OK|yes|yes|2
+F|E|OK|yes|yes|2'''.replace('|', '\t')
 
             with open(input_filename, 'w') as input_file:
                 input_file.write(input_file_contents)

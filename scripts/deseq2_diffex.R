@@ -69,8 +69,6 @@ option_list = list(
               help = 'Adjusted p-value below which a genes is considered for differential expression.'),
   make_option(c('--threads'), type = 'integer', default = DEFAULT_THREADS,
               help = 'Number of parallel processes (CPUs) to use.'),
-  make_option(c('--memoryInGb'), type = 'integer', default = DEFAULT_MEMORY_IN_GB,
-              help = 'Max memory (Gb) allocated to Java VM (-Xmx).'),
   make_option(c('--countsDir'), type = 'character', default = 'counts',
               help = 'Output directory for count data.'),
   make_option(c('--geneListsDir'), type = 'character', default = 'gene_lists',

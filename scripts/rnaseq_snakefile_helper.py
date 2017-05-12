@@ -194,6 +194,15 @@ class PhenotypeManager(object):
                     phenotype_dict[label][value].append(sample)
         return phenotype_dict
 
+    @property
+    def phenotypes_with_replicates(self):
+        with_replicates = []
+        for (label, values) in self.phenotype_sample_list.items():
+            max_sample_count = max([len(samples) for (value, samples) in values.items()])
+            if max_sample_count > 1:
+                with_replicates.append(label)
+        return sorted(with_replicates)
+
     def separated_comparisons(self, output_delimiter):
         '''Returns a dict of {phenotype_label: 'val1_v_val2,val3_v_val4'}'''
         comparisons = {}
@@ -223,19 +232,32 @@ class PhenotypeManager(object):
         return phenotype_label_values
 
     @property
-    def phenotypes_comparisons_tuple(self):
-        '''Returns named tuple of phenotype, comparison for all comparisons'''
-        phenotype_comparison = dict([(k, v) for k,v in self.comparisons.items()])
+    def phenotypes_comparisons_all_tuple(self):
+        '''Returns named tuple of phenotype, comparison for all phenotypes'''
+        return self._phenotypes_comparisons(True)
+
+    @property
+    def phenotypes_comparisons_replicates_tuple(self):
+        '''Returns named tuple of phenotype, comparison for phenotypes with replicates'''
+        return self._phenotypes_comparisons(False)
+
+    def _phenotypes_comparisons(self, include_phenotypes_without_replicates=True):
+        if include_phenotypes_without_replicates:
+            include = lambda p: True
+        else:
+            with_replicates = set(self.phenotypes_with_replicates)
+            include = lambda p: p in with_replicates
+        pheno_comps = [(p, c) for p,c in self.comparisons.items() if include(p)]
         phenotypes=[]
         comparisons=[]
-        for k, v in sorted(phenotype_comparison.items()):
-            for c in sorted(v):
-                phenotypes.append(k)
-                comparisons.append(c.strip())
+        for pheno, comps in sorted(pheno_comps):
+            for comp in sorted(comps):
+                phenotypes.append(pheno)
+                comparisons.append(comp.strip())
         PhenotypesComparisons = collections.namedtuple('PhenotypeComparisons',
                                                        'phenotypes comparisons')
-
         return PhenotypesComparisons(phenotypes=phenotypes, comparisons=comparisons)
+
 
     def cuffdiff_samples(self,
                          phenotype_label,

@@ -821,6 +821,32 @@ samples:
                                expected_message,
                                validator._check_phenotype_values_reserved_name)
 
+    def test_check_phenotype_has_replicates_ok(self):
+        config_string = '''
+phenotypes: diet ^ gender ^ time
+samples:
+        s1: A    ^ C      ^ E
+        s2: A    ^ D      ^ E
+        s3: B    ^ C      ^ E
+        s4: B    ^ D      ^ F'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        validator._check_phenotype_has_replicates()
+        self.ok()
+
+    def test_check_phenotype_has_replicates_warningIfNoReplicates(self):
+        config_string = '''
+phenotypes: diet ^ time ^ gender
+samples:
+        s1: A    ^ C      ^ G
+        s2: A    ^ D      ^ H
+        s3: B    ^ E      ^ I
+        s4: B    ^ F      ^ J'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = r'Some phenotype labels \(gender, time\)\ have no replicates'
+        self.assertRaisesRegex(_WatermelonConfigWarning,
+                               expected_message,
+                               validator._check_phenotype_has_replicates)
+
     def test_init_validationsAreIncluded(self):
         validator = _ConfigValidator(config={}, log=StringIO())
         primary_validation_names = [f.__name__ for f in validator._PARSING_VALIDATIONS]
@@ -842,7 +868,8 @@ samples:
                           '_check_comparison_missing_phenotype_label',
                           '_check_comparison_references_unknown_phenotype_label',
                           '_check_comparison_references_unknown_phenotype_value',
-                          '_check_samples_excluded_from_comparison'],
+                          '_check_samples_excluded_from_comparison',
+                          '_check_phenotype_has_replicates',],
                          secondary_validation_names)
 
 class ValidationCollectorTest(unittest.TestCase):
@@ -996,6 +1023,7 @@ phenotypes: diet ^ gender
 samples:
     s1: HD ^ Male
     s2: LD ^ Female
+    s3: LD ^ Female
 comparisons:
     diet:
     - HD_v_LD

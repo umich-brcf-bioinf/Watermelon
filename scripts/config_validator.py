@@ -128,7 +128,7 @@ class _ConfigValidator(object):
                                      self._check_comparison_references_unknown_phenotype_label,
                                      self._check_comparison_references_unknown_phenotype_value,
                                      self._check_samples_excluded_from_comparison,
-                                      ]
+                                     self._check_phenotype_has_replicates, ]
 
     def validate(self):
         collector = _ValidationCollector(self._log)
@@ -141,6 +141,17 @@ class _ConfigValidator(object):
         for validation in self._CONTENT_VALIDATIONS:
             collector.check(validation)
         return collector
+
+    def _check_phenotype_has_replicates(self):
+        phenotype_manager = PhenotypeManager(self.config)
+        all = set(phenotype_manager.phenotype_sample_list.keys())
+        with_replicates = set(phenotype_manager.phenotypes_with_replicates)
+        without_replicates = all - with_replicates
+        if without_replicates:
+            msg_fmt = ('Some phenotype labels ({}) have no replicates and will be '
+                       'excluded from DESeq2 results.')
+            raise _WatermelonConfigWarning(msg_fmt,
+                                           ', '.join(sorted(without_replicates)))
 
     def _check_missing_required_field(self):
         missing_fields = watermelon_config.REQUIRED_FIELDS - self.config.keys()

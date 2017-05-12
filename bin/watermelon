@@ -10,9 +10,6 @@ export LOG_DIR=logs/${RUN_TIME}
 export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
 export SNAKEFILE=${WATERMELON_ROOT_DIR}/rnaseq.snakefile
 export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
-export PROGRESS_FILTER='^watermelon|snakemake|rule.*:|wildcards|error|step|elapsed|Nothing to be done|^\t\w+\t\w+'
-export VERBOSE_FILTER='.*'
-export CONSOLE_LOG_FILTER=$PROGRESS_FILTER
 
 export CONFIG_FILE='config.yaml'
 export CORES=40
@@ -51,7 +48,6 @@ Options:
     --cores [N]      : =40, use at most N cores in parallel
     --dag            : create DAG files (in working dir) to visualize execution plan
     -n, --dryrun     : show plan without executing anything
-    -v, --verbose    : show verbose console log
     --help           : shows this message
 
 v${WATERMELON_VERSION}
@@ -102,10 +98,6 @@ function parse_args {
                 ;;
             --skip_config_validation)
                 SKIP_CONFIG_VALIDATION="SKIP_CONFIG_VALIDATION"
-                shift
-                ;;
-            -v | --verbose)
-                CONSOLE_LOG_FILTER=$VERBOSE_FILTER
                 shift
                 ;;
             *)  # Pass this option/arg through
@@ -223,7 +215,7 @@ if [[ "$WATERMELON_EMAIL_ENABLED" = true ]]; then
         -m "${mail_message}"
 fi
 
-) 2>&1 | tee ${LOG_FILE} | grep -Pi -e "${CONSOLE_LOG_FILTER}"
+) 2>&1 | tee ${LOG_FILE}
 
 EXIT_CODE=$(cat .watermelon.exitcode)
 exit ${EXIT_CODE}

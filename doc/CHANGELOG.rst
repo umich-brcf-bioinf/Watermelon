@@ -1,9 +1,21 @@
 Changelog
 =========
 
+0.2.4 (5/12/2017)
+-----------------
+- Adjusted DESeq PCA graphs to include variance percentages in axis labels
+- Adjusted DESeq to only consider phenotypes that have replicates (DESeq
+  crashes when attempting to normalize phenotypes without replicates)
+- Fixed DESeq bug that occurs when phenotype is not compared
+- Adjusted tuxedo-cuffdiff gene lists to correctly flip test and controls so
+  fold change directios match DESeq2
+- Reverted console logging to be verbose thereby avoiding suppression of
+  logging under certain error conditions
+
 0.2.3 (5/8/2017)
 ----------------
-- Corrected bug memory allocation probelm in deseq2/pandoc to prevents deseq2 from occasionally crashing
+- Corrected memory allocation bug in DESeq2/pandoc to prevent DESeq diffex from
+  occasionally crashing
 - Adjusted watermelon to filter console logging to progress messages
 - Speed dry-run mode by skipping follow-on "summary detail" job   
 

@@ -35,8 +35,12 @@ phenotypeManager = rnaseq_snakefile_helper.PhenotypeManager(config,
                                                             DELIMITER,
                                                             COMPARISON_INFIX)
 
-PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_tuple.phenotypes
-COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_tuple.comparisons
+ALL_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_all_tuple.phenotypes
+ALL_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_all_tuple.comparisons
+
+REPLICATE_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_replicates_tuple.phenotypes
+REPLICATE_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_replicates_tuple.comparisons
+
 
 rnaseq_snakefile_helper.init_references(config["references"])
 rnaseq_snakefile_helper.checksum_reset_all(CONFIG_CHECKSUMS_DIR,
@@ -76,17 +80,17 @@ rule all:
                 pheno=sorted(config[COMPARISONS_KEY].keys())),
         expand(TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_gene.txt",
                 zip,
-                phenotype_name=PHENOTYPE_NAMES, 
-                comparison=COMPARISON_GROUPS),
+                phenotype_name=ALL_PHENOTYPE_NAMES, 
+                comparison=ALL_COMPARISON_GROUPS),
         expand(TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_isoform.txt",
                 zip,
-                phenotype_name=PHENOTYPE_NAMES, 
-                comparison=COMPARISON_GROUPS),
+                phenotype_name=ALL_PHENOTYPE_NAMES, 
+                comparison=ALL_COMPARISON_GROUPS),
         TUXEDO_DIR + "07-split/last_split",
         expand(TUXEDO_DIR + "09-excel/{phenotype_name}/{comparison}.xlsx",
                 zip,
-                phenotype_name=PHENOTYPE_NAMES, 
-                comparison=COMPARISON_GROUPS),
+                phenotype_name=ALL_PHENOTYPE_NAMES, 
+                comparison=ALL_COMPARISON_GROUPS),
         TUXEDO_DIR + "10-summary/summary.txt",
         TUXEDO_DIR + "10-summary/summary.xlsx",
 
@@ -99,16 +103,16 @@ rule all:
         DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt",
         expand(DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype_name}/{comparison}.txt",
                zip,
-               phenotype_name=PHENOTYPE_NAMES, 
-               comparison=COMPARISON_GROUPS),
+               phenotype_name=REPLICATE_PHENOTYPE_NAMES, 
+               comparison=REPLICATE_COMPARISON_GROUPS),
         expand(DESEQ2_DIR + "04-annotation/{phenotype_name}/{comparison}.annot.txt",
                zip,
-               phenotype_name=PHENOTYPE_NAMES, 
-               comparison=COMPARISON_GROUPS),
+               phenotype_name=REPLICATE_PHENOTYPE_NAMES, 
+               comparison=REPLICATE_COMPARISON_GROUPS),
         expand(DESEQ2_DIR + "06-excel/{phenotype_name}/{comparison}.xlsx",
                 zip,
-                phenotype_name=PHENOTYPE_NAMES, 
-                comparison=COMPARISON_GROUPS),
+                phenotype_name=REPLICATE_PHENOTYPE_NAMES, 
+                comparison=REPLICATE_COMPARISON_GROUPS),
         DESEQ2_DIR + "07-summary/summary.txt",
         DESEQ2_DIR + "07-summary/summary.xlsx",
         expand(DELIVERABLES_DIR + "deseq2"),
@@ -491,8 +495,8 @@ rule tuxedo_last_split:
     input: 
         expand(TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_gene.txt",
                 zip,
-                phenotype_name=PHENOTYPE_NAMES,
-                comparison=COMPARISON_GROUPS)
+                phenotype_name=ALL_PHENOTYPE_NAMES,
+                comparison=ALL_COMPARISON_GROUPS)
     output:
         touch(TUXEDO_DIR + "07-split/last_split")
 
@@ -538,12 +542,12 @@ rule tuxedo_summary:
     input:
         input_files = expand(TUXEDO_DIR + "07-split/{phenotype}/{comparison}_gene.txt",
                              zip,
-                             phenotype=PHENOTYPE_NAMES,
-                             comparison=COMPARISON_GROUPS) +
+                             phenotype=ALL_PHENOTYPE_NAMES,
+                             comparison=ALL_COMPARISON_GROUPS) +
                        expand(TUXEDO_DIR + "07-split/{phenotype}/{comparison}_isoform.txt",
                               zip,
-                              phenotype=PHENOTYPE_NAMES,
-                              comparison=COMPARISON_GROUPS)
+                              phenotype=ALL_PHENOTYPE_NAMES,
+                              comparison=ALL_COMPARISON_GROUPS)
     output: 
         summary_txt = TUXEDO_DIR + "10-summary/summary.txt",
         summary_xlsx = TUXEDO_DIR + "10-summary/summary.xlsx",
@@ -569,12 +573,12 @@ rule deliverables_tuxedo:
     input:
         excel = expand(TUXEDO_DIR + "09-excel/{phenotype_name}/{comparison}.xlsx", 
                        zip,
-                       phenotype_name=PHENOTYPE_NAMES,
-                       comparison=COMPARISON_GROUPS),
+                       phenotype_name=ALL_PHENOTYPE_NAMES,
+                       comparison=ALL_COMPARISON_GROUPS),
         diffex_raw_counts = expand(TUXEDO_DIR + "06-cummerbund/{phenotype_name}/{phenotype_name}_repRawCounts.txt",
-                                   phenotype_name=PHENOTYPE_NAMES),
+                                   phenotype_name=ALL_PHENOTYPE_NAMES),
         plots = expand(TUXEDO_DIR + "06-cummerbund/{phenotype_name}/Plots",
-                       phenotype_name=PHENOTYPE_NAMES),
+                       phenotype_name=ALL_PHENOTYPE_NAMES),
         summary_xlsx = TUXEDO_DIR + "10-summary/summary.xlsx",
     output:
         deliverables_dir = DELIVERABLES_DIR + "tuxedo",
@@ -644,9 +648,11 @@ rule deseq2_metadata_contrasts:
     output:
         sample_metadata = DESEQ2_DIR + "02-metadata_contrasts/sample_metadata.txt",
         contrasts = DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt"
+    params:
+        phenos_with_replicates = phenotypeManager.phenotypes_with_replicates
     run:
-        deseq2_helper.build_sample_metadata(config, output.sample_metadata)
-        deseq2_helper.build_contrasts(config, output.contrasts)
+        deseq2_helper.build_sample_metadata(config, params.phenos_with_replicates, output.sample_metadata)
+        deseq2_helper.build_contrasts(config, params.phenos_with_replicates, output.contrasts)
 
 rule deseq2_diffex:
     input:
@@ -657,8 +663,8 @@ rule deseq2_diffex:
         dir = DESEQ2_DIR + "03-deseq2_diffex",
         files = expand(DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt",
                        zip,
-                       phenotype=PHENOTYPE_NAMES,
-                       comparison=COMPARISON_GROUPS),
+                       phenotype=REPLICATE_PHENOTYPE_NAMES,
+                       comparison=REPLICATE_COMPARISON_GROUPS),
     threads: 8
     log:
         DESEQ2_DIR + "03-deseq2_diffex/.log/deseq2_DESeq2Diffex.log"
@@ -746,8 +752,8 @@ rule deseq2_summary:
     input:
         input_files = expand(DESEQ2_DIR + "04-annotation/{phenotype}/{comparison}.annot.txt",
                              zip,
-                             phenotype=PHENOTYPE_NAMES,
-                             comparison=COMPARISON_GROUPS),
+                             phenotype=REPLICATE_PHENOTYPE_NAMES,
+                             comparison=REPLICATE_COMPARISON_GROUPS),
     output: 
         summary_txt = DESEQ2_DIR + "07-summary/summary.txt",
         summary_xlsx = DESEQ2_DIR + "07-summary/summary.xlsx",
@@ -773,8 +779,8 @@ rule deliverables_deseq2:
         diffex_dir = DESEQ2_DIR + "03-deseq2_diffex",
         gene_lists = expand(DESEQ2_DIR + "06-excel/{phenotype_name}/{comparison}.xlsx",
                             zip,
-                            phenotype_name=PHENOTYPE_NAMES, 
-                            comparison=COMPARISON_GROUPS),
+                            phenotype_name=REPLICATE_PHENOTYPE_NAMES, 
+                            comparison=REPLICATE_COMPARISON_GROUPS),
         summary_xlsx = DESEQ2_DIR + "07-summary/summary.xlsx",
     output:
         deliverables_dir = DELIVERABLES_DIR + "deseq2",

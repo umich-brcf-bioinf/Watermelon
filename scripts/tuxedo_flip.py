@@ -38,9 +38,9 @@ def _flip_comparisons(comparison_infix, dataframe, comparisons):
                      REQUIRED_FIELDS.test_stat]
 
     def _flip_comparison(row):
-        flipped_comparison = _COMPARISON_NAME_FMT.format(group_1=row[REQUIRED_FIELDS.sample_2],
+        flipped_comparison = _COMPARISON_NAME_FMT.format(group_1=row[REQUIRED_FIELDS.sample_1],
                                                          comparison_infix=comparison_infix,
-                                                         group_2=row[REQUIRED_FIELDS.sample_1])
+                                                         group_2=row[REQUIRED_FIELDS.sample_2])
         if flipped_comparison in comparisons:
             return (row[REQUIRED_FIELDS.sample_2], row[REQUIRED_FIELDS.sample_1],
                     row[REQUIRED_FIELDS.value_2], row[REQUIRED_FIELDS.value_1],
@@ -89,7 +89,7 @@ def _parse_command_line_args(sys_argv):
               'parameter').format(DEFAULT_COMPARISON_INFIX))
 
     args = parser.parse_args(sys_argv)
-    return args 
+    return args
 
 def main(sys_argv):
     args = _parse_command_line_args(sys_argv)

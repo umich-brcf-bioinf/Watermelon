@@ -3,10 +3,10 @@
 
 Specifically this does three things:
 1) watermelon-init accepts a source fastq dir which would typically contain a set of
-   sample_dirs each of which would contain fastq files for that sample. To encapsulate 
+   sample_dirs each of which would contain fastq files for that sample. To encapsulate
    the project data flow, while enabling data provenance, init creates a local inputs dir
    and creates symlinks to the original source dir.
-   
+
    Note that this step is skipped if the source fastq is inside the working dir (i.e.
    already local).
 
@@ -19,7 +19,7 @@ Specifically this does three things:
    c) specify sample comparisons
 
 3) watermelon-init creates a readme file that lists basic info about when/how it was run,
-   what it did, and what the user has to do to prepare the template config 
+   what it did, and what the user has to do to prepare the template config
 '''
 from __future__ import print_function, absolute_import, division
 import argparse
@@ -116,7 +116,7 @@ _CONFIG_PRELUDE=\
 def _setup_yaml():
   """ http://stackoverflow.com/a/8661021 """
   represent_dict_order = lambda self, data:  self.represent_mapping('tag:yaml.org,2002:map', data.items())
-  yaml.add_representer(OrderedDict, represent_dict_order)    
+  yaml.add_representer(OrderedDict, represent_dict_order)
 
 def _mkdir(newdir):
     """works the way a good mkdir should :)
@@ -156,6 +156,7 @@ def _is_source_fastq_external(source_fastq_dir, working_dir=os.getcwd()):
     a = os.path.realpath(source_fastq_dir)
     b = os.path.realpath(working_dir)
     common_prefix = os.path.commonprefix([a, b])
+    print(a,b,common_prefix,common_prefix != b)
     return common_prefix != b
 
 def _populate_inputs_dir(inputs_dir, samples):
@@ -322,7 +323,7 @@ def _parse_command_line_args(sys_argv):
     if args.is_source_fastq_external:
         args.inputs_dir = realpath('inputs', '00-multiplexed_reads')
     else:
-        args.inputs_dir = os.path.relpath(args.source_fastq_dir, args.x_working_dir)
+        args.inputs_dir = os.path.realpath(args.source_fastq_dir)
     return args
 
 def main(sys_argv):

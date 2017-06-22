@@ -26,7 +26,31 @@ def touch(fname, times=None):
     with open(fname, 'a'):
         os.utime(fname, times)
 
+def _mkdir(newdir):
+    """works the way a good mkdir should :)
+        - already exists, silently complete
+        - regular file in the way, raise an exception
+        - parent directory(ies) does not exist, make them as well
+    """
+    if os.path.isdir(newdir):
+        pass
+    elif os.path.isfile(newdir):
+        raise OSError("a file with the same name as the desired " \
+                      "dir, '%s', already exists." % newdir)
+    else:
+        head, tail = os.path.split(newdir)
+        if head and not os.path.isdir(head):
+            _mkdir(head)
+        if tail:
+            os.mkdir(newdir)
+
 class WatermelonInitTest(unittest.TestCase):
+    def setUp(self):
+        self.original_cwd = os.getcwd()
+
+    def tearDown(self):
+        os.chdir(self.original_cwd)
+
     def _assertSameFile(self, file1, file2):
         self.assertEqual(os.path.realpath(file1), os.path.realpath(file2))
 
@@ -112,12 +136,33 @@ class WatermelonInitTest(unittest.TestCase):
         self.assertEqual('/tmp/watermelon/template_config.yaml', args.x_template_config)
         self.assertEqual('/tmp/watermelon/genome_references.yaml', args.x_genome_references)
 
+    def test_parse_args_inputWhenLocalSourceFastq(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            os.chdir(temp_dir_path)
+            source_fastq_dir = "source_fastq"
+            _mkdir(os.path.join(temp_dir_path, "source_fastq"))
+            command_line_args = ('--genome_build mm10 '
+                                 '--job_suffix _11_01_A '
+                                 '--x_working_dir {working_dir} '
+                                 '--x_template_config /tmp/watermelon/template_config.yaml '
+                                 '--x_genome_references /tmp/watermelon/genome_references.yaml '
+                                 '{source_fastq_dir}').format(working_dir=temp_dir_path,
+                                                              source_fastq_dir=source_fastq_dir).split(' ')
+            args = watermelon_init._parse_command_line_args(command_line_args)
+
+        self.assertEqual(temp_dir_path, args.x_working_dir)
+        self.assertEqual(False, args.is_source_fastq_external)
+        self.assertEqual(os.path.realpath(os.path.join(temp_dir_path, source_fastq_dir)),
+                         args.inputs_dir)
+
+
     def test_parse_args_workingDirDefaultsToCwd(self):
         command_line_args = ('--genome_build mm10 '
                              '--job_suffix _11_01_A '
                              'DNASeqCore/Run_1286/rhim/Run_1286').split(' ')
         args = watermelon_init._parse_command_line_args(command_line_args)
-        self.assertEqual(os.getcwd(), args.x_working_dir) 
+        self.assertEqual(os.getcwd(), args.x_working_dir)
 
     def test_parse_args_templateConfigDefaultsToWatermelonConfigDir(self):
         command_line_args = ('--genome_build mm10 '
@@ -125,7 +170,7 @@ class WatermelonInitTest(unittest.TestCase):
                              'DNASeqCore/Run_1286/rhim/Run_1286').split(' ')
         args = watermelon_init._parse_command_line_args(command_line_args)
         self.assertEqual(os.path.join(_CONFIG_DIR, 'template_config.yaml'),
-                         args.x_template_config) 
+                         args.x_template_config)
 
     def test_parse_args_genomeReferencesDefaultsToWatermelonConfigDir(self):
         command_line_args = ('--genome_build mm10 '
@@ -133,7 +178,7 @@ class WatermelonInitTest(unittest.TestCase):
                              'DNASeqCore/Run_1286/rhim/Run_1286').split(' ')
         args = watermelon_init._parse_command_line_args(command_line_args)
         self.assertEqual(os.path.join(_CONFIG_DIR, 'genome_references.yaml'),
-                         args.x_genome_references) 
+                         args.x_genome_references)
 
     def test_GENOME_BUILD_OPTIONS_matchGenomeReferenceKeys(self):
         with open(os.path.join(_CONFIG_DIR, 'genome_references.yaml'), 'r') as yaml_file:
@@ -423,7 +468,7 @@ class WatermelonInitFunctoinalTest(unittest.TestCase):
     def test_commandPresentUsageIfMissingOptions(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            
+
             script_name = os.path.join(_BIN_DIR, 'watermelon_init')
 
             redirect_output = ' 2>&1 '

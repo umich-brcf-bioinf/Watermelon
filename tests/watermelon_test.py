@@ -117,7 +117,9 @@ class WatermelonTest(unittest.TestCase):
                                           CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
-            self.assertEqual(0, exit_code)
+            self.assertEqual(0,
+                             exit_code,
+                             "exit code != 0: \nactual output:\n" + actual_output)
 
             log_dirs = glob.glob("logs/*")
             self.assertEquals(0, len(log_dirs))
@@ -336,7 +338,7 @@ class WatermelonTest(unittest.TestCase):
             DEFAULT_CORES = 40
             CONFIG_FILE = os.path.join(TESTS_DIR, 'config.yaml')
             shutil.copy(CONFIG_FILE, temp_dir_path)
-            
+
             with open(snakemake_executable_path, 'w') as snakemake_command:
                 snakemake_command_contents = '#!/bin/bash\necho $@'''
                 print(snakemake_command_contents, file=snakemake_command)
@@ -391,7 +393,9 @@ class WatermelonTest(unittest.TestCase):
                                                            CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
-            self.assertEqual(0, exit_code)
+            self.assertEqual(0,
+                             exit_code,
+                             "exit code != 0: \nactual output:\n" + actual_output)
 
             log_dirs = glob.glob("logs/*")
             self.assertEquals(0, len(log_dirs))
@@ -411,7 +415,9 @@ class WatermelonTest(unittest.TestCase):
                                                            CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
-            self.assertEqual(0, exit_code)
+            self.assertEqual(0,
+                             exit_code,
+                             "exit code != 0: \nactual output:\n" + actual_output)
 
             dag_files = sorted(glob.glob("dag*.*"))
             self.assertEqual(2, len(dag_files))

@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2.5 (6/22/2017)
+-----------------
+- Fixed DESeq2 bug in correlation plots that crashes watermelon when less
+  than 10 samples in constrast
+- Simplified DESeq2 plot labels
+
 0.2.4 (5/12/2017)
 -----------------
 - Adjusted DESeq PCA graphs to include variance percentages in axis labels

@@ -304,35 +304,35 @@ pdf(file = paste(plotsDir_summary,'BoxPlot.pdf', sep = '/'), onefile = TRUE)
 rawCountsDf <- as.data.frame(rawCounts)
 df <- melt(log2(rawCountsDf), variable.name = 'Samples', value.name = 'count') # reshape the matrix
 df$Condition <- colData$combinatoric_group[match(df$Samples,colData$sample_name)]
-ggplot(df, aes(x = df$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Non-normalized Counts') + xlab('') + ylab(expression(paste(Log[2],' counts'))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+ggplot(df, aes(x = df$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Non-normalized Counts') + xlab('') + ylab('Log2 counts') + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 
 normCountsDf <- as.data.frame(normCounts)
 dfn <- melt(log2(normCountsDf), variable.name = 'Samples', value.name = 'count') # reshape the matrix
 dfn$Condition <- colData$combinatoric_group[match(dfn$Samples,colData$sample_name)]
-ggplot(dfn, aes(x = dfn$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Depth-normalized Counts') + xlab('') + ylab(expression(paste(Log[2],' depth-normalized counts'))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+ggplot(dfn, aes(x = dfn$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Depth-normalized Counts') + xlab('') + ylab('Log2 depth-normalized counts') + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 
 rldDf <- as.data.frame(assay(rld))
 dfr <- melt(rldDf, variable.name = 'Samples', value.name = 'count') # reshape the matrix
 dfr$Condition <- colData$combinatoric_group[match(dfr$Samples,colData$sample_name)]
-ggplot(dfr, aes(x = dfr$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Rlog-normalized Counts') + xlab('') + ylab(expression(paste(Regularized-Log[2],' normalized counts'))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+ggplot(dfr, aes(x = dfr$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Rlog-normalized Counts') + xlab('') + ylab('Regularized-Log2 normalized counts') + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 dev.off()
 
 #interactive boxplots
-bp <- ggplot(df, aes(x = df$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Non-normalized Counts') + xlab('') + ylab(expression(paste(Log[2],' counts'))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+bp <- ggplot(df, aes(x = df$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Non-normalized Counts') + xlab('') + ylab('Log2 counts') + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 bp <- ggplotly(bp)
 path_name <- file.path(plotsDir_summary, 'BoxPlot_RawCounts.html')
 htmlwidgets::saveWidget(bp, file = path_name)
 delDir <- gsub(pattern = '.html', replacement = '_files', x = path_name)
 unlink(x = delDir, recursive = TRUE, force = TRUE)
 
-bpn <- ggplot(dfn, aes(x = dfn$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Depth-normalized Counts') + xlab('') + ylab(expression(paste(Log[2],' depth-normalized counts'))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+bpn <- ggplot(dfn, aes(x = dfn$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Depth-normalized Counts') + xlab('') + ylab('Log2 depth-normalized counts') + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 bpn <- ggplotly(bpn)
 path_name <- file.path(plotsDir_summary, 'BoxPlot_DepthNormalizedCounts.html')
 htmlwidgets::saveWidget(bpn, file = path_name)
 delDir <- gsub(pattern = '.html', replacement = '_files', x = path_name)
 unlink(x = delDir, recursive = TRUE, force = TRUE)
 
-bpr <- ggplot(dfr, aes(x = dfr$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Rlog-normalized Counts') + xlab('') + ylab(expression(paste(Regularized-Log[2],' normalized counts'))) + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
+bpr <- ggplot(dfr, aes(x = dfr$Samples, y = count, fill = Condition)) + geom_boxplot(notch = TRUE, outlier.shape = NA) + ggtitle('Rlog-normalized Counts') + xlab('') + ylab('Regularized-Log2 normalized counts') + theme_classic() + theme(axis.text.x  = element_text(angle=90, vjust=0.5))
 bpr <- ggplotly(bpr)
 path_name <- file.path(plotsDir_summary, 'BoxPlot_RlogNormalizedCounts.html')
 htmlwidgets::saveWidget(bpr, file = path_name)
@@ -346,25 +346,25 @@ df <- as.data.frame(log2(rawCounts[idx.nz,])) # raw counts, removed 0s
 df <- melt(df, variable.name = 'Samples', value.name = 'count') # reshape the matrix
 ggplot(df, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = 'right') + ylab('Density') + xlab(expression(paste(Log[2],' counts'))) + ggtitle('Non-normalized Counts') + theme_classic()
+  theme(legend.position = 'right') + ylab('Density') + xlab('Log2 counts') + ggtitle('Non-normalized Counts') + theme_classic()
 
 dfn <- as.data.frame(log2(normCounts[idx.nz,])) #normalized counts (counts/size factors)
 dfn <- melt(dfn, variable.name = 'Samples', value.name = 'count') # reshape the matrix
 ggplot(dfn, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = 'right') + ylab('Density') + xlab(expression(paste(Log[2],' depth-normalized counts'))) + ggtitle('Depth-normalized Counts') + theme_classic()
+  theme(legend.position = 'right') + ylab('Density') + xlab('Log2 depth-normalized counts') + ggtitle('Depth-normalized Counts') + theme_classic()
 
 dfr <- as.data.frame(rldDf[idx.nz,]) #normalized counts (counts/size factors)
 dfr <- melt(dfr, variable.name = 'Samples', value.name = 'count') # reshape the matrix
 ggplot(dfr, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = 'right') + ylab('Density') + xlab(expression(paste(Regularized-Log[2],' normalized counts'))) + ggtitle('Rlog-normalized Counts') + theme_classic()
+  theme(legend.position = 'right') + ylab('Density') + xlab('Regularized-Log2 normalized counts') + ggtitle('Rlog-normalized Counts') + theme_classic()
 dev.off()
 
 #interactive density plots
 dp <- ggplot(df, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = 'right') + ylab('Density') + xlab(expression(paste(Log[2],' counts'))) + ggtitle('Non-normalized Counts') + theme_classic()
+  theme(legend.position = 'right') + ylab('Density') + xlab('Log2 counts') + ggtitle('Non-normalized Counts') + theme_classic()
 dp <- ggplotly(dp)
 path_name <- file.path(plotsDir_summary, 'DensityPlot_RawCounts.html')
 htmlwidgets::saveWidget(dp, file = path_name)
@@ -373,7 +373,7 @@ unlink(x = delDir, recursive = TRUE, force = TRUE)
 
 dpn <- ggplot(dfn, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = 'right') + ylab('Density') + xlab(expression(paste(Log[2],' depth-normalized counts'))) + ggtitle('Depth-normalized Counts') + theme_classic()
+  theme(legend.position = 'right') + ylab('Density') + xlab('Log2 depth-normalized counts') + ggtitle('Depth-normalized Counts') + theme_classic()
 dpn <- ggplotly(dpn)
 path_name <- file.path(plotsDir_summary, 'DensityPlot_DepthNormalizedCounts.html')
 htmlwidgets::saveWidget(dpn, file = path_name)
@@ -382,7 +382,7 @@ unlink(x = delDir, recursive = TRUE, force = TRUE)
 
 dpr <- ggplot(dfr, aes(x = count, colour = Samples)) + ylim(c(0, 0.25)) +
   geom_density(alpha = 0.5, size = 0.25)  +
-  theme(legend.position = 'right') + ylab('Density') + xlab(expression(paste(Regularized-Log[2],' normalized counts'))) + ggtitle('Rlog-normalized Counts') + theme_classic()
+  theme(legend.position = 'right') + ylab('Density') + xlab('Regularized-Log2 normalized counts') + ggtitle('Rlog-normalized Counts') + theme_classic()
 dpr <- ggplotly(dpr)
 path_name <- file.path(plotsDir_summary,'DensityPlot_RlogNormalizedCounts.html')
 htmlwidgets::saveWidget(dpr, file = path_name)
@@ -420,9 +420,9 @@ if(length(1:ncol(rldDf)) < 10){
    cat('\tcorrelation plots:all v all\n')
    acp <- ggpairs(data = rldDf[1:ncol(rldDf)],upper = list(continuous = wrap(ggally_cor, use = 'pairwise.complete.obs', method = 'spearman')), title = 'All samples') + theme_bw()
    acp <- ggplotly(acp)
-   path_name <- file.path(getwd(),plotsDir_comparison,'CorrelMatrix_All.html')
+   path_name <- file.path(plotsDir_comparison,'CorrelMatrix_All.html')
    htmlwidgets::saveWidget(acp, file = path_name)
-   delDir <- file.path(getwd(),plotsDir_comparison,'CorrelMatrix_All_files')
+   delDir <- gsub(pattern = '.html', replacement = '_files', x = path_name)
    unlink(x = delDir, recursive = TRUE, force = TRUE)
  } else{
    message('Too many samples for all vs all CorrelMatrix. Skipping...')
@@ -492,7 +492,7 @@ for (i in 1:nrow(contrastData)){
   
   #MA plot
   pdf(file = paste0(dir_plots,'/MAplot_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
-  p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange)) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2],' mean normalized expression'))) + ylab(expression(paste(Log[2],' fold-change')))
+  p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange)) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab('Log2 mean normalized expression') + ylab('Log2 fold-change')
   p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
   p <- p + scale_x_continuous(breaks=seq(0, max(log2(df$baseMean+1)), 2)) + geom_hline(yintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c('black', 'black', 'black'))
   if (sum(df$label == '') < nrow(df)) {
@@ -504,7 +504,7 @@ for (i in 1:nrow(contrastData)){
   dev.off()
   
   #interactive MA plot
-  p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange, colour = df$dot, label = id)) + geom_point(size = 1) + theme_classic() + xlab(expression(paste(Log[2],' mean normalized expression'))) + ylab(expression(paste(Log[2],' fold-change')))
+  p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange, colour = df$dot, label = id)) + geom_point(size = 1) + theme_classic() + xlab('Log2 mean normalized expression') + ylab('Log2 fold-change')
   p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
   p <- p + scale_x_continuous(breaks=seq(0, max(log2(df$baseMean+1)), 2)) + geom_hline(yintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c('black', 'black', 'black'))
   p <- p + ggtitle(as.character(contrastData$base_file_name[i]))
@@ -517,7 +517,7 @@ for (i in 1:nrow(contrastData)){
   cat('\tvolcano plot\n')
   #Volcano plot
   pdf(file = paste0(dir_plots,'/VolcanoPlot_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
-  p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab(expression(paste(Log[2],' fold-change'))) + ylab(expression(paste(-Log[10],' adjusted p-value')))
+  p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab('Log2 fold-change') + ylab('-Log10 adjusted p-value')
   p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
   p <- p + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c('black', 'black', 'black')) + geom_hline(yintercept = -log10(pval), linetype = 2, color = 'black')
   if (sum(df$label == '') < nrow(df)) {
@@ -529,7 +529,7 @@ for (i in 1:nrow(contrastData)){
   dev.off()
   
   #interactive Volcano plot
-  p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj), colour = df$dot, label = id)) + geom_point(size = 1) + theme_classic() + xlab(expression(paste(Log[2],' fold-change'))) + ylab(expression(paste(-Log[10],' adjusted p-value')))
+  p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj), colour = df$dot, label = id)) + geom_point(size = 1) + theme_classic() + xlab('Log2 fold-change') + ylab('-Log10 adjusted p-value')
   p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
   p <- p + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c('black', 'black', 'black')) + geom_hline(yintercept = -log10(pval), linetype = 2, color = 'black')
   p <- p + ggtitle(as.character(contrastData$base_file_name[i]))

@@ -131,44 +131,72 @@ rule concat_reads:
     shell:
         "cat {params.source_glob} > {output}"
 
-rule cutadapt:
+rule cutadapt_SE:
     input:
         trimming_options_checksum = CONFIG_CHECKSUMS_DIR + "config-trimming_options.watermelon.md5",
-        raw_fastq_R1 = ALIGNMENT_DIR + "01-raw_reads/{sample}_R1.fastq.gz",
-        raw_fastq_R2 = ALIGNMENT_DIR + "01-raw_reads/{sample}_R2.fastq.gz"
+        raw_fastq = ALIGNMENT_DIR + "01-raw_reads/{sample}_{read}_SE.fastq.gz",
     output:
-        R1 = ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_R1.fastq.gz",
-        R2 = ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_R2.fastq.gz"
+        ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read}_SE.fastq.gz",
     params:
         base_quality_5prime = config["trimming_options"]["base_quality_5prime"],
         base_quality_3prime = config["trimming_options"]["base_quality_3prime"],
         trim_length_5prime = config["trimming_options"]["trim_length_5prime"],
         trim_length_3prime = config["trimming_options"]["trim_length_3prime"],
-        output_dir = ALIGNMENT_DIR + "02-cutadapt",
-        output_file = "{sample}_trimmed_R1.fastq.gz",
-        output_R1 = "{sample}_trimmed_R1.fastq.gz",
-        output_R2 = "{sample}_trimmed_R2.fastq.gz",
         trimming_options = rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"])
     log:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_cutadapt.log"
-    shell:
-        "module load watermelon_rnaseq && "
-        "if [[ {params.trimming_options} > 0 ]]; then "
-        "(cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} "
-        " -u {params.trim_length_5prime} "
-        " -u -{params.trim_length_3prime} "
-        " --trim-n -m 20 "
-        " -o {output.R1}.tmp.gz "
-        " -p {output.R2}.tmp.gz "
-        " {input.raw_fastq_R1} "
-        " {input.raw_fastq_R2} && "
-        " mv {output.R1}.tmp.gz {output.R1} &&"
-        " mv {output.R2}.tmp.gz {output.R2}) 2>&1 | tee {log}; "
-        "else "
-        " ln -sf ../../{input.raw_fastq_R1} {params.output_dir}/{params.output_R1}; "
-        " ln -sf ../../{input.raw_fastq_R2} {params.output_dir}/{params.output_R2}; "
-        " echo \"No trimming done\" 2>&1 |tee {log}; "
-        "fi"
+    run:
+        if rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"]):
+            shell('''(module purge && module load watermelon_rnaseq &&
+                set -x &&
+                cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} \
+                    -u {params.trim_length_5prime} \
+                    -u -{params.trim_length_3prime} \
+                    --trim-n -m 20 \
+                    -o {output}.tmp.gz \
+                    {input.raw_fastq} &&
+                mv {output}.tmp.gz {output}
+                ) 2>&1 | tee {log} ''')
+        else:
+            shell('''(ln -sf ../../{input.raw_fastq} {output} &&
+                echo No trimming done
+                ) 2>&1 |tee {log} ''')
+
+rule cutadapt_PE:
+    input:
+        trimming_options_checksum = CONFIG_CHECKSUMS_DIR + "config-trimming_options.watermelon.md5",
+        raw_fastq_R1 = ALIGNMENT_DIR + "01-raw_reads/{sample}_R1_PE.fastq.gz",
+        raw_fastq_R2 = ALIGNMENT_DIR + "01-raw_reads/{sample}_R2_PE.fastq.gz"
+    output:
+        R1 = ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_R1_PE.fastq.gz",
+        R2 = ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_R2_PE.fastq.gz"
+    params:
+        base_quality_5prime = config["trimming_options"]["base_quality_5prime"],
+        base_quality_3prime = config["trimming_options"]["base_quality_3prime"],
+        trim_length_5prime = config["trimming_options"]["trim_length_5prime"],
+        trim_length_3prime = config["trimming_options"]["trim_length_3prime"],
+        trimming_options = rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"])
+    log:
+        ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_cutadapt.log"
+    run:
+        if rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"]):
+            shell('''(module purge && module load watermelon_rnaseq &&
+                set -x
+                cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} \
+                    -u {params.trim_length_5prime} \
+                    -u -{params.trim_length_3prime} \
+                    --trim-n -m 20 \
+                    -o {output.R1}.tmp.gz \
+                    -p {output.R2}.tmp.gz \
+                    {input.raw_fastq_R1} {input.raw_fastq_R2} &&
+                mv {output.R1}.tmp.gz {output.R1} &&
+                mv {output.R2}.tmp.gz {output.R2}
+                ) 2>&1 | tee {log} ''')
+        else:
+            shell('''(ln -sf ../../{input.raw_fastq_R1} {output.R1} &&
+                ln -sf ../../{input.raw_fastq_R2} {output.R2} &&
+                echo No trimming done
+                ) 2>&1 |tee {log} ''')
 
 # For paired-end reads:
 # cutadapt -a ADAPT1 -A ADAPT2 [options] -o out1.fastq -p out2.fastq in1.fastq in2.fastq

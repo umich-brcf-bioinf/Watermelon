@@ -595,8 +595,8 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
             temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
             samples = ['sample_0', 'sample_1']
 
-            actual_sample_reads = rnaseq_snakefile_helper.expand_sample_reads(temp_dir_path, samples)
-        self.assertEqual({'sample_0': ['R1'], 'sample_1': ['R1', 'R2']},
+            actual_sample_reads = rnaseq_snakefile_helper._expand_sample_reads(temp_dir_path, samples)
+        self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R1_PE', 'R2_PE']},
                          actual_sample_reads)
 
     def test_expand_sample_reads_onlyConsiderR1R2(self):
@@ -612,8 +612,8 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
             temp_dir.write(sample_1_dir + '02_R9.fastq.gz', b'foo')
             samples = ['sample_0', 'sample_1']
 
-            actual_sample_reads = rnaseq_snakefile_helper.expand_sample_reads(temp_dir_path, samples)
-        self.assertEqual({'sample_0': ['R1'], 'sample_1': ['R1']},
+            actual_sample_reads = rnaseq_snakefile_helper._expand_sample_reads(temp_dir_path, samples)
+        self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R1_SE']},
                          actual_sample_reads)
 
     def test_expand_sample_reads_okIfR2PresentButR1Missing(self):
@@ -627,8 +627,8 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
             temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
             samples = ['sample_0', 'sample_1']
 
-            actual_sample_reads = rnaseq_snakefile_helper.expand_sample_reads(temp_dir_path, samples)
-        self.assertEqual({'sample_0': ['R1'], 'sample_1': ['R2']},
+            actual_sample_reads = rnaseq_snakefile_helper._expand_sample_reads(temp_dir_path, samples)
+        self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R2_SE']},
                          actual_sample_reads)
 
     def test_expand_sample_reads_considersFastqOrFastqGz(self):
@@ -642,8 +642,8 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
             temp_dir.write(sample_1_dir + '02_R1.fastq', b'foo')
             samples = ['sample_0', 'sample_1']
 
-            actual_sample_reads = rnaseq_snakefile_helper.expand_sample_reads(temp_dir_path, samples)
-        self.assertEqual({'sample_0': ['R1'], 'sample_1': ['R1']},
+            actual_sample_reads = rnaseq_snakefile_helper._expand_sample_reads(temp_dir_path, samples)
+        self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R1_SE']},
                          actual_sample_reads)
 
     def test_expand_sample_reads_missingReads(self):
@@ -654,7 +654,7 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
             temp_dir.write(sample_0_dir + '01_RX.fastq.gz', b'foo')
             samples = ['sample_0']
 
-            actual_sample_reads = rnaseq_snakefile_helper.expand_sample_reads(temp_dir_path, samples)
+            actual_sample_reads = rnaseq_snakefile_helper._expand_sample_reads(temp_dir_path, samples)
         self.assertEqual({'sample_0': []},
                          actual_sample_reads)
 
@@ -670,6 +670,6 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
             temp_dir.write(sample_0_dir + 'fastq.01_R2', b'foo')
             samples = ['sample_0']
 
-            actual_sample_reads = rnaseq_snakefile_helper.expand_sample_reads(temp_dir_path, samples)
-        self.assertEqual({'sample_0': ['R1']},
+            actual_sample_reads = rnaseq_snakefile_helper._expand_sample_reads(temp_dir_path, samples)
+        self.assertEqual({'sample_0': ['R1_SE']},
                          actual_sample_reads)

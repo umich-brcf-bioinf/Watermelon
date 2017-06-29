@@ -323,6 +323,7 @@ def tophat_options(alignment_options):
 
 def _expand_sample_reads(fastq_base_dir, samples):
     sample_reads = {}
+    read_suffix = {0: "", 1:"_SE", 2:"_PE"}
     is_fastq = lambda fn: fn.endswith('.fastq') or fn.endswith('.fastq.gz')
     for sample in samples:
         found_reads = []
@@ -331,6 +332,7 @@ def _expand_sample_reads(fastq_base_dir, samples):
             read_present = list(filter(is_fastq, glob.glob(sample_dir + '*_{}*'.format(read))))
             if read_present:
                 found_reads.append(read)
+        found_reads = list(map(lambda x: x+read_suffix[len(found_reads)], found_reads))
         sample_reads[sample] = found_reads
     return sample_reads
 

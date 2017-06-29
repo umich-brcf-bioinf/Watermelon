@@ -17,6 +17,7 @@ import yaml
 import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
 from scripts.rnaseq_snakefile_helper import  PhenotypeManager
 
+
 class ChecksumManagerTest(unittest.TestCase):
     def assertChecksumFile(self, config_dir, config_filename, expected_checksum=None):
         config_path = os.path.join(config_dir, config_filename)
@@ -353,6 +354,20 @@ class PhenotypeManagerTest(unittest.TestCase):
                                 manager,
                                 'phenotype_sample_list')
 
+    def test_phenotype_with_replicates(self):
+        phenotype_labels = 'A | D | C | B'
+        sample_dict = {'s1' : ' a1 | d1 | c1 | b1',
+                       's2' : ' a2 | d1 | c2 | b2',
+                       's3' : ' a3 | d1 |    | b2',
+                       's4' : ' a4 | d2 |    |   ',}
+        delimiter = '|'
+        manager = PhenotypeManager({'phenotypes' : phenotype_labels,
+                                     'samples' : sample_dict},
+                                   delimiter)
+        actual = manager.phenotypes_with_replicates
+
+        self.assertEqual(['B', 'D'], actual)
+
     def test_separated_comparisons(self):
         comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
                            'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
@@ -423,36 +438,59 @@ class PhenotypeManagerTest(unittest.TestCase):
         expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D'}
         self.assertEqual(expected_comparisons, actual_comparisons)
 
-    def test_phenotypes_comparisons_tuple(self):
+    def test_phenotypes_comparisons_all_tuple(self):
         comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
                            'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
 
         manager = PhenotypeManager({'comparisons' : comparison_dict})
 
-        actual = manager.phenotypes_comparisons_tuple
+        actual = manager.phenotypes_comparisons_all_tuple
 
         self.assertEqual(['phenoLabel1', 'phenoLabel1', 'phenoLabel2', 'phenoLabel2'],
                          actual.phenotypes)
         self.assertEqual(['1A_v_1B', '1C_v_1D', '2A_v_2B', '2C_v_2D'],
                          actual.comparisons)
 
-    def test_phenotypes_comparisons_tuple_oneLabelOneComparison(self):
+    def test_phenotypes_comparisons_replicate_tuple(self):
+        phenotype_labels =    'pheno1 | pheno2 | pheno3 '
+        sample_dict = {'s1' : 'a1     | b1        | c1 ',
+                       's2' : 'a1     | b2        | c2 ',
+                       's3' : 'a2     | b3        | c2 ',}
+        comparison_dict = {'pheno1' : ['1A_v_1B','1C_v_1D'],
+                           'pheno2' : ['2A_v_2B','2C_v_2D'],
+                           'pheno3' : ['3A_v_3B','3C_v_3D'],}
+
+        delimiter = '|'
+        manager = PhenotypeManager({'phenotypes': phenotype_labels,
+                                    'samples': sample_dict,
+                                    'comparisons' : comparison_dict},
+                                    delimiter)
+
+        actual = manager.phenotypes_comparisons_replicates_tuple
+
+        self.assertEqual(['pheno1', 'pheno1', 'pheno3', 'pheno3'],
+                         actual.phenotypes)
+        self.assertEqual(['1A_v_1B', '1C_v_1D', '3A_v_3B', '3C_v_3D'],
+                         actual.comparisons)
+
+
+    def test_phenotypes_comparisons_all_tuple_oneLabelOneComparison(self):
         comparison_dict = {'phenoLabel1' : ['1A_v_1B']}
 
         manager = PhenotypeManager({'comparisons' : comparison_dict})
-        actual = manager.phenotypes_comparisons_tuple
+        actual = manager.phenotypes_comparisons_all_tuple
 
         self.assertEqual(['phenoLabel1'],
                          actual.phenotypes)
         self.assertEqual(['1A_v_1B'],
                          actual.comparisons)
 
-    def test_phenotypes_comparisons_tuple_stripsWhitespace(self):
+    def test_phenotypes_comparisons_all_tuple_stripsWhitespace(self):
         comparison_dict = {'phenoLabel1' : [' 1A_v_1B\t',' 1C_v_1D '],
                            'phenoLabel2' : [' 2A_v_2B\t',' 2C_v_2D ']}
         manager = PhenotypeManager({'comparisons' : comparison_dict})
 
-        actual = manager.phenotypes_comparisons_tuple
+        actual = manager.phenotypes_comparisons_all_tuple
 
         self.assertEqual(['phenoLabel1', 'phenoLabel1', 'phenoLabel2', 'phenoLabel2'],
                          actual.phenotypes)
@@ -544,3 +582,94 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
                                r'ERROR: .*=foo.*not valid',
                                rnaseq_snakefile_helper.strand_option_tophat,
                                'foo')
+
+    def test_expand_sample_reads(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+            rnaseq_snakefile_helper._mkdir(sample_0_dir)
+            temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
+            sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
+            rnaseq_snakefile_helper._mkdir(sample_1_dir)
+            temp_dir.write(sample_1_dir + '02_R1.fastq.gz', b'foo')
+            temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
+            samples = ['sample_0', 'sample_1']
+
+            actual_sample_reads = rnaseq_snakefile_helper.expand_sample_reads(temp_dir_path, samples)
+        self.assertEqual({'sample_0': ['R1'], 'sample_1': ['R1', 'R2']},
+                         actual_sample_reads)
+
+    def test_expand_sample_reads_onlyConsiderR1R2(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+            rnaseq_snakefile_helper._mkdir(sample_0_dir)
+            temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
+            temp_dir.write(sample_0_dir + '01_R5.fastq.gz', b'foo')
+            sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
+            rnaseq_snakefile_helper._mkdir(sample_1_dir)
+            temp_dir.write(sample_1_dir + '02_R1.fastq.gz', b'foo')
+            temp_dir.write(sample_1_dir + '02_R9.fastq.gz', b'foo')
+            samples = ['sample_0', 'sample_1']
+
+            actual_sample_reads = rnaseq_snakefile_helper.expand_sample_reads(temp_dir_path, samples)
+        self.assertEqual({'sample_0': ['R1'], 'sample_1': ['R1']},
+                         actual_sample_reads)
+
+    def test_expand_sample_reads_okIfR2PresentButR1Missing(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+            rnaseq_snakefile_helper._mkdir(sample_0_dir)
+            temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
+            sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
+            rnaseq_snakefile_helper._mkdir(sample_1_dir)
+            temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
+            samples = ['sample_0', 'sample_1']
+
+            actual_sample_reads = rnaseq_snakefile_helper.expand_sample_reads(temp_dir_path, samples)
+        self.assertEqual({'sample_0': ['R1'], 'sample_1': ['R2']},
+                         actual_sample_reads)
+
+    def test_expand_sample_reads_considersFastqOrFastqGz(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+            rnaseq_snakefile_helper._mkdir(sample_0_dir)
+            temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
+            sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
+            rnaseq_snakefile_helper._mkdir(sample_1_dir)
+            temp_dir.write(sample_1_dir + '02_R1.fastq', b'foo')
+            samples = ['sample_0', 'sample_1']
+
+            actual_sample_reads = rnaseq_snakefile_helper.expand_sample_reads(temp_dir_path, samples)
+        self.assertEqual({'sample_0': ['R1'], 'sample_1': ['R1']},
+                         actual_sample_reads)
+
+    def test_expand_sample_reads_missingReads(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+            rnaseq_snakefile_helper._mkdir(sample_0_dir)
+            temp_dir.write(sample_0_dir + '01_RX.fastq.gz', b'foo')
+            samples = ['sample_0']
+
+            actual_sample_reads = rnaseq_snakefile_helper.expand_sample_reads(temp_dir_path, samples)
+        self.assertEqual({'sample_0': []},
+                         actual_sample_reads)
+
+    def test_expand_sample_reads_ignoresFilesThatDoNotEndWithFastq(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+            rnaseq_snakefile_helper._mkdir(sample_0_dir)
+            temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
+            temp_dir.write(sample_0_dir + '01_R2.foo', b'foo')
+            temp_dir.write(sample_0_dir + '01_R2.fasta', b'foo')
+            temp_dir.write(sample_0_dir + '01_R2', b'foo')
+            temp_dir.write(sample_0_dir + 'fastq.01_R2', b'foo')
+            samples = ['sample_0']
+
+            actual_sample_reads = rnaseq_snakefile_helper.expand_sample_reads(temp_dir_path, samples)
+        self.assertEqual({'sample_0': ['R1']},
+                         actual_sample_reads)

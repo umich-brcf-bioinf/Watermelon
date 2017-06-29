@@ -39,9 +39,9 @@ gene1|A|B|foo|3|1|1.584962501|3.5
 gene2|C|D|foo|1|3|-1.584962501|-3.5
 gene3|C|D|foo|1|4|-2|-3.5''')
         df = pd.read_csv(df_contents, sep='|')
-    
+
         comparison_infix = '^'
-        tuxedo_flip._flip_comparisons(comparison_infix, df, ['B^A', 'D^C'])
+        tuxedo_flip._flip_comparisons(comparison_infix, df, ['A^B', 'C^D'])
 
         self.assertEquals(['gene0', 'B', 'A', 'foo', 1, 4, -2, -3.5], list(df.loc[0].values))
         self.assertEquals(['gene1', 'B', 'A', 'foo', 1, 3, -1.584962501, -3.5], list(df.loc[1].values))
@@ -56,7 +56,7 @@ gene1|A|B|foo|3|1|1.584962501|1
 gene2|C|D|foo|1|3|-1.584962501|-1
 gene3|C|D|foo|1|4|-2|-1''')
         df = pd.read_csv(df_contents, sep='|')
-    
+
         tuxedo_flip._flip_comparisons('_', df, ['B_A'])
 
         self.assertEquals(['gene2', 'C', 'D', 'foo', 1, 3, -1.584962501, -1], list(df.loc[2].values))
@@ -70,8 +70,8 @@ gene1|A|B|foo|3|1|1.584962501|1
 gene2|C|D|foo|1|3|-1.584962501|-1
 gene3|C|D|foo|1|4|-2|-1''')
         df = pd.read_csv(df_contents, sep='|')
-    
-        tuxedo_flip._flip_comparisons('_', df, ['B_A,C_D'])
+
+        tuxedo_flip._flip_comparisons('_', df, ['B_A','D_C'])
 
         self.assertEquals(['gene2', 'C', 'D', 'foo', 1, 3, -1.584962501, -1], list(df.loc[2].values))
         self.assertEquals(['gene3', 'C', 'D', 'foo', 1, 4, -2, -1], list(df.loc[3].values))
@@ -110,7 +110,7 @@ gene2|C|D|foo|2|1|1|3.5'''.replace('|', '\t')
             with open(input_filename, 'w') as input_file:
                 input_file.write(input_file_contents)
 
-            comparisons = 'B^A'
+            comparisons = 'A^B'
             comparison_infix_option = '--comparison_infix ^'
             redirect_output = '2>/dev/null'
             command = 'python {} {} {} {} {} {}'.format(script_name,

@@ -35,8 +35,12 @@ phenotypeManager = rnaseq_snakefile_helper.PhenotypeManager(config,
                                                             DELIMITER,
                                                             COMPARISON_INFIX)
 
-PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_tuple.phenotypes
-COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_tuple.comparisons
+ALL_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_all_tuple.phenotypes
+ALL_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_all_tuple.comparisons
+
+REPLICATE_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_replicates_tuple.phenotypes
+REPLICATE_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_replicates_tuple.comparisons
+
 
 rnaseq_snakefile_helper.init_references(config["references"])
 rnaseq_snakefile_helper.checksum_reset_all(CONFIG_CHECKSUMS_DIR,
@@ -44,12 +48,14 @@ rnaseq_snakefile_helper.checksum_reset_all(CONFIG_CHECKSUMS_DIR,
                                            phenotype_comparisons=config['comparisons'],
                                            phenotype_samples=phenotypeManager.phenotype_sample_list)
 
+SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(config['input_dir'], config[SAMPLES_KEY])
 
 rule all:
     input:
         expand(ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read}_fastqc.html",
-                sample=config[SAMPLES_KEY],
-                read=["R1", "R2"]),
+                zip,
+                sample=map(lambda x: x[0], SAMPLE_READS),
+                read=map(lambda x: x[1], SAMPLE_READS)),
         expand(ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_accepted_hits.bam",
                 sample=config[SAMPLES_KEY]),
         expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
@@ -67,7 +73,7 @@ rule all:
         expand(TUXEDO_DIR + "03-flag/{phenotype}/{phenotype}_gene.flagged.txt",
                phenotype=sorted(config[COMPARISONS_KEY].keys())),
         expand(TUXEDO_DIR + "03-flag/{phenotype}/{phenotype}_isoform.flagged.txt",
-               phenotype=sorted(config[COMPARISONS_KEY].keys())),                
+                phenotype=sorted(config[COMPARISONS_KEY].keys())),
         expand(TUXEDO_DIR + "04-annotate/{phenotype}/{phenotype}_gene.flagged.annot.txt",
                phenotype=sorted(config[COMPARISONS_KEY].keys())),
         expand(TUXEDO_DIR + "04-annotate/{phenotype}/{phenotype}_isoform.flagged.annot.txt",
@@ -77,18 +83,18 @@ rule all:
         expand(TUXEDO_DIR + "06-cummerbund/{pheno}/{pheno}_repRawCounts.txt",
                pheno=sorted(config[COMPARISONS_KEY].keys())),
         expand(TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_gene.txt",
-               zip,
-               phenotype_name=PHENOTYPE_NAMES, 
-               comparison=COMPARISON_GROUPS),
+                zip,
+                phenotype_name=ALL_PHENOTYPE_NAMES,
+                comparison=ALL_COMPARISON_GROUPS),
         expand(TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_isoform.txt",
-               zip,
-               phenotype_name=PHENOTYPE_NAMES, 
-               comparison=COMPARISON_GROUPS),
+                zip,
+                phenotype_name=ALL_PHENOTYPE_NAMES,
+                comparison=ALL_COMPARISON_GROUPS),
         TUXEDO_DIR + "07-split/last_split",
         expand(TUXEDO_DIR + "09-excel/{phenotype_name}/{comparison}.xlsx",
-               zip,
-               phenotype_name=PHENOTYPE_NAMES, 
-               comparison=COMPARISON_GROUPS),
+                zip,
+                phenotype_name=ALL_PHENOTYPE_NAMES,
+                comparison=ALL_COMPARISON_GROUPS),
         TUXEDO_DIR + "10-summary/summary.txt",
         TUXEDO_DIR + "10-summary/summary.xlsx",
 
@@ -101,34 +107,34 @@ rule all:
         DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt",
         expand(DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype_name}/{comparison}.txt",
                zip,
-               phenotype_name=PHENOTYPE_NAMES, 
-               comparison=COMPARISON_GROUPS),
+               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+               comparison=REPLICATE_COMPARISON_GROUPS),
         expand(DESEQ2_DIR + "04-annotation/{phenotype_name}/{comparison}.annot.txt",
                zip,
-               phenotype_name=PHENOTYPE_NAMES, 
-               comparison=COMPARISON_GROUPS),
+               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+               comparison=REPLICATE_COMPARISON_GROUPS),
         expand(DESEQ2_DIR + "06-excel/{phenotype_name}/{comparison}.xlsx",
                 zip,
-                phenotype_name=PHENOTYPE_NAMES, 
-                comparison=COMPARISON_GROUPS),
+                phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+                comparison=REPLICATE_COMPARISON_GROUPS),
         DESEQ2_DIR + "07-summary/summary.txt",
         DESEQ2_DIR + "07-summary/summary.xlsx",
         expand(DELIVERABLES_DIR + "deseq2"),
 
 rule concat_reads:
     input:
-        INPUT_DIR + "{sample}/"
+        INPUT_DIR + "{sample}/",
     output:
-        R1 = ALIGNMENT_DIR + "01-raw_reads/{sample}_R1.fastq.gz",
-        R2 = ALIGNMENT_DIR + "01-raw_reads/{sample}_R2.fastq.gz",
+        ALIGNMENT_DIR + "01-raw_reads/{sample}_R{read}.fastq.gz",
+    params:
+        source_glob = INPUT_DIR + "{sample}/*_R{read}*.fastq* "
     shell:
-        "cat {input}/*_R1.fastq.gz > {output.R1} && "
-        "cat {input}/*_R2.fastq.gz > {output.R2} "
+        "cat {params.source_glob} > {output}"
 
 rule cutadapt:
     input:
         trimming_options_checksum = CONFIG_CHECKSUMS_DIR + "config-trimming_options.watermelon.md5",
-        raw_fastq_R1 = ALIGNMENT_DIR + "01-raw_reads/{sample}_R1.fastq.gz"
+        raw_fastq_R1 = ALIGNMENT_DIR + "01-raw_reads/{sample}_R1.fastq.gz",
         raw_fastq_R2 = ALIGNMENT_DIR + "01-raw_reads/{sample}_R2.fastq.gz"
     output:
         R1 = ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_R1.fastq.gz",
@@ -163,10 +169,10 @@ rule cutadapt:
         " ln -sf ../../{input.raw_fastq_R2} {params.output_dir}/{params.output_R2}; "
         " echo \"No trimming done\" 2>&1 |tee {log}; "
         "fi"
-        
+
 # For paired-end reads:
 # cutadapt -a ADAPT1 -A ADAPT2 [options] -o out1.fastq -p out2.fastq in1.fastq in2.fastq
-    
+
 rule fastqc_trimmed_reads:
     input:
         ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read}.fastq.gz"
@@ -193,8 +199,8 @@ rule create_transcriptome_index:
         transcriptome_dir = "transcriptome_index",
         temp_dir =  ALIGNMENT_DIR + "04-tophat/.tmp",
         output_dir = ALIGNMENT_DIR + "04-tophat",
-        strand = rnaseq_snakefile_helper.strand_option_tophat(config["alignment_options"]["library_type"]) 
-    log: 
+        strand = rnaseq_snakefile_helper.strand_option_tophat(config["alignment_options"]["library_type"])
+    log:
         ALIGNMENT_DIR + "04-tophat/.log/create_transcriptome_index.log"
     shell:
         "mkdir -p {params.temp_dir} && "
@@ -215,7 +221,7 @@ rule tophat:
         reference_checksum = CONFIG_CHECKSUMS_DIR + "config-references.watermelon.md5",
         transcriptome_fasta = ALIGNMENT_DIR + "04-tophat/transcriptome_index/transcriptome.fa",
         bowtie2_index_dir = "references/bowtie2_index",
-        R1_fastq = ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_R1.fastq.gz"
+        R1_fastq = ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_R1.fastq.gz",
         R2_fastq = ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_R2.fastq.gz"
     output:
         ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_accepted_hits.bam",
@@ -229,7 +235,7 @@ rule tophat:
     log:
         ALIGNMENT_DIR + "04-tophat/.log/{sample}_tophat.log"
     threads: 8
-    shell: 
+    shell:
             "module load watermelon_rnaseq && "
             "tophat -p {threads} "
             " --b2-very-sensitive "
@@ -263,7 +269,7 @@ rule fastqc_tophat_align:
 rule align_qc_metrics:
     input:
         sample_checksum = CONFIG_CHECKSUMS_DIR + "config-samples.watermelon.md5",
-        align_summary_files = expand(ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_align_summary.txt", 
+        align_summary_files = expand(ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_align_summary.txt",
                                      sample=config["samples"])
     output:
         ALIGNMENT_DIR + "06-qc_metrics/alignment_stats.txt"
@@ -350,7 +356,7 @@ rule tuxedo_flip:
         isoform_flip = TUXEDO_DIR + "02-flip/{pheno}/isoform_exp.flip.diff"
     params:
         comparisons = lambda wildcards: phenotypeManager.separated_comparisons(',')[wildcards.pheno]
-    log: 
+    log:
         TUXEDO_DIR + "02-flip/.log/{pheno}_flip.log"
     shell:
         "module purge && module load python/3.4.3 && "
@@ -379,7 +385,7 @@ rule tuxedo_flag:
         fold_change = config["fold_change"]
     log:
         TUXEDO_DIR + "03-flag/.log/{pheno}_tuxedo_flag.log"
-    shell: 
+    shell:
         "module purge && "
         "module load python/3.4.3 && "
         "python {WATERMELON_SCRIPTS_DIR}/tuxedo_flag.py "
@@ -415,7 +421,7 @@ rule tuxedo_annotate:
         " -g {params.genome} "
         " -o {params.output_dir} "
         " 2>&1 | tee {log} && "
-        
+
         "python {WATERMELON_SCRIPTS_DIR}/tuxedo_annotate.py "
         " -i {input.entrez_gene_info} "
         " -e {input.isoform_diff_exp} "
@@ -471,7 +477,7 @@ rule tuxedo_cummerbund:
         " genome={params.genome} "
         " 2>&1 | tee {log} && "
         "touch {params.output_dir}/Plots "
- 
+
 rule tuxedo_split:
     input:
         gene = TUXEDO_DIR + "04-annotate/{phenotype_name}/{phenotype_name}_gene.flagged.annot.txt",
@@ -505,39 +511,39 @@ rule tuxedo_split:
 
 
 rule tuxedo_last_split:
-    input: 
+    input:
         expand(TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_gene.txt",
                 zip,
-                phenotype_name=PHENOTYPE_NAMES,
-                comparison=COMPARISON_GROUPS)
+                phenotype_name=ALL_PHENOTYPE_NAMES,
+                comparison=ALL_COMPARISON_GROUPS)
     output:
         touch(TUXEDO_DIR + "07-split/last_split")
 
 
 rule tuxedo_run_info:
-    input: 
+    input:
         TUXEDO_DIR + "07-split/last_split",
         glossary = WATERMELON_SCRIPTS_DIR + "tuxedo_glossary.txt"
-    output: 
+    output:
         run_info=TUXEDO_DIR + "08-run_info/run_info.txt",
         glossary=TUXEDO_DIR + "08-run_info/glossary.txt"
     run:
         command = ('module load watermelon_rnaseq && '
                    'module list -t 2> {}').format(output['run_info'])
         subprocess.call(command, shell=True)
-        with open(output['run_info'], 'a') as run_info_file: 
+        with open(output['run_info'], 'a') as run_info_file:
             print('\n\nConfig\n', file=run_info_file)
             print(yaml.dump(config, default_flow_style=False),
                   file=run_info_file)
         copyfile(input['glossary'], output['glossary'])
- 
+
 rule tuxedo_excel:
     input:
         gene = TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_gene.txt",
         isoform = TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_isoform.txt",
         glossary = TUXEDO_DIR + "08-run_info/glossary.txt",
         run_info = TUXEDO_DIR + "08-run_info/run_info.txt"
-    output: 
+    output:
         TUXEDO_DIR + "09-excel/{phenotype_name}/{comparison}.xlsx"
     log:
         TUXEDO_DIR + "09-excel/.log/{phenotype_name}_diffex_excel.log"
@@ -555,13 +561,13 @@ rule tuxedo_summary:
     input:
         input_files = expand(TUXEDO_DIR + "07-split/{phenotype}/{comparison}_gene.txt",
                              zip,
-                             phenotype=PHENOTYPE_NAMES,
-                             comparison=COMPARISON_GROUPS) +
+                             phenotype=ALL_PHENOTYPE_NAMES,
+                             comparison=ALL_COMPARISON_GROUPS) +
                        expand(TUXEDO_DIR + "07-split/{phenotype}/{comparison}_isoform.txt",
                               zip,
-                              phenotype=PHENOTYPE_NAMES,
-                              comparison=COMPARISON_GROUPS)
-    output: 
+                              phenotype=ALL_PHENOTYPE_NAMES,
+                              comparison=ALL_COMPARISON_GROUPS)
+    output:
         summary_txt = TUXEDO_DIR + "10-summary/summary.txt",
         summary_xlsx = TUXEDO_DIR + "10-summary/summary.xlsx",
     log:
@@ -584,14 +590,14 @@ rule tuxedo_summary:
 
 rule deliverables_tuxedo:
     input:
-        excel = expand(TUXEDO_DIR + "09-excel/{phenotype_name}/{comparison}.xlsx", 
+        excel = expand(TUXEDO_DIR + "09-excel/{phenotype_name}/{comparison}.xlsx",
                        zip,
-                       phenotype_name=PHENOTYPE_NAMES,
-                       comparison=COMPARISON_GROUPS),
+                       phenotype_name=ALL_PHENOTYPE_NAMES,
+                       comparison=ALL_COMPARISON_GROUPS),
         diffex_raw_counts = expand(TUXEDO_DIR + "06-cummerbund/{phenotype_name}/{phenotype_name}_repRawCounts.txt",
-                                   phenotype_name=PHENOTYPE_NAMES),
+                                   phenotype_name=ALL_PHENOTYPE_NAMES),
         plots = expand(TUXEDO_DIR + "06-cummerbund/{phenotype_name}/Plots",
-                       phenotype_name=PHENOTYPE_NAMES),
+                       phenotype_name=ALL_PHENOTYPE_NAMES),
         summary_xlsx = TUXEDO_DIR + "10-summary/summary.xlsx",
     output:
         deliverables_dir = DELIVERABLES_DIR + "tuxedo",
@@ -661,9 +667,11 @@ rule deseq2_metadata_contrasts:
     output:
         sample_metadata = DESEQ2_DIR + "02-metadata_contrasts/sample_metadata.txt",
         contrasts = DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt"
+    params:
+        phenos_with_replicates = phenotypeManager.phenotypes_with_replicates
     run:
-        deseq2_helper.build_sample_metadata(config, output.sample_metadata)
-        deseq2_helper.build_contrasts(config, output.contrasts)
+        deseq2_helper.build_sample_metadata(config, params.phenos_with_replicates, output.sample_metadata)
+        deseq2_helper.build_contrasts(config, params.phenos_with_replicates, output.contrasts)
 
 rule deseq2_diffex:
     input:
@@ -674,8 +682,8 @@ rule deseq2_diffex:
         dir = DESEQ2_DIR + "03-deseq2_diffex",
         files = expand(DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt",
                        zip,
-                       phenotype=PHENOTYPE_NAMES,
-                       comparison=COMPARISON_GROUPS),
+                       phenotype=REPLICATE_PHENOTYPE_NAMES,
+                       comparison=REPLICATE_COMPARISON_GROUPS),
     threads: 8
     log:
         DESEQ2_DIR + "03-deseq2_diffex/.log/deseq2_DESeq2Diffex.log"
@@ -696,7 +704,8 @@ rule deseq2_diffex:
         "    --foldChange={params.fold_change} "
         "    --adjustedPValue={params.adjusted_pvalue} "
         "    --threads={threads} "
-        "    --memoryInGb=16 2>&1 | tee {log} && "
+        "    --javaMemoryInGb=16 2>&1 "
+        "    --pandocMemoryInGb=16 2>&1 | tee {log} && "
         "mv {output.dir}/.tmp/* {output.dir} && "
         "touch {output.dir} && "
         "rm -f Rplots.pdf " #Some part of R generates this empty (nuisance) plot
@@ -721,18 +730,18 @@ rule deseq2_annotation:
        "mv {output}.tmp {output} "
 
 rule deseq2_run_info:
-    input: 
+    input:
         glossary = WATERMELON_SCRIPTS_DIR + "deseq2_glossary.txt",
         sample_metadata = DESEQ2_DIR + "02-metadata_contrasts/sample_metadata.txt",
         contrasts = DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt"
-    output: 
+    output:
         run_info = DESEQ2_DIR + "05-run_info/run_info.txt",
         glossary = DESEQ2_DIR + "05-run_info/glossary.txt"
     run:
         command = ('module load watermelon_rnaseq && '
                    'module list -t 2> {}').format(output['run_info'])
         subprocess.call(command, shell=True)
-        with open(output['run_info'], 'a') as run_info_file: 
+        with open(output['run_info'], 'a') as run_info_file:
             print('\n\nConfig\n', file=run_info_file)
             print(yaml.dump(config, default_flow_style=False),
                   file=run_info_file)
@@ -762,9 +771,9 @@ rule deseq2_summary:
     input:
         input_files = expand(DESEQ2_DIR + "04-annotation/{phenotype}/{comparison}.annot.txt",
                              zip,
-                             phenotype=PHENOTYPE_NAMES,
-                             comparison=COMPARISON_GROUPS),
-    output: 
+                             phenotype=REPLICATE_PHENOTYPE_NAMES,
+                             comparison=REPLICATE_COMPARISON_GROUPS),
+    output:
         summary_txt = DESEQ2_DIR + "07-summary/summary.txt",
         summary_xlsx = DESEQ2_DIR + "07-summary/summary.xlsx",
     log:
@@ -789,8 +798,8 @@ rule deliverables_deseq2:
         diffex_dir = DESEQ2_DIR + "03-deseq2_diffex",
         gene_lists = expand(DESEQ2_DIR + "06-excel/{phenotype_name}/{comparison}.xlsx",
                             zip,
-                            phenotype_name=PHENOTYPE_NAMES, 
-                            comparison=COMPARISON_GROUPS),
+                            phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+                            comparison=REPLICATE_COMPARISON_GROUPS),
         summary_xlsx = DESEQ2_DIR + "07-summary/summary.xlsx",
     output:
         deliverables_dir = DELIVERABLES_DIR + "deseq2",

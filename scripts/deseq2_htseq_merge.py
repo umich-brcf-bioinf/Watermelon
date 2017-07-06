@@ -38,8 +38,8 @@ def _log(message, *args):
     print('{}|deseq2_htseq_merge|{}'.format(_time_stamp(), message), file=sys.stderr)
 
 def _build_sample_dataframes(args, log=_log):
-    sample_count_files = glob.glob(os.path.join(args.htseq_dir,
-                                                '*' + args.suffix))
+    sample_count_files = sorted(glob.glob(os.path.join(args.htseq_dir,
+                                                       '*' + args.suffix)))
     if len(sample_count_files) == 0:
         msg = ('Found no htseq sample files (working_dir=[{}], suffix=[{}]); '
                'review inputs and try again').format(args.htseq_dir,
@@ -60,11 +60,13 @@ def _merge_dataframes(sample_data_frames):
     df = pd.concat(sample_data_frames, axis=1)
 
     counts_df = df.loc[~df.index.isin(STAT_COLUMNS)].copy()
+    counts_df = counts_df.reindex_axis(sorted(counts_df.columns), axis=1)
     counts_df.index.name=COUNTS_INDEX_HEADER
     counts_df.fillna(value=0, inplace=True)
     counts_df = counts_df.applymap(np.int64)
 
     stats_df = df.loc[df.index.isin(STAT_COLUMNS)].copy()
+    stats_df = stats_df.reindex_axis(sorted(stats_df.columns), axis=1)
     stats_df.loc[STATS_FEATURE_ASSIGNED,:] = counts_df.sum()
     stats_df.loc[STATS_TOTAL,:] = stats_df.sum()
     stats_df.fillna(value=0, inplace=True)
@@ -85,7 +87,6 @@ def _validate_dataframes(sample_dfs, counts_df, stats_df):
         raise ValueError(msg)
 
     min_row_count = _gene_count_from_sample_df(sample_dfs[0])
-    print(min_row_count, len(counts_df))
     if  min_row_count > len(counts_df):
         msg = ('Expected at least [{}] rows in merged file, but '
                'found [{}]').format(min_row_count, len(counts_df))
@@ -146,7 +147,7 @@ def main(sys_argv, log=_log):
     counts_df, stats_df = _merge_dataframes(sample_data_frames)
     _validate_dataframes(sample_data_frames, counts_df, stats_df)
     _save_merged_dataframes(args, counts_df, stats_df, log)
-    _log('done')
+    log('done')
 
 if __name__ == '__main__':
     main(sys.argv[1:])

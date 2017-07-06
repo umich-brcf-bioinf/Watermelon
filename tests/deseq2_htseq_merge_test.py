@@ -42,7 +42,7 @@ class Deseq2HtseqMergeTest(unittest.TestCase):
         s1_df = pd.DataFrame(data={'s1':1}, index=['gene1'])
         s2_df = pd.DataFrame(data={'s2':2}, index=['gene1','gene2'])
         s3_df = pd.DataFrame(data={'s3':4}, index=['gene2','gene3'])
-        dfs = [s1_df, s2_df, s3_df]
+        dfs = [s3_df, s1_df, s2_df]
 
         counts_df, _ = deseq2_htseq_merge._merge_dataframes(dfs)
 

@@ -84,10 +84,6 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
         command = self.build_command("mutt -v | head -1")
         self.check_command(command, "\d*\.\d+", "mutt not installed")
 
-    def test_perl_version(self):
-        command = self.build_command("perl -e 'print $];'")
-        self.check_command(command, "5.022002", "wrong perl version")
-
     def test_python_version(self):
         command = self.build_command("python --version 2>&1")
         self.check_command(command, "Python 2.7.9", "wrong python version")
@@ -123,24 +119,6 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
     def test_picard_version(self):
         command = self.build_command("java -jar $PICARD_JARS/SortSam.jar --version 2>&1 | cut -d'(' -f1")
         self.check_command(command, "1.77", "wrong picard version")
-
-
-    def test_perl_modules_present(self):
-        missing_modules = []
-        modules = ["Archive::Extract",
-                   "Excel::Writer::XLSX",
-                   "File::Path",
-                   "Getopt::Long",
-                   "HTTP::Cookies",
-                   "MIME::Lite",
-                   "SOAP::Lite"]
-        for module_name in modules:
-            command = self.build_command("perl -M{} -e 0".format(module_name))
-            try:
-                subprocess.check_output(command, shell=True)
-            except subprocess.CalledProcessError:
-                missing_modules.append(module_name)
-        self.assertEquals([], missing_modules)
 
     def test_python2_modules_present(self):
         missing_modules = []

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.x.x (mm/dd/yyyy)
+------------------
+- Fixed a bug that caused deseq2 to crash when merging htseq counts files
+  with non-standard sample names
+
 0.2.5 (6/22/2017)
 -----------------
 - Fixed DESeq2 bug in correlation plots that crashes watermelon when less

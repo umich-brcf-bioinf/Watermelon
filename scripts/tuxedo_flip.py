@@ -86,7 +86,8 @@ def _parse_command_line_args(sys_argv):
         '--comparison_infix',
         type=str,
         help=('={} The delimiter that separates group 1 and 2 in the comparisons '
-              'parameter').format(DEFAULT_COMPARISON_INFIX))
+              'parameter').format(DEFAULT_COMPARISON_INFIX),
+        default=DEFAULT_COMPARISON_INFIX)
 
     args = parser.parse_args(sys_argv)
     return args
@@ -98,7 +99,7 @@ def main(sys_argv):
     _validate_inputs(df, args)
     comparisons = args.comparisons.split(',')
     _log('flipping comparisons')
-    _flip_comparisons(DEFAULT_COMPARISON_INFIX, df, comparisons)
+    _flip_comparisons(args.comparison_infix, df, comparisons)
     _log('saving {}'.format(args.output_filepath))
     df.to_csv(args.output_filepath, index=False, sep='\t')
     _log('done')

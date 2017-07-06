@@ -64,8 +64,15 @@ def _parse_command_line_args(sys_argv):
         help=('= {}; output of merged stats '.format(DEFAULT_STATS_FILENAME),
         default=DEFAULT_STATS_FILENAME)
 
-def main(sys_argv):
-    args = _parse_command_line_args(sys_argv)
+def _build_sample_dataframes(args, log=_log):
+    sample_count_files = glob.glob(os.path.join(args.htseq_dir,
+                                                '*' + args.suffix))
+    if len(sample_count_files) == 0:
+        msg = ('Found no htseq sample files (working_dir=[{}], suffix=[{}]); '
+               'review inputs and try again').format(args.htseq_dir,
+                                                     args.suffix)
+        raise ValueError(msg)
+    log('read {} sample count files', len(sample_count_files))
 
     strip_suffix = lambda x: os.path.basename(x[:x.rfind(args.suffix)])
     htseq_file_to_df = lambda x: pd.read_table(x,
@@ -74,15 +81,10 @@ def main(sys_argv):
                                                index_col=0,
                                                names=[COUNT_INDEX_HEADER,
                                                       strip_suffix(x)])
-    sample_count_files = glob.glob(os.path.join(args.htseq_dir,
-                                                '*' + args.suffix))
-    if len(sample_count_files) == 0:
-        msg = ('Found no htseq sample files (working_dir=[{}], suffix=[{}]); '
-               'review inputs and try again').format(args.htseq_dir,
-                                                     args.suffix)
-        raise ValueError(msg)
-    _log('read {} sample count files', len(sample_count_files))
-    df = pd.concat(map(htseq_file_to_df, sample_count_files), axis=1)
+    return map(htseq_file_to_df, sample_count_files)
+
+def _merge_dataframes(sample_data_frames):
+    df = pd.concat(sample_data_frames, axis=1)
 
     counts = df.loc[~df.index.isin(STAT_COLUMNS)].copy()
 
@@ -92,6 +94,9 @@ def main(sys_argv):
     stats = stats.applymap(np.int64)
     stats.index.name=STATS_INDEX_HEADER
 
+    return counts, stats
+
+def _validate_counts_dataframe(sample_count_files, counts)
     expected_sample_count = len(sample_count_files)
     actual_sample_count = counts.shape[1]
     if expected_sample_count != actual_sample_count:
@@ -99,13 +104,21 @@ def main(sys_argv):
                'found [{}]').format(expected_sample_count, actual_sample_count)
         raise ValueError(msg)
 
+def _save_merged_dataframes(args, sample_count_files, counts, stats, log=_log)
     counts.to_csv(args.counts_filename, sep='\t')
     stats.to_csv(args.stats_filename, sep='\t')
-    _log(('merged [{}] sample count files to count file '
+    log(('merged [{}] sample count files to count file '
           '[{}] and stats file [{}]'),
           len(sample_count_files),
           args.counts_filename,
           args.stats_filename)
+
+def main(sys_argv):
+    args = _parse_command_line_args(sys_argv)
+    sample_data_frames = _build_sample_dataframes(args)
+    counts, stats = _merge_dataframes(sample_data_frames)
+    _validate_counts_dataframe(sample_count_files, counts)
+    _save_merged_dataframes(args, sample_count_files, counts, stats)
     _log('done')
 
 if __name__ == '__main__':

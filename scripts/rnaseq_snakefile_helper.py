@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import, division
 from argparse import Namespace
 import collections
 from collections import defaultdict
+import csv
 from functools import partial
 import glob
 import hashlib
@@ -12,6 +13,8 @@ import os
 from os.path import join
 from os.path import isfile
 import sys
+
+from snakemake import workflow
 
 from scripts.watermelon_config import CONFIG_KEYS
 from scripts.watermelon_config import DEFAULT_COMPARISON_INFIX
@@ -321,7 +324,7 @@ def tophat_options(alignment_options):
         options += " --no-novel-juncs "  # used in Legacy for transcriptome + genome alignment
     return options
 
-def _expand_sample_reads(fastq_base_dir, samples):
+def _get_sample_reads(fastq_base_dir, samples):
     sample_reads = {}
     read_suffix = {0: "", 1:"_SE", 2:"_PE"}
     is_fastq = lambda fn: fn.endswith('.fastq') or fn.endswith('.fastq.gz')
@@ -337,5 +340,41 @@ def _expand_sample_reads(fastq_base_dir, samples):
     return sample_reads
 
 def flattened_sample_reads(fastq_base_dir, samples):
-    sample_reads = _expand_sample_reads(fastq_base_dir, samples)
+    sample_reads = _get_sample_reads(fastq_base_dir, samples)
     return [(sample,read) for (sample,reads) in sample_reads.items() for read in reads]
+
+def expand_sample_read_endedness(sample_read_endedness_format,
+                                 all_flattened_sample_reads,
+                                 sample=None):
+    if not all_flattened_sample_reads:
+        return []
+    samples, reads = zip(*[(s, r) for s, r in all_flattened_sample_reads if not sample or s == sample])
+    return workflow.expand(sample_read_endedness_format,
+                           zip,
+                           sample=samples,
+                           read_endedness=reads)
+
+def tophat_inner_mate_distance_flag(read_stats_filename):
+    header_key = 'inner_mate_dist'
+    tophat_flag = '--mate-inner-dist'
+    result = ''
+    if os.path.exists(read_stats_filename):
+        try:
+            with open(read_stats_filename, mode='r') as infile:
+                dist = int(float(next(csv.DictReader(infile, delimiter='\t'))[header_key]))
+                result = '{} {}'.format(tophat_flag, dist)
+        except KeyError:
+            raise ValueError('missing [{}] in header of [{}]'.format(header_key, read_stats_filename))
+        except StopIteration:
+            raise ValueError('missing data row in [{}]'.format(read_stats_filename))
+        except ValueError as e:
+            raise ValueError('invalid number for [{}] in [{}]: {}'.format(header_key, read_stats_filename, e))
+    return result
+
+def expand_read_stats_if_paired(read_stats_filename_format,
+                                flattened_sample_reads,
+                                sample):
+    result = []
+    if len([s for s,r in flattened_sample_reads if s == sample]) > 1:
+        result.append(read_stats_filename_format.format(sample=sample))
+    return result

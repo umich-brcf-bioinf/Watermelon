@@ -11,6 +11,9 @@ fold_change:
 deseq2_adjustedPValue:
     0.05
 
+insert_distance_downsample:
+    0.001
+
 trimming_options:
     base_quality_5prime: 0
     base_quality_3prime: 13

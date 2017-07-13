@@ -22,8 +22,10 @@ entrez_gene_info:
     foo.txt
 genome:
 references:
+insert_distance_downsample: 0.001
 alignment_options:
     library_type: fr-unstranded
+    transcriptome_only: True
 transcriptome_index:
 comparisons:
 fold_change:

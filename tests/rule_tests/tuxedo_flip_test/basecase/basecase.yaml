@@ -1,11 +1,8 @@
-input_dir:
-    ""
+input_dir: ""
+insert_distance_downsample: 0.01
+alignment_output_dir: ""
 
-alignment_output_dir:
-    ""
-
-diffex_output_dir:
-    "diffex_results"
+diffex_output_dir: diffex_results
 
 phenotypes: pLabel
 samples:

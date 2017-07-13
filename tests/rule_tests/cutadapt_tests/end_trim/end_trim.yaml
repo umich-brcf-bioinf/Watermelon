@@ -21,7 +21,9 @@ comparisons:
 fold_change:
 deseq2_adjustedPValue:
 references:
+insert_distance_downsample: 0.001
 alignment_options:
     library_type: fr-unstranded
+    transcriptome_only: True
 comparisons:
     pLabel: pval1_v_pval2

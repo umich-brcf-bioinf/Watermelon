@@ -52,18 +52,17 @@ SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(config['input_dir'
 
 rule all:
     input:
-        expand(ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read}_fastqc.html",
-                zip,
-                sample=map(lambda x: x[0], SAMPLE_READS),
-                read=map(lambda x: x[1], SAMPLE_READS)),
+        rnaseq_snakefile_helper.expand_sample_read_endedness(\
+            ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",
+            SAMPLE_READS),
         expand(ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_accepted_hits.bam",
                 sample=config[SAMPLES_KEY]),
         expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
                 sample=config[SAMPLES_KEY]),
         ALIGNMENT_DIR + "06-qc_metrics/alignment_stats.txt",
-        expand(DELIVERABLES_DIR + "alignment/raw_reads_fastqc/{sample}_trimmed_{read}_fastqc.html",
-                sample=config[SAMPLES_KEY],
-                read=["R1", "R2"]),
+        rnaseq_snakefile_helper.expand_sample_read_endedness(\
+            DELIVERABLES_DIR + "alignment/raw_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
+            SAMPLE_READS),
         expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
                 sample=config[SAMPLES_KEY]),
         DELIVERABLES_DIR + "alignment/alignment_stats.txt",
@@ -121,17 +120,17 @@ rule all:
         DESEQ2_DIR + "07-summary/summary.xlsx",
         expand(DELIVERABLES_DIR + "deseq2"),
 
-rule concat_reads:
+rule align_concat_reads:
     input:
         INPUT_DIR + "{sample}/",
     output:
         ALIGNMENT_DIR + "01-raw_reads/{sample}_R{read}.fastq.gz",
     params:
-        source_glob = INPUT_DIR + "{sample}/*_R{read}*.fastq* "
+        source_glob = lambda wildcards: "{}/{}/*_R{}*.fastq*".format(INPUT_DIR, wildcards.sample, wildcards.read[:1]),
     shell:
         "cat {params.source_glob} > {output}"
 
-rule cutadapt_SE:
+rule align_cutadapt_SE:
     input:
         trimming_options_checksum = CONFIG_CHECKSUMS_DIR + "config-trimming_options.watermelon.md5",
         raw_fastq = ALIGNMENT_DIR + "01-raw_reads/{sample}_{read}_SE.fastq.gz",
@@ -162,7 +161,7 @@ rule cutadapt_SE:
                 echo No trimming done
                 ) 2>&1 |tee {log} ''')
 
-rule cutadapt_PE:
+rule align_cutadapt_PE:
     input:
         trimming_options_checksum = CONFIG_CHECKSUMS_DIR + "config-trimming_options.watermelon.md5",
         raw_fastq_R1 = ALIGNMENT_DIR + "01-raw_reads/{sample}_R1_PE.fastq.gz",
@@ -198,24 +197,69 @@ rule cutadapt_PE:
                 echo No trimming done
                 ) 2>&1 |tee {log} ''')
 
-# For paired-end reads:
-# cutadapt -a ADAPT1 -A ADAPT2 [options] -o out1.fastq -p out2.fastq in1.fastq in2.fastq
-
-rule fastqc_trimmed_reads:
+rule align_fastqc_trimmed_reads:
     input:
-        ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read}.fastq.gz"
+        ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read_endedness}.fastq.gz"
     output:
         touch(ALIGNMENT_DIR + "03-fastqc_reads/reads_fastq.done"),
-        ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read}_fastqc.html"
+        ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html"
     log:
-        ALIGNMENT_DIR + "03-fastqc_reads/.log/{sample}_fastqc_trimmed_{read}.log"
+        ALIGNMENT_DIR + "03-fastqc_reads/.log/{sample}_trimmed_{read_endedness}_fastqc.log"
     params:
         fastqc_dir = ALIGNMENT_DIR + "03-fastqc_reads"
     shell:
         "module load watermelon_rnaseq && "
         "fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log}"
 
-rule create_transcriptome_index:
+rule align_calc_insert_size_PE:
+    input:
+        fasta_file = "references/bowtie2_index/genome.fa",
+        bbmap_ref = "references/bbmap_ref",
+        raw_fastq_R1 = ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_R1_PE.fastq.gz",
+        raw_fastq_R2 = ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_R2_PE.fastq.gz",
+    output:
+        ALIGNMENT_DIR + "04-insert_size/{sample}_read_stats.txt"
+    params:
+        sample_id = "{sample}",
+        insert_distance_downsample = config["insert_distance_downsample"],
+        temp_dir = ALIGNMENT_DIR + "04-insert_size/.tmp/{sample}",
+        downsampled_fastq_r1 = ALIGNMENT_DIR + "04-insert_size/.tmp/{sample}/{sample}_R1.downsampled.fastq",
+        downsampled_fastq_r2 = ALIGNMENT_DIR + "04-insert_size/.tmp/{sample}/{sample}_R2.downsampled.fastq",
+        ihist_file = ALIGNMENT_DIR + "04-insert_size/.tmp/{sample}/{sample}_ihist.txt",
+        lhist_file = ALIGNMENT_DIR + "04-insert_size/.tmp/{sample}/{sample}_lhist.txt",
+        mapped_file = ALIGNMENT_DIR + "04-insert_size/.tmp/{sample}/{sample}.sam",
+        output_dir = ALIGNMENT_DIR + "04-insert_size/",
+    threads:
+        8
+    resources:
+        memoryInGb=32
+    log:
+        ALIGNMENT_DIR + "04-insert_size/.log/{sample}_read_stats.log"
+    shell:
+        '''(module purge && module load watermelon_rnaseq &&
+        mkdir -p {params.temp_dir} &&
+        python {WATERMELON_SCRIPTS_DIR}/align_subsample.py \
+            {params.insert_distance_downsample} \
+            {input.raw_fastq_R1} {input.raw_fastq_R2} \
+            {params.downsampled_fastq_r1} {params.downsampled_fastq_r2} &&
+        gzip -f {params.downsampled_fastq_r1} &&
+        gzip -f {params.downsampled_fastq_r2} &&
+        bbmap.sh -Xmx{resources.memoryInGb}g t={threads} \
+            requirecorrectstrand=f \
+            path={input.bbmap_ref} \
+            in1={params.downsampled_fastq_r1}.gz \
+            in2={params.downsampled_fastq_r2}.gz \
+            ihist={params.ihist_file} \
+            lhist={params.lhist_file} \
+            out={params.mapped_file} &&
+        module purge && module load python/3.4.3 &&
+        python {WATERMELON_SCRIPTS_DIR}/read_stats_bbmap_single.py \
+            --input_dir {params.temp_dir} \
+            --sample_id {params.sample_id} \
+            --output_dir {params.output_dir}
+        ) 2>&1 | tee {log}'''
+
+rule align_create_transcriptome_index:
     input:
         alignment_options_checksum =  CONFIG_CHECKSUMS_DIR + "config-alignment_options.watermelon.md5",
         reference_checksum =  CONFIG_CHECKSUMS_DIR + "config-references.watermelon.md5",
@@ -243,23 +287,31 @@ rule create_transcriptome_index:
         "mv tophat_out {params.output_dir}/{params.transcriptome_dir}/ && "
         "touch {params.output_dir}/{params.transcriptome_dir}/* "
 
-rule tophat:
+rule align_tophat:
     input:
         alignment_options_checksum = CONFIG_CHECKSUMS_DIR + "config-alignment_options.watermelon.md5",
         reference_checksum = CONFIG_CHECKSUMS_DIR + "config-references.watermelon.md5",
         transcriptome_fasta = ALIGNMENT_DIR + "04-tophat/transcriptome_index/transcriptome.fa",
         bowtie2_index_dir = "references/bowtie2_index",
-        R1_fastq = ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_R1.fastq.gz",
-        R2_fastq = ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_R2.fastq.gz"
+        fastq_files = lambda wildcards: rnaseq_snakefile_helper.expand_sample_read_endedness(\
+                ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read_endedness}.fastq.gz",
+                SAMPLE_READS,
+                wildcards.sample),
+        read_stats = lambda wildcards: rnaseq_snakefile_helper.expand_read_stats_if_paired(\
+                ALIGNMENT_DIR + "04-insert_size/{sample}_read_stats.txt",
+                SAMPLE_READS,
+                wildcards.sample)
     output:
         ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_accepted_hits.bam",
-        ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_align_summary.txt"
+        ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_align_summary.txt",
     params:
         transcriptome_index = ALIGNMENT_DIR + "04-tophat/transcriptome_index/transcriptome",
+        tophat_options = rnaseq_snakefile_helper.tophat_options(config["alignment_options"]),
+        strand = rnaseq_snakefile_helper.strand_option_tophat(config["alignment_options"]["library_type"]),
         tophat_dir = ALIGNMENT_DIR + "04-tophat",
         sample = lambda wildcards: wildcards.sample,
-        tophat_options = lambda wildcards: rnaseq_snakefile_helper.tophat_options(config["alignment_options"]),
-        strand = rnaseq_snakefile_helper.strand_option_tophat(config["alignment_options"]["library_type"])
+        mate_inner_distance_flag = lambda wildcards: rnaseq_snakefile_helper.tophat_inner_mate_distance_flag(\
+                ALIGNMENT_DIR + "04-insert_size/{sample}_read_stats.txt".format(sample=wildcards.sample)),
     log:
         ALIGNMENT_DIR + "04-tophat/.log/{sample}_tophat.log"
     threads: 8
@@ -271,16 +323,16 @@ rule tophat:
             " --library-type {params.strand} "
             " -I 500000 "
             " --transcriptome-index={params.transcriptome_index} "
+            " {params.mate_inner_distance_flag} "
             " {params.tophat_options} "
             " -o {params.tophat_dir}/{params.sample} "
             " {input.bowtie2_index_dir}/genome "
-            " {input.R1_fastq} "
-            " {input.R2_fastq} "
+            " {input.fastq_files} "
             " 2>&1 | tee {log} && "
             "mv {params.tophat_dir}/{params.sample}/accepted_hits.bam {params.tophat_dir}/{params.sample}/{params.sample}_accepted_hits.bam && "
             "mv {params.tophat_dir}/{params.sample}/align_summary.txt {params.tophat_dir}/{params.sample}/{params.sample}_align_summary.txt "
 
-rule fastqc_tophat_align:
+rule align_fastqc_tophat_align:
     input:
         ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_accepted_hits.bam"
     output:
@@ -312,18 +364,20 @@ rule align_qc_metrics:
         "/Mapped/ {{printf \"%s\t\",$3}} "
         "/overall/ {{print $1}}' > {output}"
 
-rule deliverables_alignment:
+rule align_deliverables_alignment:
     input:
-        raw_fastqc = expand(ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_R1_fastqc.html",
-                            sample=config["samples"]),
+        raw_fastqc = lambda wildcards: rnaseq_snakefile_helper.expand_sample_read_endedness(
+                ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",
+                SAMPLE_READS),
         align_fastqc = expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
-                              sample=config["samples"]),
+                sample=config["samples"]),
         alignment_stats = ALIGNMENT_DIR + "06-qc_metrics/alignment_stats.txt",
     output:
-        raw_fastqc = expand(DELIVERABLES_DIR + "alignment/raw_reads_fastqc/{sample}_trimmed_R1_fastqc.html",
-                            sample=config["samples"]),
+        raw_fastqc = rnaseq_snakefile_helper.expand_sample_read_endedness(
+                DELIVERABLES_DIR + "alignment/raw_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
+                SAMPLE_READS),
         align_fastqc = expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
-                              sample=config["samples"]),
+                sample=config["samples"]),
         alignment_stats = DELIVERABLES_DIR + "alignment/alignment_stats.txt",
     params:
         raw_fastqc_input_dir    =  ALIGNMENT_DIR + "03-fastqc_reads",
@@ -540,10 +594,10 @@ rule tuxedo_split:
 
 rule tuxedo_last_split:
     input:
-        expand(TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_gene.txt",
-                zip,
-                phenotype_name=ALL_PHENOTYPE_NAMES,
-                comparison=ALL_COMPARISON_GROUPS)
+        expand(TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_gene.txt", \
+               zip, \
+               phenotype_name=ALL_PHENOTYPE_NAMES, \
+               comparison=ALL_COMPARISON_GROUPS)
     output:
         touch(TUXEDO_DIR + "07-split/last_split")
 
@@ -725,6 +779,8 @@ rule deseq2_diffex:
     params:
         fold_change = config["fold_change"],
         adjusted_pvalue = config["deseq2_adjustedPValue"],
+    resources:
+        memoryInGb = 16
     shell:
         "module load watermelon_rnaseq && "
         "rm -rf {output.dir}/normalized_data && "
@@ -739,8 +795,8 @@ rule deseq2_diffex:
         "    --foldChange={params.fold_change} "
         "    --adjustedPValue={params.adjusted_pvalue} "
         "    --threads={threads} "
-        "    --javaMemoryInGb=16 2>&1 "
-        "    --pandocMemoryInGb=16 2>&1 | tee {log} && "
+        "    --javaMemoryInGb={resources.memoryInGb} 2>&1 "
+        "    --pandocMemoryInGb={resources.memoryInGb} 2>&1 | tee {log} && "
         "mv {output.dir}/.tmp/* {output.dir} && "
         "touch {output.dir} && "
         "rm -f Rplots.pdf " #Some part of R generates this empty (nuisance) plot

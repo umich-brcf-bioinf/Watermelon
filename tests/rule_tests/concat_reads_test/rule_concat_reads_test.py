@@ -43,13 +43,16 @@ class ConcatReadsTest(unittest.TestCase):
             tmp_expected_dir = os.path.join(temp_dir_path, 'expected')
             shutil.copytree(source_expected_dir, tmp_expected_dir)
             tmp_actual_dir = os.path.join(temp_dir_path, 'actual')
-            shutil.copytree(source_working_dir, tmp_actual_dir) 
+            shutil.copytree(source_working_dir, tmp_actual_dir)
 
             os.chdir(tmp_actual_dir)
-            command = '''snakemake --cores 2 \
+            command = '''snakemake -p --cores 2 \
      --snakefile {} \
      --configfile {} \
-     --force alignment_results/01-raw_reads/Sample_0_R1.fastq.gz alignment_results/01-raw_reads/Sample_1_R1.fastq.gz {}
+     --force alignment_results/01-raw_reads/Sample_0_R1.fastq.gz \
+             alignment_results/01-raw_reads/Sample_1_R1.fastq.gz \
+             alignment_results/01-raw_reads/Sample_1_R2.fastq.gz \
+             {}
 '''.format(SNAKEFILE_PATH, configfile_path, REDIRECT_OUTPUT)
             subprocess.check_output(command, shell=True)
 

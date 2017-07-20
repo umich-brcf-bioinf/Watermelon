@@ -15,15 +15,21 @@ samples:
 trimming_options:
     base_quality_5prime: 20
     base_quality_3prime: 20
-    trim_length_5prime: 0 
+    trim_length_5prime: 0
     trim_length_3prime: 0
 
 entrez_gene_info:
     foo.txt
 genome:
 references:
+
+insert_size:
+    downsample_readcount: 30000
+    pair_length: 500
+
 alignment_options:
     library_type: fr-unstranded
+    transcriptome_only: True
 transcriptome_index:
 comparisons:
 fold_change:

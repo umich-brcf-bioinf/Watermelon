@@ -8,12 +8,14 @@ hg19:
 mm10:
     genome: mm10
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/BowtieIndex/bowtie2
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/noRibo_mouse.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/BBMap/
 rn5:
     genome: rn5
     references:
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/genes.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/Sequence/BBMap/

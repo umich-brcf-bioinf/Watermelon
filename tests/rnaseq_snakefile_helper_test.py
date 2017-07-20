@@ -720,52 +720,75 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
                                                                       all_flattened_sample_reads)
         self.assertEqual([], actual)
 
-    def test_tophat_inner_mate_distance_flag(self):
+    def test_tophat_paired_end_flags(self):
         with TempDirectory() as temp_dir:
             read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\n42')
-            actual = rnaseq_snakefile_helper.tophat_inner_mate_distance_flag(read_stats_filename)
-        self.assertEqual('--mate-inner-dist 42', actual)
+            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\tinsert_std_dev\n42.3\t14.9', )
+            actual = rnaseq_snakefile_helper.tophat_paired_end_flags(read_stats_filename)
+        self.assertEqual('--mate-inner-dist 42 --mate-std-dev 15', actual)
 
-    def test_tophat_inner_mate_distance_flag_isInteger(self):
+    def test_tophat_paired_end_flags_suppressedIfFileMissing(self):
         with TempDirectory() as temp_dir:
             read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\n42.596')
-            actual = rnaseq_snakefile_helper.tophat_inner_mate_distance_flag(read_stats_filename)
-        self.assertEqual('--mate-inner-dist 42', actual)
-
-    def test_tophat_inner_mate_distance_flag_suppressedIfFileMissing(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            actual = rnaseq_snakefile_helper.tophat_inner_mate_distance_flag(read_stats_filename)
+            actual = rnaseq_snakefile_helper.tophat_paired_end_flags(read_stats_filename)
         self.assertEqual('', actual)
 
-    def test_tophat_inner_mate_distance_flag_raisesOnMalformedHeader(self):
+    def test_tophat_paired_end_flags_suppressedIfNoFileMissing(self):
+        actual = rnaseq_snakefile_helper.tophat_paired_end_flags()
+        self.assertEqual('', actual)
+
+    def test_tophat_paired_end_flags_raisesWhenMissingAllRequiredHeaders(self):
         with TempDirectory() as temp_dir:
             read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
             temp_dir.write('s0_read_stats.txt', b'foo\n42')
             self.assertRaisesRegexp(ValueError,
-                                    r'missing.*inner_mate_dist.*s0_read_stats.txt',
-                                    rnaseq_snakefile_helper.tophat_inner_mate_distance_flag,
+                                    r'missing.*inner_mate_dist,insert_std_dev.*s0_read_stats.txt',
+                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
                                     read_stats_filename)
 
-    def test_tophat_inner_mate_distance_flag_raisesOnMissingData(self):
+    def test_tophat_paired_end_flags_raisesWhenMissingInsertStdDev(self):
         with TempDirectory() as temp_dir:
             read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist')
+            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\n42')
+            self.assertRaisesRegexp(ValueError,
+                                    r'missing.*insert_std_dev.*s0_read_stats.txt',
+                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
+                                    read_stats_filename)
+
+    def test_tophat_paired_end_flags_raisesWhenMissingInnerMateDist(self):
+        with TempDirectory() as temp_dir:
+            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
+            temp_dir.write('s0_read_stats.txt', b'insert_std_dev\n42')
+            self.assertRaisesRegexp(ValueError,
+                                    r'missing.*inner_mate_dist.*s0_read_stats.txt',
+                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
+                                    read_stats_filename)
+
+    def test_tophat_paired_end_flags_raisesOnMissingData(self):
+        with TempDirectory() as temp_dir:
+            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
+            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\tinsert_std_dev\n')
             self.assertRaisesRegexp(ValueError,
                                     r'missing data row in.*s0_read_stats.txt',
-                                    rnaseq_snakefile_helper.tophat_inner_mate_distance_flag,
+                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
                                     read_stats_filename)
 
-    def test_tophat_inner_mate_distance_flag_raisesOnInvalidData(self):
+    def test_tophat_paired_end_flags_raisesOnInvalidData(self):
         with TempDirectory() as temp_dir:
             read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\nHelloWorld')
+            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\tinsert_std_dev\nHello\tWorld')
             self.assertRaisesRegexp(ValueError,
-                                    r'invalid number for.*inner_mate_dist.*in.*s0_read_stats.txt.*HelloWorld',
-                                    rnaseq_snakefile_helper.tophat_inner_mate_distance_flag,
+                                    r'invalid number.*inner_mate_dist:Hello,insert_std_dev:World.*in.*s0_read_stats.txt',
+                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
                                     read_stats_filename)
+
+    def test_tophat_paired_end_flags_ignoresExtraData(self):
+        with TempDirectory() as temp_dir:
+            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
+            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\tinsert_std_dev\trelationship_status\n42.3\t14.9\tcomplicated', )
+            actual = rnaseq_snakefile_helper.tophat_paired_end_flags(read_stats_filename)
+        self.assertEqual('--mate-inner-dist 42 --mate-std-dev 15', actual)
+
 
     def test_expand_read_stats_if_paired(self):
         filename_format = 's={sample}'

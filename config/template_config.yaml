@@ -11,8 +11,9 @@ fold_change:
 deseq2_adjustedPValue:
     0.05
 
-insert_distance_downsample:
-    0.001
+insert_size:
+    downsample_readcount: 30000
+    pair_length: 500
 
 trimming_options:
     base_quality_5prime: 0

@@ -341,7 +341,7 @@ def _get_sample_reads(fastq_base_dir, samples):
 
 def flattened_sample_reads(fastq_base_dir, samples):
     sample_reads = _get_sample_reads(fastq_base_dir, samples)
-    return [(sample,read) for (sample,reads) in sample_reads.items() for read in reads]
+    return sorted([(sample,read) for (sample,reads) in sample_reads.items() for read in reads])
 
 def expand_sample_read_endedness(sample_read_endedness_format,
                                  all_flattened_sample_reads,
@@ -354,22 +354,47 @@ def expand_sample_read_endedness(sample_read_endedness_format,
                            sample=samples,
                            read_endedness=reads)
 
-def tophat_inner_mate_distance_flag(read_stats_filename):
-    header_key = 'inner_mate_dist'
-    tophat_flag = '--mate-inner-dist'
-    result = ''
-    if os.path.exists(read_stats_filename):
-        try:
-            with open(read_stats_filename, mode='r') as infile:
-                dist = int(float(next(csv.DictReader(infile, delimiter='\t'))[header_key]))
-                result = '{} {}'.format(tophat_flag, dist)
-        except KeyError:
-            raise ValueError('missing [{}] in header of [{}]'.format(header_key, read_stats_filename))
-        except StopIteration:
-            raise ValueError('missing data row in [{}]'.format(read_stats_filename))
-        except ValueError as e:
-            raise ValueError('invalid number for [{}] in [{}]: {}'.format(header_key, read_stats_filename, e))
-    return result
+def tophat_paired_end_flags(read_stats_filename=None):
+    def read_values(filename, expected_headers):
+        with open(filename, mode='r') as infile:
+            try:
+                row = next(csv.DictReader(infile, delimiter='\t'))
+            except StopIteration:
+                raise ValueError('missing data row in [{}]'.format(filename))
+        missing_headers = sorted(expected_headers - row.keys())
+        if missing_headers:
+            msg = 'missing [{}] in header of [{}]'.format(','.join(missing_headers),
+                                                          read_stats_filename)
+            raise ValueError(msg)
+        return row
+
+    def parse_values(filename, row, headers):
+        parsed_row = {}
+        invalid_values = {}
+        for header in headers:
+            value = row[header]
+            try:
+                parsed_row[header] = str(int(round(float(value))))
+            except ValueError:
+                invalid_values[header]=value
+        if invalid_values:
+            header_values = ','.join(['{}:{}'.format(h,v) for h,v in sorted(invalid_values.items())])
+            msg = 'invalid number(s) [{}] in {}'.format(header_values, read_stats_filename)
+            raise ValueError(msg)
+        return parsed_row
+
+    header_flag = {'insert_std_dev': '--mate-std-dev',
+                   'inner_mate_dist': '--mate-inner-dist'}
+    result = []
+    if read_stats_filename and os.path.exists(read_stats_filename):
+        raw_values = read_values(read_stats_filename, header_flag.keys())
+        parsed_values = parse_values(read_stats_filename,
+                                     raw_values,
+                                     header_flag.keys())
+        for header, flag in sorted(header_flag.items()):
+            result.append(flag)
+            result.append(parsed_values[header])
+    return ' '.join(result)
 
 def expand_read_stats_if_paired(read_stats_filename_format,
                                 flattened_sample_reads,

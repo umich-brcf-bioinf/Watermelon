@@ -1,5 +1,9 @@
 input_dir: ""
-insert_distance_downsample: 0.01
+
+insert_size:
+    downsample_readcount: 30000
+    pair_length: 500
+
 alignment_output_dir: ""
 
 diffex_output_dir: diffex_results

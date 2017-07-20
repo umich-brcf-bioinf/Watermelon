@@ -1,5 +1,9 @@
 input_dir: ./inputs/00-multiplexed_reads
-insert_distance_downsample: 0.001
+
+insert_size:
+    downsample_readcount: 30000
+    pair_length: 500
+
 phenotypes: pLabel
 samples:
     sampleA: pval1

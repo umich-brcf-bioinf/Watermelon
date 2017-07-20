@@ -22,7 +22,7 @@ Changelog
   crashes when attempting to normalize phenotypes without replicates)
 - Fixed DESeq bug that occurs when phenotype is not compared
 - Adjusted tuxedo-cuffdiff gene lists to correctly flip test and controls so
-  fold change directios match DESeq2
+  fold change directions match DESeq2
 - Reverted console logging to be verbose thereby avoiding suppression of
   logging under certain error conditions
 

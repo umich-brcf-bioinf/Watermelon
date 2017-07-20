@@ -46,7 +46,7 @@ def _count_annotated(annotation_column, annotation_null, df):
 
 def _simplify_file_names(file_paths, suffix):
     simplified_names = {}
-    common_prefix = os.path.commonprefix(file_paths)
+    common_prefix = os.path.join(os.path.dirname(os.path.commonprefix(file_paths)), '')
     for path in file_paths:
         name = path
         if suffix:
@@ -54,7 +54,7 @@ def _simplify_file_names(file_paths, suffix):
         if common_prefix:
             name = re.sub('^'+common_prefix, '', name)
         simplified_names[path] = name
-    return simplified_names 
+    return simplified_names
 
 def _parse_command_line_args(sys_argv):
     parser = argparse.ArgumentParser(
@@ -100,7 +100,7 @@ def _parse_command_line_args(sys_argv):
         nargs='+')
 
     args = parser.parse_args(sys_argv)
-    return args 
+    return args
 
 def main(sys_argv, log=_log):
     args = _parse_command_line_args(sys_argv)

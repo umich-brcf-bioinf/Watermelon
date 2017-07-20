@@ -556,18 +556,19 @@ rule tuxedo_summary:
     params:
         output_dir = TUXEDO_DIR + "10-summary/",
     shell:
-        "module purge && module load python/3.4.3 && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py "
-        " --annotation_column gene_id"
-        " --annotation_null . "
-        " --diffex_call_column diff_exp "
-        " --diffex_call_pass Yes "
-        " --trim_suffix .txt "
-        " --output_file {output.summary_txt} "
-        " --output_xlsx {output.summary_xlsx} "
-        " {input.input_files} "
-        " 2>&1 | tee {log} && "
-        "touch {params.output_dir}"
+        '''(module purge && module load python/3.4.3 &&
+        set -v &&
+        python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py \
+            --annotation_column gene_id \
+            --annotation_null . \
+            --diffex_call_column diff_exp \
+            --diffex_call_pass Yes \
+            --trim_suffix .txt \
+            --output_file {output.summary_txt} \
+            --output_xlsx {output.summary_xlsx} \
+            {input.input_files} &&
+        touch {params.output_dir}
+        ) 2>&1 | tee {log} '''
 
 rule deliverables_tuxedo:
     input:

@@ -13,6 +13,7 @@ export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
 
 export CONFIG_FILE='config.yaml'
 export CORES=40
+export MEMORY_IN_GB=128
 export DRYRUN=""
 export DAG=""
 export PASS_THROUGH_ARGS=()
@@ -44,11 +45,12 @@ file based on specified sequence dirs.
 See "watermelon-init --help" for more info.
 
 Options:
-    -c, --configfile : [config.yaml] snakemake config file
+    -c, --configfile : =config.yaml, snakemake config file
     --cores [N]      : =40, use at most N cores in parallel
+    --memoryInGb [N] : =128, use at most N Gb memory
     --dag            : create DAG files (in working dir) to visualize execution plan
     -n, --dryrun     : show plan without executing anything
-    --help           : shows this message
+    --help           \: shows this message
 
 v${WATERMELON_VERSION}
 USAGE_HERE
@@ -74,6 +76,10 @@ function parse_args {
         case "$1" in
              --cores | --jobs | -j)
                 CORES="$2"
+                shift 2
+                ;;
+             --memoryInGb)
+                MEMORY_IN_GB="$2"
                 shift 2
                 ;;
             -h | --help)
@@ -107,6 +113,7 @@ function parse_args {
         esac
     done
     readonly CORES
+    readonly MEMORY_IN_GB
     readonly DRYRUN
     readonly DAG
     readonly SNAKEFILE
@@ -123,12 +130,12 @@ if [[ ! -f $CONFIG_FILE ]]; then
 else
     export CONFIG_FILEPATH=`readlink -f $CONFIG_FILE`
     export CONFIG_BASENAME=`basename ${CONFIG_FILE}`
-fi 
+fi
 
 if [[ ! -f $SNAKEFILE ]]; then
     echo "ERROR: snakefile file [${SNAKEFILE}] cannot be read (contact bfxcore support for assistance)"
     exit 1
-fi 
+fi
 
 if [[ ${SKIP_CONFIG_VALIDATION} == "" ]]; then
     ${WATERMELON_ROOT_DIR}/watermelon_config_validator-runner.py $CONFIG_FILE || exit 1
@@ -179,7 +186,7 @@ echo 0 > .watermelon.exitcode
 echo "watermelon (v${WATERMELON_VERSION}) begins"
 set +e
 
-snakemake_command="snakemake --printshellcmds --keep-going --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} --cores ${CORES} -T ${DRYRUN} ${EXTRA_ARGUMENTS}"
+snakemake_command="snakemake --printshellcmds --keep-going --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} --cores ${CORES} --resources memoryInGb=${MEMORY_IN_GB} -T ${DRYRUN} ${EXTRA_ARGUMENTS}"
     echo $snakemake_command
 unbuffer $snakemake_command
 SNAKEMAKE_EXIT=$?

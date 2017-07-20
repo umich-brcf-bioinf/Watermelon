@@ -298,6 +298,7 @@ class WatermelonTest(unittest.TestCase):
                                      (r'--configfile {} '
                                      r'--snakefile {} '
                                       r'--cores 40 '
+                                      r'--resources memoryInGb=128 '
                                       r'-T '
                                       r'1 2 3 baz froody'). format(CONFIG_FILE,
                                                                    TEST_SNAKEFILE))
@@ -325,6 +326,7 @@ class WatermelonTest(unittest.TestCase):
                                      (r'--configfile {} '
                                       r'--snakefile {} '
                                       r'--cores 40 '
+                                      r'--resources memoryInGb=128 '
                                       r'-T '
                                       r'--dryrun -a -b -d'). format(CONFIG_FILE,
                                                            TEST_SNAKEFILE))
@@ -336,6 +338,7 @@ class WatermelonTest(unittest.TestCase):
             snakemake_executable_path = os.path.join(temp_dir_path, 'snakemake')
             DEFAULT_SNAKEFILE = os.path.join(WATERMELON_ROOT, 'rnaseq.snakefile')
             DEFAULT_CORES = 40
+            DEFAULT_MEMORY = 128
             CONFIG_FILE = os.path.join(TESTS_DIR, 'config.yaml')
             shutil.copy(CONFIG_FILE, temp_dir_path)
 
@@ -346,13 +349,14 @@ class WatermelonTest(unittest.TestCase):
                        'PATH=.:$PATH; '
                        '{} --skip_config_validation ').format(WATERMELON_EXECUTABLE)
             exit_code, actual_output = self.execute(command)
-            #self.assertEqual(0, exit_code)
             self.assertRegexpMatches(actual_output,
                                      (r'--configfile config.yaml '
                                       r'--snakefile {} '
                                       r'--cores {} '
+                                      r'--resources memoryInGb={} '
                                       r'-T'). format(DEFAULT_SNAKEFILE,
-                                                     DEFAULT_CORES))
+                                                     DEFAULT_CORES,
+                                                     DEFAULT_MEMORY))
 
     def test_watermelon_canOverrideCores(self):
         with TempDirectory() as temp_dir:

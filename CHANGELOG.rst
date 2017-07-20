@@ -3,8 +3,11 @@ Changelog
 
 0.x.x (mm/dd/yyyy)
 ------------------
+- Added support for paired-end reads
 - Fixed a bug that caused deseq2 to crash when merging htseq counts files
   with non-standard sample names
+- Added memory constraint to watermelon shell script
+- Moved references to common location
 
 0.2.5 (6/22/2017)
 -----------------
@@ -19,7 +22,7 @@ Changelog
   crashes when attempting to normalize phenotypes without replicates)
 - Fixed DESeq bug that occurs when phenotype is not compared
 - Adjusted tuxedo-cuffdiff gene lists to correctly flip test and controls so
-  fold change directios match DESeq2
+  fold change directions match DESeq2
 - Reverted console logging to be verbose thereby avoiding suppression of
   logging under certain error conditions
 
@@ -28,11 +31,11 @@ Changelog
 - Corrected memory allocation bug in DESeq2/pandoc to prevent DESeq diffex from
   occasionally crashing
 - Adjusted watermelon to filter console logging to progress messages
-- Speed dry-run mode by skipping follow-on "summary detail" job   
+- Speed dry-run mode by skipping follow-on "summary detail" job
 
 0.2.2 (5/3/2017)
 ----------------
-- Corrected bug that crashed pipeline if only one phenotype specified 
+- Corrected bug that crashed pipeline if only one phenotype specified
 
 0.2.1 (4/25/2017)
 -----------------

@@ -1,13 +1,15 @@
-input_dir:
-    "./inputs/00-multiplexed_reads"
+input_dir: ./inputs/00-multiplexed_reads
+
+insert_size:
+    downsample_readcount: 30000
+    pair_length: 500
 
 phenotypes: pLabel
 samples:
     sampleA: pval1
     sampleB: pval2
 
-alignment_output_dir:
-    "alignment_results"
+alignment_output_dir: alignment_results
 
 trimming_options:
     base_quality_5prime: 0
@@ -15,8 +17,7 @@ trimming_options:
     trim_length_5prime: 3
     trim_length_3prime: 10
 
-entrez_gene_info:
-    foo.txt
+entrez_gene_info: foo.txt
 genome:
 references:
 transcriptome_index:
@@ -26,5 +27,6 @@ deseq2_adjustedPValue:
 
 alignment_options:
     library_type: fr-unstranded
+    transcriptome_only: True
 comparisons:
     pLabel: pval1_v_lval2

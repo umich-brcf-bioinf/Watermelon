@@ -8,17 +8,17 @@ diffex_output_dir:
 main_factors:  yes     ^  yes   ^    no          ^   no
 phenotypes:    gender  ^  diet  ^    male.diet   ^   female.diet
 samples:
-    Sample_61483: Me     ^   HF   ^      HF        ^             
-    Sample_61484: Me     ^   ND   ^      ND        ^             
-    Sample_61485: Me     ^   HF   ^      HF        ^             
-    Sample_61486:       ^   ND   ^                ^    ND       
-    Sample_61504: Fe     ^   HF   ^                ^    HF       
-    Sample_61505: Fe     ^   HF   ^                ^    HF       
-    Sample_61506: Fe     ^   DRG  ^                ^    DRG      
-    Sample_61490:       ^   DRG  ^                ^    DRG      
-    
+    Sample_61483: Me     ^   HF   ^      HF        ^
+    Sample_61484: Me     ^   ND   ^      ND        ^
+    Sample_61485: Me     ^   HF   ^      HF        ^
+    Sample_61486:       ^   ND   ^                ^    ND
+    Sample_61504: Fe     ^   HF   ^                ^    HF
+    Sample_61505: Fe     ^   HF   ^                ^    HF
+    Sample_61506: Fe     ^   DRG  ^                ^    DRG
+    Sample_61490:       ^   DRG  ^                ^    DRG
+
 comparisons:
-    gender: 
+    gender:
     - Me_v_Fe
     diet:
     - HF_v_ND
@@ -42,9 +42,13 @@ trimming_options:
     trim_length_5prime: 0
     trim_length_3prime: 3
 
+insert_size:
+    downsample_readcount: 30000
+    pair_length: 500
+
 alignment_options:
     transcriptome_only: True
-    library_type: fr-unstranded  # fr-firststrand # fr-secondstrand 
+    library_type: fr-unstranded  # fr-firststrand # fr-secondstrand
 
 genome:
     mm10
@@ -59,4 +63,3 @@ references:
 # path to entrez gene info file
     entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info
 #    entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02
-

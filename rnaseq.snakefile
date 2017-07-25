@@ -15,8 +15,6 @@ import yaml
 import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
 import scripts.deseq2_helper as deseq2_helper
 
-import sys
-WATERMELON_SNAKEFILE_DIR = os.path.realpath(os.path.dirname(sys.argv[1]))
 WATERMELON_CONFIG_DIR = os.path.join(os.environ.get('WATERMELON_CONFIG_DIR', 'config'), '')
 WATERMELON_SCRIPTS_DIR = os.path.join(os.environ.get('WATERMELON_SCRIPTS_DIR', 'scripts'), '')
 

@@ -21,6 +21,7 @@ Specifically this does three things:
 3) watermelon-init creates a readme file that lists basic info about when/how it was run,
    what it did, and what the user has to do to prepare the template config
 '''
+#pylint: disable=locally-disabled,no-member
 from __future__ import print_function, absolute_import, division
 import argparse
 from collections import OrderedDict
@@ -45,22 +46,28 @@ class _UsageError(Exception):
     def __init__(self, msg, *args):
         super(_UsageError, self).__init__(msg, *args)
 
+
+
 class _CommandValidator(object):
+    #pylint: disable=locally-disabled,too-few-public-methods
     def __init__(self):
         pass
 
     def validate_args(self, args):
+        #pylint: disable=locally-disabled, missing-docstring
         for validation in [self._validate_source_fastq_dir,
                            self._validate_overwrite_check]:
             validation(args)
 
-    def _validate_source_fastq_dir(self, args):
+    @staticmethod
+    def _validate_source_fastq_dir(args):
         if not os.path.isdir(args.source_fastq_dir):
             msg = ('Specified source_fastq_dir [{}] is not a dir or cannot be read. '
                    'Review inputs and try again.').format(args.source_fastq_dir)
             raise _UsageError(msg)
 
-    def _validate_overwrite_check(self, args):
+    @staticmethod
+    def _validate_overwrite_check(args):
         existing_files = {}
         if os.path.exists(args.analysis_dir):
             existing_files['analysis_dir'] = args.analysis_dir
@@ -90,8 +97,10 @@ _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, 'genome_references.yaml')
 
 _FASTQ_GLOBS = ['*.fastq', '*.fastq.gz']
 
-_DEFAULT_MAIN_FACTORS =     'yes    | yes      | no'.replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
-_DEFAULT_PHENOTYPE_LABELS = 'gender | genotype | gender.genotype'.replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
+_DEFAULT_MAIN_FACTORS = 'yes    | yes      | no'.\
+    replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
+_DEFAULT_PHENOTYPE_LABELS = 'gender | genotype | gender.genotype'.\
+    replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
 _DEFAULT_GENDER_VALUES = ['female', 'male']
 _DEFAULT_GENOTYPE_VALUES = ['MutA', 'MutB', 'WT']
 _DEFAULT_COMPARISONS = {'gender'   : ['male_v_female'],
@@ -100,12 +109,11 @@ _DEFAULT_COMPARISONS = {'gender'   : ['male_v_female'],
 
 _TODAY = datetime.date.today()
 _DEFAULT_JOB_SUFFIX = '_{:02d}_{:02d}'.format(_TODAY.month, _TODAY.day)
-_CONFIG_PRELUDE=\
-'''# config created {timestamp}
+_CONFIG_PRELUDE = '''# config created {timestamp}
 # To do:
 # ------
 # 1) Review/adjust samples names
-#     Note: if you change names in config, also change the sample dir names in the input dir
+#     Note: names in config, must match the sample dir names in the input dir
 # 2) Add a sample group for each sample
 # 3) Add comparisons
 # 4) Review genome and references
@@ -114,9 +122,10 @@ _CONFIG_PRELUDE=\
 '''.format(timestamp=_timestamp())
 
 def _setup_yaml():
-  """ http://stackoverflow.com/a/8661021 """
-  represent_dict_order = lambda self, data:  self.represent_mapping('tag:yaml.org,2002:map', data.items())
-  yaml.add_representer(OrderedDict, represent_dict_order)
+    """ http://stackoverflow.com/a/8661021 """
+    represent_dict_order = lambda self, data: \
+        self.represent_mapping('tag:yaml.org,2002:map', data.items())
+    yaml.add_representer(OrderedDict, represent_dict_order)
 
 def _mkdir(newdir):
     """works the way a good mkdir should :)
@@ -137,10 +146,10 @@ def _mkdir(newdir):
             os.mkdir(newdir)
 
 def _initialize_samples(source_fastq_dir):
-    def _count_fastq(dir):
+    def _count_fastq(directory):
         count = 0
         for fastq_glob in _FASTQ_GLOBS:
-            count += len(glob.glob(os.path.join(dir, fastq_glob)))
+            count += len(glob.glob(os.path.join(directory, fastq_glob)))
         return count
 
     samples = {}
@@ -153,17 +162,18 @@ def _initialize_samples(source_fastq_dir):
     return samples, file_count
 
 def _is_source_fastq_external(source_fastq_dir, working_dir=os.getcwd()):
-    a = os.path.realpath(source_fastq_dir)
-    b = os.path.realpath(working_dir)
-    common_prefix = os.path.commonprefix([a, b])
-    print(a,b,common_prefix,common_prefix != b)
-    return common_prefix != b
+    dir_a = os.path.realpath(source_fastq_dir)
+    dir_b = os.path.realpath(working_dir)
+    common_prefix = os.path.commonprefix([dir_a, dir_b])
+    return common_prefix != dir_b
 
 def _populate_inputs_dir(inputs_dir, samples):
     for sample_name, sample_dir_target in samples.items():
         os.symlink(sample_dir_target, os.path.join(inputs_dir, sample_name))
 
+
 def _build_phenotypes_samples_comparisons(samples):
+    #pylint: disable=locally-disabled,invalid-name
     config = {}
     config[watermelon_config.CONFIG_KEYS.main_factors] = _DEFAULT_MAIN_FACTORS
     config[watermelon_config.CONFIG_KEYS.phenotypes] = _DEFAULT_PHENOTYPE_LABELS
@@ -327,6 +337,7 @@ def _parse_command_line_args(sys_argv):
     return args
 
 def main(sys_argv):
+    '''See DESCRIPTION'''
     try:
         args = _parse_command_line_args(sys_argv)
         _CommandValidator().validate_args(args)
@@ -355,7 +366,7 @@ def main(sys_argv):
         print(message, file=sys.stderr)
         print("See 'watermelon-init --help'.", file=sys.stderr)
         sys.exit(1)
-    except Exception: #pylint: disable=broad-except
+    except Exception: #pylint: disable=locally-disabled,broad-except
         print("An unexpected error occurred", file=sys.stderr)
         print(traceback.format_exc(), file=sys.stderr)
         exit(1)

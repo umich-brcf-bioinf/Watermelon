@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import, division
 from argparse import Namespace
 import collections
 from collections import defaultdict
+import csv
 from functools import partial
 import glob
 import hashlib
@@ -13,6 +14,8 @@ from os.path import join
 from os.path import isfile
 import sys
 
+from snakemake import workflow
+
 from scripts.watermelon_config import CONFIG_KEYS
 from scripts.watermelon_config import DEFAULT_COMPARISON_INFIX
 from scripts.watermelon_config import DEFAULT_PHENOTYPE_DELIM
@@ -20,6 +23,13 @@ from scripts.watermelon_config import DEFAULT_PHENOTYPE_DELIM
 FILE_EXTENSION = '.watermelon.md5'
 '''Appended to all checksum filenames; must be very distinctive to ensure the module can
 unambiguously identify and safely remove extraneous checksums.'''
+
+TOPHAT_NAME = 'tophat'
+HTSEQ_NAME = 'htseq'
+
+STRAND_CONFIG_PARAM = { 'fr-unstranded' : {TOPHAT_NAME: 'fr-unstranded', HTSEQ_NAME: 'no'},
+                        'fr-firststrand' : {TOPHAT_NAME : 'fr-firststrand', HTSEQ_NAME: 'reverse'},
+                        'fr-secondstrand' : {TOPHAT_NAME : 'fr-secondstrand', HTSEQ_NAME: 'yes'} }
 
 def _mkdir(newdir):
     """works the way a good mkdir should :)
@@ -151,7 +161,7 @@ class PhenotypeManager(object):
         Specifically {phenotype_label : {phenotype_value : [list of samples] } }
 
         Strips all surrounding white space.
-    
+
         phenotypes_string : delimited phenotype labels (columns)
         sample_phenotype_value_dict : {sample_id : delimited phenotype_value_string} (rows)
         '''
@@ -178,7 +188,7 @@ class PhenotypeManager(object):
         sorted_sample_phenotypes_items = sorted([(k, v) for k,v in self.sample_phenotype_value_dict.items()])
         for sample, phenotype_values in sorted_sample_phenotypes_items:
             sample_phenotype_values = list(map(str.strip, phenotype_values.split(self.delimiter)))
-            sample_phenotypes = dict(zip(phenotype_labels, sample_phenotype_values)) 
+            sample_phenotypes = dict(zip(phenotype_labels, sample_phenotype_values))
             check_labels_match_values(phenotype_labels,
                                       sample,
                                       sample_phenotype_values)
@@ -186,6 +196,15 @@ class PhenotypeManager(object):
                 if value != '':
                     phenotype_dict[label][value].append(sample)
         return phenotype_dict
+
+    @property
+    def phenotypes_with_replicates(self):
+        with_replicates = []
+        for (label, values) in self.phenotype_sample_list.items():
+            max_sample_count = max([len(samples) for (value, samples) in values.items()])
+            if max_sample_count > 1:
+                with_replicates.append(label)
+        return sorted(with_replicates)
 
     def separated_comparisons(self, output_delimiter):
         '''Returns a dict of {phenotype_label: 'val1_v_val2,val3_v_val4'}'''
@@ -204,7 +223,7 @@ class PhenotypeManager(object):
             unique_conditions = set()
             for group in comparison_list:
                 unique_conditions.update(group.split(self.comparison_infix))
-            values = sorted(unique_conditions) 
+            values = sorted(unique_conditions)
             phenotype_label_values[phenotype] = values
         return phenotype_label_values
 
@@ -216,19 +235,32 @@ class PhenotypeManager(object):
         return phenotype_label_values
 
     @property
-    def phenotypes_comparisons_tuple(self):
-        '''Returns named tuple of phenotype, comparison for all comparisons'''
-        phenotype_comparison = dict([(k, v) for k,v in self.comparisons.items()])
+    def phenotypes_comparisons_all_tuple(self):
+        '''Returns named tuple of phenotype, comparison for all phenotypes'''
+        return self._phenotypes_comparisons(True)
+
+    @property
+    def phenotypes_comparisons_replicates_tuple(self):
+        '''Returns named tuple of phenotype, comparison for phenotypes with replicates'''
+        return self._phenotypes_comparisons(False)
+
+    def _phenotypes_comparisons(self, include_phenotypes_without_replicates=True):
+        if include_phenotypes_without_replicates:
+            include = lambda p: True
+        else:
+            with_replicates = set(self.phenotypes_with_replicates)
+            include = lambda p: p in with_replicates
+        pheno_comps = [(p, c) for p,c in self.comparisons.items() if include(p)]
         phenotypes=[]
         comparisons=[]
-        for k, v in sorted(phenotype_comparison.items()):
-            for c in sorted(v):
-                phenotypes.append(k)
-                comparisons.append(c.strip())
+        for pheno, comps in sorted(pheno_comps):
+            for comp in sorted(comps):
+                phenotypes.append(pheno)
+                comparisons.append(comp.strip())
         PhenotypesComparisons = collections.namedtuple('PhenotypeComparisons',
                                                        'phenotypes comparisons')
-
         return PhenotypesComparisons(phenotypes=phenotypes, comparisons=comparisons)
+
 
     def cuffdiff_samples(self,
                          phenotype_label,
@@ -236,7 +268,7 @@ class PhenotypeManager(object):
         '''Returns a list of sample files grouped by phenotype value.
            Each sample group represents the comma separated samples for a phenotype value.
            Sample groups are separated by a space.
-           
+
            sample_file_format is format string with placeholder {sample_placeholder}'''
 
         group_separator = ' '
@@ -257,24 +289,19 @@ class PhenotypeManager(object):
 
         return group_separator.join(params)
 
-
-
-def check_strand_option(library_type,strand_option):
-    strand_config_param = { 'fr-unstranded' : {'tuxedo': 'fr-unstranded', 'htseq': 'no'}, 
-                            'fr-firststrand' : {'tuxedo' : 'fr-firststrand', 'htseq': 'yes'}, 
-                            'fr-secondstrand' : {'tuxedo' : 'fr-secondstrand', 'htseq': 'reverse'} }
-
-    if not strand_option in strand_config_param.keys():
-        msg_format = "ERROR: 'alignment_options:library_type' in config file is '{}'. Valid library_type options are: 'fr-unstranded', 'fr-firststrand', 'fr-secondstrand'."
-        msg = msg_format.format(strand_option)
+def _strand_option(tuxedo_or_htseq, strand_option):
+    if not strand_option in STRAND_CONFIG_PARAM:
+        msg_format = ('ERROR: config:alignment_options:library_type={} is '
+                      'not valid. Valid library_type options are: {}')
+        msg = msg_format.format(strand_option, ','.join(STRAND_CONFIG_PARAM.keys()))
         raise ValueError(msg)
+    return STRAND_CONFIG_PARAM[strand_option][tuxedo_or_htseq]
 
-    try:
-        param_value = strand_config_param[strand_option][library_type]
-        return param_value
-    except KeyError:
-        raise KeyError('invalid library type option: ', library_type)
+def strand_option_tophat(config_strand_option):
+    return _strand_option(TOPHAT_NAME, config_strand_option)
 
+def strand_option_htseq(config_strand_option):
+    return _strand_option(HTSEQ_NAME, config_strand_option)
 
 def cutadapt_options(trim_params):
     run_trimming_options = 0
@@ -283,9 +310,9 @@ def cutadapt_options(trim_params):
             msg_format = "ERROR: config:trimming_options '{}={}' must be integer"
             msg = msg_format.format(option, value)
             raise ValueError(msg)
-        run_trimming_options = 1
+        if value != 0:
+            run_trimming_options = 1
     return run_trimming_options
-
 
 def tophat_options(alignment_options):
     options = ""
@@ -296,3 +323,83 @@ def tophat_options(alignment_options):
     else:
         options += " --no-novel-juncs "  # used in Legacy for transcriptome + genome alignment
     return options
+
+def _get_sample_reads(fastq_base_dir, samples):
+    sample_reads = {}
+    read_suffix = {0: "", 1:"_SE", 2:"_PE"}
+    is_fastq = lambda fn: fn.endswith('.fastq') or fn.endswith('.fastq.gz')
+    for sample in samples:
+        found_reads = []
+        for read in ['R1', 'R2']:
+            sample_dir = join(fastq_base_dir, sample, '')
+            read_present = list(filter(is_fastq, glob.glob(sample_dir + '*_{}*'.format(read))))
+            if read_present:
+                found_reads.append(read)
+        found_reads = list(map(lambda x: x+read_suffix[len(found_reads)], found_reads))
+        sample_reads[sample] = found_reads
+    return sample_reads
+
+def flattened_sample_reads(fastq_base_dir, samples):
+    sample_reads = _get_sample_reads(fastq_base_dir, samples)
+    return sorted([(sample,read) for (sample,reads) in sample_reads.items() for read in reads])
+
+def expand_sample_read_endedness(sample_read_endedness_format,
+                                 all_flattened_sample_reads,
+                                 sample=None):
+    if not all_flattened_sample_reads:
+        return []
+    samples, reads = zip(*[(s, r) for s, r in all_flattened_sample_reads if not sample or s == sample])
+    return workflow.expand(sample_read_endedness_format,
+                           zip,
+                           sample=samples,
+                           read_endedness=reads)
+
+def tophat_paired_end_flags(read_stats_filename=None):
+    def read_values(filename, expected_headers):
+        with open(filename, mode='r') as infile:
+            try:
+                row = next(csv.DictReader(infile, delimiter='\t'))
+            except StopIteration:
+                raise ValueError('missing data row in [{}]'.format(filename))
+        missing_headers = sorted(expected_headers - row.keys())
+        if missing_headers:
+            msg = 'missing [{}] in header of [{}]'.format(','.join(missing_headers),
+                                                          read_stats_filename)
+            raise ValueError(msg)
+        return row
+
+    def parse_values(filename, row, headers):
+        parsed_row = {}
+        invalid_values = {}
+        for header in headers:
+            value = row[header]
+            try:
+                parsed_row[header] = str(int(round(float(value))))
+            except ValueError:
+                invalid_values[header]=value
+        if invalid_values:
+            header_values = ','.join(['{}:{}'.format(h,v) for h,v in sorted(invalid_values.items())])
+            msg = 'invalid number(s) [{}] in {}'.format(header_values, read_stats_filename)
+            raise ValueError(msg)
+        return parsed_row
+
+    header_flag = {'insert_std_dev': '--mate-std-dev',
+                   'inner_mate_dist': '--mate-inner-dist'}
+    result = []
+    if read_stats_filename and os.path.exists(read_stats_filename):
+        raw_values = read_values(read_stats_filename, header_flag.keys())
+        parsed_values = parse_values(read_stats_filename,
+                                     raw_values,
+                                     header_flag.keys())
+        for header, flag in sorted(header_flag.items()):
+            result.append(flag)
+            result.append(parsed_values[header])
+    return ' '.join(result)
+
+def expand_read_stats_if_paired(read_stats_filename_format,
+                                flattened_sample_reads,
+                                sample):
+    result = []
+    if len([s for s,r in flattened_sample_reads if s == sample]) > 1:
+        result.append(read_stats_filename_format.format(sample=sample))
+    return result

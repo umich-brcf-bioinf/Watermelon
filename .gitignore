@@ -1,4 +1,8 @@
+.Rhistory
+._.DS_Store
 .DS_Store
+
+scripts/.Rhistory
 
 # watermelon tmp exitcode
 .watermelon.exitcode

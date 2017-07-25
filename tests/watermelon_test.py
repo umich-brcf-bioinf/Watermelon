@@ -27,6 +27,11 @@ class WatermelonTest(unittest.TestCase):
     def tearDown(self):
         os.chdir(self.original_wd)
 
+    def setup_tmp_dir(self, temp_dir):
+        temp_dir_path = temp_dir.path  #'/tmp/foo' #
+        os.chdir(temp_dir_path)
+        return temp_dir_path
+
     def execute(self, command):
         exit_code = 0
         try:
@@ -66,7 +71,6 @@ class WatermelonTest(unittest.TestCase):
         self.assertEqual(['lineA\n'], actual_output_A)
         self.assertEqual(['lineB\n'], actual_output_B)
 
-
     def test_watermelon_logsResults(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = self.setup_tmp_dir(temp_dir)
@@ -95,7 +99,7 @@ class WatermelonTest(unittest.TestCase):
         self.assertRegexpMatches(actual_log, r'3 of 3 steps \(100%\) done')
         self.assertRegexpMatches(actual_log, r'elapsed seconds: \d+')
         self.assertRegexpMatches(actual_log, r'elapsed time: 0h:0m:\d+s')
-        self.assertRegexpMatches(actual_log, r'Watermelon complete')
+        self.assertRegexpMatches(actual_log, r'watermelon complete')
 
 
     def test_watermelon_skipsLogsOnDryrun(self):
@@ -113,7 +117,9 @@ class WatermelonTest(unittest.TestCase):
                                           CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
-            self.assertEqual(0, exit_code)
+            self.assertEqual(0,
+                             exit_code,
+                             "exit code != 0: \nactual output:\n" + actual_output)
 
             log_dirs = glob.glob("logs/*")
             self.assertEquals(0, len(log_dirs))
@@ -292,6 +298,7 @@ class WatermelonTest(unittest.TestCase):
                                      (r'--configfile {} '
                                      r'--snakefile {} '
                                       r'--cores 40 '
+                                      r'--resources memoryInGb=128 '
                                       r'-T '
                                       r'1 2 3 baz froody'). format(CONFIG_FILE,
                                                                    TEST_SNAKEFILE))
@@ -319,6 +326,7 @@ class WatermelonTest(unittest.TestCase):
                                      (r'--configfile {} '
                                       r'--snakefile {} '
                                       r'--cores 40 '
+                                      r'--resources memoryInGb=128 '
                                       r'-T '
                                       r'--dryrun -a -b -d'). format(CONFIG_FILE,
                                                            TEST_SNAKEFILE))
@@ -330,9 +338,10 @@ class WatermelonTest(unittest.TestCase):
             snakemake_executable_path = os.path.join(temp_dir_path, 'snakemake')
             DEFAULT_SNAKEFILE = os.path.join(WATERMELON_ROOT, 'rnaseq.snakefile')
             DEFAULT_CORES = 40
+            DEFAULT_MEMORY = 128
             CONFIG_FILE = os.path.join(TESTS_DIR, 'config.yaml')
             shutil.copy(CONFIG_FILE, temp_dir_path)
-            
+
             with open(snakemake_executable_path, 'w') as snakemake_command:
                 snakemake_command_contents = '#!/bin/bash\necho $@'''
                 print(snakemake_command_contents, file=snakemake_command)
@@ -340,13 +349,14 @@ class WatermelonTest(unittest.TestCase):
                        'PATH=.:$PATH; '
                        '{} --skip_config_validation ').format(WATERMELON_EXECUTABLE)
             exit_code, actual_output = self.execute(command)
-            #self.assertEqual(0, exit_code)
             self.assertRegexpMatches(actual_output,
                                      (r'--configfile config.yaml '
                                       r'--snakefile {} '
                                       r'--cores {} '
+                                      r'--resources memoryInGb={} '
                                       r'-T'). format(DEFAULT_SNAKEFILE,
-                                                     DEFAULT_CORES))
+                                                     DEFAULT_CORES,
+                                                     DEFAULT_MEMORY))
 
     def test_watermelon_canOverrideCores(self):
         with TempDirectory() as temp_dir:
@@ -387,7 +397,9 @@ class WatermelonTest(unittest.TestCase):
                                                            CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
-            self.assertEqual(0, exit_code)
+            self.assertEqual(0,
+                             exit_code,
+                             "exit code != 0: \nactual output:\n" + actual_output)
 
             log_dirs = glob.glob("logs/*")
             self.assertEquals(0, len(log_dirs))
@@ -407,7 +419,9 @@ class WatermelonTest(unittest.TestCase):
                                                            CONFIG_FILE)
             exit_code, actual_output = self.execute(command)
 
-            self.assertEqual(0, exit_code)
+            self.assertEqual(0,
+                             exit_code,
+                             "exit code != 0: \nactual output:\n" + actual_output)
 
             dag_files = sorted(glob.glob("dag*.*"))
             self.assertEqual(2, len(dag_files))

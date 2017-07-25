@@ -1,10 +1,19 @@
 alignment_output_dir:
-    "alignment_results"
+    "alignment_results/"
 diffex_output_dir:
-    "diffex_results"
+    "diffex_results/"
+deliverables_output_dir:
+    "deliverables/"
 
 fold_change:
     1.5
+
+deseq2_adjustedPValue:
+    0.05
+
+insert_size:
+    downsample_readcount: 30000
+    pair_length: 500
 
 trimming_options:
     base_quality_5prime: 0

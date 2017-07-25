@@ -1,0 +1,15 @@
+subtitle: ''
+intro_text: ''
+
+no_version_check: True
+
+module_order:
+  - fastqc:
+      name: 'FastQC (trimmed sequences)'
+      path_filters:
+        - '*trim*'
+  - tophat
+  - fastqc:
+      name: 'FastQC (aligned reads)'
+      path_filters:
+        - '*_accepted_hits_fastqc*'

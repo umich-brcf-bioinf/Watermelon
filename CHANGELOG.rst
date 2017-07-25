@@ -4,6 +4,7 @@ Changelog
 0.x.x (mm/dd/yyyy)
 ------------------
 - Added support for paired-end reads
+- Transitioned naive alignment QC metrics to MultiQC
 - Fixed a bug that caused deseq2 to crash when merging htseq counts files
   with non-standard sample names
 - Added memory constraint to watermelon shell script

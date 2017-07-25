@@ -15,6 +15,9 @@ import yaml
 import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
 import scripts.deseq2_helper as deseq2_helper
 
+import sys
+WATERMELON_SNAKEFILE_DIR = os.path.realpath(os.path.dirname(sys.argv[1]))
+WATERMELON_CONFIG_DIR = os.path.join(os.environ.get('WATERMELON_CONFIG_DIR', 'config'), '')
 WATERMELON_SCRIPTS_DIR = os.path.join(os.environ.get('WATERMELON_SCRIPTS_DIR', 'scripts'), '')
 
 INPUT_DIR = os.path.join(config.get("input_dir", "inputs"), "")
@@ -59,13 +62,13 @@ rule all:
                 sample=config[SAMPLES_KEY]),
         expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
                 sample=config[SAMPLES_KEY]),
-        ALIGNMENT_DIR + "06-qc_metrics/alignment_stats.txt",
+        ALIGNMENT_DIR + "06-qc/alignment_qc.html",
         rnaseq_snakefile_helper.expand_sample_read_endedness(\
             DELIVERABLES_DIR + "alignment/raw_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
             SAMPLE_READS),
         expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
                 sample=config[SAMPLES_KEY]),
-        DELIVERABLES_DIR + "alignment/alignment_stats.txt",
+        DELIVERABLES_DIR + "alignment/alignment_qc.html",
 
         expand(TUXEDO_DIR + "01-cuffdiff/{phenotype}/gene_exp.diff",
                phenotype=sorted(config[COMPARISONS_KEY].keys())),
@@ -364,23 +367,35 @@ rule align_fastqc_tophat_align:
         "module purge && module load watermelon_rnaseq && "
         "fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log} "
 
-rule align_qc_metrics:
+rule align_qc:
     input:
         sample_checksum = CONFIG_CHECKSUMS_DIR + "config-samples.watermelon.md5",
+        raw_read_fastq_files = rnaseq_snakefile_helper.expand_sample_read_endedness(\
+            ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",
+            SAMPLE_READS),
         align_summary_files = expand(ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_align_summary.txt",
-                                     sample=config["samples"])
+                                     sample=config["samples"]),
+        align_fastq_files = expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
+                                     sample=config["samples"]),
     output:
-        ALIGNMENT_DIR + "06-qc_metrics/alignment_stats.txt"
+        ALIGNMENT_DIR + "06-qc/alignment_qc.html"
     params:
-        tophat_dir = ALIGNMENT_DIR + "04-tophat"
+        output_dir = ALIGNMENT_DIR + "06-qc/",
+        output_filename = "alignment_qc.html",
+        multiqc_config_filename = WATERMELON_CONFIG_DIR + "multiqc_config.yaml",
+    log:
+        ALIGNMENT_DIR + "06-qc/.log/align_qc.log"
     shell:
-        "find {params.tophat_dir} -name '*align_summary.txt' | "
-        "sort | xargs awk "
-        "'BEGIN {{print \"sample\tinput_reads\tmapped_reads\talignment_rate\"}} "
-        "/Reads/ {{n=split(FILENAME, fields, /\//); printf \"%s\t\",fields[n-1]}} "
-        "/Input/ {{printf \"%s\t\",$3}} "
-        "/Mapped/ {{printf \"%s\t\",$3}} "
-        "/overall/ {{print $1}}' > {output}"
+        '''(module purge && module load watermelon_rnaseq &&
+        echo 'watermelon|version|multiqc|'`multiqc --version | cut -d' ' -f2-` &&
+        multiqc --force \
+            --exclude cutadapt \
+            --exclude bowtie2 \
+            --config {params.multiqc_config_filename} \
+            --outdir {params.output_dir} \
+            --filename {params.output_filename} \
+            alignment_results
+        ) 2>&1 | tee {log} '''
 
 rule align_deliverables_alignment:
     input:
@@ -389,14 +404,14 @@ rule align_deliverables_alignment:
                 SAMPLE_READS),
         align_fastqc = expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
                 sample=config["samples"]),
-        alignment_stats = ALIGNMENT_DIR + "06-qc_metrics/alignment_stats.txt",
+        alignment_stats = ALIGNMENT_DIR + "06-qc/alignment_qc.html",
     output:
         raw_fastqc = rnaseq_snakefile_helper.expand_sample_read_endedness(
                 DELIVERABLES_DIR + "alignment/raw_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
                 SAMPLE_READS),
         align_fastqc = expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
                 sample=config["samples"]),
-        alignment_stats = DELIVERABLES_DIR + "alignment/alignment_stats.txt",
+        alignment_stats = DELIVERABLES_DIR + "alignment/alignment_qc.html",
     params:
         raw_fastqc_input_dir    =  ALIGNMENT_DIR + "03-fastqc_reads",
         raw_fastqc_output_dir   =  DELIVERABLES_DIR + "alignment/raw_reads_fastqc",

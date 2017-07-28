@@ -35,21 +35,24 @@ class CutadaptTest(unittest.TestCase):
         os.chdir(self.original_wd)
 
     #TODO: use a string constant for "02-cutadapt"
-    def _snakemake(self, configfile_path, source_expected_dir, source_working_dir):
+    def _snakemake(self, configfile_path, source_expected_dir, source_working_dir, snakemake_flags):
         anomalies = []
         with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path  # '/tmp/foo'
+            temp_dir_path = temp_dir.path
             tmp_expected_dir = os.path.join(temp_dir_path, 'expected')
             shutil.copytree(source_expected_dir, tmp_expected_dir)
             tmp_actual_dir = os.path.join(temp_dir_path, 'actual')
-            shutil.copytree(source_working_dir, tmp_actual_dir) 
+            shutil.copytree(source_working_dir, tmp_actual_dir)
 
             os.chdir(tmp_actual_dir)
-            command = '''snakemake --cores 2 \
-     --snakefile {0} \
-     --configfile {1} \
-     --force alignment_results/02-cutadapt/Sample_0_trimmed_R1.fastq.gz alignment_results/02-cutadapt/Sample_1_trimmed_R1.fastq.gz {2}
-'''.format(SNAKEFILE_PATH, configfile_path, REDIRECT_OUTPUT)
+            command = '''snakemake -p --cores 2 \
+     --snakefile {snakefile_path} \
+     --configfile {configfile_path} \
+     {snakemake_flags} {redirect_output}
+'''.format(snakefile_path=SNAKEFILE_PATH,
+           configfile_path=configfile_path,
+           snakemake_flags=snakemake_flags,
+           redirect_output=REDIRECT_OUTPUT)
             subprocess.check_output(command, shell=True)
 
             gunzip(tmp_expected_dir + '/alignment_results/02-cutadapt/*.gz')
@@ -71,20 +74,40 @@ class CutadaptTest(unittest.TestCase):
         configfile_path = os.path.join(TEST_DIR, 'end_trim', 'end_trim.yaml')
         source_working_dir = os.path.join(TEST_DIR, 'end_trim', 'working_dir')
         source_expected_dir = os.path.join(TEST_DIR, 'end_trim', 'expected')
-        anomalies =  self._snakemake(configfile_path, source_expected_dir, source_working_dir)
+        snakemake_flags = ('--force '
+                          'alignment_results/02-cutadapt/Sample_0_trimmed_R1_SE.fastq.gz '
+                          'alignment_results/02-cutadapt/Sample_1_trimmed_R1_SE.fastq.gz '
+                          'alignment_results/02-cutadapt/Sample_2_trimmed_R1_PE.fastq.gz '
+                          'alignment_results/02-cutadapt/Sample_2_trimmed_R2_PE.fastq.gz '
+                          'alignment_results/02-cutadapt/Sample_3_trimmed_R2_SE.fastq.gz')
+        anomalies =  self._snakemake(configfile_path,
+                                     source_expected_dir,
+                                     source_working_dir,
+                                     snakemake_flags)
         self.assertEqual([], anomalies, 'some files did not match')
 
     def test_no_trim(self):
         configfile_path = os.path.join(TEST_DIR, 'no_trim', 'no_trim.yaml')
         source_working_dir = os.path.join(TEST_DIR, 'no_trim', 'working_dir')
         source_expected_dir = os.path.join(TEST_DIR, 'no_trim', 'expected')
-        anomalies =  self._snakemake(configfile_path, source_expected_dir, source_working_dir)
+        snakemake_flags = ('--force '
+                          'alignment_results/02-cutadapt/Sample_0_trimmed_R1_SE.fastq.gz '
+                          'alignment_results/02-cutadapt/Sample_1_trimmed_R1_SE.fastq.gz ')
+        anomalies =  self._snakemake(configfile_path,
+                                     source_expected_dir,
+                                     source_working_dir,
+                                     snakemake_flags)
         self.assertEqual([], anomalies, 'some files did not match')
 
     def test_quality_trim(self):
         configfile_path = os.path.join(TEST_DIR, 'quality_trim', 'quality_trim.yaml')
         source_working_dir = os.path.join(TEST_DIR, 'quality_trim', 'working_dir')
         source_expected_dir = os.path.join(TEST_DIR, 'quality_trim', 'expected')
-        anomalies =  self._snakemake(configfile_path, source_expected_dir, source_working_dir)
+        snakemake_flags = ('--force '
+                          'alignment_results/02-cutadapt/Sample_0_trimmed_R1_SE.fastq.gz '
+                          'alignment_results/02-cutadapt/Sample_1_trimmed_R1_SE.fastq.gz ')
+        anomalies =  self._snakemake(configfile_path,
+                                     source_expected_dir,
+                                     source_working_dir,
+                                     snakemake_flags)
         self.assertEqual([], anomalies, 'some files did not match')
-

@@ -80,6 +80,15 @@ class DiffexSummarizeTest(unittest.TestCase):
                           'c/b/1' : 'c/b/1'}
         self.assertEqual(expected_names, actual_names)
 
+    def test_simplify_file_names_simplePair(self):
+        file_paths = ['a/b/1_gene.xlsx','a/b/1_isoform.xlsx']
+        suffix = None
+        actual_names = diffex_summary._simplify_file_names(file_paths, suffix)
+
+        expected_names = {'a/b/1_gene.xlsx':'1_gene.xlsx',
+                          'a/b/1_isoform.xlsx':'1_isoform.xlsx'}
+        self.assertEqual(expected_names, actual_names)
+
     def test_count_annotated(self):
         df_contents = StringIO(\
 '''a|b|gene_id|c

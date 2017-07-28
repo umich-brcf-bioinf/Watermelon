@@ -1,11 +1,12 @@
-input_dir:
-    ""
+input_dir: ""
 
-alignment_output_dir:
-    ""
+insert_size:
+    downsample_readcount: 30000
+    pair_length: 500
 
-diffex_output_dir:
-    "diffex_results"
+alignment_output_dir: ""
+
+diffex_output_dir: diffex_results
 
 phenotypes: pLabel
 samples:

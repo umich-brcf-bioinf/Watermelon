@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import, division
 from argparse import Namespace
 import collections
 from collections import defaultdict
+import csv
 from functools import partial
 import glob
 import hashlib
@@ -12,6 +13,8 @@ import os
 from os.path import join
 from os.path import isfile
 import sys
+
+from snakemake import workflow
 
 from scripts.watermelon_config import CONFIG_KEYS
 from scripts.watermelon_config import DEFAULT_COMPARISON_INFIX
@@ -320,3 +323,83 @@ def tophat_options(alignment_options):
     else:
         options += " --no-novel-juncs "  # used in Legacy for transcriptome + genome alignment
     return options
+
+def _get_sample_reads(fastq_base_dir, samples):
+    sample_reads = {}
+    read_suffix = {0: "", 1:"_SE", 2:"_PE"}
+    is_fastq = lambda fn: fn.endswith('.fastq') or fn.endswith('.fastq.gz')
+    for sample in samples:
+        found_reads = []
+        for read in ['R1', 'R2']:
+            sample_dir = join(fastq_base_dir, sample, '')
+            read_present = list(filter(is_fastq, glob.glob(sample_dir + '*_{}*'.format(read))))
+            if read_present:
+                found_reads.append(read)
+        found_reads = list(map(lambda x: x+read_suffix[len(found_reads)], found_reads))
+        sample_reads[sample] = found_reads
+    return sample_reads
+
+def flattened_sample_reads(fastq_base_dir, samples):
+    sample_reads = _get_sample_reads(fastq_base_dir, samples)
+    return sorted([(sample,read) for (sample,reads) in sample_reads.items() for read in reads])
+
+def expand_sample_read_endedness(sample_read_endedness_format,
+                                 all_flattened_sample_reads,
+                                 sample=None):
+    if not all_flattened_sample_reads:
+        return []
+    samples, reads = zip(*[(s, r) for s, r in all_flattened_sample_reads if not sample or s == sample])
+    return workflow.expand(sample_read_endedness_format,
+                           zip,
+                           sample=samples,
+                           read_endedness=reads)
+
+def tophat_paired_end_flags(read_stats_filename=None):
+    def read_values(filename, expected_headers):
+        with open(filename, mode='r') as infile:
+            try:
+                row = next(csv.DictReader(infile, delimiter='\t'))
+            except StopIteration:
+                raise ValueError('missing data row in [{}]'.format(filename))
+        missing_headers = sorted(expected_headers - row.keys())
+        if missing_headers:
+            msg = 'missing [{}] in header of [{}]'.format(','.join(missing_headers),
+                                                          read_stats_filename)
+            raise ValueError(msg)
+        return row
+
+    def parse_values(filename, row, headers):
+        parsed_row = {}
+        invalid_values = {}
+        for header in headers:
+            value = row[header]
+            try:
+                parsed_row[header] = str(int(round(float(value))))
+            except ValueError:
+                invalid_values[header]=value
+        if invalid_values:
+            header_values = ','.join(['{}:{}'.format(h,v) for h,v in sorted(invalid_values.items())])
+            msg = 'invalid number(s) [{}] in {}'.format(header_values, read_stats_filename)
+            raise ValueError(msg)
+        return parsed_row
+
+    header_flag = {'insert_std_dev': '--mate-std-dev',
+                   'inner_mate_dist': '--mate-inner-dist'}
+    result = []
+    if read_stats_filename and os.path.exists(read_stats_filename):
+        raw_values = read_values(read_stats_filename, header_flag.keys())
+        parsed_values = parse_values(read_stats_filename,
+                                     raw_values,
+                                     header_flag.keys())
+        for header, flag in sorted(header_flag.items()):
+            result.append(flag)
+            result.append(parsed_values[header])
+    return ' '.join(result)
+
+def expand_read_stats_if_paired(read_stats_filename_format,
+                                flattened_sample_reads,
+                                sample):
+    result = []
+    if len([s for s,r in flattened_sample_reads if s == sample]) > 1:
+        result.append(read_stats_filename_format.format(sample=sample))
+    return result

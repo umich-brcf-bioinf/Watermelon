@@ -30,6 +30,7 @@ import functools
 import glob
 import itertools
 import os
+import shutil
 import sys
 import time
 import traceback
@@ -41,11 +42,13 @@ import scripts.watermelon_config as watermelon_config
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
 
+_PATH_SEP = '^'
+
+
 class _UsageError(Exception):
     '''Raised for malformed command or invalid arguments.'''
     def __init__(self, msg, *args):
         super(_UsageError, self).__init__(msg, *args)
-
 
 
 class _CommandValidator(object):
@@ -170,6 +173,15 @@ def _is_source_fastq_external(source_fastq_dir, working_dir=os.getcwd()):
 def _populate_inputs_dir(inputs_dir, samples):
     for sample_name, sample_dir_target in samples.items():
         os.symlink(sample_dir_target, os.path.join(inputs_dir, sample_name))
+
+def _link_run_dirs(source_run_dirs, watermelon_runs_dir):
+    _mkdir(watermelon_runs_dir)
+    for run_dir in source_run_dirs:
+        abs_run_dir = os.path.abspath(run_dir)
+        mangled_dirname = abs_run_dir.replace(os.path.sep, _PATH_SEP)
+        mangled_dirname.rstrip(os.path.sep)
+        watermelon_run_dir = os.path.join(watermelon_runs_dir, mangled_dirname)
+        shutil.copytree(run_dir, watermelon_run_dir, copy_function=os.link)
 
 
 def _build_phenotypes_samples_comparisons(samples):

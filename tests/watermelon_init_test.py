@@ -46,6 +46,21 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
+def _create_files(base_dir, source_files):
+    for parent, child in source_files.items():
+        if isinstance(child, dict):
+            parent_dir = os.path.join(base_dir, parent)
+            _mkdir(parent_dir)
+            _create_files(parent_dir, child)
+        else:
+            with open(os.path.join(base_dir, parent), 'wt') as f:
+                print(child, file=f)
+
+def _listfiles(directory):
+    for root, _, files in os.walk(directory):
+        for filename in files:
+            yield os.path.join(root, filename)
+
 class WatermelonInitTest(unittest.TestCase):
     def setUp(self):
         self.original_cwd = os.getcwd()
@@ -220,13 +235,65 @@ class WatermelonInitTest(unittest.TestCase):
                              actual_dirs)
 
 
-    # def test_run_dir(self):
-    #     j = os.path.join
-    #     self.assertEqual('a-b', watermelon_init._build_run_dir(j('a', 'b', 'c')))
-    #     self.assertEqual('a', watermelon_init._build_run_dir(j('a', 'b-c')))
-    #     self.assertEqual('a-b', watermelon_init._build_run_dir(j('a', 'b-', 'c')))
-    #     self.assertEqual('a-b', watermelon_init._build_run_dir(j('-a', 'b', 'c')))
+    def test_link_run_dirs(self):
+        source_files = {
+            'Run_1': {
+                'tuttle': {
+                    'project': {
+                        'sampleA': {
+                            '1.fastq':'A',
+                            '2.fastq': 'AT'},
+                        'sampleB': {
+                            '3.fastq':'ATC',
+                            '4.fastq': 'ATCG'}
+                    }
+                }
+            },
+            'Run_2': {
+                'tuttle': {
+                    'project': {
+                        'sampleA': {
+                            '1.fastq':'AA',
+                            '2.fastq': 'AATT'},
+                        'sampleB': {
+                            '3.fastq':'AATTCC',
+                            '4.fastq': 'AATTCCGG'}
+                    }
+                }
+            }}
+        j = os.path.join
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            orig_wd = os.getcwd()
+            try:
+                os.chdir(temp_dir_path)
+                watermelon_run_dir = j('00-source_runs', '')
+                source_run_basedir = j('DNASeqCore', '')
 
+                _create_files(source_run_basedir, source_files)
+                source_run_dirs = [j(source_run_basedir, 'Run_1', 'tuttle', 'project'),
+                                   j(source_run_basedir, 'Run_2', 'tuttle', 'project')]
+
+                watermelon_init._link_run_dirs(source_run_dirs, watermelon_run_dir)
+
+                actual_files = list(_listfiles(j(temp_dir_path, watermelon_run_dir)))
+                actual_link_count = sum([os.stat(f).st_nlink == 2 for f in actual_files])
+            finally:
+                os.chdir(orig_wd)
+
+        expected_files = ['DNASeqCore^Run_1^tuttle^project/sampleA/1.fastq',
+                          'DNASeqCore^Run_1^tuttle^project/sampleA/2.fastq',
+                          'DNASeqCore^Run_1^tuttle^project/sampleB/3.fastq',
+                          'DNASeqCore^Run_1^tuttle^project/sampleB/4.fastq',
+                          'DNASeqCore^Run_2^tuttle^project/sampleA/1.fastq',
+                          'DNASeqCore^Run_2^tuttle^project/sampleA/2.fastq',
+                          'DNASeqCore^Run_2^tuttle^project/sampleB/3.fastq',
+                          'DNASeqCore^Run_2^tuttle^project/sampleB/4.fastq']
+        prefix_path = lambda x: temp_dir_path.replace(os.path.sep, '^') + '^' + x
+        expected_files = [prefix_path(f) for f in expected_files]
+        expected_files = [j(temp_dir_path, watermelon_run_dir, f) for f in expected_files]
+        self.assertEqual(set(expected_files), set(actual_files))
+        self.assertEqual(len(actual_files), actual_link_count)
 
     # def test_populate_inputs_source_dir(self):
     #     with TempDirectory() as temp_dir:

@@ -24,7 +24,7 @@ Specifically this does three things:
 #pylint: disable=locally-disabled,no-member
 from __future__ import print_function, absolute_import, division
 import argparse
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 import datetime
 import functools
 import glob
@@ -148,7 +148,7 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
-def _initialize_samples(source_fastq_dir):
+def _initialize_samples(watermelon_sample_dir):
     def _count_fastq(directory):
         count = 0
         for fastq_glob in _FASTQ_GLOBS:
@@ -157,22 +157,16 @@ def _initialize_samples(source_fastq_dir):
 
     samples = {}
     file_count = 0
-    for file_name in os.listdir(source_fastq_dir):
-        full_path = os.path.realpath(os.path.join(source_fastq_dir, file_name))
+    for file_name in os.listdir(watermelon_sample_dir):
+        full_path = os.path.realpath(os.path.join(watermelon_sample_dir, file_name))
         if os.path.isdir(full_path) and _count_fastq(full_path):
             samples[file_name] = full_path
             file_count += _count_fastq(full_path)
     return samples, file_count
 
-def _is_source_fastq_external(source_fastq_dir, working_dir=os.getcwd()):
-    dir_a = os.path.realpath(source_fastq_dir)
-    dir_b = os.path.realpath(working_dir)
-    common_prefix = os.path.commonprefix([dir_a, dir_b])
-    return common_prefix != dir_b
-
-def _populate_inputs_dir(inputs_dir, samples):
-    for sample_name, sample_dir_target in samples.items():
-        os.symlink(sample_dir_target, os.path.join(inputs_dir, sample_name))
+# def _populate_inputs_dir(inputs_dir, samples):
+#     for sample_name, sample_dir_target in samples.items():
+#         os.symlink(sample_dir_target, os.path.join(inputs_dir, sample_name))
 
 def _link_run_dirs(source_run_dirs, watermelon_runs_dir):
     _mkdir(watermelon_runs_dir)
@@ -183,6 +177,29 @@ def _link_run_dirs(source_run_dirs, watermelon_runs_dir):
         watermelon_run_dir = os.path.join(watermelon_runs_dir, mangled_dirname)
         shutil.copytree(run_dir, watermelon_run_dir, copy_function=os.link)
 
+def _merge_sample_dirs(watermelon_runs_dir, watermelon_samples_dir):
+    j = os.path.join
+    watermelon_runs_dir = os.path.abspath(watermelon_runs_dir)
+    watermelon_samples_dir = os.path.abspath(watermelon_samples_dir)
+    sample_source_link = defaultdict(dict)
+    for run_dir in os.listdir(watermelon_runs_dir):
+        for sample_dir in os.listdir(j(watermelon_runs_dir, run_dir)):
+            for sample_file in os.listdir(j(watermelon_runs_dir, run_dir, sample_dir)):
+                source = j(watermelon_runs_dir, run_dir, sample_dir, sample_file)
+                link = j(watermelon_samples_dir,
+                         sample_dir,
+                         run_dir + _PATH_SEP + sample_file)
+                new_sample_dir = j(watermelon_samples_dir, sample_dir)
+                sample_source_link[new_sample_dir][source] = link
+
+    _mkdir(watermelon_samples_dir)
+    for sample_dir, source_links in sample_source_link.items():
+        _mkdir(sample_dir)
+        for source, link in source_links.items():
+            os.link(source, link)
+
+def _get_samples_and_file_count(watermelon_samples_dir):
+    return 'no', 0
 
 def _build_phenotypes_samples_comparisons(samples):
     #pylint: disable=locally-disabled,invalid-name
@@ -265,10 +282,10 @@ $ watermelon -c {config_basename}
            job_suffix=args.job_suffix,)
     return postlude
 
-def _make_top_level_dirs(args):
-    _mkdir(args.analysis_dir)
-    if args.is_source_fastq_external:
-        _mkdir(args.inputs_dir)
+# def _make_top_level_dirs(args):
+#     _mkdir(args.analysis_dir)
+#     if args.is_source_fastq_external:
+#         _mkdir(args.inputs_dir)
 
 def _write_config_file(config_filename, config_dict):
     tmp_config_dict = dict(config_dict)
@@ -308,13 +325,13 @@ def _parse_command_line_args(sys_argv):
               'top/ps.)').format(_DEFAULT_JOB_SUFFIX),
         required=False)
     parser.add_argument(
-        'source_fastq_dir',
+        'source_fastq_dirs',
         type=str,
-        help=('Path to dir which contains samples dirs (each sample dir '
-              'contains one or more fastq.gz files). The sample dir names are used to '
-              'initialize the config template. If the source_fastq_dir is outside the '
-              'working dir, init will make local inputs dir containing symlinks to the '
-              'original files.'),
+        nargs='+',
+        help=('One or more paths to run dirs. Each run dir should contain '
+              'samples dirs which should in turn contain one or more fastq.gz '
+              'files. The watermelon sample names will be derived from the '
+              'sample directories.'),
         )
     parser.add_argument(
         '--x_working_dir',
@@ -340,12 +357,8 @@ def _parse_command_line_args(sys_argv):
     args.analysis_dir = realpath('analysis{}'.format(args.job_suffix))
     args.config_file = os.path.join(args.analysis_dir,
                                     'config{}.yaml'.format(args.job_suffix))
-    args.is_source_fastq_external = _is_source_fastq_external(args.source_fastq_dir,
-                                                              args.x_working_dir)
-    if args.is_source_fastq_external:
-        args.inputs_dir = realpath('inputs', '00-multiplexed_reads')
-    else:
-        args.inputs_dir = os.path.realpath(args.source_fastq_dir)
+    args.input_runs_dir = realpath('inputs', '00-source_runs')
+    args.input_samples_dir = realpath('inputs', '01-source_samples')
     return args
 
 def main(sys_argv):
@@ -354,10 +367,14 @@ def main(sys_argv):
         args = _parse_command_line_args(sys_argv)
         _CommandValidator().validate_args(args)
 
-        (samples, file_count) = _initialize_samples(args.source_fastq_dir)
-        _make_top_level_dirs(args)
-        if args.is_source_fastq_external:
-            _populate_inputs_dir(args.inputs_dir, samples)
+        # (samples, file_count) = _initialize_samples(args.source_fastq_dir)
+        # _make_top_level_dirs(args)
+        # _populate_inputs_dir(args.inputs_dir, samples)
+
+        _link_run_dirs(args.source_fastq_dirs, args.input_runs_dir)
+        _merge_sample_dirs(args.input_runs_dir, args.input_samples_dir)
+        (samples, file_count) = _initialize_samples(args.input_samples_dir)
+        _mkdir(args.analysis_dir)
 
         with open(args.x_template_config, 'r') as template_config_file:
             template_config = yaml.load(template_config_file)
@@ -365,7 +382,7 @@ def main(sys_argv):
             genome_references = yaml.load(genome_references_file)[args.genome_build]
         config_dict = _make_config_dict(template_config,
                                         genome_references,
-                                        args.inputs_dir,
+                                        args.input_samples_dir,
                                         samples)
         _write_config_file(args.config_file, config_dict)
 

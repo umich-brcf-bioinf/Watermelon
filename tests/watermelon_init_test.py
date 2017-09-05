@@ -71,30 +71,30 @@ class WatermelonInitTest(unittest.TestCase):
     def _assertSameFile(self, file1, file2):
         self.assertEqual(os.path.realpath(file1), os.path.realpath(file2))
 
-    def test_is_source_fastq_external_TrueForSibling(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            parent_dir = temp_dir_path
-            working_dir = os.path.join(parent_dir, 'working_dir')
-            sibling_dir = os.path.join(parent_dir, 'sibling_dir')
-            self.assertTrue(watermelon_init._is_source_fastq_external(sibling_dir,
-                                                                      working_dir=working_dir))
-    def test_is_source_fastq_external_TrueForParent(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            parent_dir = temp_dir_path
-            working_dir = os.path.join(parent_dir, 'working_dir')
-            self.assertTrue(watermelon_init._is_source_fastq_external(parent_dir,
-                                                                      working_dir=working_dir))
+    # def test_is_source_fastq_external_TrueForSibling(self):
+    #     with TempDirectory() as temp_dir:
+    #         temp_dir_path = temp_dir.path
+    #         parent_dir = temp_dir_path
+    #         working_dir = os.path.join(parent_dir, 'working_dir')
+    #         sibling_dir = os.path.join(parent_dir, 'sibling_dir')
+    #         self.assertTrue(watermelon_init._is_source_fastq_external(sibling_dir,
+    #                                                                   working_dir=working_dir))
+    # def test_is_source_fastq_external_TrueForParent(self):
+    #     with TempDirectory() as temp_dir:
+    #         temp_dir_path = temp_dir.path
+    #         parent_dir = temp_dir_path
+    #         working_dir = os.path.join(parent_dir, 'working_dir')
+    #         self.assertTrue(watermelon_init._is_source_fastq_external(parent_dir,
+    #                                                                   working_dir=working_dir))
 
-    def test_is_source_fastq_external_FalseForChild(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            parent_dir = temp_dir_path
-            working_dir = os.path.join(parent_dir, 'working_dir')
-            child_dir = os.path.join(working_dir, 'child_dir')
-            self.assertFalse(watermelon_init._is_source_fastq_external(child_dir,
-                                                                       working_dir=working_dir))
+    # def test_is_source_fastq_external_FalseForChild(self):
+    #     with TempDirectory() as temp_dir:
+    #         temp_dir_path = temp_dir.path
+    #         parent_dir = temp_dir_path
+    #         working_dir = os.path.join(parent_dir, 'working_dir')
+    #         child_dir = os.path.join(working_dir, 'child_dir')
+    #         self.assertFalse(watermelon_init._is_source_fastq_external(child_dir,
+    #                                                                    working_dir=working_dir))
 
     def test_build_postlude(self):
         args = Namespace(inputs_dir='INPUTS_DIR',
@@ -125,54 +125,58 @@ class WatermelonInitTest(unittest.TestCase):
                              '--x_working_dir /tmp.foo '
                              '--x_template_config /tmp/watermelon/template_config.yaml '
                              '--x_genome_references /tmp/watermelon/genome_references.yaml '
-                             'DNASeqCore/Run_1286/rhim/Run_1286').split(' ')
+                             'DNASeqCore/Run_1/rhim/Run_1 DNASeqCore/Run_2/rhim/Run_2').split(' ')
         args = watermelon_init._parse_command_line_args(command_line_args)
         expected_args = ['analysis_dir',
                          'config_file',
                          'genome_build',
                          'x_genome_references',
-                         'inputs_dir',
-                         'is_source_fastq_external',
+                         'input_runs_dir',
+                         'input_samples_dir',
                          'job_suffix',
-                         'source_fastq_dir',
+                         'source_fastq_dirs',
                          'x_template_config',
                          'x_working_dir']
         self.assertEqual(sorted(expected_args), sorted(vars(args)))
         self.assertEqual('mm10', args.genome_build)
         self.assertEqual('_11_01_A', args.job_suffix)
-        self.assertEqual(True, args.is_source_fastq_external)
-        self.assertEqual('DNASeqCore/Run_1286/rhim/Run_1286', args.source_fastq_dir)
+        self.assertEqual(['DNASeqCore/Run_1/rhim/Run_1',
+                          'DNASeqCore/Run_2/rhim/Run_2'],
+                         args.source_fastq_dirs)
         join = os.path.join
         basedir = '/tmp.foo'
         expected_analysis_filepath = join(basedir, 'analysis_11_01_A')
         self.assertEqual(expected_analysis_filepath, args.analysis_dir)
-        self.assertEqual(os.path.join(expected_analysis_filepath, 'config_11_01_A.yaml'),
+        self.assertEqual(os.path.join(expected_analysis_filepath,
+                                      'config_11_01_A.yaml'),
                          args.config_file)
-        self.assertEqual(os.path.join(basedir, 'inputs', '00-multiplexed_reads'),
-                         args.inputs_dir)
+        self.assertEqual(os.path.join(basedir, 'inputs', '00-source_runs'),
+                         args.input_runs_dir)
+        self.assertEqual(os.path.join(basedir, 'inputs', '01-source_samples'),
+                         args.input_samples_dir)
         self.assertEqual('/tmp/watermelon/template_config.yaml', args.x_template_config)
         self.assertEqual('/tmp/watermelon/genome_references.yaml', args.x_genome_references)
 
-    def test_parse_args_inputWhenLocalSourceFastq(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            os.chdir(temp_dir_path)
-            source_fastq_dir = "source_fastq"
-            _mkdir(os.path.join(temp_dir_path, "source_fastq"))
-            args = ('--genome_build mm10 '
-                    '--job_suffix _11_01_A '
-                    '--x_working_dir {working_dir} '
-                    '--x_template_config /tmp/watermelon/template_config.yaml '
-                    '--x_genome_references /tmp/watermelon/genome_references.yaml '
-                    '{source_fastq_dir}')
-            command_line_args = args.format(working_dir=temp_dir_path,
-                                            source_fastq_dir=source_fastq_dir).split(' ')
-            args = watermelon_init._parse_command_line_args(command_line_args)
-
-        self.assertEqual(temp_dir_path, args.x_working_dir)
-        self.assertEqual(False, args.is_source_fastq_external)
-        self.assertEqual(os.path.realpath(os.path.join(temp_dir_path, source_fastq_dir)),
-                         args.inputs_dir)
+    # def test_parse_args_inputWhenLocalSourceFastq(self):
+    #     with TempDirectory() as temp_dir:
+    #         temp_dir_path = temp_dir.path
+    #         os.chdir(temp_dir_path)
+    #         source_fastq_dir = "source_fastq"
+    #         _mkdir(os.path.join(temp_dir_path, "source_fastq"))
+    #         args = ('--genome_build mm10 '
+    #                 '--job_suffix _11_01_A '
+    #                 '--x_working_dir {working_dir} '
+    #                 '--x_template_config /tmp/watermelon/template_config.yaml '
+    #                 '--x_genome_references /tmp/watermelon/genome_references.yaml '
+    #                 '{source_fastq_dir}')
+    #         command_line_args = args.format(working_dir=temp_dir_path,
+    #                                         source_fastq_dir=source_fastq_dir).split(' ')
+    #         args = watermelon_init._parse_command_line_args(command_line_args)
+    #
+    #     self.assertEqual(temp_dir_path, args.x_working_dir)
+    #     self.assertEqual(False, args.is_source_fastq_external)
+    #     self.assertEqual(os.path.realpath(os.path.join(temp_dir_path, source_fastq_dir)),
+    #                      args.inputs_dir)
 
 
     def test_parse_args_workingDirDefaultsToCwd(self):
@@ -204,35 +208,35 @@ class WatermelonInitTest(unittest.TestCase):
         self.assertEqual(sorted(watermelon_init.GENOME_BUILD_OPTIONS),
                          sorted(genome_references.keys()))
 
-    def test_make_top_level_dirs(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            real = functools.partial(os.path.join, temp_dir_path)
-            args = Namespace(analysis_dir=real('ANALYSIS_11_10_A'),
-                             inputs_dir=real('INPUTS'),
-                             is_source_fastq_external=True)
-            watermelon_init._make_top_level_dirs(args)
+    # def test_make_top_level_dirs(self):
+    #     with TempDirectory() as temp_dir:
+    #         temp_dir_path = temp_dir.path
+    #         real = functools.partial(os.path.join, temp_dir_path)
+    #         args = Namespace(analysis_dir=real('ANALYSIS_11_10_A'),
+    #                          inputs_dir=real('INPUTS'),
+    #                          is_source_fastq_external=True)
+    #         watermelon_init._make_top_level_dirs(args)
+    #
+    #         def is_dir(o):
+    #             return os.path.isdir(os.path.join(temp_dir_path, o))
+    #         actual_dirs = sorted([o for o in os.listdir(temp_dir_path) if is_dir(o)])
+    #         self.assertEqual(['ANALYSIS_11_10_A', 'INPUTS'],
+    #                          actual_dirs)
 
-            def is_dir(o):
-                return os.path.isdir(os.path.join(temp_dir_path, o))
-            actual_dirs = sorted([o for o in os.listdir(temp_dir_path) if is_dir(o)])
-            self.assertEqual(['ANALYSIS_11_10_A', 'INPUTS'],
-                             actual_dirs)
-
-    def test_make_top_level_dirs_bypassInputsWhenSourceNotExternal(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            real = functools.partial(os.path.join, temp_dir_path)
-            args = Namespace(analysis_dir=real('ANALYSIS_11_10_A'),
-                             inputs_dir=real('INPUTS'),
-                             is_source_fastq_external=False)
-            watermelon_init._make_top_level_dirs(args)
-
-            def is_dir(o):
-                return os.path.isdir(os.path.join(temp_dir_path, o))
-            actual_dirs = sorted([o for o in os.listdir(temp_dir_path) if is_dir(o)])
-            self.assertEqual(['ANALYSIS_11_10_A'],
-                             actual_dirs)
+    # def test_make_top_level_dirs_bypassInputsWhenSourceNotExternal(self):
+    #     with TempDirectory() as temp_dir:
+    #         temp_dir_path = temp_dir.path
+    #         real = functools.partial(os.path.join, temp_dir_path)
+    #         args = Namespace(analysis_dir=real('ANALYSIS_11_10_A'),
+    #                          inputs_dir=real('INPUTS'),
+    #                          is_source_fastq_external=False)
+    #         watermelon_init._make_top_level_dirs(args)
+    #
+    #         def is_dir(o):
+    #             return os.path.isdir(os.path.join(temp_dir_path, o))
+    #         actual_dirs = sorted([o for o in os.listdir(temp_dir_path) if is_dir(o)])
+    #         self.assertEqual(['ANALYSIS_11_10_A'],
+    #                          actual_dirs)
 
 
     def test_link_run_dirs(self):
@@ -267,16 +271,16 @@ class WatermelonInitTest(unittest.TestCase):
             orig_wd = os.getcwd()
             try:
                 os.chdir(temp_dir_path)
-                watermelon_run_dir = j('00-source_runs', '')
+                watermelon_runs_dir = j('00-source_runs', '')
                 source_run_basedir = j('DNASeqCore', '')
 
                 _create_files(source_run_basedir, source_files)
                 source_run_dirs = [j(source_run_basedir, 'Run_1', 'tuttle', 'project'),
                                    j(source_run_basedir, 'Run_2', 'tuttle', 'project')]
 
-                watermelon_init._link_run_dirs(source_run_dirs, watermelon_run_dir)
+                watermelon_init._link_run_dirs(source_run_dirs, watermelon_runs_dir)
 
-                actual_files = list(_listfiles(j(temp_dir_path, watermelon_run_dir)))
+                actual_files = list(_listfiles(j(temp_dir_path, watermelon_runs_dir)))
                 actual_link_count = sum([os.stat(f).st_nlink == 2 for f in actual_files])
             finally:
                 os.chdir(orig_wd)
@@ -291,7 +295,57 @@ class WatermelonInitTest(unittest.TestCase):
                           'DNASeqCore^Run_2^tuttle^project/sampleB/4.fastq']
         prefix_path = lambda x: temp_dir_path.replace(os.path.sep, '^') + '^' + x
         expected_files = [prefix_path(f) for f in expected_files]
-        expected_files = [j(temp_dir_path, watermelon_run_dir, f) for f in expected_files]
+        expected_files = [j(temp_dir_path, watermelon_runs_dir, f) for f in expected_files]
+        self.assertEqual(set(expected_files), set(actual_files))
+        self.assertEqual(len(actual_files), actual_link_count)
+
+    def test_merge_samples_dirs(self):
+        source_runs = {
+            'DNASeqCore^Run_1^tuttle^project': {
+                'sampleA': {
+                    '1.fastq':'A',
+                    '2.fastq': 'AT'},
+                'sampleB': {
+                    '3.fastq':'ATC',
+                    '4.fastq': 'ATCG'}
+            },
+            'DNASeqCore^Run_2^tuttle^project': {
+                'sampleA': {
+                    '1.fastq':'AA',
+                    '2.fastq': 'AATT'},
+                'sampleB': {
+                    '3.fastq':'AATTCC',
+                    '4.fastq': 'AATTCCGG'}
+            },
+        }
+        j = os.path.join
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            orig_wd = os.getcwd()
+            try:
+                os.chdir(temp_dir_path)
+                watermelon_runs_dir = j('00-source_runs', '')
+                watermelon_samples_dir = j('01-source_samples', '')
+
+                _create_files(watermelon_runs_dir, source_runs)
+                watermelon_init._merge_sample_dirs(watermelon_runs_dir,
+                                                   watermelon_samples_dir)
+
+                actual_files = list(_listfiles(j(temp_dir_path, watermelon_samples_dir)))
+                actual_link_count = sum([os.stat(f).st_nlink == 2 for f in actual_files])
+            finally:
+                os.chdir(orig_wd)
+
+        expected_files = ['sampleA/DNASeqCore^Run_1^tuttle^project^1.fastq',
+                          'sampleA/DNASeqCore^Run_1^tuttle^project^2.fastq',
+                          'sampleA/DNASeqCore^Run_2^tuttle^project^1.fastq',
+                          'sampleA/DNASeqCore^Run_2^tuttle^project^2.fastq',
+                          'sampleB/DNASeqCore^Run_1^tuttle^project^3.fastq',
+                          'sampleB/DNASeqCore^Run_1^tuttle^project^4.fastq',
+                          'sampleB/DNASeqCore^Run_2^tuttle^project^3.fastq',
+                          'sampleB/DNASeqCore^Run_2^tuttle^project^4.fastq']
+        prefix_path = lambda x: j(temp_dir_path, watermelon_samples_dir, x)
+        expected_files = [prefix_path(f) for f in expected_files]
         self.assertEqual(set(expected_files), set(actual_files))
         self.assertEqual(len(actual_files), actual_link_count)
 

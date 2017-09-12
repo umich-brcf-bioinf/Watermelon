@@ -161,17 +161,11 @@ def _initialize_samples(watermelon_sample_dir):
         return count
 
     samples = {}
-    file_count = 0
     for file_name in os.listdir(watermelon_sample_dir):
         full_path = os.path.realpath(os.path.join(watermelon_sample_dir, file_name))
         if os.path.isdir(full_path) and _count_fastq(full_path):
             samples[file_name] = full_path
-            file_count += _count_fastq(full_path)
-    return samples, file_count
-
-# def _populate_inputs_dir(inputs_dir, samples):
-#     for sample_name, sample_dir_target in samples.items():
-#         os.symlink(sample_dir_target, os.path.join(inputs_dir, sample_name))
+    return samples
 
 def _link_run_dirs(source_run_dirs, watermelon_runs_dir):
     _mkdir(watermelon_runs_dir)
@@ -242,7 +236,7 @@ def _build_input_summary(input_samples_dir):
         for name in files:
             file_name = os.path.basename(name)
             sample_name = os.path.basename(root)
-            run_name = os.path.basename(os.path.dirname(root)).replace(_PATH_SEP, os.path.sep)
+            run_name = os.path.dirname(file_name.replace(_PATH_SEP, os.path.sep))
             rows.append((run_name, sample_name, file_name))
 
     df = pd.DataFrame(data=rows, columns=['run', 'sample', 'file'])
@@ -253,16 +247,18 @@ def _build_input_summary(input_samples_dir):
 
     total_sample_count = len(sample_run_counts_df)
     total_file_count = sum(sum(sample_run_counts_df.values))
-    sample_run_counts_df.loc['total']= sample_run_counts_df.sum()
+    sample_run_counts_df.loc['run_total']= sample_run_counts_df.sum()
+    sample_run_counts_df['sample_total']= sample_run_counts_df.sum(axis=1)
 
-    input_summary = Namespace(runs_df = runs_df,
-                              sample_run_counts_df=sample_run_counts_df,
-                              total_sample_count=total_sample_count,
-                              total_file_count=total_file_count,
-                              total_run_count=len(runs_df))
+    input_summary = argparse.Namespace(runs_df = runs_df,
+                                       sample_run_counts_df=sample_run_counts_df,
+                                       total_sample_count=total_sample_count,
+                                       total_file_count=total_file_count,
+                                       total_run_count=len(runs_df))
     return input_summary
 
 def _build_postlude(args, input_summary):
+    input_dir_relative = os.path.relpath(args.input_dir, args.x_working_dir)
     postlude = \
 '''
 watermelon_init.README
@@ -281,9 +277,9 @@ Sample x run file counts:
 Created files and dirs
 ----------------------
 {working_dir}/
-    {input_relative}/
+    {input_dir_relative}/
         {input_runs_dir}/
-        {input_samples_dir}
+        {input_samples_dir}/
     {analysis_relative}/
         {config_basename}
 
@@ -317,9 +313,9 @@ $ watermelon -c {config_basename}
            run_details=input_summary.runs_df.to_string(justify='left'),
            sample_run_counts=input_summary.sample_run_counts_df.to_string(justify='left'),
            working_dir=args.x_working_dir,
-           input_relative=os.path.relpath(args.input_dir, args.x_working_dir),
-           input_runs_dir=args.input_runs_dir,
-           input_samples_dir=args.input_samples_dir,
+           input_dir_relative=input_dir_relative,
+           input_runs_dir=os.path.relpath(args.input_runs_dir, input_dir_relative),
+           input_samples_dir=os.path.relpath(args.input_samples_dir, input_dir_relative),
            analysis_dir=args.analysis_dir,
            analysis_relative=os.path.relpath(args.analysis_dir, args.x_working_dir),
            config_file=args.config_file,
@@ -327,11 +323,6 @@ $ watermelon -c {config_basename}
            config_basename=os.path.basename(args.config_file),
            job_suffix=args.job_suffix,)
     return postlude
-
-# def _make_top_level_dirs(args):
-#     _mkdir(args.analysis_dir)
-#     if args.is_source_fastq_external:
-#         _mkdir(args.inputs_dir)
 
 def _write_config_file(config_filename, config_dict):
     tmp_config_dict = dict(config_dict)
@@ -414,13 +405,11 @@ def main(sys_argv):
         args = _parse_command_line_args(sys_argv)
         _CommandValidator().validate_args(args)
 
-        # (samples, file_count) = _initialize_samples(args.source_fastq_dir)
-        # _make_top_level_dirs(args)
-        # _populate_inputs_dir(args.inputs_dir, samples)
-
         _link_run_dirs(args.source_fastq_dirs, args.input_runs_dir)
         _merge_sample_dirs(args.input_runs_dir, args.input_samples_dir)
-        (samples, file_count) = _initialize_samples(args.input_samples_dir)
+        input_summary = _build_input_summary(args.input_samples_dir)
+        #check for samples without fastq files
+        samples  = _initialize_samples(args.input_samples_dir)
         _mkdir(args.analysis_dir)
 
         with open(args.x_template_config, 'r') as template_config_file:
@@ -433,7 +422,7 @@ def main(sys_argv):
                                         samples)
         _write_config_file(args.config_file, config_dict)
 
-        postlude = _build_postlude(args, len(samples), file_count)
+        postlude = _build_postlude(args, input_summary)
         print(postlude)
         with open(README_FILENAME, 'w') as readme:
             print(postlude, file=readme)

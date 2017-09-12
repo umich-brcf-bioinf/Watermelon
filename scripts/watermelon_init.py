@@ -35,6 +35,7 @@ import sys
 import time
 import traceback
 
+import pandas as pd
 import yaml
 
 import scripts.watermelon_config as watermelon_config
@@ -58,15 +59,17 @@ class _CommandValidator(object):
 
     def validate_args(self, args):
         #pylint: disable=locally-disabled, missing-docstring
-        for validation in [self._validate_source_fastq_dir,
+        for validation in [self._validate_source_fastq_dirs,
                            self._validate_overwrite_check]:
             validation(args)
 
     @staticmethod
-    def _validate_source_fastq_dir(args):
-        if not os.path.isdir(args.source_fastq_dir):
-            msg = ('Specified source_fastq_dir [{}] is not a dir or cannot be read. '
-                   'Review inputs and try again.').format(args.source_fastq_dir)
+    def _validate_source_fastq_dirs(args):
+        bad_dirs = [x for x in args.source_fastq_dirs if not os.path.isdir(x)]
+        if bad_dirs:
+            msg = ('Specified source_fastq_dir(s) [{}] not a dir or cannot be '
+                   'read. Review inputs and try again.'
+                  ).format(','.join(sorted(bad_dirs)))
             raise _UsageError(msg)
 
     @staticmethod
@@ -74,8 +77,10 @@ class _CommandValidator(object):
         existing_files = {}
         if os.path.exists(args.analysis_dir):
             existing_files['analysis_dir'] = args.analysis_dir
-        if os.path.exists(args.inputs_dir) and args.is_source_fastq_external:
-            existing_files['inputs_dir'] = args.inputs_dir
+        if os.path.exists(args.input_runs_dir):
+            existing_files['input_runs_dir'] = args.input_runs_dir
+        if os.path.exists(args.input_samples_dir):
+            existing_files['input_samples_dir'] = args.input_samples_dir
         if existing_files:
             file_types = [file_type for file_type in sorted(existing_files.keys())]
             file_names = [existing_files[key] for key in file_types]
@@ -230,18 +235,55 @@ def _make_config_dict(template_config, genome_references, input_dir, samples):
     config.update(_build_phenotypes_samples_comparisons(samples))
     return config
 
-def _build_postlude(args, sample_count, file_count):
+def _build_input_summary(input_samples_dir):
+    pd.set_option('display.max_colwidth', 300)
+    rows = []
+    for root, dirs, files in os.walk(input_samples_dir):
+        for name in files:
+            file_name = os.path.basename(name)
+            sample_name = os.path.basename(root)
+            run_name = os.path.basename(os.path.dirname(root)).replace(_PATH_SEP, os.path.sep)
+            rows.append((run_name, sample_name, file_name))
+
+    df = pd.DataFrame(data=rows, columns=['run', 'sample', 'file'])
+    df['run_index'] = df['run'].rank(method='dense').apply(lambda x: chr(64+int(x)))
+
+    runs_df = df.drop_duplicates(subset=['run_index', 'run'])[['run_index', 'run']].set_index('run_index')
+    sample_run_counts_df = df.pivot_table(values='file',index=['sample'], columns='run_index', aggfunc='count').fillna(0).astype(int, errors='ignore')
+
+    total_sample_count = len(sample_run_counts_df)
+    total_file_count = sum(sum(sample_run_counts_df.values))
+    sample_run_counts_df.loc['total']= sample_run_counts_df.sum()
+
+    input_summary = Namespace(runs_df = runs_df,
+                              sample_run_counts_df=sample_run_counts_df,
+                              total_sample_count=total_sample_count,
+                              total_file_count=total_file_count,
+                              total_run_count=len(runs_df))
+    return input_summary
+
+def _build_postlude(args, input_summary):
     postlude = \
 '''
 watermelon_init.README
 ======================
 
+Input summary:
+--------------
+Found {total_file_count} files for {total_sample_count} samples across {total_run_count} run(s).
+
+Source fastq dirs details (i.e. source sequencing run dirs):
+{run_details}
+
+Sample x run file counts:
+{sample_run_counts}
+
 Created files and dirs
 ----------------------
 {working_dir}/
-    {inputs_relative}/
-        | source fastq dir | sample count | fastq file count
-        | {source_fastq_dir} | {sample_count} samples | {file_count} files
+    {input_relative}/
+        {input_runs_dir}/
+        {input_samples_dir}
     {analysis_relative}/
         {config_basename}
 
@@ -269,11 +311,15 @@ $ screen -S watermelon{job_suffix}
 $ watermelon --dry-run -c {config_basename}
 # to run:
 $ watermelon -c {config_basename}
-'''.format(working_dir=args.x_working_dir,
-           inputs_relative=os.path.relpath(args.inputs_dir, args.x_working_dir),
-           source_fastq_dir=args.source_fastq_dir,
-           sample_count=sample_count,
-           file_count=file_count,
+'''.format(total_file_count=input_summary.total_file_count,
+           total_sample_count=input_summary.total_sample_count,
+           total_run_count=input_summary.total_run_count,
+           run_details=input_summary.runs_df.to_string(justify='left'),
+           sample_run_counts=input_summary.sample_run_counts_df.to_string(justify='left'),
+           working_dir=args.x_working_dir,
+           input_relative=os.path.relpath(args.input_dir, args.x_working_dir),
+           input_runs_dir=args.input_runs_dir,
+           input_samples_dir=args.input_samples_dir,
            analysis_dir=args.analysis_dir,
            analysis_relative=os.path.relpath(args.analysis_dir, args.x_working_dir),
            config_file=args.config_file,
@@ -357,8 +403,9 @@ def _parse_command_line_args(sys_argv):
     args.analysis_dir = realpath('analysis{}'.format(args.job_suffix))
     args.config_file = os.path.join(args.analysis_dir,
                                     'config{}.yaml'.format(args.job_suffix))
-    args.input_runs_dir = realpath('inputs', '00-source_runs')
-    args.input_samples_dir = realpath('inputs', '01-source_samples')
+    args.input_dir = realpath('inputs')
+    args.input_runs_dir = os.path.join(args.input_dir, '00-source_runs')
+    args.input_samples_dir = os.path.join(args.input_dir, '01-source_samples')
     return args
 
 def main(sys_argv):

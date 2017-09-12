@@ -15,6 +15,7 @@ except ImportError:
     from io import StringIO
 
 from testfixtures.tempdirectory import TempDirectory
+import pandas as pd
 import yaml
 
 import scripts.watermelon_init as watermelon_init
@@ -97,23 +98,52 @@ class WatermelonInitTest(unittest.TestCase):
     #                                                                    working_dir=working_dir))
 
     def test_build_postlude(self):
-        args = Namespace(inputs_dir='INPUTS_DIR',
-                         source_fastq_dir='SOURCE_FASTQ_DIR',
+        args = Namespace(input_dir='INPUT_DIR',
+                         input_runs_dir='INPUT_RUNS_DIR',
+                         input_samples_dir='INPUT_SAMPLES_DIR',
                          analysis_dir='ANALYSIS_DIR',
                          config_file='path/to/CONFIG_FILE',
                          job_suffix='_JOB_SUFFIX',
                          x_working_dir='WORKING_DIR')
-        sample_count = 42
-        file_count = 168
-        actual_postlude = watermelon_init._build_postlude(args, sample_count, file_count)
+        runs_df_contents = StringIO(\
+        '''run_index|run
+        A|/foo/bar/A
+        B|/foo/bar/B
+        C|/foo/baz/C
+        D|/foo/baz/D''')
+        runs_df = pd.read_csv(runs_df_contents, sep='|')
+        sample_run_counts_df_contents = StringIO(\
+        '''sample/run_index|A|B|C|D
+        sample_1|2|4| |
+        sample_2| | |8| 16''')
+        sample_run_counts_df = pd.read_csv(sample_run_counts_df_contents, sep='|')
+        input_summary = Namespace(total_file_count=732,
+                                  total_sample_count=78,
+                                  total_run_count=4,
+                                  runs_df=runs_df,
+                                  sample_run_counts_df=sample_run_counts_df)
+
+        actual_postlude = watermelon_init._build_postlude(args, input_summary)
         self.assertRegexpMatches(actual_postlude,
-                                 r'INPUTS_DIR')
+                                 r'Found 732 files for 78 samples across 4 run')
         self.assertRegexpMatches(actual_postlude,
-                                 r'SOURCE_FASTQ_DIR \| 42 samples \| 168 files')
+                                 r'A.*/foo/bar/A')
+        self.assertRegexpMatches(actual_postlude,
+                                 r'D.*/foo/baz/D')
+        self.assertRegexpMatches(actual_postlude,
+                                 r'sample_1.*2.*4')
+        self.assertRegexpMatches(actual_postlude,
+                                 r'sample_2.*8.*16')
         self.assertRegexpMatches(actual_postlude,
                                  r'ANALYSIS_DIR')
         self.assertRegexpMatches(actual_postlude,
-                                 r'    CONFIG_FILE')
+                                 r'CONFIG_FILE')
+        self.assertRegexpMatches(actual_postlude,
+                                 r'INPUT_DIR')
+        self.assertRegexpMatches(actual_postlude,
+                                 r'INPUT_RUNS_DIR')
+        self.assertRegexpMatches(actual_postlude,
+                                 r'INPUT_SAMPLES_DIR')
         self.assertRegexpMatches(actual_postlude,
                                  r'screen -S watermelon_JOB_SUFFIX')
         self.assertRegexpMatches(actual_postlude,
@@ -131,6 +161,7 @@ class WatermelonInitTest(unittest.TestCase):
                          'config_file',
                          'genome_build',
                          'x_genome_references',
+                         'input_dir',
                          'input_runs_dir',
                          'input_samples_dir',
                          'job_suffix',
@@ -150,6 +181,8 @@ class WatermelonInitTest(unittest.TestCase):
         self.assertEqual(os.path.join(expected_analysis_filepath,
                                       'config_11_01_A.yaml'),
                          args.config_file)
+        self.assertEqual(os.path.join(basedir, 'inputs'),
+                         args.input_dir)
         self.assertEqual(os.path.join(basedir, 'inputs', '00-source_runs'),
                          args.input_runs_dir)
         self.assertEqual(os.path.join(basedir, 'inputs', '01-source_samples'),
@@ -590,17 +623,22 @@ class CommandValidatorTest(unittest.TestCase):
         #pylint: disable=locally-disabled,redundant-unittest-assert
         self.assertTrue(True)
 
-    def test_validate_source_fastq_dir_raisesIfInvalid(self):
+    def test_validate_source_fastq_dirs_raisesIfInvalid(self):
         validator = watermelon_init._CommandValidator()
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            source_fastq_dir = os.path.join(temp_dir_path, 'source')
-            args = Namespace(source_fastq_dir=source_fastq_dir)
-            msg = (r'Specified source_fastq_dir \[.*\] is not a dir or '
-                   r'cannot be read. ')
+            source_fastq_dir_a = os.path.join(temp_dir_path, 'dir_a')
+            source_fastq_dir_b = os.path.join(temp_dir_path, 'dir_b')
+            source_fastq_dir_c = os.path.join(temp_dir_path, 'dir_c')
+            os.mkdir(source_fastq_dir_b)
+            args = Namespace(source_fastq_dirs=[source_fastq_dir_a,
+                                                source_fastq_dir_b,
+                                                source_fastq_dir_c])
+            msg = (r'Specified source_fastq_dir\(s\) \[.*dir_a,.*dir_c\] not a '
+                   r'dir or cannot be read.')
             self.assertRaisesRegexp(watermelon_init._UsageError,
                                     msg,
-                                    validator._validate_source_fastq_dir,
+                                    validator._validate_source_fastq_dirs,
                                     args)
 
     def test_validate_source_fastq_dir_ok(self):
@@ -609,8 +647,8 @@ class CommandValidatorTest(unittest.TestCase):
             temp_dir_path = temp_dir.path
             os.mkdir(os.path.join(temp_dir_path, 'source'))
             source_fastq_dir = os.path.join(temp_dir_path, 'source')
-            args = Namespace(source_fastq_dir=source_fastq_dir)
-            validator._validate_source_fastq_dir(args)
+            args = Namespace(source_fastq_dirs=[source_fastq_dir])
+            validator._validate_source_fastq_dirs(args)
             self.ok()
 
     def test_validate_overwrite_check_ok(self):
@@ -618,9 +656,11 @@ class CommandValidatorTest(unittest.TestCase):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             analysis_dir = os.path.join(temp_dir_path, 'analysis')
-            inputs_dir = os.path.join(temp_dir_path, 'inputs')
+            in_runs_dir = os.path.join(temp_dir_path, 'inputs', 'runs')
+            in_samples_dir = os.path.join(temp_dir_path, 'inputs', 'samples')
             args = Namespace(analysis_dir=analysis_dir,
-                             inputs_dir=inputs_dir)
+                             input_runs_dir=in_runs_dir,
+                             input_samples_dir=in_samples_dir)
             validator._validate_overwrite_check(args)
             self.ok()
 
@@ -628,27 +668,47 @@ class CommandValidatorTest(unittest.TestCase):
         validator = watermelon_init._CommandValidator()
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            os.mkdir(os.path.join(temp_dir_path, 'analysis'))
+            _mkdir(os.path.join(temp_dir_path, 'analysis'))
             analysis_dir = os.path.join(temp_dir_path, 'analysis')
-            inputs_dir = os.path.join(temp_dir_path, 'inputs')
-            args = Namespace(analysis_dir=analysis_dir, inputs_dir=inputs_dir)
+            in_runs_dir = os.path.join(temp_dir_path, 'inputs', 'runs')
+            in_samples_dir = os.path.join(temp_dir_path, 'inputs', 'samples')
+            args = Namespace(analysis_dir=analysis_dir,
+                             input_runs_dir=in_runs_dir,
+                             input_samples_dir=in_samples_dir)
             self.assertRaisesRegexp(watermelon_init._UsageError,
                                     r'analysis_dir \[.*\] exist\(s\)',
                                     validator._validate_overwrite_check,
                                     args)
 
-    def test_validate_overwrite_check_raisesIfInputsExists(self):
+    def test_validate_overwrite_check_raisesIfInputRunsExists(self):
         validator = watermelon_init._CommandValidator()
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            os.mkdir(os.path.join(temp_dir_path, 'inputs'))
-            inputs_dir = os.path.join(temp_dir_path, 'inputs')
+            in_runs_dir = os.path.join(temp_dir_path, 'inputs', 'runs')
+            _mkdir(os.path.join(in_runs_dir))
+            in_samples_dir = os.path.join(temp_dir_path, 'inputs', 'samples')
             analysis_dir = os.path.join(temp_dir_path, 'analysis')
             args = Namespace(analysis_dir=analysis_dir,
-                             inputs_dir=inputs_dir,
-                             is_source_fastq_external=True)
+                             input_runs_dir=in_runs_dir,
+                             input_samples_dir=in_samples_dir)
             self.assertRaisesRegexp(watermelon_init._UsageError,
-                                    r'inputs_dir \[.*\] exist\(s\)',
+                                    r'input_runs_dir \[.*\] exist\(s\)',
+                                    validator._validate_overwrite_check,
+                                    args)
+
+    def test_validate_overwrite_check_raisesIfInputSamplesExists(self):
+        validator = watermelon_init._CommandValidator()
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            in_samples_dir = os.path.join(temp_dir_path, 'inputs', 'samples')
+            _mkdir(os.path.join(in_samples_dir))
+            in_runs_dir = os.path.join(temp_dir_path, 'inputs', 'runs')
+            analysis_dir = os.path.join(temp_dir_path, 'analysis')
+            args = Namespace(analysis_dir=analysis_dir,
+                             input_runs_dir=in_runs_dir,
+                             input_samples_dir=in_samples_dir)
+            self.assertRaisesRegexp(watermelon_init._UsageError,
+                                    r'input_samples_dir \[.*\] exist\(s\)',
                                     validator._validate_overwrite_check,
                                     args)
 
@@ -673,6 +733,7 @@ class WatermelonInitFunctoinalTest(unittest.TestCase):
 
                 redirect_output = ' 2>&1 '
                 command = '{} {}'.format(script_name, redirect_output)
+                print(command)
                 exit_code, command_output = self.execute(command)
             finally:
                 os.chdir(orig_wd)

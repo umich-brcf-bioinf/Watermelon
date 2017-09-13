@@ -56,6 +56,9 @@ rule all:
         rnaseq_snakefile_helper.expand_sample_read_endedness(\
             ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",
             SAMPLE_READS),
+        rnaseq_snakefile_helper.expand_sample_read_endedness(\
+            ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}.screen.html",
+            SAMPLE_READS),
         expand(ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_accepted_hits.bam",
                 sample=config[SAMPLES_KEY]),
         expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
@@ -197,6 +200,58 @@ rule align_cutadapt_PE:
                 ln -sf ../../{input.raw_fastq_R2} {output.R2} &&
                 echo No trimming done
                 ) 2>&1 |tee {log} ''')
+
+rule align_fastq_screen_biotype:
+    input:
+        ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read_endedness}.fastq.gz"
+    output:
+        ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}.screen.html",
+        ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}.screen.txt",
+    log:
+        ALIGNMENT_DIR + "03-fastq_screen/biotype/.log/{sample}_trimmed_{read_endedness}.screen.log"
+    threads:
+        8
+    params:
+        subset = config['fastq_screen']['subset'],
+        biotype_output_dir = ALIGNMENT_DIR + "03-fastq_screen/biotype",
+        biotype_config_file = config['fastq_screen']['reference_basedir'] +'/' + config['fastq_screen_species'] + '.conf'
+    shell:
+        '''(module purge && module load watermelon_rnaseq &&
+        echo 'watermelon|version|fastq_screen|'`fastq_screen --version` &&
+        fastq_screen \
+            --threads {threads} \
+            --subset {params.subset} \
+            --conf {param.biotype_config_file} \
+            --outdir {params.biotype_output_dir} \
+            {input}
+        ) 2>&1 | tee {log}'''
+
+rule align_fastq_screen_multi_species:
+    input:
+        ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read_endedness}.fastq.gz"
+    output:
+        ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}.screen.html",
+        ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}.screen.txt",
+    log:
+        ALIGNMENT_DIR + "03-fastq_screen/multi_species/.log/{sample}_trimmed_{read_endedness}.screen.log"
+    threads:
+        8
+    params:
+        subset = config['fastq_screen']['subset'],
+        multi_species_output_dir = ALIGNMENT_DIR + "03-fastq_screen/multi_species",
+        multi_species_biotype_config_file = config['fastq_screen']['reference_basedir'] +"/multi_species.conf"
+    shell:
+        '''(module purge && module load watermelon_rnaseq &&
+        echo 'watermelon|version|fastq_screen|'`fastq_screen --version` &&
+        fastq_screen \
+            --threads {threads} \
+            --subset {params.subset} \
+            --conf {param.multi_species_config_file} \
+            --outdir {params.multi_species_output_dir} \
+            {input} 
+        ) 2>&1 | tee {log}'''
+
+
 
 rule align_fastqc_trimmed_reads:
     input:

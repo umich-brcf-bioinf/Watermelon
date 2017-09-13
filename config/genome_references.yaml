@@ -1,5 +1,6 @@
 hg19:
     genome: hg19
+    fastq_screen_species: human
     references:
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/noRibo_human.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/Bowtie2Index
@@ -7,6 +8,7 @@ hg19:
         bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/BBMap/
 mm10:
     genome: mm10
+    fastq_screen_species: mouse
     references:
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/noRibo_mouse.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/Bowtie2Index
@@ -14,6 +16,7 @@ mm10:
         bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/BBMap/
 rn5:
     genome: rn5
+    fastq_screen_species: rat
     references:
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/genes.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/Sequence/Bowtie2Index

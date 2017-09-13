@@ -24,3 +24,8 @@ trimming_options:
 alignment_options:
     transcriptome_only: True
     library_type: fr-unstranded   #fr-firststrand   #fr-secondstrand
+
+fastq_screen:
+    reference_basedir: /nfs/med-bfx-common/pipelines/Watermelon/references/fastq_screen
+    aligner: bowtie2
+    subset: 100000

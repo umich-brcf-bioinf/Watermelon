@@ -51,14 +51,30 @@ rnaseq_snakefile_helper.checksum_reset_all(CONFIG_CHECKSUMS_DIR,
 
 SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(config['input_dir'], config[SAMPLES_KEY])
 
+if 'fastq_screen' in config:
+    RUN_FASTQ_SCREEN = True
+    FASTQ_SCREEN_CONFIG = config['fastq_screen']
+else:
+    RUN_FASTQ_SCREEN = False
+    FASTQ_SCREEN_CONFIG = defaultdict(str)
+
+iif = lambda check, collection: collection if check else []
+
 rule all:
     input:
         rnaseq_snakefile_helper.expand_sample_read_endedness(\
             ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",
             SAMPLE_READS),
-        rnaseq_snakefile_helper.expand_sample_read_endedness(\
-            ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}.screen.html",
-            SAMPLE_READS),
+        iif(RUN_FASTQ_SCREEN,
+            rnaseq_snakefile_helper.expand_sample_read_endedness(\
+                ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
+                SAMPLE_READS)),
+        iif(RUN_FASTQ_SCREEN,
+            rnaseq_snakefile_helper.expand_sample_read_endedness(\
+                ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
+                SAMPLE_READS)),
+        iif(RUN_FASTQ_SCREEN,
+            ALIGNMENT_DIR + "03-fastq_screen/fastq_screen_multiqc.html"),
         expand(ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_accepted_hits.bam",
                 sample=config[SAMPLES_KEY]),
         expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
@@ -70,7 +86,14 @@ rule all:
         expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
                 sample=config[SAMPLES_KEY]),
         DELIVERABLES_DIR + "alignment/alignment_qc.html",
-
+        iif(RUN_FASTQ_SCREEN,
+            rnaseq_snakefile_helper.expand_sample_read_endedness(
+                DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
+                SAMPLE_READS)),
+        iif(RUN_FASTQ_SCREEN,
+            rnaseq_snakefile_helper.expand_sample_read_endedness(
+                DELIVERABLES_DIR + "alignment/fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
+                SAMPLE_READS)),
         expand(TUXEDO_DIR + "01-cuffdiff/{phenotype}/gene_exp.diff",
                phenotype=sorted(config[COMPARISONS_KEY].keys())),
         expand(TUXEDO_DIR + "03-flag/{phenotype}/{phenotype}_gene.flagged.txt",
@@ -205,24 +228,26 @@ rule align_fastq_screen_biotype:
     input:
         ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read_endedness}.fastq.gz"
     output:
-        ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}.screen.html",
-        ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}.screen.txt",
+        ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
+        ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.txt",
     log:
-        ALIGNMENT_DIR + "03-fastq_screen/biotype/.log/{sample}_trimmed_{read_endedness}.screen.log"
+        ALIGNMENT_DIR + "03-fastq_screen/biotype/.log/{sample}_trimmed_{read_endedness}_screen.log"
     threads:
         8
     params:
-        subset = config['fastq_screen']['subset'],
+        aligner = FASTQ_SCREEN_CONFIG['aligner'],
+        subset = FASTQ_SCREEN_CONFIG['subset'],
         biotype_output_dir = ALIGNMENT_DIR + "03-fastq_screen/biotype",
-        biotype_config_file = config['fastq_screen']['reference_basedir'] +'/' + config['fastq_screen_species'] + '.conf'
+        biotype_config_file = FASTQ_SCREEN_CONFIG['reference_basedir'] +'/' + config.get('fastq_screen_species', '') + '.conf'
     shell:
         '''(module purge && module load watermelon_rnaseq &&
         echo 'watermelon|version|fastq_screen|'`fastq_screen --version` &&
         fastq_screen \
             --threads {threads} \
             --subset {params.subset} \
-            --conf {param.biotype_config_file} \
+            --conf {params.biotype_config_file} \
             --outdir {params.biotype_output_dir} \
+            --aligner {params.aligner} \
             {input}
         ) 2>&1 | tee {log}'''
 
@@ -230,28 +255,51 @@ rule align_fastq_screen_multi_species:
     input:
         ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read_endedness}.fastq.gz"
     output:
-        ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}.screen.html",
-        ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}.screen.txt",
+        ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
+        ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.txt",
     log:
-        ALIGNMENT_DIR + "03-fastq_screen/multi_species/.log/{sample}_trimmed_{read_endedness}.screen.log"
+        ALIGNMENT_DIR + "03-fastq_screen/multi_species/.log/{sample}_trimmed_{read_endedness}_screen.log"
     threads:
         8
     params:
-        subset = config['fastq_screen']['subset'],
+        aligner = FASTQ_SCREEN_CONFIG['aligner'],
+        subset = FASTQ_SCREEN_CONFIG['subset'],
         multi_species_output_dir = ALIGNMENT_DIR + "03-fastq_screen/multi_species",
-        multi_species_biotype_config_file = config['fastq_screen']['reference_basedir'] +"/multi_species.conf"
+        multi_species_config_file = FASTQ_SCREEN_CONFIG['reference_basedir'] +"/multi_species.conf"
     shell:
         '''(module purge && module load watermelon_rnaseq &&
         echo 'watermelon|version|fastq_screen|'`fastq_screen --version` &&
         fastq_screen \
             --threads {threads} \
             --subset {params.subset} \
-            --conf {param.multi_species_config_file} \
+            --conf {params.multi_species_config_file} \
             --outdir {params.multi_species_output_dir} \
+            --aligner {params.aligner} \
             {input} 
         ) 2>&1 | tee {log}'''
 
-
+rule align_fastq_screen_multiqc:
+    input:
+        rnaseq_snakefile_helper.expand_sample_read_endedness(\
+            ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.txt",
+            SAMPLE_READS)
+    output:
+        ALIGNMENT_DIR + "03-fastq_screen/fastq_screen_multiqc.html"
+    params:
+        multiqc_config_filename = WATERMELON_CONFIG_DIR + "multiqc_config.yaml",
+        output_dir = ALIGNMENT_DIR + "03-fastq_screen/",
+        output_filename = "fastq_screen_multiqc.html",
+    log:
+        ALIGNMENT_DIR + "03-fastq_screen/.log/fastq_screen_multiqc.log"
+    shell:
+        '''(module purge && module load watermelon_rnaseq &&
+        echo 'watermelon|version|multiqc|'`multiqc --version | cut -d' ' -f2-` &&
+        multiqc --force \
+            --config {params.multiqc_config_filename} \
+            --outdir {params.output_dir} \
+            --filename {params.output_filename} \
+            {params.output_dir}
+        ) 2>&1 | tee {log} '''
 
 rule align_fastqc_trimmed_reads:
     input:
@@ -452,28 +500,52 @@ rule align_qc:
 
 rule align_deliverables_alignment:
     input:
-        raw_fastqc = lambda wildcards: rnaseq_snakefile_helper.expand_sample_read_endedness(
+        rnaseq_snakefile_helper.expand_sample_read_endedness(
                 ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",
                 SAMPLE_READS),
-        align_fastqc = expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
+        expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
                 sample=config["samples"]),
         alignment_stats = ALIGNMENT_DIR + "06-qc/alignment_qc.html",
     output:
-        raw_fastqc = rnaseq_snakefile_helper.expand_sample_read_endedness(
+        rnaseq_snakefile_helper.expand_sample_read_endedness(
                 DELIVERABLES_DIR + "alignment/raw_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
                 SAMPLE_READS),
-        align_fastqc = expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
+        expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
                 sample=config["samples"]),
         alignment_stats = DELIVERABLES_DIR + "alignment/alignment_qc.html",
     params:
         raw_fastqc_input_dir    =  ALIGNMENT_DIR + "03-fastqc_reads",
-        raw_fastqc_output_dir   =  DELIVERABLES_DIR + "alignment/raw_reads_fastqc",
+        raw_fastqc_output_dir   =  DELIVERABLES_DIR + "alignment/sequence_reads_fastqc",
         align_fastqc_input_dir  =  ALIGNMENT_DIR + "05-fastqc_align",
         align_fastqc_output_dir =  DELIVERABLES_DIR + "alignment/aligned_reads_fastqc",
     shell:
         "cp -r {params.raw_fastqc_input_dir}/* {params.raw_fastqc_output_dir} && "
         "cp -r {params.align_fastqc_input_dir}/* {params.align_fastqc_output_dir} && "
         "cp -r {input.alignment_stats} {output.alignment_stats} "
+
+rule align_deliverables_fastq_screen:
+    input:
+        rnaseq_snakefile_helper.expand_sample_read_endedness(\
+                ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
+                SAMPLE_READS),
+        rnaseq_snakefile_helper.expand_sample_read_endedness(\
+                ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
+                SAMPLE_READS),
+    output:
+        rnaseq_snakefile_helper.expand_sample_read_endedness(
+                DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
+                SAMPLE_READS),
+        rnaseq_snakefile_helper.expand_sample_read_endedness(
+                DELIVERABLES_DIR + "alignment/fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
+                SAMPLE_READS),
+    params:
+        source_multi_species    =  ALIGNMENT_DIR + "03-fastq_screen/multi_species/",
+        dest_multi_species    =  DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/",
+        source_biotype    =  ALIGNMENT_DIR + "03-fastq_screen/biotype/",
+        dest_biotype    =  DELIVERABLES_DIR + "alignment/fastq_screen/biotype/",
+    shell:
+        "cp -r {params.source_multi_species}/*_screen.html {params.dest_multi_species} && "
+        "cp -r {params.source_biotype}/*_screen.html {params.dest_biotype}"
 
 
 rule tuxedo_cuffdiff:

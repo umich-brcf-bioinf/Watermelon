@@ -7,6 +7,7 @@ from argparse import Namespace
 import functools
 import os
 import subprocess
+import sys
 import unittest
 try:
     #pylint: disable=locally-disabled,unused-import
@@ -16,6 +17,8 @@ except ImportError:
 
 from testfixtures.tempdirectory import TempDirectory
 import pandas as pd
+from pandas.util.testing import assert_frame_equal
+
 import yaml
 
 import scripts.watermelon_init as watermelon_init
@@ -72,14 +75,7 @@ class WatermelonInitTest(unittest.TestCase):
     def _assertSameFile(self, file1, file2):
         self.assertEqual(os.path.realpath(file1), os.path.realpath(file2))
 
-    def test_build_postlude(self):
-        args = Namespace(input_dir='INPUT_DIR',
-                         input_runs_dir='INPUT_RUNS_DIR',
-                         input_samples_dir='INPUT_SAMPLES_DIR',
-                         analysis_dir='ANALYSIS_DIR',
-                         config_file='path/to/CONFIG_FILE',
-                         job_suffix='_JOB_SUFFIX',
-                         x_working_dir='WORKING_DIR')
+    def test_build_input_summary_text(self):
         runs_df_contents = StringIO(\
         '''run_index|run
         A|/foo/bar/A
@@ -98,17 +94,31 @@ class WatermelonInitTest(unittest.TestCase):
                                   runs_df=runs_df,
                                   sample_run_counts_df=sample_run_counts_df)
 
-        actual_postlude = watermelon_init._build_postlude(args, input_summary)
-        self.assertRegexpMatches(actual_postlude,
+        actual_text = watermelon_init._build_input_summary_text(input_summary)
+        self.assertRegexpMatches(actual_text,
                                  r'Found 732 files for 78 samples across 4 run')
-        self.assertRegexpMatches(actual_postlude,
+        self.assertRegexpMatches(actual_text,
                                  r'A.*/foo/bar/A')
-        self.assertRegexpMatches(actual_postlude,
+        self.assertRegexpMatches(actual_text,
                                  r'D.*/foo/baz/D')
-        self.assertRegexpMatches(actual_postlude,
+        self.assertRegexpMatches(actual_text,
                                  r'sample_1.*2.*4')
-        self.assertRegexpMatches(actual_postlude,
+        self.assertRegexpMatches(actual_text,
                                  r'sample_2.*8.*16')
+
+    def test_build_postlude(self):
+        args = Namespace(input_dir='INPUT_DIR',
+                         input_runs_dir='INPUT_RUNS_DIR',
+                         input_samples_dir='INPUT_SAMPLES_DIR',
+                         analysis_dir='ANALYSIS_DIR',
+                         config_file='path/to/CONFIG_FILE',
+                         job_suffix='_JOB_SUFFIX',
+                         x_working_dir='WORKING_DIR')
+        summary_text = 'SUMMARY_TEXT\n'
+
+        actual_postlude = watermelon_init._build_postlude(args, summary_text)
+        self.assertRegexpMatches(actual_postlude,
+                                 r'SUMMARY_TEXT')
         self.assertRegexpMatches(actual_postlude,
                                  r'ANALYSIS_DIR')
         self.assertRegexpMatches(actual_postlude,
@@ -136,6 +146,7 @@ class WatermelonInitTest(unittest.TestCase):
                          'config_file',
                          'genome_build',
                          'x_genome_references',
+                         'tmp_input_dir',
                          'input_dir',
                          'input_runs_dir',
                          'input_samples_dir',
@@ -156,11 +167,13 @@ class WatermelonInitTest(unittest.TestCase):
         self.assertEqual(os.path.join(expected_analysis_filepath,
                                       'config_11_01_A.yaml'),
                          args.config_file)
+        self.assertEqual(os.path.join(basedir, '.inputs'),
+                         args.tmp_input_dir)
         self.assertEqual(os.path.join(basedir, 'inputs'),
                          args.input_dir)
-        self.assertEqual(os.path.join(basedir, 'inputs', '00-source_runs'),
+        self.assertEqual(os.path.join(basedir, '.inputs', '00-source_runs'),
                          args.input_runs_dir)
-        self.assertEqual(os.path.join(basedir, 'inputs', '01-source_samples'),
+        self.assertEqual(os.path.join(basedir, '.inputs', '01-source_samples'),
                          args.input_samples_dir)
         self.assertEqual('/tmp/watermelon/template_config.yaml', args.x_template_config)
         self.assertEqual('/tmp/watermelon/genome_references.yaml', args.x_genome_references)
@@ -304,54 +317,127 @@ class WatermelonInitTest(unittest.TestCase):
         self.assertEqual(set(expected_files), set(actual_files))
         self.assertEqual(len(actual_files), actual_link_count)
 
-    def test_initialize_samples(self):
+    def test_build_input_summary(self):
+        source_files = {
+            '01-source_samples': {
+                'sample_1': {
+                    'foo^run1^1.fastq.gz':'A',
+                    'foo^run2^2.fastq.gz': 'AT',},
+                'sample_2': {
+                    'foo^run2^2.fastq.gz': 'ATCG',},
+                'sample_3': {
+                    'foo^run1^1.fastq.gz':'ATC',}
+                },
+            }
+        j = os.path.join
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            source_fastq_dir = os.path.join(temp_dir_path, 'source_fastq_dir')
-            os.mkdir(source_fastq_dir)
-            os.mkdir(os.path.join(source_fastq_dir, 'Sample_A'))
-            touch(os.path.join(source_fastq_dir, 'Sample_A', 'a1.fastq.gz'))
-            touch(os.path.join(source_fastq_dir, 'Sample_A', 'a2.fastq.gz'))
-            os.mkdir(os.path.join(source_fastq_dir, 'Sample_B'))
-            touch(os.path.join(source_fastq_dir, 'Sample_B', 'b.fastq.gz'))
-            os.mkdir(os.path.join(source_fastq_dir, 'Sample_C'))
-            touch(os.path.join(source_fastq_dir, 'Sample_C', 'c.fastq.gz'))
-            actual_samples = watermelon_init._initialize_samples(source_fastq_dir)
-        self.assertEqual(['Sample_A', 'Sample_B', 'Sample_C'],
-                         sorted(actual_samples.keys()))
-        self._assertSameFile(os.path.join(source_fastq_dir, 'Sample_A'),
-                             actual_samples['Sample_A'])
-        self._assertSameFile(os.path.join(source_fastq_dir, 'Sample_B'),
-                             actual_samples['Sample_B'])
-        self._assertSameFile(os.path.join(source_fastq_dir, 'Sample_C'),
-                             actual_samples['Sample_C'])
+            _create_files(temp_dir_path, source_files)
+            input_samples_dir = j(temp_dir_path, '01-source_samples')
+            actual_summary = watermelon_init._build_input_summary(input_samples_dir)
 
-    def test_initialize_samples_missingFastqExcluded(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            source_fastq_dir = os.path.join(temp_dir_path, 'source_fastq_dir')
-            os.mkdir(source_fastq_dir)
-            os.mkdir(os.path.join(source_fastq_dir, 'Sample_A'))
-            touch(os.path.join(source_fastq_dir, 'Sample_A', 'a.fastq.gz'))
-            os.mkdir(os.path.join(source_fastq_dir, 'Sample_B'))
-            touch(os.path.join(source_fastq_dir, 'Sample_B', 'b.fastq'))
-            os.mkdir(os.path.join(source_fastq_dir, 'Sample_C'))
-            touch(os.path.join(source_fastq_dir, 'Sample_C', 'c.foo'))
-            actual_samples = watermelon_init._initialize_samples(source_fastq_dir)
-        self.assertEqual(['Sample_A', 'Sample_B'],
-                         sorted(actual_samples.keys()))
-        self._assertSameFile(os.path.join(source_fastq_dir, 'Sample_A'),
-                             actual_samples['Sample_A'])
-        self._assertSameFile(os.path.join(source_fastq_dir, 'Sample_B'),
-                             actual_samples['Sample_B'])
+        actual_keys = vars(actual_summary).keys()
+        expected_keys = set(['runs_df',
+                             'sample_run_counts_df',
+                             'total_sample_count',
+                             'total_run_count',
+                             'total_file_count',
+                             'samples',
+                             'samples_missing_fastq_files',
+                             'runs_missing_fastq_files'])
+        self.assertEqual(expected_keys, actual_keys)
+        self.assertEqual(['sample_1', 'sample_2', 'sample_3'],
+                         actual_summary.samples)
+        self.assertEqual(3, actual_summary.total_sample_count)
+        self.assertEqual(2, actual_summary.total_run_count)
+        self.assertEqual(4, actual_summary.total_file_count)
+        self.assertEqual([], actual_summary.samples_missing_fastq_files)
+        self.assertEqual([], actual_summary.runs_missing_fastq_files)
 
-    def test_initialize_samples_emptyIfNoFastqFound(self):
+        runs_df_contents = StringIO(\
+'''run_index|run
+A|foo/run1
+B|foo/run2''')
+        expected_runs_df = pd.read_csv(runs_df_contents, sep='|', index_col=0)
+        assert_frame_equal(expected_runs_df,
+                           actual_summary.runs_df)
+
+        sample_run_counts_df_contents = StringIO(\
+'''sample|A|B|sample_total
+sample_1|1|1|2
+sample_2|0|1|1
+sample_3|1|0|1
+run_total|2|2|4''')
+        expected_df = pd.read_csv(sample_run_counts_df_contents, sep='|', index_col=0)
+        expected_df.columns.names=['run_index']
+
+        assert_frame_equal(expected_df, actual_summary.sample_run_counts_df)
+
+    def test_build_input_summary_samplesMissingFastqFiles(self):
+        source_files = {
+            '01-source_samples': {
+                'sample_1': {
+                    'foo^run1^1.fastq.gz':'A',},
+                'sample_2': {
+                    'foo^run2^2.fastq': 'ATCG',},
+                'sample_3': {
+                    'foo^run1^1.foo':'ATC',},
+                'sample_4': {
+                    'foo^run1^2.':'',},
+                },
+            }
+        j = os.path.join
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            source_fastq_dir = os.path.join(temp_dir_path, 'source_fastq_dir')
-            os.mkdir(source_fastq_dir)
-            actual_samples = watermelon_init._initialize_samples(source_fastq_dir)
-        self.assertEqual({}, actual_samples)
+            _create_files(temp_dir_path, source_files)
+            input_samples_dir = j(temp_dir_path, '01-source_samples')
+            actual_summary = watermelon_init._build_input_summary(input_samples_dir)
+
+        sample_run_counts_df_contents = StringIO(\
+'''sample|A|B|sample_total
+sample_1|1|0|1
+sample_2|0|1|1
+sample_3|0|0|0
+sample_4|0|0|0
+run_total|1|1|2''')
+        expected_df = pd.read_csv(sample_run_counts_df_contents, sep='|', index_col=0)
+        expected_df.columns.names=['run_index']
+
+        assert_frame_equal(expected_df, actual_summary.sample_run_counts_df)
+        self.assertEqual(['sample_3', 'sample_4'],
+                         actual_summary.samples_missing_fastq_files)
+
+    def test_build_input_summary_runsMissingFastqFiles(self):
+        source_files = {
+            '01-source_samples': {
+                'sample_1': {
+                    'foo^run1^1.fastq.gz':'A',
+                    'foo^run2^1.foo':'A',
+                    'foo^run3^1.foo':'A',},
+                'sample_2': {
+                    'foo^run1^1.fastq': 'ATCG',
+                    'foo^run2^1.foo': 'ATCG',
+                    'foo^run3^1.foo': 'ATCG',},
+                },
+            }
+        j = os.path.join
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            _create_files(temp_dir_path, source_files)
+            input_samples_dir = j(temp_dir_path, '01-source_samples')
+            actual_summary = watermelon_init._build_input_summary(input_samples_dir)
+
+        sample_run_counts_df_contents = StringIO(\
+'''sample|A|B|C|sample_total
+sample_1|1|0|0|1
+sample_2|1|0|0|1
+run_total|2|0|0|2''')
+        expected_df = pd.read_csv(sample_run_counts_df_contents, sep='|', index_col=0)
+        expected_df.columns.names=['run_index']
+
+        assert_frame_equal(expected_df, actual_summary.sample_run_counts_df)
+
+        self.assertEqual(['B','C'], actual_summary.runs_missing_fastq_files)
 
     def test_make_config_dict(self):
         template_config = yaml.load(\
@@ -371,9 +457,7 @@ references:
     entrez_gene_info: /ccmb/BioinfCore/entrez_gene_info/2016_09_02/gene_info
 ''')
         input_dir = '/my/input/dir'
-        samples = {'sA':'fooA', 'sB': 'fooB', 'sC': 'fooC',
-                   'sD':'fooA', 'sE': 'fooB', 'sF': 'fooC',
-                  }
+        samples = ['sA', 'sB', 'sC', 'sD', 'sE', 'sF']
         actual_config = watermelon_init._make_config_dict(template_config,
                                                           genome_references,
                                                           input_dir,
@@ -441,6 +525,14 @@ references:
         self.assertEqual('templateC: TEMPLATE_C', next(line_iter))
 
 class CommandValidatorTest(unittest.TestCase):
+    def setUp(self):
+        self.stderr_saved = sys.stderr
+        self.stderr = StringIO()
+        sys.stderr = self.stderr
+
+    def tearDown(self):
+        sys.stderr = self.stderr_saved
+
     def ok(self):
         #pylint: disable=locally-disabled,redundant-unittest-assert
         self.assertTrue(True)
@@ -478,11 +570,9 @@ class CommandValidatorTest(unittest.TestCase):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             analysis_dir = os.path.join(temp_dir_path, 'analysis')
-            in_runs_dir = os.path.join(temp_dir_path, 'inputs', 'runs')
-            in_samples_dir = os.path.join(temp_dir_path, 'inputs', 'samples')
+            input_dir = os.path.join(temp_dir_path, 'inputs')
             args = Namespace(analysis_dir=analysis_dir,
-                             input_runs_dir=in_runs_dir,
-                             input_samples_dir=in_samples_dir)
+                             input_dir=input_dir)
             validator._validate_overwrite_check(args)
             self.ok()
 
@@ -490,49 +580,100 @@ class CommandValidatorTest(unittest.TestCase):
         validator = watermelon_init._CommandValidator()
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            _mkdir(os.path.join(temp_dir_path, 'analysis'))
             analysis_dir = os.path.join(temp_dir_path, 'analysis')
-            in_runs_dir = os.path.join(temp_dir_path, 'inputs', 'runs')
-            in_samples_dir = os.path.join(temp_dir_path, 'inputs', 'samples')
+            _mkdir(analysis_dir)
+            input_dir = os.path.join(temp_dir_path, 'inputs')
             args = Namespace(analysis_dir=analysis_dir,
-                             input_runs_dir=in_runs_dir,
-                             input_samples_dir=in_samples_dir)
+                             input_dir=input_dir)
             self.assertRaisesRegexp(watermelon_init._UsageError,
-                                    r'analysis_dir \[.*\] exist\(s\)',
+                                    r'analysis_dir \[.*\] exists',
                                     validator._validate_overwrite_check,
                                     args)
 
-    def test_validate_overwrite_check_raisesIfInputRunsExists(self):
+    def test_validate_overwrite_check_raisesIfInputDirExists(self):
         validator = watermelon_init._CommandValidator()
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            in_runs_dir = os.path.join(temp_dir_path, 'inputs', 'runs')
-            _mkdir(os.path.join(in_runs_dir))
-            in_samples_dir = os.path.join(temp_dir_path, 'inputs', 'samples')
+            input_dir = os.path.join(temp_dir_path, 'inputs')
+            _mkdir(os.path.join(input_dir))
             analysis_dir = os.path.join(temp_dir_path, 'analysis')
             args = Namespace(analysis_dir=analysis_dir,
-                             input_runs_dir=in_runs_dir,
-                             input_samples_dir=in_samples_dir)
+                             input_dir=input_dir)
             self.assertRaisesRegexp(watermelon_init._UsageError,
-                                    r'input_runs_dir \[.*\] exist\(s\)',
+                                    r'input_dir \[.*\] exists',
                                     validator._validate_overwrite_check,
                                     args)
 
-    def test_validate_overwrite_check_raisesIfInputSamplesExists(self):
+    def test_validate_runs_have_fastq_files_raisesIfInvalid(self):
         validator = watermelon_init._CommandValidator()
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            in_samples_dir = os.path.join(temp_dir_path, 'inputs', 'samples')
-            _mkdir(os.path.join(in_samples_dir))
-            in_runs_dir = os.path.join(temp_dir_path, 'inputs', 'runs')
-            analysis_dir = os.path.join(temp_dir_path, 'analysis')
-            args = Namespace(analysis_dir=analysis_dir,
-                             input_runs_dir=in_runs_dir,
-                             input_samples_dir=in_samples_dir)
-            self.assertRaisesRegexp(watermelon_init._UsageError,
-                                    r'input_samples_dir \[.*\] exist\(s\)',
-                                    validator._validate_overwrite_check,
-                                    args)
+        runs_df_contents = StringIO(\
+'''run_index|run
+A|/foo/bar/A
+B|/foo/bar/B
+C|/foo/bar/C''')
+        runs_df = pd.read_csv(runs_df_contents, sep='|', index_col='run_index')
+        sample_run_counts_df_contents = StringIO(\
+'''sample|A|B|C
+sample_1|1|0|0
+sample_2|1|0|0
+run_total|2|0|0''')
+        sample_run_counts_df = pd.read_csv(sample_run_counts_df_contents,
+                                           sep='|',
+                                           index_col='sample')
+        input_summary = Namespace(total_file_count=732,
+                                  total_sample_count=78,
+                                  total_run_count=4,
+                                  runs_df=runs_df,
+                                  sample_run_counts_df=sample_run_counts_df,
+                                  runs_missing_fastq_files=['B', 'C'])
+
+        msg = (r'Some runs missing fastq files: \[B, C\].')
+        self.assertRaisesRegexp(watermelon_init._InputValidationError,
+                                msg,
+                                validator._validate_runs_have_fastq_files,
+                                input_summary)
+        self.assertRegexpMatches(self.stderr.getvalue(), r'Input summary')
+
+    def test_validate_runs_have_fastq_files_ok(self):
+        validator = watermelon_init._CommandValidator()
+        input_summary = Namespace(runs_missing_fastq_files=[])
+        validator._validate_runs_have_fastq_files(input_summary)
+        self.assertEqual(self.stderr.getvalue(), '')
+
+    def test_validate_samples_have_fastq_files_raisesIfInvalid(self):
+        validator = watermelon_init._CommandValidator()
+        runs_df_contents = StringIO(\
+'''run_index|run
+A|/foo/bar/A''')
+        runs_df = pd.read_csv(runs_df_contents, sep='|', index_col='run_index')
+        sample_run_counts_df_contents = StringIO(\
+'''sample|A|sample_total
+sample_1|1|1
+sample_2|0|0
+sample_3|0|0
+run_total|1|1''')
+        sample_run_counts_df = pd.read_csv(sample_run_counts_df_contents,
+                                           sep='|',
+                                           index_col='sample')
+        input_summary = Namespace(total_file_count=732,
+                                  total_sample_count=78,
+                                  total_run_count=4,
+                                  runs_df=runs_df,
+                                  sample_run_counts_df=sample_run_counts_df,
+                                  samples_missing_fastq_files=['sample_2', 'sample_3'])
+
+        msg = (r'Some samples missing fastq files: \[sample_2, sample_3\].')
+        self.assertRaisesRegexp(watermelon_init._InputValidationError,
+                                msg,
+                                validator._validate_samples_have_fastq_files,
+                                input_summary)
+        self.assertRegexpMatches(self.stderr.getvalue(), r'Input summary')
+
+    def test_validate_samples_have_fastq_files_ok(self):
+        validator = watermelon_init._CommandValidator()
+        input_summary = Namespace(samples_missing_fastq_files=[])
+        validator._validate_samples_have_fastq_files(input_summary)
+        self.assertEqual(self.stderr.getvalue(), '')
 
 
 class WatermelonInitFunctoinalTest(unittest.TestCase):
@@ -548,16 +689,52 @@ class WatermelonInitFunctoinalTest(unittest.TestCase):
     def test_commandPresentUsageIfMissingOptions(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
+
+            script_name = os.path.join(_BIN_DIR, 'watermelon_init')
+
+            redirect_output = ' 2>&1 '
+            command = '{} {}'.format(script_name, redirect_output)
+            exit_code, command_output = self.execute(command)
+
+        self.assertEqual(2, exit_code, command)
+        self.assertRegexpMatches(command_output, 'usage',command)
+
+    def test_commandErrorUsageIfInvalidInput(self):
+        source_files = {
+            'Run_1': {
+                'tuttle': {
+                    'project': {
+                        'sampleA': {
+                            '1.fastq':'A',
+                            '2.fastq': 'AT'},
+                        'sampleB': {
+                            'foo.txt': 'foo',},
+                        },
+                    },
+                },
+            }
+        j = os.path.join
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
             orig_wd = os.getcwd()
             try:
                 os.chdir(temp_dir_path)
+                source_run_basedir = j('DNASeqCore', '')
+
+                _create_files(source_run_basedir, source_files)
+                source_run_dirs = [j(source_run_basedir, 'Run_1', 'tuttle', 'project'),]
+
                 script_name = os.path.join(_BIN_DIR, 'watermelon_init')
 
                 redirect_output = ' 2>&1 '
-                command = '{} {}'.format(script_name, redirect_output)
+                command = '{} {} {} {}'.format(script_name,
+                                               '--genome hg19',
+                                               ' '.join(source_run_dirs),
+                                               redirect_output)
                 print(command)
                 exit_code, command_output = self.execute(command)
             finally:
                 os.chdir(orig_wd)
-        self.assertEqual(2, exit_code, command)
-        self.assertRegexpMatches(command_output, 'usage', command)
+        self.assertEqual(1, exit_code, command)
+        self.assertRegexpMatches(command_output,
+                                 'Some samples missing fastq files')

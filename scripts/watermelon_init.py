@@ -5,10 +5,7 @@ Specifically this does three things:
 1) watermelon-init accepts a source fastq dir which would typically contain a set of
    sample_dirs each of which would contain fastq files for that sample. To encapsulate
    the project data flow, while enabling data provenance, init creates a local inputs dir
-   and creates symlinks to the original source dir.
-
-   Note that this step is skipped if the source fastq is inside the working dir (i.e.
-   already local).
+   and links files to the original source dir.
 
 2) watermelon-init creates an analysis directory which contains a template watermelon
    config file. The template config file is created by combining the specified genome
@@ -46,6 +43,11 @@ DESCRIPTION = \
 _PATH_SEP = '^'
 
 
+class _InputValidationError(Exception):
+    '''Raised for problematic input data.'''
+    def __init__(self, msg, *args):
+        super(_InputValidationError, self).__init__(msg, *args)
+
 class _UsageError(Exception):
     '''Raised for malformed command or invalid arguments.'''
     def __init__(self, msg, *args):
@@ -63,6 +65,41 @@ class _CommandValidator(object):
                            self._validate_overwrite_check]:
             validation(args)
 
+    def validate_inputs(self, input_summary):
+        for validation in [self._validate_runs_have_fastq_files,
+                           self._validate_samples_have_fastq_files]:
+            validation(input_summary)
+
+    @staticmethod
+    def _validate_samples_have_fastq_files(input_summary):
+        if input_summary.samples_missing_fastq_files:
+            print(_build_input_summary_text(input_summary),
+                  file=sys.stderr)
+            msg = ('Some samples missing fastq files: [{}]. '
+                   'Review details above against inputs and try again.'
+                  ).format(', '.join(input_summary.samples_missing_fastq_files))
+            raise _InputValidationError(msg)
+
+    @staticmethod
+    def _validate_runs_have_fastq_files(input_summary):
+        if input_summary.runs_missing_fastq_files:
+            print(_build_input_summary_text(input_summary),
+                  file=sys.stderr)
+            msg = ('Some runs missing fastq files: [{}]. '
+                   'Review details above against inputs and try again.'
+                  ).format(', '.join(input_summary.runs_missing_fastq_files))
+            raise _InputValidationError(msg)
+
+
+    @staticmethod
+    def _validate_source_fastq_dirs(args):
+        bad_dirs = [x for x in args.source_fastq_dirs if not os.path.isdir(x)]
+        if bad_dirs:
+            msg = ('Specified source_fastq_dir(s) [{}] not a dir or cannot be '
+                   'read. Review inputs and try again.'
+                  ).format(','.join(sorted(bad_dirs)))
+            raise _UsageError(msg)
+
     @staticmethod
     def _validate_source_fastq_dirs(args):
         bad_dirs = [x for x in args.source_fastq_dirs if not os.path.isdir(x)]
@@ -77,14 +114,12 @@ class _CommandValidator(object):
         existing_files = {}
         if os.path.exists(args.analysis_dir):
             existing_files['analysis_dir'] = args.analysis_dir
-        if os.path.exists(args.input_runs_dir):
-            existing_files['input_runs_dir'] = args.input_runs_dir
-        if os.path.exists(args.input_samples_dir):
-            existing_files['input_samples_dir'] = args.input_samples_dir
+        if os.path.exists(args.input_dir):
+            existing_files['input_dir'] = args.input_dir
         if existing_files:
             file_types = [file_type for file_type in sorted(existing_files.keys())]
             file_names = [existing_files[key] for key in file_types]
-            msg_format = ('{file_types} [{file_names}] exist(s) (will not overwrite). '
+            msg_format = ('{file_types} [{file_names}] exists (will not overwrite). '
                           'Remove these dir(s)/files(s) and try again.')
             msg = msg_format.format(file_types=",".join(file_types),
                                     file_names=",".join(file_names))
@@ -153,20 +188,6 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
-def _initialize_samples(watermelon_sample_dir):
-    def _count_fastq(directory):
-        count = 0
-        for fastq_glob in _FASTQ_GLOBS:
-            count += len(glob.glob(os.path.join(directory, fastq_glob)))
-        return count
-
-    samples = {}
-    for file_name in os.listdir(watermelon_sample_dir):
-        full_path = os.path.realpath(os.path.join(watermelon_sample_dir, file_name))
-        if os.path.isdir(full_path) and _count_fastq(full_path):
-            samples[file_name] = full_path
-    return samples
-
 def _link_run_dirs(source_run_dirs, watermelon_runs_dir):
     _mkdir(watermelon_runs_dir)
     for run_dir in source_run_dirs:
@@ -180,25 +201,64 @@ def _merge_sample_dirs(watermelon_runs_dir, watermelon_samples_dir):
     j = os.path.join
     watermelon_runs_dir = os.path.abspath(watermelon_runs_dir)
     watermelon_samples_dir = os.path.abspath(watermelon_samples_dir)
-    sample_source_link = defaultdict(dict)
+    _mkdir(watermelon_samples_dir)
     for run_dir in os.listdir(watermelon_runs_dir):
         for sample_dir in os.listdir(j(watermelon_runs_dir, run_dir)):
-            for sample_file in os.listdir(j(watermelon_runs_dir, run_dir, sample_dir)):
-                source = j(watermelon_runs_dir, run_dir, sample_dir, sample_file)
-                link = j(watermelon_samples_dir,
-                         sample_dir,
-                         run_dir + _PATH_SEP + sample_file)
-                new_sample_dir = j(watermelon_samples_dir, sample_dir)
-                sample_source_link[new_sample_dir][source] = link
+            new_sample_dir = j(watermelon_samples_dir, sample_dir)
+            _mkdir(new_sample_dir)
+            files = os.listdir(j(watermelon_runs_dir, run_dir, sample_dir))
+            if files:
+                for sample_file in files:
+                    source = j(watermelon_runs_dir, run_dir, sample_dir, sample_file)
+                    link = j(new_sample_dir,
+                             run_dir + _PATH_SEP + sample_file)
+                    os.link(source, link)
+            else:
+                from pathlib import Path
+                Path(j(new_sample_dir, run_dir + _PATH_SEP + 'empty_dir')).touch()
 
-    _mkdir(watermelon_samples_dir)
-    for sample_dir, source_links in sample_source_link.items():
-        _mkdir(sample_dir)
-        for source, link in source_links.items():
-            os.link(source, link)
+def _is_fastq_file(file_name):
+    return file_name.endswith('.fastq') or file_name.endswith('.fastq.gz')
 
-def _get_samples_and_file_count(watermelon_samples_dir):
-    return 'no', 0
+def _build_input_summary(input_samples_dir):
+    rows = []
+    for root, dirs, files in os.walk(input_samples_dir):
+        for name in files:
+            file_name = os.path.basename(name)
+            sample_name = os.path.basename(root)
+            run_name = os.path.dirname(file_name.replace(_PATH_SEP, os.path.sep))
+            rows.append((run_name, sample_name, file_name))
+
+    df = pd.DataFrame(data=rows, columns=['run', 'sample', 'file'])
+    df['run_index'] = df['run'].rank(method='dense').apply(lambda x: chr(64+int(x)))
+    df['is_fastq_file'] = df['file'].apply(_is_fastq_file)
+
+    runs_df = df.drop_duplicates(subset=['run_index', 'run'])[['run_index', 'run']].set_index('run_index').sort_index(axis=0)
+    sample_run_counts_df = df.pivot_table(values='is_fastq_file',
+                                          index=['sample'],
+                                          columns='run_index',
+                                          aggfunc='sum')
+    sample_run_counts_df = sample_run_counts_df.fillna(0).astype(int, errors='ignore')
+
+    total_sample_count = len(sample_run_counts_df)
+    total_file_count = sum(sum(sample_run_counts_df.values))
+    samples=sorted(sample_run_counts_df.index)
+    sample_run_counts_df.loc['run_total']= sample_run_counts_df.sum()
+    sample_run_counts_df['sample_total']= sample_run_counts_df.sum(axis=1)
+    samples_missing_fastq_files = sorted(sample_run_counts_df[sample_run_counts_df['sample_total']==0].index)
+
+    run_counts_df = sample_run_counts_df[sample_run_counts_df.index =='run_total'].transpose()
+    runs_missing_fastq_files = sorted(run_counts_df[run_counts_df['run_total'] == 0].index)
+
+    input_summary = argparse.Namespace(runs_df = runs_df,
+                                       sample_run_counts_df=sample_run_counts_df,
+                                       total_sample_count=total_sample_count,
+                                       total_file_count=total_file_count,
+                                       total_run_count=len(runs_df),
+                                       samples=samples,
+                                       samples_missing_fastq_files=samples_missing_fastq_files,
+                                       runs_missing_fastq_files=runs_missing_fastq_files)
+    return input_summary
 
 def _build_phenotypes_samples_comparisons(samples):
     #pylint: disable=locally-disabled,invalid-name
@@ -229,50 +289,35 @@ def _make_config_dict(template_config, genome_references, input_dir, samples):
     config.update(_build_phenotypes_samples_comparisons(samples))
     return config
 
-def _build_input_summary(input_samples_dir):
+def _build_input_summary_text(input_summary):
     pd.set_option('display.max_colwidth', 300)
-    rows = []
-    for root, dirs, files in os.walk(input_samples_dir):
-        for name in files:
-            file_name = os.path.basename(name)
-            sample_name = os.path.basename(root)
-            run_name = os.path.dirname(file_name.replace(_PATH_SEP, os.path.sep))
-            rows.append((run_name, sample_name, file_name))
+    text = \
+'''Input summary:
+--------------
+Found {total_file_count} files for {total_sample_count} samples across {total_run_count} run(s).
 
-    df = pd.DataFrame(data=rows, columns=['run', 'sample', 'file'])
-    df['run_index'] = df['run'].rank(method='dense').apply(lambda x: chr(64+int(x)))
+Run dir(s):
+-----------
+{run_details}
 
-    runs_df = df.drop_duplicates(subset=['run_index', 'run'])[['run_index', 'run']].set_index('run_index')
-    sample_run_counts_df = df.pivot_table(values='file',index=['sample'], columns='run_index', aggfunc='count').fillna(0).astype(int, errors='ignore')
+Sample x run fastq file counts:
+-------------------------------
+{sample_run_counts}
+'''.format(total_file_count=input_summary.total_file_count,
+           total_sample_count=input_summary.total_sample_count,
+           total_run_count=input_summary.total_run_count,
+           run_details=input_summary.runs_df.to_string(justify='left'),
+           sample_run_counts=input_summary.sample_run_counts_df.to_string(justify='left'))
+    return text
 
-    total_sample_count = len(sample_run_counts_df)
-    total_file_count = sum(sum(sample_run_counts_df.values))
-    sample_run_counts_df.loc['run_total']= sample_run_counts_df.sum()
-    sample_run_counts_df['sample_total']= sample_run_counts_df.sum(axis=1)
-
-    input_summary = argparse.Namespace(runs_df = runs_df,
-                                       sample_run_counts_df=sample_run_counts_df,
-                                       total_sample_count=total_sample_count,
-                                       total_file_count=total_file_count,
-                                       total_run_count=len(runs_df))
-    return input_summary
-
-def _build_postlude(args, input_summary):
+def _build_postlude(args, input_summary_text):
     input_dir_relative = os.path.relpath(args.input_dir, args.x_working_dir)
     postlude = \
 '''
 watermelon_init.README
 ======================
 
-Input summary:
---------------
-Found {total_file_count} files for {total_sample_count} samples across {total_run_count} run(s).
-
-Source fastq dirs details (i.e. source sequencing run dirs):
-{run_details}
-
-Sample x run file counts:
-{sample_run_counts}
+{input_summary_text}
 
 Created files and dirs
 ----------------------
@@ -307,11 +352,7 @@ $ screen -S watermelon{job_suffix}
 $ watermelon --dry-run -c {config_basename}
 # to run:
 $ watermelon -c {config_basename}
-'''.format(total_file_count=input_summary.total_file_count,
-           total_sample_count=input_summary.total_sample_count,
-           total_run_count=input_summary.total_run_count,
-           run_details=input_summary.runs_df.to_string(justify='left'),
-           sample_run_counts=input_summary.sample_run_counts_df.to_string(justify='left'),
+'''.format(input_summary_text=input_summary_text,
            working_dir=args.x_working_dir,
            input_dir_relative=input_dir_relative,
            input_runs_dir=os.path.relpath(args.input_runs_dir, input_dir_relative),
@@ -394,9 +435,10 @@ def _parse_command_line_args(sys_argv):
     args.analysis_dir = realpath('analysis{}'.format(args.job_suffix))
     args.config_file = os.path.join(args.analysis_dir,
                                     'config{}.yaml'.format(args.job_suffix))
+    args.tmp_input_dir = realpath('.inputs')
+    args.input_runs_dir = os.path.join(args.tmp_input_dir, '00-source_runs')
+    args.input_samples_dir = os.path.join(args.tmp_input_dir, '01-source_samples')
     args.input_dir = realpath('inputs')
-    args.input_runs_dir = os.path.join(args.input_dir, '00-source_runs')
-    args.input_samples_dir = os.path.join(args.input_dir, '01-source_samples')
     return args
 
 def main(sys_argv):
@@ -405,11 +447,14 @@ def main(sys_argv):
         args = _parse_command_line_args(sys_argv)
         _CommandValidator().validate_args(args)
 
+        if os.path.isdir(args.tmp_input_dir):
+            shutil.rmtree(args.tmp_input_dir)
         _link_run_dirs(args.source_fastq_dirs, args.input_runs_dir)
         _merge_sample_dirs(args.input_runs_dir, args.input_samples_dir)
         input_summary = _build_input_summary(args.input_samples_dir)
-        #check for samples without fastq files
-        samples  = _initialize_samples(args.input_samples_dir)
+        _CommandValidator().validate_inputs(input_summary)
+        os.rename(args.tmp_input_dir, args.input_dir)
+
         _mkdir(args.analysis_dir)
 
         with open(args.x_template_config, 'r') as template_config_file:
@@ -419,10 +464,10 @@ def main(sys_argv):
         config_dict = _make_config_dict(template_config,
                                         genome_references,
                                         args.input_samples_dir,
-                                        samples)
+                                        input_summary.samples)
         _write_config_file(args.config_file, config_dict)
 
-        postlude = _build_postlude(args, input_summary)
+        postlude = _build_postlude(args, _build_input_summary_text(input_summary))
         print(postlude)
         with open(README_FILENAME, 'w') as readme:
             print(postlude, file=readme)
@@ -430,6 +475,9 @@ def main(sys_argv):
         message = "watermelon-init usage problem: {}".format(str(usage_error))
         print(message, file=sys.stderr)
         print("See 'watermelon-init --help'.", file=sys.stderr)
+        sys.exit(1)
+    except _InputValidationError as input_validation_error:
+        print(input_validation_error, file=sys.stderr)
         sys.exit(1)
     except Exception: #pylint: disable=locally-disabled,broad-except
         print("An unexpected error occurred", file=sys.stderr)

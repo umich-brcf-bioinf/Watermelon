@@ -59,7 +59,7 @@ output_filename = args.output_filename
 taxonomy = {'hg19': '9606', 'GRCh37': '9606',   # human
             'mm10': '10090', 'mm9': '10090',    # mouse
             'rn5': '10116', 'rn6': '10116',     # rat
-            'WS220': '6239', 'WS220': '6239',   # c. elegans
+            'ce10': '6239', 'ce11': '6239', 'WS220': '6239', 'WBS235': '6239',   # c. elegans
             'GRCz10' : '7955', 'Zv9': '7955',   # zebra fish
             'TAIR9': '3702', 'TAIR10': '3702',   # arabidopis
             'MSU6': '4530'                      # rice

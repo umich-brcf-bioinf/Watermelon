@@ -153,7 +153,7 @@ def _timestamp():
 
 README_FILENAME = 'watermelon.README'
 
-GENOME_BUILD_OPTIONS = ('hg19', 'mm10', 'rn5')
+GENOME_BUILD_OPTIONS = ('GRCh37', 'hg19', 'mm10', 'rn5', 'ce10', 'ce11', 'WBS235')
 
 _SCRIPTS_DIR = os.path.realpath(os.path.dirname(__file__))
 _WATERMELON_ROOT = os.path.dirname(_SCRIPTS_DIR)

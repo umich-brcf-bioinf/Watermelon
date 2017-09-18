@@ -3,13 +3,14 @@ Changelog
 
 0.3.0.x (mm/dd/yyyy)
 --------------------
+- Added support for c. elegans (ce10, ce11, WBS235) and GRCh37
 - Adjusted watermelon_init to add support for multiple runs
   - Adjusted watermelon_init to display matrix of sample run files
   - Added validation error where a run or sample has no fastq files
 - Adjusted how genome references are merged with template config to allow for
-  nested dicts and also avoid accidentally overwriting template dicts
-- Revised how source files are linked during init:
-  - Source files are hardlinked where possible (and symlinked if not)
+  nested dicts and also avoid accidentally overwriting default template dicts
+- Revised how source files are linked during init; hardlinked where possible 
+  (and symlinked if not)
 
 0.3.0 (7/28/2017)
 ------------------

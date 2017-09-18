@@ -1,6 +1,8 @@
 Changelog
 =========
 
+- Added support for c. elegans (ce10, ce11, WBS235) and GRCh37
+
 0.3.0 (7/28/2017)
 ------------------
 - Added support for paired-end reads

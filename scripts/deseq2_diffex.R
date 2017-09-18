@@ -125,6 +125,10 @@ register(multicore_param, default=TRUE)
 
 message('loading libraries complete')
 
+opt$countDataFile = '/Users/cjsifuen/ActiveProjects/Myers_mgmyers_RS27_rtagett_HI_1876-1882/DESeq2_test/HTSeq_counts.txt'
+opt$metaDataFile = '/Users/cjsifuen/ActiveProjects/Myers_mgmyers_RS27_rtagett_HI_1876-1882/DESeq2_test/sample_metadata.txt'
+opt$contrastFile = '/Users/cjsifuen/ActiveProjects/Myers_mgmyers_RS27_rtagett_HI_1876-1882/DESeq2_test/contrasts.txt'
+
 #convert fc and padj options to numeric values
 fc <- as.numeric(opt$foldChange)
 pval <- as.numeric(opt$adjustedPValue)
@@ -190,12 +194,37 @@ cat('building PCA plots\n')
 rld <- rlog(dds, blind = FALSE)
 pdf(file = paste(plotsDir_summary,'PCAplot_All.pdf', sep = '/'), onefile = TRUE)
 
-#PCA plot for all samples
+message('calculating dispersion')
+#Normalize and calculate dispersions
+dds <- DESeq(dds, betaPrior = TRUE, parallel = TRUE)
+
+#get raw counts values for later
+rawCounts <- counts(dds) #raw
+normCounts <- counts(dds, normalized = TRUE) #raw/lib size factors
+idx.nz <- apply(rawCounts, 1, function(x) { all(x > 0)})
+
+#PCA plot for Rlog-Normalized counts for all samples
 p.all <- plotPCA(rld, intgroup = 'sample_name')
 CombinatoricGroup <- factor(colData$combinatoric_group)
 SampleName <- factor(colData$sample_name)
-gp <- ggplot(p.all$data, aes(x = PC1, y = PC2, color = SampleName, shape = CombinatoricGroup)) + xlab(p.all$labels[2]) + ylab(p.all$labels[1]) + scale_shape_manual(values=1:nlevels(CombinatoricGroup), name = 'Combinatoric Group') + geom_point(size=2) + ggtitle(label = as.character('All samples')) + theme(plot.title = element_text(hjust = 0.5)) + guides(colour=guide_legend(nrow=12, title = 'Sample'), legend.key = element_rect(size = 1), legend.key.size = unit(0, 'cm')) + theme_classic(base_size = 10) + theme(legend.margin=margin(t = 0, unit='mm'))
+gp <- ggplot(p.all$data, aes(x = PC1, y = PC2, color = SampleName, shape = CombinatoricGroup)) + xlab(p.all$labels[2]) + ylab(p.all$labels[1]) + scale_shape_manual(values=1:nlevels(CombinatoricGroup), name = 'Combinatoric Group') + geom_point(size=2) + ggtitle(label = as.character('All samples Rlog-Normalized')) + theme(plot.title = element_text(hjust = 0.5)) + guides(colour=guide_legend(nrow=12, title = 'Sample'), legend.key = element_rect(size = 1), legend.key.size = unit(0, 'cm')) + theme_classic(base_size = 10) + theme(legend.margin=margin(t = 0, unit='mm'))
 plot(gp)
+
+#PCA for Depth-Normalized counts for all samples
+DNC <- SummarizedExperiment(log2(counts(dds, normalized = TRUE)), colData=colData(dds))
+p.DNC <- plotPCA(DESeqTransform(DNC), intgroup = 'sample_name')
+CombinatoricGroup <- factor(colData$combinatoric_group)
+SampleName <- factor(colData$sample_name)
+gpDNC <- ggplot(p.DNC$data, aes(x = PC1, y = PC2, color = SampleName, shape = CombinatoricGroup)) + xlab(p.DNC$labels[2]) + ylab(p.DNC$labels[1]) + scale_shape_manual(values=1:nlevels(CombinatoricGroup), name = 'Combinatoric Group') + geom_point(size=2) + ggtitle(label = as.character('All samples Depth-Normalized')) + theme(plot.title = element_text(hjust = 0.5)) + guides(colour=guide_legend(nrow=12, title = 'Sample'), legend.key = element_rect(size = 1), legend.key.size = unit(0, 'cm')) + theme_classic(base_size = 10) + theme(legend.margin=margin(t = 0, unit='mm'))
+plot(gpDNC)
+
+#PCA for Raw counts for all samples
+RC <- SummarizedExperiment(log2(counts(dds, normalized = FALSE)), colData=colData(dds))
+p.RC <- plotPCA(DESeqTransform(RC), intgroup = 'sample_name')
+CombinatoricGroup <- factor(colData$combinatoric_group)
+SampleName <- factor(colData$sample_name)
+gpRC <- ggplot(p.RC$data, aes(x = PC1, y = PC2, color = SampleName, shape = CombinatoricGroup)) + xlab(p.RC$labels[2]) + ylab(p.RC$labels[1]) + scale_shape_manual(values=1:nlevels(CombinatoricGroup), name = 'Combinatoric Group') + geom_point(size=2) + ggtitle(label = as.character('All samples Raw')) + theme(plot.title = element_text(hjust = 0.5)) + guides(colour=guide_legend(nrow=12, title = 'Sample'), legend.key = element_rect(size = 1), legend.key.size = unit(0, 'cm')) + theme_classic(base_size = 10) + theme(legend.margin=margin(t = 0, unit='mm'))
+plot(gpRC)
 dev.off()
 
 #get replicate df and sample df
@@ -228,8 +257,20 @@ for (i in names(sampleColData[1:length(sampleColData)])) {
 
 message('Interactive html plots')
 gp <- ggplotly(gp)
-path_name <- file.path(plotsDir_summary, 'PCAplot_All.html')
+path_name <- file.path(plotsDir_summary, 'PCAplot_All_RlogNormalized.html')
 htmlwidgets::saveWidget(gp, file = path_name, selfcontained = TRUE)
+delDir <- gsub(pattern = '.html', replacement = '_files', x = path_name)
+unlink(x = delDir, recursive = TRUE, force = TRUE)
+
+gpDNC <- ggplotly(gpDNC)
+path_name <- file.path(plotsDir_summary, 'PCAplot_All_DepthNormalized.html')
+htmlwidgets::saveWidget(gpDNC, file = path_name, selfcontained = TRUE)
+delDir <- gsub(pattern = '.html', replacement = '_files', x = path_name)
+unlink(x = delDir, recursive = TRUE, force = TRUE)
+
+gpRC <- ggplotly(gpRC)
+path_name <- file.path(plotsDir_summary, 'PCAplot_All_Raw.html')
+htmlwidgets::saveWidget(gpRC, file = path_name, selfcontained = TRUE)
 delDir <- gsub(pattern = '.html', replacement = '_files', x = path_name)
 unlink(x = delDir, recursive = TRUE, force = TRUE)
 
@@ -252,15 +293,6 @@ for (i in names(sampleColData[1:length(sampleColData)])) {
     message('Skipping combinatoric_group...')
   }
 }
-
-message('calculating dispersion')
-#Normalize and calculate dispersions
-dds <- DESeq(dds, betaPrior = TRUE, parallel = TRUE)
-
-#get raw counts values for later
-rawCounts <- counts(dds) #raw
-normCounts <- counts(dds, normalized = TRUE) #raw/lib size factors
-idx.nz <- apply(rawCounts, 1, function(x) { all(x > 0)})
 
 cat('building plots\n')
 cat('\tdispersions\n')

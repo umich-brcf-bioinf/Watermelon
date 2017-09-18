@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.x.x (mm/dd/yyyy)
+0.3.0 (7/28/2017)
 ------------------
 - Added support for paired-end reads
 - Transitioned naive alignment QC metrics to MultiQC

@@ -4,6 +4,7 @@
 from __future__ import print_function, absolute_import, division
 
 from argparse import Namespace
+import errno
 import functools
 import os
 import subprocess
@@ -114,9 +115,14 @@ class WatermelonInitTest(unittest.TestCase):
                          config_file='path/to/CONFIG_FILE',
                          job_suffix='_JOB_SUFFIX',
                          x_working_dir='WORKING_DIR')
+        linker_results = 'LINKER_RESULTS\n'
         summary_text = 'SUMMARY_TEXT\n'
 
-        actual_postlude = watermelon_init._build_postlude(args, summary_text)
+        actual_postlude = watermelon_init._build_postlude(args,
+                                                          linker_results,
+                                                          summary_text)
+        self.assertRegexpMatches(actual_postlude,
+                                 r'LINKER_RESULTS')
         self.assertRegexpMatches(actual_postlude,
                                  r'SUMMARY_TEXT')
         self.assertRegexpMatches(actual_postlude,
@@ -234,6 +240,7 @@ class WatermelonInitTest(unittest.TestCase):
                 }
             }}
         j = os.path.join
+        linker = watermelon_init._Linker()
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             orig_wd = os.getcwd()
@@ -246,7 +253,9 @@ class WatermelonInitTest(unittest.TestCase):
                 source_run_dirs = [j(source_run_basedir, 'Run_1', 'tuttle', 'project'),
                                    j(source_run_basedir, 'Run_2', 'tuttle', 'project')]
 
-                watermelon_init._link_run_dirs(source_run_dirs, watermelon_runs_dir)
+                watermelon_init._link_run_dirs(source_run_dirs,
+                                               watermelon_runs_dir,
+                                               linker)
 
                 actual_files = list(_listfiles(j(temp_dir_path, watermelon_runs_dir)))
                 actual_link_count = sum([os.stat(f).st_nlink == 2 for f in actual_files])
@@ -674,6 +683,108 @@ run_total|1|1''')
         input_summary = Namespace(samples_missing_fastq_files=[])
         validator._validate_samples_have_fastq_files(input_summary)
         self.assertEqual(self.stderr.getvalue(), '')
+
+
+class LinkerTest(unittest.TestCase):
+    def test_link_allHardlinks(self):
+        linker = watermelon_init._Linker()
+        j = os.path.join
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            source_dir = j(temp_dir_path, 'source')
+            _mkdir(source_dir)
+            dest_dir = j(temp_dir_path, 'dest')
+            _mkdir(dest_dir)
+            source_filename1 = os.path.join(source_dir, '1.tmp')
+            source_filename2 = os.path.join(source_dir, '2.tmp')
+            touch(source_filename1)
+            touch(source_filename2)
+            dest_filename1 = os.path.join(dest_dir, '1.lnk')
+            dest_filename2 = os.path.join(dest_dir, '2.lnk')
+            linker._link(source_filename1, dest_filename1)
+            linker._link(source_filename2, dest_filename2)
+
+            dest_filename1_stat = os.stat(dest_filename1)
+            dest_filename2_stat = os.stat(dest_filename2)
+
+            self.assertEqual(os.stat(source_filename1).st_ino,
+                              dest_filename1_stat.st_ino)
+            self.assertEqual(os.stat(source_filename2).st_ino,
+                              dest_filename2_stat.st_ino)
+
+            self.assertEqual(dest_filename1_stat.st_nlink, 2)
+            self.assertEqual(dest_filename2_stat.st_nlink, 2)
+
+        self.assertEquals('linked 2 source files: 2 hardlinked', linker.results)
+
+    def test_link_allSymlinks(self):
+        linker = watermelon_init._Linker()
+        j = os.path.join
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            source_dir = j(temp_dir_path, 'source')
+            _mkdir(source_dir)
+            dest_dir = j(temp_dir_path, 'dest')
+            _mkdir(dest_dir)
+            source_filename1 = os.path.join(source_dir, '1.tmp')
+            source_filename2 = os.path.join(source_dir, '2.tmp')
+            touch(source_filename1)
+            touch(source_filename2)
+            dest_filename1 = os.path.join(dest_dir, '1.lnk')
+            dest_filename2 = os.path.join(dest_dir, '2.lnk')
+            def angry_link(source, dest):
+                raise OSError(errno.EXDEV, 'Cross-device link')
+            try:
+                os_link = os.link
+                os.link = angry_link
+                linker._link(source_filename1, dest_filename1)
+                linker._link(source_filename2, dest_filename2)
+            finally:
+                os.link = os_link
+
+            dest_filename1_stat = os.stat(dest_filename1, follow_symlinks=False)
+            dest_filename2_stat = os.stat(dest_filename2, follow_symlinks=False)
+
+            self.assertNotEqual(os.stat(source_filename1).st_ino,
+                              dest_filename1_stat.st_ino)
+            self.assertNotEqual(os.stat(source_filename2).st_ino,
+                              dest_filename2_stat.st_ino)
+        self.assertEquals('linked 2 source files: 2 symlinked', linker.results)
+
+    def test_link_hardlinksAndSymlinks(self):
+        linker = watermelon_init._Linker()
+        j = os.path.join
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            source_dir = j(temp_dir_path, 'source')
+            _mkdir(source_dir)
+            dest_dir = j(temp_dir_path, 'dest')
+            _mkdir(dest_dir)
+            source_filename1 = os.path.join(source_dir, '1.tmp')
+            source_filename2 = os.path.join(source_dir, '2.tmp')
+            touch(source_filename1)
+            touch(source_filename2)
+            dest_filename1 = os.path.join(dest_dir, '1.lnk')
+            dest_filename2 = os.path.join(dest_dir, '2.lnk')
+            linker._link(source_filename1, dest_filename1)
+            def angry_link(source, dest):
+                raise OSError(errno.EXDEV, 'Cross-device link')
+            try:
+                os_link = os.link
+                os.link = angry_link
+                linker._link(source_filename2, dest_filename2)
+            finally:
+                os.link = os_link
+
+            dest_filename1_stat = os.stat(dest_filename1, follow_symlinks=False)
+            dest_filename2_stat = os.stat(dest_filename2, follow_symlinks=False)
+
+            self.assertEqual(os.stat(source_filename1).st_ino,
+                              dest_filename1_stat.st_ino)
+            self.assertNotEqual(os.stat(source_filename2).st_ino,
+                              dest_filename2_stat.st_ino)
+        self.assertEquals('linked 2 source files: 1 hardlinked, 1 symlinked', linker.results)
+
 
 
 class WatermelonInitFunctoinalTest(unittest.TestCase):

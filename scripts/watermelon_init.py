@@ -23,8 +23,8 @@ from __future__ import print_function, absolute_import, division
 import argparse
 from collections import defaultdict, OrderedDict
 import datetime
+import errno
 import functools
-import glob
 import itertools
 import os
 import shutil
@@ -47,6 +47,7 @@ class _InputValidationError(Exception):
     '''Raised for problematic input data.'''
     def __init__(self, msg, *args):
         super(_InputValidationError, self).__init__(msg, *args)
+
 
 class _UsageError(Exception):
     '''Raised for malformed command or invalid arguments.'''
@@ -125,6 +126,33 @@ class _CommandValidator(object):
                                     file_names=",".join(file_names))
             raise _UsageError(msg)
 
+
+class _Linker(object):
+    '''Attempts to hard link file falling back to symlink as necessary.
+    Only copies files.'''
+    def __init__(self):
+        self.links = defaultdict(int)
+
+    def _link(self, source, dest):
+        try:
+            os.link(source, dest)
+            self.links['hardlinked'] += 1
+        except OSError as e:
+            if e.errno != errno.EXDEV:
+                raise e
+            os.symlink(source, dest)
+            self.links['symlinked'] += 1
+
+    def copytree(self, source, dest):
+        shutil.copytree(source, dest, copy_function=self._link)
+
+    @property
+    def results(self):
+        x = ', '.join(['{} {}'.format(count, type) for type, count in sorted(self.links.items())])
+        return 'linked {} source files: {}'.format(sum(self.links.values()), x)
+
+
+
 def _timestamp():
     return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
@@ -188,14 +216,14 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
-def _link_run_dirs(source_run_dirs, watermelon_runs_dir):
+def _link_run_dirs(source_run_dirs, watermelon_runs_dir, linker):
     _mkdir(watermelon_runs_dir)
     for run_dir in source_run_dirs:
         abs_run_dir = os.path.abspath(run_dir)
         mangled_dirname = abs_run_dir.replace(os.path.sep, _PATH_SEP)
         mangled_dirname.rstrip(os.path.sep)
         watermelon_run_dir = os.path.join(watermelon_runs_dir, mangled_dirname)
-        shutil.copytree(run_dir, watermelon_run_dir, copy_function=os.link)
+        linker.copytree(run_dir, watermelon_run_dir)
 
 def _merge_sample_dirs(watermelon_runs_dir, watermelon_samples_dir):
     j = os.path.join
@@ -242,15 +270,15 @@ def _build_input_summary(input_samples_dir):
 
     total_sample_count = len(sample_run_counts_df)
     total_file_count = sum(sum(sample_run_counts_df.values))
-    samples=sorted(sample_run_counts_df.index)
-    sample_run_counts_df.loc['run_total']= sample_run_counts_df.sum()
-    sample_run_counts_df['sample_total']= sample_run_counts_df.sum(axis=1)
-    samples_missing_fastq_files = sorted(sample_run_counts_df[sample_run_counts_df['sample_total']==0].index)
+    samples = sorted(sample_run_counts_df.index)
+    sample_run_counts_df.loc['run_total'] = sample_run_counts_df.sum()
+    sample_run_counts_df['sample_total'] = sample_run_counts_df.sum(axis=1)
+    samples_missing_fastq_files = sorted(sample_run_counts_df[sample_run_counts_df['sample_total'] == 0].index)
 
-    run_counts_df = sample_run_counts_df[sample_run_counts_df.index =='run_total'].transpose()
+    run_counts_df = sample_run_counts_df[sample_run_counts_df.index == 'run_total'].transpose()
     runs_missing_fastq_files = sorted(run_counts_df[run_counts_df['run_total'] == 0].index)
 
-    input_summary = argparse.Namespace(runs_df = runs_df,
+    input_summary = argparse.Namespace(runs_df=runs_df,
                                        sample_run_counts_df=sample_run_counts_df,
                                        total_sample_count=total_sample_count,
                                        total_file_count=total_file_count,
@@ -310,13 +338,14 @@ Sample x run fastq file counts:
            sample_run_counts=input_summary.sample_run_counts_df.to_string(justify='left'))
     return text
 
-def _build_postlude(args, input_summary_text):
+def _build_postlude(args, linker_results, input_summary_text):
     input_dir_relative = os.path.relpath(args.input_dir, args.x_working_dir)
     postlude = \
 '''
 watermelon_init.README
 ======================
 
+{linker_results}
 {input_summary_text}
 
 Created files and dirs
@@ -352,7 +381,8 @@ $ screen -S watermelon{job_suffix}
 $ watermelon --dry-run -c {config_basename}
 # to run:
 $ watermelon -c {config_basename}
-'''.format(input_summary_text=input_summary_text,
+'''.format(linker_results=linker_results,
+           input_summary_text=input_summary_text,
            working_dir=args.x_working_dir,
            input_dir_relative=input_dir_relative,
            input_runs_dir=os.path.relpath(args.input_runs_dir, input_dir_relative),
@@ -449,7 +479,10 @@ def main(sys_argv):
 
         if os.path.isdir(args.tmp_input_dir):
             shutil.rmtree(args.tmp_input_dir)
-        _link_run_dirs(args.source_fastq_dirs, args.input_runs_dir)
+        linker = _Linker()
+        _link_run_dirs(args.source_fastq_dirs,
+                       args.input_runs_dir,
+                       linker)
         _merge_sample_dirs(args.input_runs_dir, args.input_samples_dir)
         input_summary = _build_input_summary(args.input_samples_dir)
         _CommandValidator().validate_inputs(input_summary)
@@ -467,7 +500,9 @@ def main(sys_argv):
                                         input_summary.samples)
         _write_config_file(args.config_file, config_dict)
 
-        postlude = _build_postlude(args, _build_input_summary_text(input_summary))
+        postlude = _build_postlude(args,
+                                   linker.results,
+                                   _build_input_summary_text(input_summary))
         print(postlude)
         with open(README_FILENAME, 'w') as readme:
             print(postlude, file=readme)

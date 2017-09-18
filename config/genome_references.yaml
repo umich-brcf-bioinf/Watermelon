@@ -5,6 +5,13 @@ hg19:
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
         bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/BBMap/
+GRCh37:
+    genome: GRCh37
+    references:
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/Sequence/BBMap/
 mm10:
     genome: mm10
     references:
@@ -19,3 +26,24 @@ rn5:
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
         bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/Sequence/BBMap/
+ce10:
+    genome: ce10
+    references:
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/Sequence/BBMap/
+ce11:
+    genome: ce11
+    references:
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/Sequence/BBMap/
+WBS235:
+    genome: WBS235
+    references:
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/Sequence/BBMap/

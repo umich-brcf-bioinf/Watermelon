@@ -2,15 +2,19 @@
 '''Creates template config file and directories for a watermelon rnaseq job.
 
 Specifically this does three things:
-1) watermelon-init accepts a source fastq dir which would typically contain a set of
-   sample_dirs each of which would contain fastq files for that sample. To encapsulate
-   the project data flow, while enabling data provenance, init creates a local inputs dir
-   and links files to the original source dir.
+1) watermelon_init accepts a set of source fastq dirs.
+   * Each source fastq dir (a "run") contains a set of sample_dirs;
+     these dir names become the sample names in the config file.
+   * Each sample_dir contains one or more fastq (.fastq[.gz]) files.
+   * watermelon_init creates local input dirs for the runs and also merges
+     fastqs from all runs to create a dir of samples. Each sample dir
+     is a flat dir of all fastqs for that sample.
+   * Absence of fastq files for a run or an individaul sample raises an error.
 
-2) watermelon-init creates an analysis directory which contains a template watermelon
-   config file. The template config file is created by combining the specified genome
-   with the sample names in (from the inputs dir). The template config must be reviewed
-   and edited to:
+2) watermelon-init creates an analysis directory which contains a template
+   watermelon config file. The template config file is created by combining the
+   specified genome with the sample names in (from the inputs dir). The
+   template config must be reviewed and edited to:
    a) adjust run params
    b) add sample phenotypes/aliases
    c) specify sample comparisons
@@ -91,15 +95,6 @@ class _CommandValidator(object):
                   ).format(', '.join(input_summary.runs_missing_fastq_files))
             raise _InputValidationError(msg)
 
-
-    @staticmethod
-    def _validate_source_fastq_dirs(args):
-        bad_dirs = [x for x in args.source_fastq_dirs if not os.path.isdir(x)]
-        if bad_dirs:
-            msg = ('Specified source_fastq_dir(s) [{}] not a dir or cannot be '
-                   'read. Review inputs and try again.'
-                  ).format(','.join(sorted(bad_dirs)))
-            raise _UsageError(msg)
 
     @staticmethod
     def _validate_source_fastq_dirs(args):
@@ -216,6 +211,25 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
+import collections
+
+def _dict_merge(dct, merge_dct):
+    """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
+    updating only top-level keys, dict_merge recurses down into dicts nested
+    to an arbitrary depth, updating keys. The ``merge_dct`` is merged into
+    ``dct``.
+    :param dct: dict onto which the merge is executed
+    :param merge_dct: dct merged into dct
+    :return: None
+    """
+    # https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
+    for k, v in merge_dct.items():
+        if (k in dct and isinstance(dct[k], dict)
+                and isinstance(merge_dct[k], collections.Mapping)):
+            _dict_merge(dct[k], merge_dct[k])
+        else:
+            dct[k] = merge_dct[k]
+
 def _link_run_dirs(source_run_dirs, watermelon_runs_dir, linker):
     _mkdir(watermelon_runs_dir)
     for run_dir in source_run_dirs:
@@ -313,8 +327,8 @@ def _build_phenotypes_samples_comparisons(samples):
 def _make_config_dict(template_config, genome_references, input_dir, samples):
     config = dict(template_config)
     config[watermelon_config.CONFIG_KEYS.input_dir] = '{}'.format(input_dir)
-    config.update(genome_references)
     config.update(_build_phenotypes_samples_comparisons(samples))
+    _dict_merge(config, genome_references)
     return config
 
 def _build_input_summary_text(input_summary):

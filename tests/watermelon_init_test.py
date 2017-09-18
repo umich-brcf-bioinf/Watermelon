@@ -497,6 +497,25 @@ references:
         self.assertEqual(['MutA_v_WT', 'MutB_v_WT'],
                          actual_config['comparisons']['genotype'])
 
+    def test_make_config_dict_intelligentlyMergesGenomeReferences(self):
+        template_config = yaml.load(\
+'''fastq_screen:
+    aligner: bowtie2
+''')
+        genome_references = yaml.load(\
+'''fastq_screen:
+    species: human
+''')
+        input_dir = '/my/input/dir'
+        samples = []
+        actual_config = watermelon_init._make_config_dict(template_config,
+                                                          genome_references,
+                                                          input_dir,
+                                                          samples)
+        expected_config = {'aligner': 'bowtie2', 'species': 'human'}
+        self.assertEqual(expected_config, actual_config['fastq_screen'])
+
+
     def test_write_config_file(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path

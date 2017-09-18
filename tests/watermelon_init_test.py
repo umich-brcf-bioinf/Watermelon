@@ -177,10 +177,8 @@ class WatermelonInitTest(unittest.TestCase):
                          args.tmp_input_dir)
         self.assertEqual(os.path.join(basedir, 'inputs'),
                          args.input_dir)
-        self.assertEqual(os.path.join(basedir, '.inputs', '00-source_runs'),
-                         args.input_runs_dir)
-        self.assertEqual(os.path.join(basedir, '.inputs', '01-source_samples'),
-                         args.input_samples_dir)
+        self.assertEqual('00-source_runs', args.input_runs_dir)
+        self.assertEqual('01-source_samples', args.input_samples_dir)
         self.assertEqual('/tmp/watermelon/template_config.yaml', args.x_template_config)
         self.assertEqual('/tmp/watermelon/genome_references.yaml', args.x_genome_references)
 
@@ -253,9 +251,10 @@ class WatermelonInitTest(unittest.TestCase):
                 source_run_dirs = [j(source_run_basedir, 'Run_1', 'tuttle', 'project'),
                                    j(source_run_basedir, 'Run_2', 'tuttle', 'project')]
 
-                watermelon_init._link_run_dirs(source_run_dirs,
-                                               watermelon_runs_dir,
-                                               linker)
+                args = Namespace(source_fastq_dirs=source_run_dirs,
+                                 tmp_input_dir=temp_dir_path,
+                                 input_runs_dir=watermelon_runs_dir)
+                watermelon_init._link_run_dirs(args, linker)
 
                 actual_files = list(_listfiles(j(temp_dir_path, watermelon_runs_dir)))
                 actual_link_count = sum([os.stat(f).st_nlink == 2 for f in actual_files])
@@ -301,14 +300,17 @@ class WatermelonInitTest(unittest.TestCase):
             orig_wd = os.getcwd()
             try:
                 os.chdir(temp_dir_path)
-                watermelon_runs_dir = j('00-source_runs', '')
-                watermelon_samples_dir = j('01-source_samples', '')
+                args = Namespace(tmp_input_dir=j(temp_dir_path, '.input', ''),
+                                 input_runs_dir=j('00-source_runs', ''),
+                                 input_samples_dir=j('01-source_samples', ''))
 
-                _create_files(watermelon_runs_dir, source_runs)
-                watermelon_init._merge_sample_dirs(watermelon_runs_dir,
-                                                   watermelon_samples_dir)
+                input_runs_dir = j(args.tmp_input_dir, args.input_runs_dir)
+                _mkdir(input_runs_dir)
+                _create_files(input_runs_dir, source_runs)
+                watermelon_init._merge_sample_dirs(args)
 
-                actual_files = list(_listfiles(j(temp_dir_path, watermelon_samples_dir)))
+                actual_files = list(_listfiles(j(args.tmp_input_dir,
+                                                 args.input_samples_dir)))
                 actual_link_count = sum([os.stat(f).st_nlink == 2 for f in actual_files])
             finally:
                 os.chdir(orig_wd)
@@ -321,7 +323,7 @@ class WatermelonInitTest(unittest.TestCase):
                           'sampleB/DNASeqCore^Run_1^tuttle^project^4.fastq',
                           'sampleB/DNASeqCore^Run_2^tuttle^project^3.fastq',
                           'sampleB/DNASeqCore^Run_2^tuttle^project^4.fastq']
-        prefix_path = lambda x: j(temp_dir_path, watermelon_samples_dir, x)
+        prefix_path = lambda x: j(args.tmp_input_dir, args.input_samples_dir, x)
         expected_files = [prefix_path(f) for f in expected_files]
         self.assertEqual(set(expected_files), set(actual_files))
         self.assertEqual(len(actual_files), actual_link_count)
@@ -338,12 +340,12 @@ class WatermelonInitTest(unittest.TestCase):
                     'foo^run1^1.fastq.gz':'ATC',}
                 },
             }
-        j = os.path.join
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             _create_files(temp_dir_path, source_files)
-            input_samples_dir = j(temp_dir_path, '01-source_samples')
-            actual_summary = watermelon_init._build_input_summary(input_samples_dir)
+            args = Namespace(tmp_input_dir=temp_dir_path,
+                             input_samples_dir='01-source_samples')
+            actual_summary = watermelon_init._build_input_summary(args)
 
         actual_keys = vars(actual_summary).keys()
         expected_keys = set(['runs_df',
@@ -399,8 +401,10 @@ run_total|2|2|4''')
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             _create_files(temp_dir_path, source_files)
-            input_samples_dir = j(temp_dir_path, '01-source_samples')
-            actual_summary = watermelon_init._build_input_summary(input_samples_dir)
+
+            args = Namespace(tmp_input_dir=temp_dir_path,
+                             input_samples_dir='01-source_samples')
+            actual_summary = watermelon_init._build_input_summary(args)
 
         sample_run_counts_df_contents = StringIO(\
 '''sample|A|B|sample_total
@@ -433,8 +437,9 @@ run_total|1|1|2''')
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             _create_files(temp_dir_path, source_files)
-            input_samples_dir = j(temp_dir_path, '01-source_samples')
-            actual_summary = watermelon_init._build_input_summary(input_samples_dir)
+            args = Namespace(tmp_input_dir=temp_dir_path,
+                             input_samples_dir='01-source_samples')
+            actual_summary = watermelon_init._build_input_summary(args)
 
         sample_run_counts_df_contents = StringIO(\
 '''sample|A|B|C|sample_total
@@ -465,18 +470,19 @@ references:
     bowtie2_index: /ccmb/BioinfCore/iGenomes/hg19/Sequence/Bowtie2Index
     entrez_gene_info: /ccmb/BioinfCore/entrez_gene_info/2016_09_02/gene_info
 ''')
-        input_dir = '/my/input/dir'
+        args = Namespace(input_dir = '/my/input/dir',
+                         input_samples_dir='samples')
         samples = ['sA', 'sB', 'sC', 'sD', 'sE', 'sF']
         actual_config = watermelon_init._make_config_dict(template_config,
                                                           genome_references,
-                                                          input_dir,
+                                                          args,
                                                           samples)
         expected_keys = ['input_dir',
                          'foo1', 'foo2',
                          'genome', 'references',
                          'main_factors', 'phenotypes', 'samples', 'comparisons']
         self.assertEquals(sorted(expected_keys), sorted(actual_config.keys()))
-        self.assertEqual(input_dir, actual_config['input_dir'])
+        self.assertEqual('/my/input/dir/samples', actual_config['input_dir'])
         self.assertEqual(template_config['foo1'], actual_config['foo1'])
         self.assertEqual(template_config['foo2'], actual_config['foo2'])
         self.assertEqual(genome_references['genome'], actual_config['genome'])
@@ -506,11 +512,12 @@ references:
 '''fastq_screen:
     species: human
 ''')
-        input_dir = '/my/input/dir'
+        args = Namespace(input_dir='/my/input/dir',
+                         input_samples_dir='samples')
         samples = []
         actual_config = watermelon_init._make_config_dict(template_config,
                                                           genome_references,
-                                                          input_dir,
+                                                          args,
                                                           samples)
         expected_config = {'aligner': 'bowtie2', 'species': 'human'}
         self.assertEqual(expected_config, actual_config['fastq_screen'])
@@ -850,7 +857,7 @@ class WatermelonInitFunctoinalTest(unittest.TestCase):
             try:
                 os.chdir(temp_dir_path)
                 source_run_basedir = j('DNASeqCore', '')
-
+                _mkdir(source_run_basedir)
                 _create_files(source_run_basedir, source_files)
                 source_run_dirs = [j(source_run_basedir, 'Run_1', 'tuttle', 'project'),]
 

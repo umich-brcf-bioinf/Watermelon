@@ -230,7 +230,9 @@ def _dict_merge(dct, merge_dct):
         else:
             dct[k] = merge_dct[k]
 
-def _link_run_dirs(source_run_dirs, watermelon_runs_dir, linker):
+def _link_run_dirs(args, linker):
+    source_run_dirs = args.source_fastq_dirs
+    watermelon_runs_dir = os.path.join(args.tmp_input_dir, args.input_runs_dir)
     _mkdir(watermelon_runs_dir)
     for run_dir in source_run_dirs:
         abs_run_dir = os.path.abspath(run_dir)
@@ -239,10 +241,12 @@ def _link_run_dirs(source_run_dirs, watermelon_runs_dir, linker):
         watermelon_run_dir = os.path.join(watermelon_runs_dir, mangled_dirname)
         linker.copytree(run_dir, watermelon_run_dir)
 
-def _merge_sample_dirs(watermelon_runs_dir, watermelon_samples_dir):
+def _merge_sample_dirs(args):
     j = os.path.join
-    watermelon_runs_dir = os.path.abspath(watermelon_runs_dir)
-    watermelon_samples_dir = os.path.abspath(watermelon_samples_dir)
+    watermelon_runs_dir = os.path.abspath(j(args.tmp_input_dir,
+                                            args.input_runs_dir))
+    watermelon_samples_dir = os.path.abspath(j(args.tmp_input_dir,
+                                               args.input_samples_dir))
     _mkdir(watermelon_samples_dir)
     for run_dir in os.listdir(watermelon_runs_dir):
         for sample_dir in os.listdir(j(watermelon_runs_dir, run_dir)):
@@ -262,7 +266,8 @@ def _merge_sample_dirs(watermelon_runs_dir, watermelon_samples_dir):
 def _is_fastq_file(file_name):
     return file_name.endswith('.fastq') or file_name.endswith('.fastq.gz')
 
-def _build_input_summary(input_samples_dir):
+def _build_input_summary(args):
+    input_samples_dir = os.path.join(args.tmp_input_dir, args.input_samples_dir)
     rows = []
     for root, dirs, files in os.walk(input_samples_dir):
         for name in files:
@@ -324,9 +329,9 @@ def _build_phenotypes_samples_comparisons(samples):
     config[watermelon_config.CONFIG_KEYS.comparisons] = _DEFAULT_COMPARISONS
     return config
 
-def _make_config_dict(template_config, genome_references, input_dir, samples):
+def _make_config_dict(template_config, genome_references, args, samples):
     config = dict(template_config)
-    config[watermelon_config.CONFIG_KEYS.input_dir] = '{}'.format(input_dir)
+    config[watermelon_config.CONFIG_KEYS.input_dir] = os.path.join(args.input_dir, args.input_samples_dir)
     config.update(_build_phenotypes_samples_comparisons(samples))
     _dict_merge(config, genome_references)
     return config
@@ -399,8 +404,8 @@ $ watermelon -c {config_basename}
            input_summary_text=input_summary_text,
            working_dir=args.x_working_dir,
            input_dir_relative=input_dir_relative,
-           input_runs_dir=os.path.relpath(args.input_runs_dir, input_dir_relative),
-           input_samples_dir=os.path.relpath(args.input_samples_dir, input_dir_relative),
+           input_runs_dir=args.input_runs_dir,
+           input_samples_dir=args.input_samples_dir,
            analysis_dir=args.analysis_dir,
            analysis_relative=os.path.relpath(args.analysis_dir, args.x_working_dir),
            config_file=args.config_file,
@@ -480,8 +485,8 @@ def _parse_command_line_args(sys_argv):
     args.config_file = os.path.join(args.analysis_dir,
                                     'config{}.yaml'.format(args.job_suffix))
     args.tmp_input_dir = realpath('.inputs')
-    args.input_runs_dir = os.path.join(args.tmp_input_dir, '00-source_runs')
-    args.input_samples_dir = os.path.join(args.tmp_input_dir, '01-source_samples')
+    args.input_runs_dir = '00-source_runs'
+    args.input_samples_dir = '01-source_samples'
     args.input_dir = realpath('inputs')
     return args
 
@@ -494,11 +499,9 @@ def main(sys_argv):
         if os.path.isdir(args.tmp_input_dir):
             shutil.rmtree(args.tmp_input_dir)
         linker = _Linker()
-        _link_run_dirs(args.source_fastq_dirs,
-                       args.input_runs_dir,
-                       linker)
-        _merge_sample_dirs(args.input_runs_dir, args.input_samples_dir)
-        input_summary = _build_input_summary(args.input_samples_dir)
+        _link_run_dirs(args, linker)
+        _merge_sample_dirs(args)
+        input_summary = _build_input_summary(args)
         _CommandValidator().validate_inputs(input_summary)
         os.rename(args.tmp_input_dir, args.input_dir)
 
@@ -510,7 +513,7 @@ def main(sys_argv):
             genome_references = yaml.load(genome_references_file)[args.genome_build]
         config_dict = _make_config_dict(template_config,
                                         genome_references,
-                                        args.input_samples_dir,
+                                        args,
                                         input_summary.samples)
         _write_config_file(args.config_file, config_dict)
 

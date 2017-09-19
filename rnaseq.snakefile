@@ -51,6 +51,32 @@ rnaseq_snakefile_helper.checksum_reset_all(CONFIG_CHECKSUMS_DIR,
 
 SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(config['input_dir'], config[SAMPLES_KEY])
 
+DESEQ2_ALL = []
+if REPLICATE_PHENOTYPE_NAMES:
+    DESEQ2_ALL = [
+        expand(DELIVERABLES_DIR + "tuxedo"),
+        expand(DESEQ2_DIR + "01-htseq/{sample}_counts.txt",
+               sample=config[SAMPLES_KEY]),
+        DESEQ2_DIR + "01-htseq/htseq_merged.txt",
+        DESEQ2_DIR + "02-metadata_contrasts/sample_metadata.txt",
+        DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt",
+        expand(DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype_name}/{comparison}.txt",
+               zip,
+               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+               comparison=REPLICATE_COMPARISON_GROUPS),
+        expand(DESEQ2_DIR + "04-annotation/{phenotype_name}/{comparison}.annot.txt",
+               zip,
+               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+               comparison=REPLICATE_COMPARISON_GROUPS),
+        expand(DESEQ2_DIR + "06-excel/{phenotype_name}/{comparison}.xlsx",
+                zip,
+                phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+                comparison=REPLICATE_COMPARISON_GROUPS),
+        DESEQ2_DIR + "07-summary/summary.txt",
+        DESEQ2_DIR + "07-summary/summary.xlsx",
+        expand(DELIVERABLES_DIR + "deseq2"),
+        ]
+
 rule all:
     input:
         rnaseq_snakefile_helper.expand_sample_read_endedness(\
@@ -97,29 +123,7 @@ rule all:
                 comparison=ALL_COMPARISON_GROUPS),
         TUXEDO_DIR + "10-summary/summary.txt",
         TUXEDO_DIR + "10-summary/summary.xlsx",
-
-        expand(DELIVERABLES_DIR + "tuxedo"),
-
-        expand(DESEQ2_DIR + "01-htseq/{sample}_counts.txt",
-               sample=config[SAMPLES_KEY]),
-        DESEQ2_DIR + "01-htseq/htseq_merged.txt",
-        DESEQ2_DIR + "02-metadata_contrasts/sample_metadata.txt",
-        DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt",
-        expand(DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype_name}/{comparison}.txt",
-               zip,
-               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
-               comparison=REPLICATE_COMPARISON_GROUPS),
-        expand(DESEQ2_DIR + "04-annotation/{phenotype_name}/{comparison}.annot.txt",
-               zip,
-               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
-               comparison=REPLICATE_COMPARISON_GROUPS),
-        expand(DESEQ2_DIR + "06-excel/{phenotype_name}/{comparison}.xlsx",
-                zip,
-                phenotype_name=REPLICATE_PHENOTYPE_NAMES,
-                comparison=REPLICATE_COMPARISON_GROUPS),
-        DESEQ2_DIR + "07-summary/summary.txt",
-        DESEQ2_DIR + "07-summary/summary.xlsx",
-        expand(DELIVERABLES_DIR + "deseq2"),
+        *DESEQ2_ALL
 
 rule align_concat_reads:
     input:

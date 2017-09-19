@@ -125,10 +125,6 @@ register(multicore_param, default=TRUE)
 
 message('loading libraries complete')
 
-opt$countDataFile = '/Users/cjsifuen/ActiveProjects/Myers_mgmyers_RS27_rtagett_HI_1876-1882/DESeq2_test/HTSeq_counts.txt'
-opt$metaDataFile = '/Users/cjsifuen/ActiveProjects/Myers_mgmyers_RS27_rtagett_HI_1876-1882/DESeq2_test/sample_metadata.txt'
-opt$contrastFile = '/Users/cjsifuen/ActiveProjects/Myers_mgmyers_RS27_rtagett_HI_1876-1882/DESeq2_test/contrasts.txt'
-
 #convert fc and padj options to numeric values
 fc <- as.numeric(opt$foldChange)
 pval <- as.numeric(opt$adjustedPValue)

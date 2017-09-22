@@ -1,14 +1,25 @@
 hg19:
     genome: hg19
-    fastq_screen_species: human
+    fastq_screen:
+        species: human
     references:
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/noRibo_human.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
         bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/BBMap/
+GRCh37:
+    genome: GRCh37
+    fastq_screen:
+        species: human
+    references:
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/Sequence/BBMap/
 mm10:
     genome: mm10
-    fastq_screen_species: mouse
+    fastq_screen:
+        species: mouse
     references:
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/noRibo_mouse.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/Bowtie2Index
@@ -16,9 +27,37 @@ mm10:
         bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/BBMap/
 rn5:
     genome: rn5
-    fastq_screen_species: rat
+    fastq_screen:
+        species: rat
     references:
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/genes.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
         bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/Sequence/BBMap/
+ce10:
+    genome: ce10
+    fastq_screen:
+        species: celegans
+    references:
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/Sequence/BBMap/
+ce11:
+    genome: ce11
+    fastq_screen:
+        species: celegans
+    references:
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/Sequence/BBMap/
+WBS235:
+    genome: WBS235
+    fastq_screen:
+        species: celegans
+    references:
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/Sequence/BBMap/

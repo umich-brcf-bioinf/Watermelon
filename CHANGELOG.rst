@@ -2,7 +2,7 @@ Changelog
 =========
 
 0.3.1 (9/25/2017)
---------------------
+-----------------
 - Added support for c. elegans (ce10, ce11, WBS235) and GRCh37
 - Added support for multiple runs
   - Adjusted watermelon_init to display matrix of sample run files
@@ -20,7 +20,7 @@ Changelog
   top 10 diffex genes in PDF output
 
 0.3.0 (7/28/2017)
-------------------
+-----------------
 - Added support for paired-end reads
 - Transitioned naive alignment QC metrics to MultiQC
 - Fixed a bug that caused deseq2 to crash when merging htseq counts files

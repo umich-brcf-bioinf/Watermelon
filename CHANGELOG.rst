@@ -5,10 +5,12 @@ Changelog
 -----------------
 - Added support for c. elegans (ce10, ce11, WBS235) and GRCh37
 - Added support for multiple runs
+
   - Adjusted watermelon_init to display matrix of sample run files
   - Added validation error where a run or sample has no fastq files
   - Revised how source files are linked during init; hardlinked where 
     possible (and symlinked if not)
+
 - Adjusted watermelon to warn and/or gracefully skip DESeq2 if no replicates
   in any phenotype
 - Added fastq_screen rule to analyze breakdown of alignments within and 

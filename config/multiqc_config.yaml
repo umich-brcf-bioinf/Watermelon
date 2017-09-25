@@ -8,6 +8,7 @@ module_order:
       name: 'FastQC (trimmed sequences)'
       path_filters:
         - '*trim*'
+  - fastq_screen
   - tophat
   - fastqc:
       name: 'FastQC (aligned reads)'

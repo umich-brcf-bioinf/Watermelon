@@ -512,8 +512,8 @@ for (i in 1:nrow(contrastData)){
   
   #take top 10 up, down, then combine, assign label
   top <- rbind(head(subset(df, df$dot == 1), 10),head(subset(df, df$dot == 2), 10))
-  df$label <- rep('', nrow(df))
-  df$label[which(df$id %in% top$id)] = df$id
+  top$label <- top$id
+  df <- merge(x = df, y = top[,c('id','label')], by = "id", all.x = TRUE)
   
   #count the number of significan up and down genes, assign value for legend
   df$dot <- factor(df$dot,levels = c(1,2,3), labels = c(paste0('Up: ', sum(df$dot == 1)),paste0('Down: ', sum(df$dot == 2)),'NS'))
@@ -523,7 +523,7 @@ for (i in 1:nrow(contrastData)){
   p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange)) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab('Log2 mean normalized expression') + ylab('Log2 fold-change')
   p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
   p <- p + scale_x_continuous(breaks=seq(0, max(log2(df$baseMean+1)), 2)) + geom_hline(yintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c('black', 'black', 'black'))
-  if (sum(df$label == '') < nrow(df)) {
+  if (sum(is.na(df$label)) < nrow(df)) {
     p <- p + geom_label_repel(label = df$label, force = 3, segment.alpha = 0.4) + ggtitle(as.character(contrastData$base_file_name[i]))
   } else {
     p <- p + ggtitle(as.character(contrastData$base_file_name[i]))
@@ -548,7 +548,7 @@ for (i in 1:nrow(contrastData)){
   p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj))) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab('Log2 fold-change') + ylab('-Log10 adjusted p-value')
   p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
   p <- p + geom_vline(xintercept = c(0, -log2(fc), log2(fc)), linetype = c(1, 2, 2), color = c('black', 'black', 'black')) + geom_hline(yintercept = -log10(pval), linetype = 2, color = 'black')
-  if (sum(df$label == '') < nrow(df)) {
+  if (sum(is.na(df$label)) < nrow(df)) {
     p <- p + geom_label_repel(label = df$label, force = 3, segment.alpha = 0.4) + ggtitle(as.character(contrastData$base_file_name[i]))
   } else {
     p <- p + ggtitle(as.character(contrastData$base_file_name[i]))

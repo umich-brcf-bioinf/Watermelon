@@ -232,7 +232,7 @@ comparisons: X
         config_string = \
 '''samples:
    - s1
-   - s2 
+   - s2
 '''
         validator = _ConfigValidator(yaml.load(config_string), StringIO())
         self.assertRaisesRegex(_WatermelonConfigFailure,
@@ -243,7 +243,7 @@ comparisons: X
         config_string = \
 '''samples:
     s1
-    s2 
+    s2
 '''
         validator = _ConfigValidator(yaml.load(config_string), StringIO())
         self.assertRaisesRegex(_WatermelonConfigFailure,
@@ -341,12 +341,12 @@ comparisons: X
     - x_v_
     - _v_
     - a_v_b_v_c
-    - 
+    -
 '''
         config = yaml.load(config_string)
         log = StringIO()
         validator = _ConfigValidator(config, log)
-        
+
         self.assertRaisesRegex(_WatermelonConfigFailure,
                                (r'\[comparisons\] are not paired: \(\[empty comparison\], '
                                 r'_v_, a_v_b_v_c, bar_foo, x_v_\);'),
@@ -408,7 +408,7 @@ samples:
         config = yaml.load(config_string)
         log = StringIO()
         validator = _ConfigValidator(config, log)
-        
+
         self.assertRaisesRegex(_WatermelonConfigFailure,
                                (r'Some \[samples\] had unexpected number of phenotype values '
                                 r'\[expected 2 values\]: '
@@ -479,7 +479,7 @@ comparisons:
         config = yaml.load(config_string)
         log = StringIO()
         validator = _ConfigValidator(config, log)
-        
+
         expected_message = (r'\(pLabelA:A3,A4;pLabelB:B3,B4\)'
                             r' are not present in \[comparisons\]; '
                             r'some samples \(pLabelA:s3,s4;pLabelB:s1,s2\) will be excluded from comparisons .*')
@@ -833,7 +833,7 @@ samples:
         validator._check_phenotype_has_replicates()
         self.ok()
 
-    def test_check_phenotype_has_replicates_warningIfNoReplicates(self):
+    def test_check_phenotype_has_replicates_warningIfNoReplicatesForSomePhenotypes(self):
         config_string = '''
 phenotypes: diet ^ time ^ gender
 samples:
@@ -843,6 +843,20 @@ samples:
         s4: B    ^ F      ^ J'''
         validator = _ConfigValidator(yaml.load(config_string), StringIO())
         expected_message = r'Some phenotype labels \(gender, time\)\ have no replicates'
+        self.assertRaisesRegex(_WatermelonConfigWarning,
+                               expected_message,
+                               validator._check_phenotype_has_replicates)
+
+    def test_check_phenotype_has_replicates_warningIfNoReplicatesForAllPhenotypes(self):
+        config_string = '''
+phenotypes: diet ^ time ^ gender
+samples:
+        s1: A    ^ C      ^ G
+        s2: B    ^ D      ^ H
+        s3: C    ^ E      ^ I
+        s4: D    ^ F      ^ J'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = r'No phenotype labels have any replicates; DESeq2 will not be run.'
         self.assertRaisesRegex(_WatermelonConfigWarning,
                                expected_message,
                                validator._check_phenotype_has_replicates)

@@ -80,7 +80,11 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
                    "python --version 2>&1").format(_MODULES_DIR)
         self.check_command(command, "Python 2.7.9", "wrong python version")
 
-    def test_module_loads_correct_versions(self):
+    def test_fastq_screen_versions(self):
+        command = self.build_command("fastq_screen --version 2>&1 || echo 'not installed'")
+        self.check_command(command, "v0.11.1", "fastq screen wrong version")
+
+    def test_bbmap_versions(self):
         command = self.build_command("bbmap.sh --version 2>&1 | grep 'BBMap version' || echo 'not installed'")
         self.check_command(command, "37.02", "BBMap wrong version")
 

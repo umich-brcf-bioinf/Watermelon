@@ -144,9 +144,13 @@ class _ConfigValidator(object):
 
     def _check_phenotype_has_replicates(self):
         phenotype_manager = PhenotypeManager(self.config)
-        all = set(phenotype_manager.phenotype_sample_list.keys())
+        all_phenotypes = set(phenotype_manager.phenotype_sample_list.keys())
         with_replicates = set(phenotype_manager.phenotypes_with_replicates)
-        without_replicates = all - with_replicates
+        if not with_replicates:
+            msg = ('No phenotype labels have any replicates; DESeq2 '
+                   'will not be run.')
+            raise _WatermelonConfigWarning(msg)
+        without_replicates = all_phenotypes - with_replicates
         if without_replicates:
             msg_fmt = ('Some phenotype labels ({}) have no replicates and will be '
                        'excluded from DESeq2 results.')
@@ -257,7 +261,7 @@ class _ConfigValidator(object):
         for label, values in phenotype_manager.phenotype_sample_list.items():
             for value in values:
                 pheno_label_values.append((label, value))
-        comparison_label_values = [] 
+        comparison_label_values = []
         for label, values in phenotype_manager.comparison_values.items():
             for value in values:
                 comparison_label_values.append((label, value))

@@ -4,13 +4,19 @@ Changelog
 0.3.0.x (mm/dd/yyyy)
 --------------------
 - Added support for c. elegans (ce10, ce11, WBS235) and GRCh37
-- Adjusted watermelon_init to add support for multiple runs
+- Added fastq_screen rule to analyze breakdown of alignments within and 
+  across species to identify contamination and/or depletion problems
+- Added support for multiple runs
   - Adjusted watermelon_init to display matrix of sample run files
   - Added validation error where a run or sample has no fastq files
+  - Revised how source files are linked during init; hardlinked where 
+    possible (and symlinked if not)
+- Adjusted watermelon to warn and/or gracefully skip DESeq2 if no replicates
+  in any phenotype
 - Adjusted how genome references are merged with template config to allow for
   nested dicts and also avoid accidentally overwriting default template dicts
-- Revised how source files are linked during init; hardlinked where possible 
-  (and symlinked if not)
+- Corrected a bug in DESeq2 MA and volcano plots that incorrectly labeled the
+  top 10 diffex genes in PDF output
 
 0.3.0 (7/28/2017)
 ------------------

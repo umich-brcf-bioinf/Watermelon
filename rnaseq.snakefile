@@ -60,7 +60,6 @@ if 'fastq_screen' in config:
             rnaseq_snakefile_helper.expand_sample_read_endedness(\
                 ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
                 SAMPLE_READS),
-            ALIGNMENT_DIR + "03-fastq_screen/fastq_screen_multiqc.html",
             rnaseq_snakefile_helper.expand_sample_read_endedness(
                 DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
                 SAMPLE_READS),
@@ -98,6 +97,7 @@ if REPLICATE_PHENOTYPE_NAMES:
         ]
 
 OPTIONAL_ALL = DESEQ2_ALL + FASTQ_SCREEN_ALL
+
 rule all:
     input:
         rnaseq_snakefile_helper.expand_sample_read_endedness(\
@@ -276,31 +276,6 @@ rule align_fastq_screen_multi_species:
             --aligner {params.aligner} \
             {input} 
         ) 2>&1 | tee {log}'''
-
-rule align_fastq_screen_multiqc:
-    input:
-        rnaseq_snakefile_helper.expand_sample_read_endedness(\
-            ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.txt",
-            SAMPLE_READS),
-        rnaseq_snakefile_helper.expand_sample_read_endedness(\
-            ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.txt",
-            SAMPLE_READS),
-    output:
-        ALIGNMENT_DIR + "03-fastq_screen/fastq_screen_multiqc.html"
-    params:
-        multiqc_config_filename = WATERMELON_CONFIG_DIR + "multiqc_config.yaml",
-        output_dir = ALIGNMENT_DIR + "03-fastq_screen/",
-        output_filename = "fastq_screen_multiqc.html",
-    log:
-        ALIGNMENT_DIR + "03-fastq_screen/.log/fastq_screen_multiqc.log"
-    shell:
-        '''(module purge && module load watermelon_rnaseq &&
-        echo 'watermelon|version|multiqc|'`multiqc --version | cut -d' ' -f2-` &&
-        multiqc --force \
-            --outdir {params.output_dir} \
-            --filename {params.output_filename} \
-            {params.output_dir}
-        ) 2>&1 | tee {log} '''
 
 rule align_fastqc_trimmed_reads:
     input:

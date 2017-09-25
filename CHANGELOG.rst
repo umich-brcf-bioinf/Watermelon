@@ -1,8 +1,12 @@
 Changelog
 =========
 
-0.3.1 (9/25/2017)
+0.x.x.x (mm/dd/yyyy)
 --------------------
+
+
+0.3.1 (9/25/2017)
+-----------------
 - Added support for c. elegans (ce10, ce11, WBS235) and GRCh37
 - Added support for multiple runs
   - Adjusted watermelon_init to display matrix of sample run files

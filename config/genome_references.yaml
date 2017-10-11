@@ -61,3 +61,12 @@ WBS235:
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
         bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/Sequence/BBMap/
+GRCz10:
+    genome: GRCz10
+    fastq_screen:
+        species: zebrafish
+    references:
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/Sequence/BBMap/

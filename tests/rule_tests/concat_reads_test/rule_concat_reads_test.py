@@ -5,7 +5,6 @@ import gzip
 import os
 import shutil
 import subprocess
-import sys
 import unittest
 
 from testfixtures import TempDirectory

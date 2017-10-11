@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.3.1.1 (10/11/2017)
+--------------------
+- Added support for zebrafish (GRCz10)
+
+
 0.3.1 (9/25/2017)
 -----------------
 - Added support for c. elegans (ce10, ce11, WBS235) and GRCh37

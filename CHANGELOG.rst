@@ -4,7 +4,7 @@ Changelog
 0.x.x.x (mm/dd/yyyy)
 --------------------
 
-- Modified top 500 gene heatmaps in DESeq2: row scalling, row dendro, and aspect ratio.
+- Modified top 500 gene heatmaps in DESeq2: row scaling, row dendro, and aspect ratio.
 
 
 

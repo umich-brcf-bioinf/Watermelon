@@ -1,7 +1,8 @@
 Changelog
 =========
 
-0.3.1.1 (10/11/2017)
+
+0.x.x.x (mm/dd/yyyy)
 --------------------
 - Added support for zebrafish (GRCz10)
 

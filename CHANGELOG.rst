@@ -3,6 +3,7 @@ Changelog
 
 0.x.x.x (mm/dd/yyyy)
 --------------------
+- Added config validation to fail if test-control comparison values are not distinct
 
 
 0.3.1 (9/25/2017)

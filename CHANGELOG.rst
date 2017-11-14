@@ -5,6 +5,8 @@ Changelog
 0.x.x.x (mm/dd/yyyy)
 --------------------
 - Added support for zebrafish (GRCz10)
+- Adjusted config validation to fail if test-control comparison values are not distinct
+- Added step to create combined gene list summaries in deliverables/
 
 
 0.3.1 (9/25/2017)
@@ -14,12 +16,12 @@ Changelog
 
   - Adjusted watermelon_init to display matrix of sample run files
   - Added validation error where a run or sample has no fastq files
-  - Revised how source files are linked during init; hardlinked where 
+  - Revised how source files are linked during init; hardlinked where
     possible (and symlinked if not)
 
 - Adjusted watermelon to warn and/or gracefully skip DESeq2 if no replicates
   in any phenotype
-- Added fastq_screen rule to analyze breakdown of alignments within and 
+- Added fastq_screen rule to analyze breakdown of alignments within and
   across species to identify contamination and/or depletion problems
 - Adjusted DESeq2 to produce pre and post normalization PCA plots
 - Adjusted how genome references are merged with template config to allow for

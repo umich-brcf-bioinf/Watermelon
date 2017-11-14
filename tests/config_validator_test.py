@@ -292,6 +292,34 @@ comparisons: X
         validator._check_comparisons_malformed()
         self.ok()
 
+    def test_check_comparisons_malformed_raisesIfValuesNotDistinct_ok(self):
+        config_string = \
+'''comparisons:
+    foo:
+    - bar_v_baz
+'''
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        validator._check_comparison_values_distinct()
+        self.ok()
+
+    def test_check_comparisons_malformed_raisesIfValuesNotDistinct(self):
+        config_string = \
+'''comparisons:
+    foo:
+    - wt_v_mut
+    - bar_v_bar
+    - baz_v_baz
+'''
+        config = yaml.load(config_string)
+        log = StringIO()
+        validator = _ConfigValidator(config, log)
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               (r'test-control values are not distinct: '
+                                r'\(bar_v_bar, baz_v_baz\)'),
+                               validator._check_comparison_values_distinct)
+
     def test_check_comparisons_malformed_raisesIfNotDict(self):
         config_string = \
 '''comparisons:

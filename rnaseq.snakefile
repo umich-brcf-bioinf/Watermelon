@@ -91,9 +91,9 @@ if REPLICATE_PHENOTYPE_NAMES:
                 zip,
                 phenotype_name=REPLICATE_PHENOTYPE_NAMES,
                 comparison=REPLICATE_COMPARISON_GROUPS),
-        DESEQ2_DIR + "07-summary/summary.txt",
-        DESEQ2_DIR + "07-summary/summary.xlsx",
-        expand(DELIVERABLES_DIR + "deseq2"),
+        DESEQ2_DIR + "07-summary/deseq2_summary.txt",
+        DESEQ2_DIR + "07-summary/deseq2_summary.xlsx",
+        DELIVERABLES_DIR + "deseq2",
         ]
 
 OPTIONAL_ALL = DESEQ2_ALL + FASTQ_SCREEN_ALL
@@ -141,9 +141,10 @@ rule all:
                 zip,
                 phenotype_name=ALL_PHENOTYPE_NAMES,
                 comparison=ALL_COMPARISON_GROUPS),
-        TUXEDO_DIR + "10-summary/summary.txt",
-        TUXEDO_DIR + "10-summary/summary.xlsx",
-        expand(DELIVERABLES_DIR + "tuxedo"),
+        TUXEDO_DIR + "10-summary/tuxedo_summary.txt",
+        TUXEDO_DIR + "10-summary/tuxedo_summary.xlsx",
+        DELIVERABLES_DIR + "tuxedo",
+        DELIVERABLES_DIR + "combined_summary.xlsx",
         *OPTIONAL_ALL
 
 rule align_concat_reads:
@@ -274,7 +275,7 @@ rule align_fastq_screen_multi_species:
             --conf {params.multi_species_config_file} \
             --outdir {params.multi_species_output_dir} \
             --aligner {params.aligner} \
-            {input} 
+            {input}
         ) 2>&1 | tee {log}'''
 
 rule align_fastqc_trimmed_reads:
@@ -783,10 +784,10 @@ rule tuxedo_summary:
                               phenotype=ALL_PHENOTYPE_NAMES,
                               comparison=ALL_COMPARISON_GROUPS)
     output:
-        summary_txt = TUXEDO_DIR + "10-summary/summary.txt",
-        summary_xlsx = TUXEDO_DIR + "10-summary/summary.xlsx",
+        summary_txt = TUXEDO_DIR + "10-summary/tuxedo_summary.txt",
+        summary_xlsx = TUXEDO_DIR + "10-summary/tuxedo_summary.xlsx",
     log:
-        TUXEDO_DIR + "10-summary/.log/summary.log"
+        TUXEDO_DIR + "10-summary/.log/tuxedo_summary.log"
     params:
         output_dir = TUXEDO_DIR + "10-summary/",
     shell:
@@ -814,22 +815,44 @@ rule deliverables_tuxedo:
                                    phenotype_name=ALL_PHENOTYPE_NAMES),
         plots = expand(TUXEDO_DIR + "06-cummerbund/{phenotype_name}/Plots",
                        phenotype_name=ALL_PHENOTYPE_NAMES),
-        summary_xlsx = TUXEDO_DIR + "10-summary/summary.xlsx",
+        summary_txt = TUXEDO_DIR + "10-summary/tuxedo_summary.txt",
+        summary_xlsx = TUXEDO_DIR + "10-summary/tuxedo_summary.xlsx",
     output:
         deliverables_dir = DELIVERABLES_DIR + "tuxedo",
+        summary_gene_lists = DELIVERABLES_DIR + "tuxedo/gene_lists/tuxedo_summary.txt",
     params:
         tmp_dir = DELIVERABLES_DIR + "tuxedo.tmp",
         source_gene_list_dir = TUXEDO_DIR +  "/09-excel",
         source_counts_dir =  TUXEDO_DIR +  "/06-cummerbund",
         source_plots_dir =  TUXEDO_DIR +  "/06-cummerbund",
     shell:
-        "rm -rf {output.deliverables_dir} {params.tmp_dir} && "
-        "mkdir -p {params.tmp_dir}/counts {params.tmp_dir}/plots && "
-        "cp `find {params.source_counts_dir} -maxdepth 2 -name '*_repRawCounts.txt'` {params.tmp_dir}/counts && "
-        "(for phenotype in `ls {params.source_plots_dir}`; do cp -r {params.source_plots_dir}/${{phenotype}}/Plots {params.tmp_dir}/plots/$phenotype; done) && "
-        "cp -r {params.source_gene_list_dir} {params.tmp_dir}/gene_lists && "
-        "cp {input.summary_xlsx} {params.tmp_dir}/gene_lists && "
-        "mv {params.tmp_dir} {output.deliverables_dir} "
+        """rm -rf {output.deliverables_dir} {params.tmp_dir}
+        mkdir -p {params.tmp_dir}/counts {params.tmp_dir}/plots
+        cp `find {params.source_counts_dir} -maxdepth 2 -name '*_repRawCounts.txt'` {params.tmp_dir}/counts
+        (for phenotype in `ls {params.source_plots_dir}`; do cp -r {params.source_plots_dir}/${{phenotype}}/Plots {params.tmp_dir}/plots/$phenotype; done)
+        cp -r {params.source_gene_list_dir} {params.tmp_dir}/gene_lists
+        cp {input.summary_txt} {params.tmp_dir}/gene_lists
+        cp {input.summary_xlsx} {params.tmp_dir}/gene_lists
+        mv {params.tmp_dir} {output.deliverables_dir} """
+
+def gene_summaries():
+    summaries = [DELIVERABLES_DIR + "tuxedo/gene_lists/tuxedo_summary.txt"]
+    if DESEQ2_ALL:
+        summaries.append(DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt")
+    return summaries
+
+rule deliverables_combined_summary:
+    input:
+        lambda x: gene_summaries()
+    output:
+        txt = DELIVERABLES_DIR + "combined_summary.txt",
+        xlsx = DELIVERABLES_DIR + "combined_summary.xlsx",
+    params:
+        base_name = DELIVERABLES_DIR + "combined_summary"
+    shell:
+        '''python {WATERMELON_SCRIPTS_DIR}/combine_summaries.py \
+            --output_base {params.base_name} {input}
+        '''
 
 rule deseq2_htseq:
     input:
@@ -999,10 +1022,10 @@ rule deseq2_summary:
                              phenotype=REPLICATE_PHENOTYPE_NAMES,
                              comparison=REPLICATE_COMPARISON_GROUPS),
     output:
-        summary_txt = DESEQ2_DIR + "07-summary/summary.txt",
-        summary_xlsx = DESEQ2_DIR + "07-summary/summary.xlsx",
+        summary_txt = DESEQ2_DIR + "07-summary/deseq2_summary.txt",
+        summary_xlsx = DESEQ2_DIR + "07-summary/deseq2_summary.xlsx",
     log:
-        DESEQ2_DIR + "07-summary/.log/summary.log"
+        DESEQ2_DIR + "07-summary/.log/deseq2_summary.log"
     params:
         output_dir = DESEQ2_DIR + "07-summary/",
     shell:
@@ -1025,17 +1048,21 @@ rule deliverables_deseq2:
                             zip,
                             phenotype_name=REPLICATE_PHENOTYPE_NAMES,
                             comparison=REPLICATE_COMPARISON_GROUPS),
-        summary_xlsx = DESEQ2_DIR + "07-summary/summary.xlsx",
+        summary_txt = DESEQ2_DIR + "07-summary/deseq2_summary.txt",
+        summary_xlsx = DESEQ2_DIR + "07-summary/deseq2_summary.xlsx",
     output:
         deliverables_dir = DELIVERABLES_DIR + "deseq2",
+        summary_gene_lists = DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt",
+
     params:
         tmp_dir = DELIVERABLES_DIR + "deseq2.tmp",
         source_gene_list_dir = DESEQ2_DIR + "06-excel"
     shell:
-        "rm -rf {output.deliverables_dir} {params.tmp_dir} && "
-        "mkdir -p {params.tmp_dir} && "
-        "cp -r {input.diffex_dir}/counts {params.tmp_dir} && "
-        "cp -r {input.diffex_dir}/plots {params.tmp_dir} && "
-        "cp -r {params.source_gene_list_dir} {params.tmp_dir}/gene_lists && "
-        "cp -r {input.summary_xlsx} {params.tmp_dir}/gene_lists && "
-        "mv {params.tmp_dir} {output.deliverables_dir} "
+        """rm -rf {output.deliverables_dir} {params.tmp_dir}
+        mkdir -p {params.tmp_dir}
+        cp -r {input.diffex_dir}/counts {params.tmp_dir}
+        cp -r {input.diffex_dir}/plots {params.tmp_dir}
+        cp -r {params.source_gene_list_dir} {params.tmp_dir}/gene_lists
+        cp {input.summary_txt} {params.tmp_dir}/gene_lists
+        cp {input.summary_xlsx} {params.tmp_dir}/gene_lists
+        mv {params.tmp_dir} {output.deliverables_dir} """

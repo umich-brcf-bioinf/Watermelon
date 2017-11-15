@@ -305,7 +305,7 @@ rownames(sampleDistMatrix) <- paste(rld$combinatoric_group, sep='-')
 colnames(sampleDistMatrix) <- NULL
 colors <- colorRampPalette(rev(brewer.pal(9, 'Blues')))(255)
 pdf(file = paste(plotsDir_summary,'Heatmap_Samples.pdf', sep = '/'), onefile = FALSE)
-pheatmap(sampleDistMatrix,
+pheatmap(sampleDistMatrix, 
          clustering_distance_rows=sampleDists,
          clustering_distance_cols=sampleDists,
          col=colors)
@@ -316,14 +316,14 @@ cat('\ttop variant heatmap\n')
 colors <- colorRampPalette(brewer.pal(9, 'Blues'))(255)
 select <- order(rowVars(assay(rld)), decreasing=TRUE)[1:500]
 df <- data.frame(Group = colData(rld)[,c('combinatoric_group')], row.names = rownames(colData(dds)))
-pdf(file = paste(plotsDir_summary,'/Heatmap_TopVar.pdf', sep = '/'), onefile = FALSE)
-pheatmap(assay(rld)[select,], cluster_rows=FALSE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors, main = '500 Top Variably Expressed Genes Heatmap')
+pdf(file = paste(plotsDir_summary,'/Heatmap_TopVar.pdf', sep = '/'), onefile = FALSE, width=10, height=20)
+pheatmap(assay(rld)[select,], scale="row",  cluster_rows=TRUE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors, main = '500 Top Variably Expressed Genes Heatmap')
 dev.off()
 
 select <- order(rowMeans(assay(rld)), decreasing=TRUE)[1:500]
 df <- data.frame(Group = colData(rld)[,c('combinatoric_group')], row.names = rownames(colData(dds)))
-pdf(file = paste(plotsDir_summary,'Heatmap_TopExp.pdf', sep = '/'), onefile = FALSE)
-pheatmap(assay(rld)[select,], cluster_rows=FALSE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors, main = '500 Top Expressed Genes Heatmap')
+pdf(file = paste(plotsDir_summary,'Heatmap_TopExp.pdf', sep = '/'), onefile = FALSE, width=10, height=20)
+pheatmap(assay(rld)[select,], scale="row",  cluster_rows=TRUE, show_rownames=FALSE, cluster_cols=TRUE, annotation_col=df, fontsize = 7, las = 2, fontsize_row = 7, color = colors, main = '500 Top Expressed Genes Heatmap')
 dev.off()
 
 cat('\tbox plots\n')

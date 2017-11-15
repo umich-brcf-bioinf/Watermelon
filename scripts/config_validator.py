@@ -196,6 +196,41 @@ class _ConfigValidator(object):
             if not isinstance(value, list):
                 raise failure
 
+    def _check_comparison_values_distinct(self):
+        comparisons = self.config[watermelon_config.CONFIG_KEYS.comparisons]
+        nondistinct_comparisons = []
+        for phenotype_label, comparison_list in comparisons.items():
+            for comparison in comparison_list:
+                if comparison:
+                    values = comparison.strip().split(watermelon_config.DEFAULT_COMPARISON_INFIX)
+                    values = [i for i in values if i]
+                    if len(values) == 2 and values[0]==values[1]:
+                        nondistinct_comparisons.append(comparison)
+        if nondistinct_comparisons:
+            msg = ('Some [comparison] test-control values are not distinct: ({}); '
+                   'review config and try again')
+            problem_str = ', '.join(sorted(nondistinct_comparisons))
+            raise _WatermelonConfigFailure(msg, problem_str)
+
+
+    def _check_comparisons_not_a_pair(self):
+        comparisons = self.config[watermelon_config.CONFIG_KEYS.comparisons]
+        malformed_comparisons = []
+        for phenotype_label, comparison_list in comparisons.items():
+            for comparison in comparison_list:
+                if not comparison:
+                    malformed_comparisons.append("[empty comparison]")
+                else:
+                    values = comparison.strip().split(watermelon_config.DEFAULT_COMPARISON_INFIX)
+                    values = [i for i in values if i]
+                    if len(values) != 2:
+                        malformed_comparisons.append(comparison)
+        if malformed_comparisons:
+            msg = ('Some [comparisons] are not paired: ({}); '
+                   'review config and try again')
+            malformed_str = ', '.join(sorted(malformed_comparisons))
+            raise _WatermelonConfigFailure(msg, malformed_str)
+
     def _check_comparisons_not_a_pair(self):
         comparisons = self.config[watermelon_config.CONFIG_KEYS.comparisons]
         malformed_comparisons = []

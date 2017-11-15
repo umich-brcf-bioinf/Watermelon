@@ -2,7 +2,7 @@
 
 # adds annotations to output of: scripts/flag_diffex.py
 
-from __future__ import print_function, absolute_import, division 
+from __future__ import print_function, absolute_import, division
 import sys
 import os
 import csv
@@ -13,6 +13,14 @@ from collections import defaultdict
 
 WARNING_PERCENTAGE_ANNOTATED_CUTOFF = 50
 
+TAXONOMY = {'hg19': '9606', 'GRCh37': '9606',   # human
+            'mm10': '10090', 'mm9': '10090',    # mouse
+            'rn5': '10116', 'rn6': '10116',     # rat
+            'ce10': '6239', 'ce11': '6239', 'WS220': '6239', 'WBS235': '6239',   # c. elegans
+            'GRCz10' : '7955', 'Zv9': '7955',   # zebra fish
+            'TAIR9': '3702', 'TAIR10': '3702',   # arabidopis
+            'MSU6': '4530'                      # rice
+            }
 
 def time_stamp():
     ts = time.time()
@@ -31,12 +39,11 @@ def parse_command_line_args():
     parser.add_argument(
         '-e', '--diffexp', type=str, help='path to input differential_expression_file', required=True)
     parser.add_argument(
-        '-g', '--genome', type=str, help='organism taxonomy ID', required=True)  
+        '-g', '--genome', type=str, help='organism taxonomy ID', required=True)
     parser.add_argument(
         '-o', '--outdir', type=str, help='output directory name', required=True)
     args = parser.parse_args()
     return args
-
 
 def check_geneinfo_matches(all_lines,
                            matching_lines,
@@ -50,75 +57,68 @@ def check_geneinfo_matches(all_lines,
         msg = msg_format.format(warning_percent_annotated_cutoff)
         log(msg)
 
-
-args = parse_command_line_args()
-gene_info = args.geneinfo
-gene_expr = args.diffexp
-outdir = args.outdir
-
-taxonomy = {'hg19': '9606', 'GRCh37': '9606',   # human
-            'mm10': '10090', 'mm9': '10090',    # mouse
-            'rn5': '10116', 'rn6': '10116',     # rat
-            'ce10': '6239', 'ce11': '6239', 'WS220': '6239', 'WBS235': '6239',   # c. elegans
-            'GRCz10' : '7955', 'Zv9': '7955',   # zebra fish
-            'TAIR9': '3702', 'TAIR10': '3702',   # arabidopis
-            'MSU6': '4530'                      # rice
-            }
-
 def get_taxid(genome):
-    if genome in taxonomy:
-        return taxonomy.get(genome)
+    if genome in TAXONOMY:
+        return TAXONOMY.get(genome)
     else:
         msg_fmt = 'ERROR: Taxonomy id not found for -g/--genome:[{}]. Available taxonomy-genome mappings are: {}'
-        msg = msg_fmt.format(genome, taxonomy)
+        msg = msg_fmt.format(genome, TAXONOMY)
         print(msg, file=sys.stderr)
         sys.exit()
 
-tax_id = get_taxid(args.genome)
-
-outfile_tag = os.path.basename(gene_expr.replace('.txt', '.annot.txt'))
-outfile_name = os.path.join(outdir, outfile_tag)
-
-log('reading entrez gene info')
-
+def main():
+    args = parse_command_line_args()
+    gene_info = args.geneinfo
+    gene_expr = args.diffexp
+    outdir = args.outdir
 
 
-#### def get_geneinfo_lines():
-    
-gene_details = defaultdict(list)
-with open(gene_info,'r') as geneinfo_file:
-    next(geneinfo_file) # skip header
-    reader=csv.reader(geneinfo_file,delimiter='\t')
-    for row in reader:
-        (geneinfo_tax_id, geneinfo_gene_id, geneinfo_gene_symbol, geneinfo_gene_description) = (row[0], row[1], row[2], row[8])
-        if geneinfo_tax_id == tax_id:
-            gene_details[geneinfo_gene_symbol] = [geneinfo_gene_id, geneinfo_gene_description]
+    tax_id = get_taxid(args.genome)
+
+    outfile_tag = os.path.basename(gene_expr.replace('.txt', '.annot.txt'))
+    outfile_name = os.path.join(outdir, outfile_tag)
+
+    log('reading entrez gene info')
+
+    #### def get_geneinfo_lines():
+
+    gene_details = defaultdict(list)
+    with open(gene_info,'r') as geneinfo_file:
+        next(geneinfo_file) # skip header
+        reader=csv.reader(geneinfo_file,delimiter='\t')
+        for row in reader:
+            (geneinfo_tax_id, geneinfo_gene_id, geneinfo_gene_symbol, geneinfo_gene_description) = (row[0], row[1], row[2], row[8])
+            if geneinfo_tax_id == tax_id:
+                gene_details[geneinfo_gene_symbol] = [geneinfo_gene_id, geneinfo_gene_description]
 
 
-#### def add_annotation(args.diffexp, outfile_name):
-all_lines = 0
-matching_gene_symbol_count = 0
-with open(gene_expr, 'r') as file_to_annotate, open(outfile_name, 'w') as annotated_file: 
-    reader=csv.reader(file_to_annotate,delimiter='\t')
-    for row in reader:
-        all_lines += 1
-        row = [col.strip() for col in row]
-        if row[0] == 'test_id':
-            row[1] = 'gene_symbol'
-            row[2] = 'gene_id'
-            row.insert(3, 'gene_desc')
-            print('\t'.join(row), file=annotated_file)
-        else:
-            left = row[0:2]
-            right = row[3:]
-            gene_name = row[1]
-            if gene_name in gene_details:
-                gene_id_symbol = gene_details[gene_name]
-                matching_gene_symbol_count += 1
+    #### def add_annotation(args.diffexp, outfile_name):
+    all_lines = 0
+    matching_gene_symbol_count = 0
+    with open(gene_expr, 'r') as file_to_annotate, open(outfile_name, 'w') as annotated_file:
+        reader=csv.reader(file_to_annotate,delimiter='\t')
+        for row in reader:
+            all_lines += 1
+            row = [col.strip() for col in row]
+            if row[0] == 'test_id':
+                row[1] = 'gene_symbol'
+                row[2] = 'gene_id'
+                row.insert(3, 'gene_desc')
+                print('\t'.join(row), file=annotated_file)
             else:
-                gene_id_symbol = ['.','.']
-            outline = "\t".join(left + gene_id_symbol + right)  
-            print(outline, file=annotated_file)
+                left = row[0:2]
+                right = row[3:]
+                gene_name = row[1]
+                if gene_name in gene_details:
+                    gene_id_symbol = gene_details[gene_name]
+                    matching_gene_symbol_count += 1
+                else:
+                    gene_id_symbol = ['.','.']
+                outline = "\t".join(left + gene_id_symbol + right)
+                print(outline, file=annotated_file)
 
-check_geneinfo_matches(all_lines, matching_gene_symbol_count)
-log('done')
+    check_geneinfo_matches(all_lines, matching_gene_symbol_count)
+    log('done')
+
+if __name__ == '__main__':
+    main()

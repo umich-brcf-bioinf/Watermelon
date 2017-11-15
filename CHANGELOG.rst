@@ -1,6 +1,9 @@
 Changelog
 =========
 
+0.x.x.x (mm/dd/yyyy)
+------------------
+
 
 0.3.2 (11/15/2017)
 ------------------
@@ -8,8 +11,6 @@ Changelog
 - Adjusted config validation to fail if test-control comparison values are not distinct
 - Added step to create combined gene list summaries in deliverables/
 - Modified top 500 gene heatmaps in DESeq2: row scaling, row dendro, and aspect ratio.
-
-
 
 0.3.1 (9/25/2017)
 -----------------

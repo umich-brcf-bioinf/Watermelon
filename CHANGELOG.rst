@@ -1,8 +1,10 @@
 Changelog
 =========
 
+
 0.x.x.x (mm/dd/yyyy)
 --------------------
+- Added support for zebrafish (GRCz10)
 - Adjusted config validation to fail if test-control comparison values are not distinct
 - Added step to create combined gene list summaries in deliverables/
 - Modified top 500 gene heatmaps in DESeq2: row scaling, row dendro, and aspect ratio.

@@ -53,13 +53,15 @@ SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(config['input_dir'
 
 if 'fastq_screen' in config:
     FASTQ_SCREEN_CONFIG = config['fastq_screen']
-    FASTQ_SCREEN_ALL = [
+    FASTQ_SCREEN_ALIGNMENT = [
             rnaseq_snakefile_helper.expand_sample_read_endedness(\
                 ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
                 SAMPLE_READS),
             rnaseq_snakefile_helper.expand_sample_read_endedness(\
                 ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
-                SAMPLE_READS),
+                SAMPLE_READS)
+        ]
+    FASTQ_SCREEN_DELIVERABLES = [
             rnaseq_snakefile_helper.expand_sample_read_endedness(
                 DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
                 SAMPLE_READS),
@@ -69,7 +71,8 @@ if 'fastq_screen' in config:
         ]
 else:
     FASTQ_SCREEN_CONFIG = defaultdict(str)
-    FASTQ_SCREEN_ALL = []
+    FASTQ_SCREEN_ALIGNMENT = []
+    FASTQ_SCREEN_DELIVERABLES = []
 
 DESEQ2_ALL = []
 if REPLICATE_PHENOTYPE_NAMES:
@@ -96,7 +99,7 @@ if REPLICATE_PHENOTYPE_NAMES:
         DELIVERABLES_DIR + "deseq2",
         ]
 
-OPTIONAL_ALL = DESEQ2_ALL + FASTQ_SCREEN_ALL
+OPTIONAL_ALL = DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
 
 rule all:
     input:
@@ -455,6 +458,7 @@ rule align_qc:
                                      sample=config["samples"]),
         align_fastq_files = expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
                                      sample=config["samples"]),
+        fastq_screen_alignment = FASTQ_SCREEN_ALIGNMENT,
     output:
         ALIGNMENT_DIR + "06-qc/alignment_qc.html"
     params:

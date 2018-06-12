@@ -1,7 +1,3 @@
-## abhasi, cgates
-## 7/26/2016
-## Watermelon 1.0 : Recreate Legacy pipeline in snakemake
-
 from __future__ import print_function, absolute_import, division
 
 from collections import defaultdict, OrderedDict
@@ -176,7 +172,7 @@ rule align_cutadapt_SE:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_cutadapt.log"
     run:
         if rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"]):
-            shell('''(module purge && module load watermelon_rnaseq &&
+            shell('''(module purge && module load watermelon_dependencies &&
                 set -x &&
                 cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} \
                     -u {params.trim_length_5prime} \
@@ -209,7 +205,7 @@ rule align_cutadapt_PE:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_cutadapt.log"
     run:
         if rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"]):
-            shell('''(module purge && module load watermelon_rnaseq &&
+            shell('''(module purge && module load watermelon_dependencies &&
                 set -x
                 cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} \
                     -u {params.trim_length_5prime} \
@@ -243,7 +239,7 @@ rule align_fastq_screen_biotype:
         biotype_output_dir = ALIGNMENT_DIR + "03-fastq_screen/biotype",
         biotype_config_file = FASTQ_SCREEN_CONFIG['reference_basedir'] +'/' + FASTQ_SCREEN_CONFIG['species'] + '.conf'
     shell:
-        '''(module purge && module load watermelon_rnaseq &&
+        '''(module purge && module load watermelon_dependencies &&
         echo 'watermelon|version|fastq_screen|'`fastq_screen --version` &&
         fastq_screen \
             --threads {threads} \
@@ -270,7 +266,7 @@ rule align_fastq_screen_multi_species:
         multi_species_output_dir = ALIGNMENT_DIR + "03-fastq_screen/multi_species",
         multi_species_config_file = FASTQ_SCREEN_CONFIG['reference_basedir'] +"/multi_species.conf"
     shell:
-        '''(module purge && module load watermelon_rnaseq &&
+        '''(module purge && module load watermelon_dependencies &&
         echo 'watermelon|version|fastq_screen|'`fastq_screen --version` &&
         fastq_screen \
             --threads {threads} \
@@ -292,7 +288,7 @@ rule align_fastqc_trimmed_reads:
     params:
         fastqc_dir = ALIGNMENT_DIR + "03-fastqc_reads"
     shell:
-        "module purge && module load watermelon_rnaseq && "
+        "module purge && module load watermelon_dependencies && "
         "fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log}"
 
 rule align_insert_size_PE:
@@ -321,7 +317,7 @@ rule align_insert_size_PE:
     log:
         ALIGNMENT_DIR + "04-insert_size/.log/{sample}_read_stats.log"
     shell:
-        '''(module purge && module load watermelon_rnaseq &&
+        '''(module purge && module load watermelon_dependencies &&
         mkdir -p {params.temp_dir} &&
         JAVA_OPTS="-XX:ParallelGCThreads=2" &&
         reformat.sh t={threads} \
@@ -339,7 +335,7 @@ rule align_insert_size_PE:
             ihist={params.ihist_file} \
             lhist={params.lhist_file} \
             out={params.mapped_file} &&
-        module purge && module load python/3.4.3 &&
+        module purge && module load python/3.6.1 &&
         python {WATERMELON_SCRIPTS_DIR}/read_stats_bbmap_single.py \
             --input_dir {params.temp_dir} \
             --sample_id {params.sample_id} \
@@ -362,7 +358,7 @@ rule align_create_transcriptome_index:
     log:
         ALIGNMENT_DIR + "04-tophat/.log/create_transcriptome_index.log"
     shell:
-        '''(module purge && module load watermelon_rnaseq &&
+        '''(module purge && module load watermelon_dependencies &&
         mkdir -p {params.temp_dir} &&
         rm -rf {params.temp_dir}/* &&
         tophat -G {input.gtf} \
@@ -416,7 +412,7 @@ rule align_tophat:
         ALIGNMENT_DIR + "04-tophat/.log/{sample}_tophat.log"
     threads: 8
     shell:
-        '''(module purge && module load watermelon_rnaseq &&
+        '''(module purge && module load watermelon_dependencies &&
         TOPHAT_SAMPLE_OPTIONS=$(<{input.tophat_sample_options}) &&
         set -x &&
         tophat -p {threads} \
@@ -445,7 +441,7 @@ rule align_fastqc_tophat_align:
     log:
         ALIGNMENT_DIR + "05-fastqc_align/.log/{sample}_fastqc_tophat_align.log"
     shell:
-        "module purge && module load watermelon_rnaseq && "
+        "module purge && module load watermelon_dependencies && "
         "fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log} "
 
 rule align_qc:
@@ -468,7 +464,7 @@ rule align_qc:
     log:
         ALIGNMENT_DIR + "06-qc/.log/align_qc.log"
     shell:
-        '''(module purge && module load watermelon_rnaseq &&
+        '''(module purge && module load watermelon_dependencies &&
         echo 'watermelon|version|multiqc|'`multiqc --version | cut -d' ' -f2-` &&
         multiqc --force \
             --exclude cutadapt \
@@ -553,7 +549,7 @@ rule tuxedo_cuffdiff:
         TUXEDO_DIR + "01-cuffdiff/.log/{pheno}_cuffdiff.log"
     shell:
         "rm -rf {params.output_dir} {params.output_dir}.tmp &&"
-        "module purge && module load watermelon_rnaseq && "
+        "module purge && module load watermelon_dependencies && "
         "cuffdiff -q "
         " -p {threads} "
         " -L {params.labels} "
@@ -580,7 +576,7 @@ rule tuxedo_flip:
     log:
         TUXEDO_DIR + "02-flip/.log/{pheno}_flip.log"
     shell:
-        "module purge && module load python/3.4.3 && "
+        "module purge && module load python/3.6.1 && "
         "python {WATERMELON_SCRIPTS_DIR}/tuxedo_flip.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " {input.gene_cuffdiff} "
@@ -607,7 +603,7 @@ rule tuxedo_flag:
     log:
         TUXEDO_DIR + "03-flag/.log/{pheno}_tuxedo_flag.log"
     shell:
-        "module purge && module load python/3.4.3 && "
+        "module purge && module load python/3.6.1 && "
         "python {WATERMELON_SCRIPTS_DIR}/tuxedo_flag.py "
         " -f {params.fold_change} "
         " {input.cuffdiff_gene_exp} "
@@ -687,7 +683,7 @@ rule tuxedo_cummerbund:
     log:
          TUXEDO_DIR + "06-cummerbund/.log/{pheno}_cummerbund.log"
     shell:
-        "module purge && module load watermelon_rnaseq && "
+        "module purge && module load watermelon_dependencies && "
         "mkdir -p {params.output_dir}/Plots && "
         "Rscript {WATERMELON_SCRIPTS_DIR}/Run_cummeRbund.R "
         " baseDir={params.output_dir} "
@@ -711,7 +707,7 @@ rule tuxedo_split:
     log:
         TUXEDO_DIR + "07-split/.log/{phenotype_name}_tuxedo_split.log"
     shell:
-        "module purge && module load python/3.4.3 && "
+        "module purge && module load python/3.6.1 && "
         "python {WATERMELON_SCRIPTS_DIR}/tuxedo_split.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " -o _gene.txt "
@@ -720,7 +716,7 @@ rule tuxedo_split:
         " {params.user_specified_comparison_list} "
         " 2>&1 | tee {log} && "
 
-        "module purge && module load python/3.4.3 && "
+        "module purge && module load python/3.6.1 && "
         "python {WATERMELON_SCRIPTS_DIR}/tuxedo_split.py "
         " --comparison_infix {COMPARISON_INFIX} "
         " -o _isoform.txt "
@@ -748,7 +744,7 @@ rule tuxedo_run_info:
         run_info=TUXEDO_DIR + "08-run_info/run_info.txt",
         glossary=TUXEDO_DIR + "08-run_info/glossary.txt"
     run:
-        command = ('module load watermelon_rnaseq && '
+        command = ('module load watermelon_dependencies && '
                    'module list -t 2> {}').format(output['run_info'])
         subprocess.call(command, shell=True)
         with open(output['run_info'], 'a') as run_info_file:
@@ -768,7 +764,7 @@ rule tuxedo_excel:
     log:
         TUXEDO_DIR + "09-excel/.log/{phenotype_name}_diffex_excel.log"
     shell:
-        "module purge && module load python/3.4.3 && "
+        "module purge && module load python/3.6.1 && "
         "python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py "
         " -g {input.gene}"
         " -i {input.isoform}"
@@ -795,7 +791,7 @@ rule tuxedo_summary:
     params:
         output_dir = TUXEDO_DIR + "10-summary/",
     shell:
-        '''(module purge && module load python/3.4.3 &&
+        '''(module purge && module load python/3.6.1 &&
         set -v &&
         python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py \
             --annotation_column gene_id \
@@ -871,7 +867,7 @@ rule deseq2_htseq:
     log:
         DESEQ2_DIR + "01-htseq/.log/{sample}_htseq_per_sample.log"
     shell:
-        "module purge && module load watermelon_rnaseq && "
+        "module purge && module load watermelon_dependencies && "
         "export MKL_NUM_THREADS={threads} && " #these exports throttle numpy processes
         "export NUMEXPR_NUM_THREADS={threads} && "
         "export OMP_NUM_THREADS={threads} && "
@@ -943,7 +939,7 @@ rule deseq2_diffex:
     resources:
         memoryInGb = 16
     shell:
-        "module purge && module load watermelon_rnaseq && "
+        "module purge && module load watermelon_dependencies && "
         "rm -rf {output.dir}/normalized_data && "
         "rm -rf {output.dir}/plots && "
         "rm -rf {output.dir}/gene_lists && "
@@ -990,7 +986,7 @@ rule deseq2_run_info:
         run_info = DESEQ2_DIR + "05-run_info/run_info.txt",
         glossary = DESEQ2_DIR + "05-run_info/glossary.txt"
     run:
-        command = ('module load watermelon_rnaseq && '
+        command = ('module load watermelon_dependencies && '
                    'module list -t 2> {}').format(output['run_info'])
         subprocess.call(command, shell=True)
         with open(output['run_info'], 'a') as run_info_file:
@@ -1011,7 +1007,7 @@ rule deseq2_excel:
     params:
         output_dir = DESEQ2_DIR + "06-excel/",
     shell:
-        "module purge && module load python/3.4.3 && "
+        "module purge && module load python/3.6.1 && "
         "python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py "
         " -g {input.gene}"
         " --glossary {input.glossary} "
@@ -1033,7 +1029,7 @@ rule deseq2_summary:
     params:
         output_dir = DESEQ2_DIR + "07-summary/",
     shell:
-        "module purge && module load python/3.4.3 && "
+        "module purge && module load python/3.6.1 && "
         "python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py "
         " --annotation_column gene_id"
         " --annotation_null . "

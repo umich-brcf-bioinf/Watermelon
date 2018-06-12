@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.3.4 (6/12/2018)
+-----------------
+- Adjusted module files to make compatible with bfx-comp5/6
+- Clarified/simplified module file names and versions
+
 0.3.3 (12/20/2017)
 ------------------
 - Modified rnaseq.snakefile to wait until all multiqc files are available

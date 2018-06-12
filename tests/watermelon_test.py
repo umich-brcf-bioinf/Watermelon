@@ -219,6 +219,7 @@ class WatermelonTest(unittest.TestCase):
                        '--configfile {} ').format(WATERMELON_EXECUTABLE,
                                                   TEST_SNAKEFILE,
                                                   CONFIG_FILE)
+            print(WATERMELON_EXECUTABLE)
             exit_code, actual_output = self.execute(command)
             print(actual_output)
             self.assertEqual(0, exit_code)
@@ -417,6 +418,7 @@ class WatermelonTest(unittest.TestCase):
                        '--skip_config_validation ').format(WATERMELON_EXECUTABLE,
                                                            TEST_SNAKEFILE,
                                                            CONFIG_FILE)
+            print(command)
             exit_code, actual_output = self.execute(command)
 
             self.assertEqual(0,

@@ -28,7 +28,7 @@ class BfxCoreBaseTestCase(unittest.TestCase):
     def build_command(command_text):
         command = ("module purge; "
                    "module use {}; "
-                   "module load watermelon_rnaseq 2>/dev/null; "
+                   "module load watermelon_dependencies 2>/dev/null; "
                    "{}").format(_MODULES_DIR, command_text)
         return command
 
@@ -43,7 +43,7 @@ class WatermelonModuleTest(BfxCoreBaseTestCase):
                    "module use {}; "
                    "module load watermelon 2>/dev/null; "
                    "python --version 2>&1").format(_MODULES_DIR)
-        self.check_command(command, "Python 3.4.3", "wrong python version")
+        self.check_command(command, "Python 3.6.1", "wrong python version")
 
     def test_python3_modules_present(self):
         missing_modules = []
@@ -54,7 +54,7 @@ class WatermelonModuleTest(BfxCoreBaseTestCase):
                    "yaml"]
         for module_name in modules:
             command = ("module purge; "
-                       "module load python/3.4.3; "
+                       "module load python/3.6.1; "
                        "python -c 'import {}'".format(module_name))
             try:
                 subprocess.check_output(command, stderr=self.dev_null, shell=True)
@@ -68,15 +68,15 @@ class WatermelonModuleTest(BfxCoreBaseTestCase):
                    "module load watermelon 2>/dev/null; "
                    "python -c 'import snakemake as s; print(s.__version__)'").format(_MODULES_DIR)
         output = str(subprocess.check_output(command, stderr=self.dev_null, shell=True))
-        self.assertRegexpMatches(output, "3.7.1", "wrong snakemake version")
+        self.assertRegexpMatches(output, r"3\..*", "wrong snakemake version")
 
 
 class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
     def test_module_switches_python_version(self):
         command = ("module purge; "
                    "module use {}; "
-                   "module load python/3.4.3; "
-                   "module load watermelon_rnaseq 2>/dev/null; "
+                   "module load python/3.6.1; "
+                   "module load watermelon_dependencies 2>/dev/null; "
                    "python --version 2>&1").format(_MODULES_DIR)
         self.check_command(command, "Python 2.7.9", "wrong python version")
 
@@ -122,7 +122,7 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
 
     def test_samtools_version(self):
         command = self.build_command("(samtools 2>&1 | grep 'Version') || echo -e samtools not loaded")
-        self.check_command(command, "Version: 0.1.19", "wrong samtools version")
+        self.check_command(command, "Version: 1.5", "wrong samtools version")
 
     def test_picard_version(self):
         command = self.build_command("java -jar $PICARD_JARS/SortSam.jar --version 2>&1 | cut -d'(' -f1")

@@ -3,8 +3,10 @@ Changelog
 
 0.3.4 (6/12/2018)
 -----------------
-- Adjusted module files to make compatible with bfx-comp5/6
-- Clarified/simplified module file names and versions
+- Adjusted module files/tests to make compatible with bfx-comp5/6
+- Renamed watermelon_rnaseq to watermelon_dependencies
+- Adjusted versions of watermelon and watermelon_dependencies modules to match
+  Watermenlon version number
 
 0.3.3 (12/20/2017)
 ------------------

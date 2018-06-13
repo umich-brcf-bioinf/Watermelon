@@ -10,7 +10,7 @@ x.x.x (MM/DD/YYYY)
 - Adjusted module files/tests to make compatible with bfx-comp5/6
 - Renamed watermelon_rnaseq to watermelon_dependencies
 - Adjusted versions of watermelon and watermelon_dependencies modules to match
-  Watermenlon version number
+  Watermelon version number
 
 0.3.3 (12/20/2017)
 ------------------

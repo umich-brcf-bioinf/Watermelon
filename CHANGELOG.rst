@@ -3,7 +3,8 @@ Changelog
 
 x.x.x (MM/DD/YYYY)
 ---
--
+- Modularize by giving each rule its own file.
+- The all rule is now based on the minimal set of outputs.
 
 0.3.4 (6/12/2018)
 -----------------

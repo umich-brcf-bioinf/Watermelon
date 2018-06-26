@@ -97,6 +97,8 @@ if REPLICATE_PHENOTYPE_NAMES:
 
 OPTIONAL_ALL = DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
 
+ALL = [OPTIONAL_ALL]
+
 include: 'rules/align_concat_reads.smk'
 include: 'rules/align_cutadapt_SE.smk'
 include: 'rules/align_cutadapt_PE.smk'
@@ -139,49 +141,4 @@ include: 'rules/deliverables_combined_summary.smk'
 
 rule all:
     input:
-        rnaseq_snakefile_helper.expand_sample_read_endedness(\
-            ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",
-            SAMPLE_READS),
-        expand(ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_accepted_hits.bam",
-                sample=config[SAMPLES_KEY]),
-        expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
-                sample=config[SAMPLES_KEY]),
-        ALIGNMENT_DIR + "06-qc/alignment_qc.html",
-        rnaseq_snakefile_helper.expand_sample_read_endedness(\
-            DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
-            SAMPLE_READS),
-        expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}_accepted_hits_fastqc.html",
-                sample=config[SAMPLES_KEY]),
-        DELIVERABLES_DIR + "alignment/alignment_qc.html",
-        expand(TUXEDO_DIR + "01-cuffdiff/{phenotype}/gene_exp.diff",
-               phenotype=sorted(config[COMPARISONS_KEY].keys())),
-        expand(TUXEDO_DIR + "03-flag/{phenotype}/{phenotype}_gene.flagged.txt",
-               phenotype=sorted(config[COMPARISONS_KEY].keys())),
-        expand(TUXEDO_DIR + "03-flag/{phenotype}/{phenotype}_isoform.flagged.txt",
-                phenotype=sorted(config[COMPARISONS_KEY].keys())),
-        expand(TUXEDO_DIR + "04-annotate/{phenotype}/{phenotype}_gene.flagged.annot.txt",
-               phenotype=sorted(config[COMPARISONS_KEY].keys())),
-        expand(TUXEDO_DIR + "04-annotate/{phenotype}/{phenotype}_isoform.flagged.annot.txt",
-               phenotype=sorted(config[COMPARISONS_KEY].keys())),
-        expand(TUXEDO_DIR + "06-cummerbund/{pheno}/Plots/{pheno}_boxplot.pdf",
-               pheno=sorted(config[COMPARISONS_KEY].keys())),
-        expand(TUXEDO_DIR + "06-cummerbund/{pheno}/{pheno}_repRawCounts.txt",
-               pheno=sorted(config[COMPARISONS_KEY].keys())),
-        expand(TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_gene.txt",
-                zip,
-                phenotype_name=ALL_PHENOTYPE_NAMES,
-                comparison=ALL_COMPARISON_GROUPS),
-        expand(TUXEDO_DIR + "07-split/{phenotype_name}/{comparison}_isoform.txt",
-                zip,
-                phenotype_name=ALL_PHENOTYPE_NAMES,
-                comparison=ALL_COMPARISON_GROUPS),
-        TUXEDO_DIR + "07-split/last_split",
-        expand(TUXEDO_DIR + "09-excel/{phenotype_name}/{comparison}.xlsx",
-                zip,
-                phenotype_name=ALL_PHENOTYPE_NAMES,
-                comparison=ALL_COMPARISON_GROUPS),
-        TUXEDO_DIR + "10-summary/tuxedo_summary.txt",
-        TUXEDO_DIR + "10-summary/tuxedo_summary.xlsx",
-        DELIVERABLES_DIR + "tuxedo",
-        DELIVERABLES_DIR + "combined_summary.xlsx",
-        *OPTIONAL_ALL
+        *ALL

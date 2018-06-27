@@ -1,0 +1,60 @@
+input_dir: ./inputs/00-multiplexed_reads
+
+alignment_output_dir:
+    "alignment_results"
+diffex_output_dir:
+    "diffex_results"
+
+main_factors:  yes     ^  yes   ^    no          ^   no
+phenotypes:    gender  ^  diet  ^    male.diet   ^   female.diet
+samples:
+    Sample_0: Me     ^   HF   ^      HF        ^
+    Sample_1: Me     ^   ND   ^      ND        ^
+    Sample_2: Me     ^   HF   ^      HF        ^
+    Sample_3:       ^   ND   ^                ^    ND
+    Sample_4: Fe     ^   HF   ^                ^    HF
+    Sample_5: Fe     ^   HF   ^                ^    HF
+    Sample_6: Fe     ^   DRG  ^                ^    DRG
+    Sample_7:       ^   DRG  ^                ^    DRG
+
+comparisons:
+    gender:
+    - Me_v_Fe
+    diet:
+    - HF_v_ND
+    - HF_v_DRG
+    - ND_v_DRG
+    male.diet:
+    - HF_v_ND
+    female.diet:
+    - HF_v_ND
+    - HF_v_DRG
+
+fold_change:
+    1.5
+
+deseq2_adjustedPValue:
+    0.05
+
+trimming_options:
+    base_quality_5prime: 0
+    base_quality_3prime: 0
+    trim_length_5prime: 0
+    trim_length_3prime: 3
+
+insert_size:
+    downsample_readcount: 30000
+    pair_length: 500
+
+alignment_options:
+    transcriptome_only: True
+    library_type: fr-unstranded  # fr-firststrand # fr-secondstrand
+
+genome:
+    mm10
+
+references:
+    gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/noRibo_mouse.gtf
+    bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/Bowtie2Index
+    entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+    bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/BBMap/

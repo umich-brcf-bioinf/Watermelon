@@ -14,10 +14,12 @@ import scripts.deseq2_helper as deseq2_helper
 WATERMELON_CONFIG_DIR = os.path.join(os.environ.get('WATERMELON_CONFIG_DIR', srcdir('config')), '')
 WATERMELON_SCRIPTS_DIR = os.path.join(os.environ.get('WATERMELON_SCRIPTS_DIR', srcdir('scripts')), '')
 
-INPUT_DIR = os.path.join(config.get("input_dir", "inputs"), "")
-ALIGNMENT_DIR = os.path.join(config.get("alignment_output_dir", "alignment_results"), "")
-DIFFEX_DIR = os.path.join(config.get("diffex_output_dir", "diffex_results"), "")
-DELIVERABLES_DIR = os.path.join(config.get("deliverables_output_dir", "deliverables"), "")
+rnaseq_snakefile_helper.transform_config(config)
+_DIRS = config.get("dirs", {})
+INPUT_DIR = os.path.join(_DIRS.get("input", "inputs"), "")
+ALIGNMENT_DIR = os.path.join(_DIRS.get("alignment_output", "alignment_results"), "")
+DIFFEX_DIR = os.path.join(_DIRS.get("diffex_output", "diffex_results"), "")
+DELIVERABLES_DIR = os.path.join(_DIRS.get("deliverables_output", "deliverables"), "")
 DESEQ2_DIR = os.path.join(DIFFEX_DIR, "deseq2", "")
 TUXEDO_DIR = os.path.join(DIFFEX_DIR, "tuxedo", "")
 CONFIG_CHECKSUMS_DIR = os.path.join(".config_checksums", "")
@@ -45,7 +47,7 @@ rnaseq_snakefile_helper.checksum_reset_all(CONFIG_CHECKSUMS_DIR,
                                            phenotype_comparisons=config['comparisons'],
                                            phenotype_samples=phenotypeManager.phenotype_sample_list)
 
-SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(config['input_dir'], config[SAMPLES_KEY])
+SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(INPUT_DIR, config[SAMPLES_KEY])
 
 if 'fastq_screen' in config:
     FASTQ_SCREEN_CONFIG = config['fastq_screen']

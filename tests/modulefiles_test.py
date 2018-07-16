@@ -80,33 +80,13 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
                    "python --version 2>&1").format(_MODULES_DIR)
         self.check_command(command, "Python 2.7.9", "wrong python version")
 
-    def test_fastq_screen_versions(self):
-        command = self.build_command("fastq_screen --version 2>&1 || echo 'not installed'")
-        self.check_command(command, "v0.11.1", "fastq screen wrong version")
-
     def test_bbmap_versions(self):
         command = self.build_command("bbmap.sh --version 2>&1 | grep 'BBMap version' || echo 'not installed'")
         self.check_command(command, "37.02", "BBMap wrong version")
 
-    def test_mutt_version(self):
-        command = self.build_command("mutt -v | head -1")
-        self.check_command(command, "\d*\.\d+", "mutt not installed")
-
-    def test_python_version(self):
-        command = self.build_command("python --version 2>&1")
-        self.check_command(command, "Python 2.7.9", "wrong python version")
-
-    def test_fastq_version(self):
-        command = self.build_command("fastqc --version 2>&1")
-        self.check_command(command, "FastQC v0.11.3", "wrong fastqc version")
-
     def test_bowtie_version(self):
         command = self.build_command("bowtie2 --version | awk 'NR==1 {print $NF}'")
         self.check_command(command, "2.2.1", "wrong bowtie2 version")
-
-    def test_tophat_version(self):
-        command = self.build_command("tophat --version 2>&1")
-        self.check_command(command, "TopHat v2.0.13", "wrong tophat version")
 
     def test_cufflinks_version(self):
         command = self.build_command("cufflinks 2>&1 | awk 'NR==1'")
@@ -116,17 +96,29 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
         command = self.build_command("cutadapt --version 2>&1")
         self.check_command(command, "1.8.1", "wrong cutadapt version")
 
-    def test_R_version(self):
-        command = self.build_command("Rscript --version 2>&1")
-        self.check_command(command, "version 3.3", "wrong R version")
+    def test_fastq_version(self):
+        command = self.build_command("fastqc --version 2>&1")
+        self.check_command(command, "FastQC v0.11.3", "wrong fastqc version")
 
-    def test_samtools_version(self):
-        command = self.build_command("(samtools 2>&1 | grep 'Version') || echo -e samtools not loaded")
-        self.check_command(command, "Version: 1.5", "wrong samtools version")
+    def test_fastq_screen_versions(self):
+        command = self.build_command("fastq_screen --version 2>&1 || echo 'not installed'")
+        self.check_command(command, "v0.11.1", "fastq screen wrong version")
+
+    def test_multiqc_installed(self):
+        command = self.build_command("multiqc --version")
+        self.check_command(command, "multiqc, version", "multiqc not installed")
+
+    def test_mutt_version(self):
+        command = self.build_command("mutt -v | head -1")
+        self.check_command(command, "\d*\.\d+", "mutt not installed")
 
     def test_picard_version(self):
         command = self.build_command("java -jar $PICARD_JARS/SortSam.jar --version 2>&1 | cut -d'(' -f1")
         self.check_command(command, "1.77", "wrong picard version")
+
+    def test_python_version(self):
+        command = self.build_command("python --version 2>&1")
+        self.check_command(command, "Python 2.7.9", "wrong python version")
 
     def test_python2_modules_present(self):
         missing_modules = []
@@ -142,22 +134,11 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
                 missing_modules.append(module_name)
         self.assertEquals([], missing_modules)
 
-    def test_tuxedo_R_libraries_present(self):
-        missing_libs = []
-        libs = ['cummeRbund']
-        for lib_name in libs:
-            rscript = ("Rscript --vanilla -e "
-                       "  'result<-1-require({}); "
-                       "   quit(status=result)'").format(lib_name)
-            command = self.build_command(rscript)
-            try:
-                subprocess.check_output(command, stderr=self.dev_null, shell=True)
-            except subprocess.CalledProcessError:
-                missing_libs.append(lib_name)
-        self.assertEquals([], missing_libs)
+    def test_R_version(self):
+        command = self.build_command("Rscript --version 2>&1")
+        self.check_command(command, "version 3.3", "wrong R version")
 
-
-    def test_deseq2_R_libraries_present(self):
+    def test_R_deseq2_libraries_present(self):
         missing_libs = []
         libs = ['BiocParallel',
                 'calibrate',
@@ -186,3 +167,25 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
             except subprocess.CalledProcessError:
                 missing_libs.append(lib_name)
         self.assertEquals([], missing_libs)
+
+    def test_R_tuxedo_libraries_present(self):
+        missing_libs = []
+        libs = ['cummeRbund']
+        for lib_name in libs:
+            rscript = ("Rscript --vanilla -e "
+                       "  'result<-1-require({}); "
+                       "   quit(status=result)'").format(lib_name)
+            command = self.build_command(rscript)
+            try:
+                subprocess.check_output(command, stderr=self.dev_null, shell=True)
+            except subprocess.CalledProcessError:
+                missing_libs.append(lib_name)
+        self.assertEquals([], missing_libs)
+
+    def test_samtools_version(self):
+        command = self.build_command("(samtools 2>&1 | grep 'Version') || echo -e samtools not loaded")
+        self.check_command(command, "Version: 1.5", "wrong samtools version")
+
+    def test_tophat_version(self):
+        command = self.build_command("tophat --version 2>&1")
+        self.check_command(command, "TopHat v2.0.13", "wrong tophat version")

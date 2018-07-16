@@ -128,7 +128,8 @@ class _ConfigValidator(object):
                                      self._check_comparison_references_unknown_phenotype_label,
                                      self._check_comparison_references_unknown_phenotype_value,
                                      self._check_samples_excluded_from_comparison,
-                                     self._check_phenotype_has_replicates, ]
+                                     self._check_phenotype_has_replicates,
+                                     self._check_config_can_be_transformed]
 
     def validate(self):
         collector = _ValidationCollector(self._log)
@@ -141,6 +142,13 @@ class _ConfigValidator(object):
         for validation in self._CONTENT_VALIDATIONS:
             collector.check(validation)
         return collector
+
+    def _check_config_can_be_transformed(self):
+        config = dict(self.config)
+        try:
+            watermelon_config.transform_config(config)
+        except ValueError as e:
+            raise _WatermelonConfigFailure('{}'.format(e))
 
     def _check_phenotype_has_replicates(self):
         phenotype_manager = PhenotypeManager(self.config)

@@ -1,5 +1,6 @@
 from argparse import Namespace
-CONFIG_KEYS = Namespace(input_dir='input_dir',
+CONFIG_KEYS = Namespace(dirs='dirs',
+                        dirs_input='input',
                         comparisons='comparisons',
                         main_factors='main_factors',
                         phenotypes='phenotypes',
@@ -30,3 +31,17 @@ def split_config_list(config_string, delim=DEFAULT_PHENOTYPE_DELIM):
     for i in config_string.split(delim):
         config_list.append(i.strip())
     return config_list
+
+def transform_config(config):
+    '''Accepts old or new config dict updating obsolete keys in place.'''
+    dir_keys = {'input_dir': 'input',
+                'alignment_output_dir': 'alignment_output',
+                'diffex_output_dir': 'diffex_output',
+                'deliverables_output_dir': 'deliverables_output',
+                }
+    dirs = config.get('dirs', {})
+    for old_key, new_key in dir_keys.items():
+        if old_key in config:
+            dirs[new_key] = config.pop(old_key)
+    if dirs:
+        config['dirs'] = dirs

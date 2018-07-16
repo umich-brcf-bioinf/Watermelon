@@ -1,9 +1,9 @@
-input_dir:
-    "/ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1_tests/test_data/inputs/00-multiplexed_reads"
-alignment_output_dir:
-    "alignment_results"
-diffex_output_dir:
-    "diffex_results"
+dirs:
+  input:
+    /ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1_tests/test_data/inputs/00-multiplexed_reads
+  alignment_output: alignment_results
+  diffex_output: diffex_results
+  deliverables_output_dir: deliverables
 
 main_factors:  yes     ^  yes   ^    no          ^   no
 phenotypes:    gender  ^  diet  ^    male.diet   ^   female.diet

@@ -26,5 +26,5 @@ rule align_qc:
             --config {params.multiqc_config_filename} \
             --outdir {params.output_dir} \
             --filename {params.output_filename} \
-            alignment_results
+            {ALIGNMENT_DIR}
         ) 2>&1 | tee {log} '''

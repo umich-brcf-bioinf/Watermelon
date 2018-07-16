@@ -16,6 +16,7 @@ import sys
 
 from snakemake import workflow
 
+from scripts import watermelon_config
 from scripts.watermelon_config import CONFIG_KEYS
 from scripts.watermelon_config import DEFAULT_COMPARISON_INFIX
 from scripts.watermelon_config import DEFAULT_PHENOTYPE_DELIM
@@ -403,3 +404,6 @@ def expand_read_stats_if_paired(read_stats_filename_format,
     if len([s for s,r in flattened_sample_reads if s == sample]) > 1:
         result.append(read_stats_filename_format.format(sample=sample))
     return result
+
+def transform_config(config):
+    watermelon_config.transform_config(config)

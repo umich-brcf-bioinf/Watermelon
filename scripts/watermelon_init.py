@@ -40,6 +40,7 @@ import pandas as pd
 import yaml
 
 import scripts.watermelon_config as watermelon_config
+from scripts.watermelon_config import CONFIG_KEYS
 
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
@@ -109,9 +110,9 @@ class _CommandValidator(object):
     def _validate_overwrite_check(args):
         existing_files = {}
         if os.path.exists(args.analysis_dir):
-            existing_files['analysis_dir'] = args.analysis_dir
+            existing_files['dirs: analysis'] = args.analysis_dir
         if os.path.exists(args.input_dir):
-            existing_files['input_dir'] = args.input_dir
+            existing_files['dirs: input'] = args.input_dir
         if existing_files:
             file_types = [file_type for file_type in sorted(existing_files.keys())]
             file_names = [existing_files[key] for key in file_types]
@@ -310,8 +311,8 @@ def _build_input_summary(args):
 def _build_phenotypes_samples_comparisons(samples):
     #pylint: disable=locally-disabled,invalid-name
     config = {}
-    config[watermelon_config.CONFIG_KEYS.main_factors] = _DEFAULT_MAIN_FACTORS
-    config[watermelon_config.CONFIG_KEYS.phenotypes] = _DEFAULT_PHENOTYPE_LABELS
+    config[CONFIG_KEYS.main_factors] = _DEFAULT_MAIN_FACTORS
+    config[CONFIG_KEYS.phenotypes] = _DEFAULT_PHENOTYPE_LABELS
 
     gender_values = itertools.cycle(_DEFAULT_GENDER_VALUES)
     genotype_values = itertools.cycle(_DEFAULT_GENOTYPE_VALUES)
@@ -324,14 +325,18 @@ def _build_phenotypes_samples_comparisons(samples):
     pheno_fmt = "{0:7}| {1:8} | {2}".replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
     pheno_value_strings = [pheno_fmt.format(*values) for values in sorted(pheno_value_items)]
     samples_dict = dict([(s, v) for s, v in zip(sorted(samples), pheno_value_strings)])
-    config[watermelon_config.CONFIG_KEYS.samples] = samples_dict
+    config[CONFIG_KEYS.samples] = samples_dict
 
-    config[watermelon_config.CONFIG_KEYS.comparisons] = _DEFAULT_COMPARISONS
+    config[CONFIG_KEYS.comparisons] = _DEFAULT_COMPARISONS
     return config
 
 def _make_config_dict(template_config, genome_references, args, samples):
     config = dict(template_config)
-    config[watermelon_config.CONFIG_KEYS.input_dir] = os.path.join(args.input_dir, args.input_samples_dir)
+
+    dirs = config[CONFIG_KEYS.dirs]
+    dirs[CONFIG_KEYS.dirs_input] = os.path.join(args.input_dir,
+                                                args.input_samples_dir)
+
     config.update(_build_phenotypes_samples_comparisons(samples))
     _dict_merge(config, genome_references)
     return config
@@ -417,13 +422,13 @@ $ watermelon -c {config_basename}
 def _write_config_file(config_filename, config_dict):
     tmp_config_dict = dict(config_dict)
     ordered_config_dict = OrderedDict()
-    named_keys = [watermelon_config.CONFIG_KEYS.input_dir,
-                  watermelon_config.CONFIG_KEYS.main_factors,
-                  watermelon_config.CONFIG_KEYS.phenotypes,
-                  watermelon_config.CONFIG_KEYS.samples,
-                  watermelon_config.CONFIG_KEYS.comparisons,
-                  watermelon_config.CONFIG_KEYS.genome,
-                  watermelon_config.CONFIG_KEYS.references]
+    named_keys = [CONFIG_KEYS.dirs,
+                  CONFIG_KEYS.main_factors,
+                  CONFIG_KEYS.phenotypes,
+                  CONFIG_KEYS.samples,
+                  CONFIG_KEYS.comparisons,
+                  CONFIG_KEYS.genome,
+                  CONFIG_KEYS.references]
     for key in named_keys:
         if key in tmp_config_dict:
             ordered_config_dict[key] = tmp_config_dict.pop(key)

@@ -542,12 +542,14 @@ references:
             with open(config_filename, 'r') as config_file:
                 config_lines = [line.strip('\n') for line in config_file.readlines()]
         config_prelude = watermelon_init._CONFIG_PRELUDE.split('\n')
-        self.assertEqual(12 + len(config_prelude), len(config_lines))
+        expected_config_lines = 13
+        self.assertEqual(expected_config_lines + len(config_prelude),
+                         len(config_lines))
         line_iter = iter(config_lines)
         for _ in config_prelude:
             next(line_iter)
         self.assertEqual('dirs:', next(line_iter))
-        self.assertEqual('  input: INPUT_DIR', next(line_iter)
+        self.assertEqual('    input: INPUT_DIR', next(line_iter))
         self.assertEqual('main_factors: yes ^ no', next(line_iter))
         self.assertEqual('phenotypes: PHENOLABEL1 ^ PHENOLABEL2', next(line_iter))
         self.assertEqual('samples: SAMPLES', next(line_iter))
@@ -622,7 +624,7 @@ class CommandValidatorTest(unittest.TestCase):
             args = Namespace(analysis_dir=analysis_dir,
                              input_dir=input_dir)
             self.assertRaisesRegexp(watermelon_init._UsageError,
-                                    r'analysis_dir \[.*\] exists',
+                                    r'dirs: analysis \[.*\] exists',
                                     validator._validate_overwrite_check,
                                     args)
 

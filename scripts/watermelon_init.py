@@ -333,9 +333,10 @@ def _build_phenotypes_samples_comparisons(samples):
 def _make_config_dict(template_config, genome_references, args, samples):
     config = dict(template_config)
 
-    dirs = config[CONFIG_KEYS.dirs]
+    dirs = config.get(CONFIG_KEYS.dirs, {})
     dirs[CONFIG_KEYS.dirs_input] = os.path.join(args.input_dir,
                                                 args.input_samples_dir)
+    config[CONFIG_KEYS.dirs] = dirs
 
     config.update(_build_phenotypes_samples_comparisons(samples))
     _dict_merge(config, genome_references)

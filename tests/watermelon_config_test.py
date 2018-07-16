@@ -71,3 +71,19 @@ class WatermelonConfigTest(unittest.TestCase):
                   }
         watermelon_config.transform_config(config)
         self.assertEqual(expected_config, config)
+
+    def test_transform_config_raisesOnDuplicateKeys(self):
+        config = {'a': 1,
+                  'b': 2,
+                  'dirs': {'input': 'new_input',
+                           'alignment_output': 'new_alignment',
+                           },
+                  'input_dir': 'old_input',
+                  'alignment_output_dir': 'old_alignment',
+                  }
+        self.assertRaisesRegexp(ValueError,
+                                (r'found both old and new style.*'
+                                 r'alignment_output_dir,dirs:alignment_output; '
+                                 r'input_dir,dirs:input'),
+                                watermelon_config.transform_config,
+                                config)

@@ -3,8 +3,11 @@ Changelog
 
 x.x.x (MM/DD/YYYY)
 ------------------
-- Modularize by giving each rule its own file.
-- The all rule is now based on the minimal set of outputs.
+- Modularize snakefile by splitting rules into individual files.
+- Revised "all" rule to specify the minimal set of outputs.
+- Adjusted config to group dirs into single block.
+- Fixed bug that caused multiqc to crash when custom alignment dir specified
+- Extended version tests to check multiqc installed correctly
 
 0.3.4 (6/12/2018)
 -----------------

@@ -1,12 +1,20 @@
 Changelog
 =========
 
+0.3.5 (08/01/2018)
+------------------
+- Modularize snakefile by splitting rules into individual files.
+- Revised "all" rule to specify the minimal set of outputs.
+- Adjusted config to group dirs into single block.
+- Fixed bug that caused multiqc to crash when custom alignment dir specified
+- Extended version tests to check multiqc installed correctly
+
 0.3.4 (6/12/2018)
 -----------------
 - Adjusted module files/tests to make compatible with bfx-comp5/6
 - Renamed watermelon_rnaseq to watermelon_dependencies
 - Adjusted versions of watermelon and watermelon_dependencies modules to match
-  Watermenlon version number
+  Watermelon version number
 
 0.3.3 (12/20/2017)
 ------------------

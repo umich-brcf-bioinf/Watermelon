@@ -889,6 +889,25 @@ samples:
                                expected_message,
                                validator._check_phenotype_has_replicates)
 
+    def test_config_can_be_transformed_ok(self):
+        config_string = 'input_dir: input'
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        validator._check_config_can_be_transformed()
+        self.ok()
+
+    def test_config_can_be_transformed_failureIfOldAndNewStyleConfigs(self):
+        config_string = '''
+dirs:
+    input: new_input
+input_dir: old_input
+'''
+        validator = _ConfigValidator(yaml.load(config_string), StringIO())
+        expected_message = r'old and new style dirs'
+        self.assertRaisesRegex(_WatermelonConfigFailure,
+                               expected_message,
+                               validator._check_config_can_be_transformed)
+
+
     def test_init_validationsAreIncluded(self):
         validator = _ConfigValidator(config={}, log=StringIO())
         primary_validation_names = [f.__name__ for f in validator._PARSING_VALIDATIONS]
@@ -911,7 +930,8 @@ samples:
                           '_check_comparison_references_unknown_phenotype_label',
                           '_check_comparison_references_unknown_phenotype_value',
                           '_check_samples_excluded_from_comparison',
-                          '_check_phenotype_has_replicates',],
+                          '_check_phenotype_has_replicates',
+                          '_check_config_can_be_transformed',],
                          secondary_validation_names)
 
 class ValidationCollectorTest(unittest.TestCase):

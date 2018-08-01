@@ -477,12 +477,12 @@ references:
                                                           genome_references,
                                                           args,
                                                           samples)
-        expected_keys = ['input_dir',
+        expected_keys = ['dirs',
                          'foo1', 'foo2',
                          'genome', 'references',
                          'main_factors', 'phenotypes', 'samples', 'comparisons']
         self.assertEquals(sorted(expected_keys), sorted(actual_config.keys()))
-        self.assertEqual('/my/input/dir/samples', actual_config['input_dir'])
+        self.assertEqual('/my/input/dir/samples', actual_config['dirs']['input'])
         self.assertEqual(template_config['foo1'], actual_config['foo1'])
         self.assertEqual(template_config['foo2'], actual_config['foo2'])
         self.assertEqual(genome_references['genome'], actual_config['genome'])
@@ -527,7 +527,7 @@ references:
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             config_filename = os.path.join(temp_dir_path, 'config.yaml')
-            config_dict = {'input_dir' : 'INPUT_DIR',
+            config_dict = {'dirs': {'input' : 'INPUT_DIR'},
                            'samples' : 'SAMPLES',
                            'comparisons' : 'COMPARISONS',
                            'genome' : 'GENOME',
@@ -542,11 +542,14 @@ references:
             with open(config_filename, 'r') as config_file:
                 config_lines = [line.strip('\n') for line in config_file.readlines()]
         config_prelude = watermelon_init._CONFIG_PRELUDE.split('\n')
-        self.assertEqual(12 + len(config_prelude), len(config_lines))
+        expected_config_lines = 13
+        self.assertEqual(expected_config_lines + len(config_prelude),
+                         len(config_lines))
         line_iter = iter(config_lines)
         for _ in config_prelude:
             next(line_iter)
-        self.assertEqual('input_dir: INPUT_DIR', next(line_iter))
+        self.assertEqual('dirs:', next(line_iter))
+        self.assertEqual('    input: INPUT_DIR', next(line_iter))
         self.assertEqual('main_factors: yes ^ no', next(line_iter))
         self.assertEqual('phenotypes: PHENOLABEL1 ^ PHENOLABEL2', next(line_iter))
         self.assertEqual('samples: SAMPLES', next(line_iter))
@@ -621,7 +624,7 @@ class CommandValidatorTest(unittest.TestCase):
             args = Namespace(analysis_dir=analysis_dir,
                              input_dir=input_dir)
             self.assertRaisesRegexp(watermelon_init._UsageError,
-                                    r'analysis_dir \[.*\] exists',
+                                    r'dirs: analysis \[.*\] exists',
                                     validator._validate_overwrite_check,
                                     args)
 
@@ -635,7 +638,7 @@ class CommandValidatorTest(unittest.TestCase):
             args = Namespace(analysis_dir=analysis_dir,
                              input_dir=input_dir)
             self.assertRaisesRegexp(watermelon_init._UsageError,
-                                    r'input_dir \[.*\] exists',
+                                    r'dirs: input \[.*\] exists',
                                     validator._validate_overwrite_check,
                                     args)
 

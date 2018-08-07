@@ -3,12 +3,13 @@ Changelog
 
 x.y.z (MM/DD/YYYY)
 ------------------
-
-- 
+- Adjusted how environment modules are versioned and how rules load environment
+  modules
+-
 
 0.3.5 (08/01/2018)
 ------------------
-- Modularize snakefile by splitting rules into individual files.
+- Modularized snakefile by splitting rules into individual files.
 - Revised "all" rule to specify the minimal set of outputs.
 - Adjusted config to group dirs into single block.
 - Fixed bug that caused multiqc to crash when custom alignment dir specified

@@ -105,7 +105,7 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
         self.check_command(command, "v0.11.1", "fastq screen wrong version")
 
     def test_multiqc_installed(self):
-        command = self.build_command("multiqc --version")
+        command = self.build_command("module load watermelon > /dev/null && multiqc --version")
         self.check_command(command, "multiqc, version", "multiqc not installed")
 
     def test_mutt_version(self):

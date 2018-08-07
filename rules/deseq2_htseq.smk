@@ -11,16 +11,18 @@ rule deseq2_htseq:
     log:
         DESEQ2_DIR + "01-htseq/.log/{sample}_htseq_per_sample.log"
     shell:
-        "module purge && module load watermelon_dependencies && "
-        "export MKL_NUM_THREADS={threads} && " #these exports throttle numpy processes
-        "export NUMEXPR_NUM_THREADS={threads} && "
-        "export OMP_NUM_THREADS={threads} && "
-        "python -m HTSeq.scripts.count "
-        "   -f bam "
-        "   -s {params.strand} "
-        "   -m intersection-nonempty "
-        "   -q {input.bams} "
-        "   {input.gtf} "
-        "   > {output}.tmp "
-        "   2>&1 | tee {log} && "
-        "mv {output}.tmp {output} "
+        '''(module purge
+        module load watermelon_dependencies/{WAT_VER}
+        # These exports throttle numpy processes
+        export MKL_NUM_THREADS={threads}
+        export NUMEXPR_NUM_THREADS={threads}
+        export OMP_NUM_THREADS={threads}
+        python -m HTSeq.scripts.count \
+           -f bam \
+           -s {params.strand} \
+           -m intersection-nonempty \
+           -q {input.bams} \
+           {input.gtf} \
+           > {output}.tmp
+        mv {output}.tmp {output}
+        ) 2>&1 | tee {log} '''

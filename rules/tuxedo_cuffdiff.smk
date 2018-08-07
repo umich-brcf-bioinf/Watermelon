@@ -21,18 +21,19 @@ rule tuxedo_cuffdiff:
     log:
         TUXEDO_DIR + "01-cuffdiff/.log/{pheno}_cuffdiff.log"
     shell:
-        "rm -rf {params.output_dir} {params.output_dir}.tmp &&"
-        "module purge && module load watermelon_dependencies && "
-        "cuffdiff -q "
-        " -p {threads} "
-        " -L {params.labels} "
-        " --max-bundle-frags 999999999 "
-        " --library-type {params.strand} "
-        " -o {params.output_dir}.tmp "
-        " -b {input.fasta_file} "
-        " -u -N "
-        " --compatible-hits-norm "
-        " {input.gtf_file} "
-        " {params.samples} "
-        " 2>&1 | tee {log} && "
-        "mv {params.output_dir}.tmp {params.output_dir} "
+        '''(rm -rf {params.output_dir} {params.output_dir}.tmp
+        module purge
+        module load watermelon_dependencies/{WAT_VER}
+        cuffdiff -q \
+            -p {threads} \
+            -L {params.labels} \
+            --max-bundle-frags 999999999 \
+            --library-type {params.strand} \
+            -o {params.output_dir}.tmp \
+            -b {input.fasta_file} \
+            -u -N \
+            --compatible-hits-norm \
+            {input.gtf_file} \
+            {params.samples}
+        mv {params.output_dir}.tmp {params.output_dir}
+        ) 2>&1 | tee {log} '''

@@ -19,7 +19,7 @@ rule align_qc:
         ALIGNMENT_DIR + "06-qc/.log/align_qc.log"
     shell:
         '''(module purge
-        module load watermelon &&
+        module load watermelon/{WAT_VER}
         echo 'watermelon|version|multiqc|'`multiqc --version | cut -d' ' -f2-`
         multiqc --force \
             --exclude cutadapt \

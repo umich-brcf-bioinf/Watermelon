@@ -1,7 +1,6 @@
 #!/bin/bash
 # Launches snakemake
 
-export WATERMELON_VERSION=0.3.5x
 export SCRIPT_NAME=`basename $0 .sh`
 export WATERMELON_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
 export RUN_TIME=`date +"%Y%m%d_%H%M%S"`
@@ -10,6 +9,7 @@ export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
 export SNAKEFILE=${WATERMELON_ROOT_DIR}/rnaseq.snakefile
 export WATERMELON_CONFIG_DIR=${WATERMELON_ROOT_DIR}/config
 export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
+export WATERMELON_VERSION=$(cd $WATERMELON_ROOT_DIR; python -c 'import scripts; print(scripts.__version__)')
 
 export CONFIG_FILE='config.yaml'
 export CORES=40

@@ -24,14 +24,15 @@ rule align_insert_size_PE:
     log:
         ALIGNMENT_DIR + "04-insert_size/.log/{sample}_read_stats.log"
     shell:
-        '''(module purge && module load watermelon_dependencies &&
-        mkdir -p {params.temp_dir} &&
-        JAVA_OPTS="-XX:ParallelGCThreads=2" &&
+        '''(module purge
+        module load watermelon_dependencies/{WAT_VER}
+        mkdir -p {params.temp_dir}
+        JAVA_OPTS="-XX:ParallelGCThreads=2"
         reformat.sh t={threads} \
             sampleseed=42 \
             samplereadstarget={params.downsample_readcount} \
             in1={input.raw_fastq_R1} in2={input.raw_fastq_R2} \
-            out={params.downsampled_fastq_r1} out2={params.downsampled_fastq_r2} &&
+            out={params.downsampled_fastq_r1} out2={params.downsampled_fastq_r2}
         bbmap.sh -Xmx{resources.memoryInGb}g t={threads} \
             semiperfectmode=t \
             requirecorrectstrand=f \
@@ -41,8 +42,9 @@ rule align_insert_size_PE:
             in2={params.downsampled_fastq_r2} \
             ihist={params.ihist_file} \
             lhist={params.lhist_file} \
-            out={params.mapped_file} &&
-        module purge && module load python/3.6.1 &&
+            out={params.mapped_file}
+        module purge
+        module load python/3.6.1
         python {WATERMELON_SCRIPTS_DIR}/read_stats_bbmap_single.py \
             --input_dir {params.temp_dir} \
             --sample_id {params.sample_id} \

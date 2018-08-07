@@ -12,6 +12,9 @@ try:
 except ImportError:
     from io import StringIO
 
+import scripts
+WAT_VER = scripts.__version__
+
 _TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 _MODULES_DIR = os.path.realpath(os.path.join(_TEST_DIR, '..', 'modulefiles'))
 
@@ -28,8 +31,8 @@ class BfxCoreBaseTestCase(unittest.TestCase):
     def build_command(command_text):
         command = ("module purge; "
                    "module use {}; "
-                   "module load watermelon_dependencies 2>/dev/null; "
-                   "{}").format(_MODULES_DIR, command_text)
+                   "module load watermelon_dependencies/{} 2>/dev/null; "
+                   "{}").format(_MODULES_DIR, WAT_VER, command_text)
         return command
 
     def check_command(self, command, expected_regexp, message):
@@ -41,8 +44,8 @@ class WatermelonModuleTest(BfxCoreBaseTestCase):
     def test_module_switches_python_version(self):
         command = ("module purge; "
                    "module use {}; "
-                   "module load watermelon 2>/dev/null; "
-                   "python --version 2>&1").format(_MODULES_DIR)
+                   "module load watermelon/{} 2>/dev/null; "
+                   "python --version 2>&1").format(_MODULES_DIR, WAT_VER)
         self.check_command(command, "Python 3.6.1", "wrong python version")
 
     def test_python3_modules_present(self):
@@ -65,8 +68,9 @@ class WatermelonModuleTest(BfxCoreBaseTestCase):
     def test_snakemake_version(self):
         command = ("module purge; "
                    "module use {}; "
-                   "module load watermelon 2>/dev/null; "
-                   "python -c 'import snakemake as s; print(s.__version__)'").format(_MODULES_DIR)
+                   "module load watermelon/{} 2>/dev/null; "
+                   "python -c 'import snakemake as s; print(s.__version__)'")\
+                        .format(_MODULES_DIR, WAT_VER)
         output = str(subprocess.check_output(command, stderr=self.dev_null, shell=True))
         self.assertRegexpMatches(output, r"3\..*", "wrong snakemake version")
 
@@ -76,8 +80,8 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
         command = ("module purge; "
                    "module use {}; "
                    "module load python/3.6.1; "
-                   "module load watermelon_dependencies 2>/dev/null; "
-                   "python --version 2>&1").format(_MODULES_DIR)
+                   "module load watermelon_dependencies/{} 2>/dev/null; "
+                   "python --version 2>&1").format(_MODULES_DIR, WAT_VER)
         self.check_command(command, "Python 2.7.9", "wrong python version")
 
     def test_bbmap_versions(self):
@@ -105,7 +109,9 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
         self.check_command(command, "v0.11.1", "fastq screen wrong version")
 
     def test_multiqc_installed(self):
-        command = self.build_command("module load watermelon > /dev/null && multiqc --version")
+        command = 'module load watermelon/{} >/dev/null 2>&1 && multiqc --version'
+        command = command.format(WAT_VER)
+        command = self.build_command(command)
         self.check_command(command, "multiqc, version", "multiqc not installed")
 
     def test_mutt_version(self):

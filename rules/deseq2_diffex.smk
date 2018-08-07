@@ -18,21 +18,23 @@ rule deseq2_diffex:
     resources:
         memoryInGb = 16
     shell:
-        "module purge && module load watermelon_dependencies && "
-        "rm -rf {output.dir}/normalized_data && "
-        "rm -rf {output.dir}/plots && "
-        "rm -rf {output.dir}/gene_lists && "
-        "rm -rf {output.dir}/.tmp/* && "
-        "{WATERMELON_SCRIPTS_DIR}/deseq2_diffex.R "
-        "    -c {input.htseq_counts} "
-        "    -m {input.sample_metadata} "
-        "    -f {input.contrasts} "
-        "    -o {output.dir}/.tmp "
-        "    --foldChange={params.fold_change} "
-        "    --adjustedPValue={params.adjusted_pvalue} "
-        "    --threads={threads} "
-        "    --javaMemoryInGb={resources.memoryInGb} 2>&1 "
-        "    --pandocMemoryInGb={resources.memoryInGb} 2>&1 | tee {log} && "
-        "mv {output.dir}/.tmp/* {output.dir} && "
-        "touch {output.dir} && "
-        "rm -f Rplots.pdf " #Some part of R generates this empty (nuisance) plot
+        '''(module purge
+        module load watermelon_dependencies/{WAT_VER}
+        rm -rf {output.dir}/normalized_data
+        rm -rf {output.dir}/plots
+        rm -rf {output.dir}/gene_lists
+        rm -rf {output.dir}/.tmp/*
+        {WATERMELON_SCRIPTS_DIR}/deseq2_diffex.R \
+            -c {input.htseq_counts} \
+            -m {input.sample_metadata} \
+            -f {input.contrasts} \
+            -o {output.dir}/.tmp \
+            --foldChange={params.fold_change} \
+            --adjustedPValue={params.adjusted_pvalue} \
+            --threads={threads} \
+            --javaMemoryInGb={resources.memoryInGb} \
+            --pandocMemoryInGb={resources.memoryInGb}
+        mv {output.dir}/.tmp/* {output.dir}
+        touch {output.dir}
+        rm -f Rplots.pdf #Some part of R generates this empty (nuisance) plot
+        ) 2>&1 | tee {log}'''

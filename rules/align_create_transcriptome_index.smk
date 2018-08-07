@@ -14,15 +14,16 @@ rule align_create_transcriptome_index:
     log:
         ALIGNMENT_DIR + "04-tophat/.log/create_transcriptome_index.log"
     shell:
-        '''(module purge && module load watermelon_dependencies &&
-        mkdir -p {params.temp_dir} &&
-        rm -rf {params.temp_dir}/* &&
+        '''(module purge
+        module load watermelon_dependencies/{WAT_VER}
+        mkdir -p {params.temp_dir}
+        rm -rf {params.temp_dir}/*
         tophat -G {input.gtf} \
             --library-type {params.strand} \
             --transcriptome-index={params.temp_dir}/transcriptome_index/transcriptome \
-            {input.bowtie2_index_dir}/genome &&
-        rm -rf {params.output_dir}/{params.transcriptome_dir} &&
-        mv {params.temp_dir}/{params.transcriptome_dir} {params.output_dir} &&
-        mv tophat_out {params.output_dir}/{params.transcriptome_dir}/ &&
+            {input.bowtie2_index_dir}/genome
+        rm -rf {params.output_dir}/{params.transcriptome_dir}
+        mv {params.temp_dir}/{params.transcriptome_dir} {params.output_dir}
+        mv tophat_out {params.output_dir}/{params.transcriptome_dir}/
         touch {params.output_dir}/{params.transcriptome_dir}/*
         ) 2>&1 | tee {log}'''

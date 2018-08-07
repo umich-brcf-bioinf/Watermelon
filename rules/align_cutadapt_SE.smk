@@ -14,17 +14,18 @@ rule align_cutadapt_SE:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_cutadapt.log"
     run:
         if rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"]):
-            shell('''(module purge && module load watermelon_dependencies &&
-                set -x &&
+            shell('''(module purge
+                module load watermelon_dependencies/{WAT_VER}
+                set -x
                 cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} \
                     -u {params.trim_length_5prime} \
                     -u -{params.trim_length_3prime} \
                     --trim-n -m 20 \
                     -o {output}.tmp.gz \
-                    {input.raw_fastq} &&
+                    {input.raw_fastq}
                 mv {output}.tmp.gz {output}
                 ) 2>&1 | tee {log} ''')
         else:
-            shell('''(ln -sf ../../{input.raw_fastq} {output} &&
+            shell('''(ln -sf ../../{input.raw_fastq} {output}
                 echo No trimming done
                 ) 2>&1 |tee {log} ''')

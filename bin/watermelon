@@ -188,7 +188,11 @@ set +e
 
 snakemake_command="snakemake --printshellcmds --keep-going --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} --cores ${CORES} --resources memoryInGb=${MEMORY_IN_GB} -T ${DRYRUN} ${EXTRA_ARGUMENTS}"
     echo $snakemake_command
-unbuffer $snakemake_command
+# cgates: unbuffer is a good idea, but bfx-comp6 unbuffer is broke and causes
+# crash; furthermore, the need for unbuffer will go away when we switch
+# to a better python logger (so we don't need to tee at all)
+# unbuffer $snakemake_command
+$snakemake_command
 SNAKEMAKE_EXIT=$?
 
 if [[ -z "$DRYRUN" ]]; then

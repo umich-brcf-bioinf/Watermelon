@@ -3,9 +3,8 @@ Changelog
 
 x.y.z (MM/DD/YYYY)
 ------------------
-- Adjusted how environment modules are versioned and how rules load environment
-  modules
--
+- Adjusted how environment modules are versioned and loaded
+- Disabled color output to avoid errors on bfx-comp6 (a transient regression, we hope)
 
 0.3.5 (08/01/2018)
 ------------------

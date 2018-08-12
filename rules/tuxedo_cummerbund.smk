@@ -15,7 +15,7 @@ rule tuxedo_cummerbund:
     log:
          TUXEDO_DIR + "06-cummerbund/.log/{pheno}_cummerbund.log"
     shell:
-        '''module purge
+        '''(module purge
         module load watermelon_dependencies/{WAT_VER}
         mkdir -p {params.output_dir}/Plots
         Rscript {WATERMELON_SCRIPTS_DIR}/Run_cummeRbund.R \

@@ -15,7 +15,7 @@ rule align_fastq_screen_biotype:
         biotype_config_file = FASTQ_SCREEN_CONFIG['reference_basedir'] +'/' + FASTQ_SCREEN_CONFIG['species'] + '.conf'
     shell:
         '''(module purge
-        module load watermelon_dependencies/{_WAT_VER}
+        module load watermelon_dependencies/{WAT_VER}
         echo 'watermelon|version|fastq_screen|'`fastq_screen --version`
         fastq_screen \
             --threads {threads} \

@@ -50,8 +50,10 @@ class WatermelonModuleTest(BfxCoreBaseTestCase):
 
     def test_python3_modules_present(self):
         missing_modules = []
-        modules = ["numpy",
+        modules = ["HTSeq",
                    "pandas",
+                   "pysam",
+                   "numpy",
                    "testfixtures",
                    "xlsxwriter",
                    "yaml"]
@@ -128,8 +130,7 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
 
     def test_python2_modules_present(self):
         missing_modules = []
-        modules = ["HTSeq",
-                   "numpy",
+        modules = ["numpy",
                    "xlsxwriter",
                    "yaml"]
         for module_name in modules:

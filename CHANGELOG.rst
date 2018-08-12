@@ -5,6 +5,7 @@ x.y.z (MM/DD/YYYY)
 ------------------
 - Adjusted how environment modules are versioned and loaded
 - Disabled color output to avoid errors on bfx-comp6 (a transient regression, we hope)
+- Adjusted watermelon script and rules to work consistently across comp 3,5,6
 
 0.3.5 (08/01/2018)
 ------------------

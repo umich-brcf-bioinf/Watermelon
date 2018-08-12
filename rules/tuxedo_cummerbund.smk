@@ -15,13 +15,14 @@ rule tuxedo_cummerbund:
     log:
          TUXEDO_DIR + "06-cummerbund/.log/{pheno}_cummerbund.log"
     shell:
-        "module purge && module load watermelon_dependencies && "
-        "mkdir -p {params.output_dir}/Plots && "
-        "Rscript {WATERMELON_SCRIPTS_DIR}/Run_cummeRbund.R "
-        " baseDir={params.output_dir} "
-        " cuffDiffDir={params.cuff_diff_dir} "
-        " grpRepFile={input.group_replicates} "
-        " gtfFile={input.gtf_file} "
-        " genome={params.genome} "
-        " 2>&1 | tee {log} && "
-        "touch {params.output_dir}/Plots "
+        '''(module purge
+        module load watermelon_dependencies/{WAT_VER}
+        mkdir -p {params.output_dir}/Plots
+        Rscript {WATERMELON_SCRIPTS_DIR}/Run_cummeRbund.R \
+            baseDir={params.output_dir} \
+            cuffDiffDir={params.cuff_diff_dir} \
+            grpRepFile={input.group_replicates} \
+            gtfFile={input.gtf_file} \
+            genome={params.genome}
+        touch {params.output_dir}/Plots
+        ) 2>&1 | tee {log} '''

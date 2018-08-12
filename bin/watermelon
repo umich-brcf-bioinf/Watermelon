@@ -1,7 +1,6 @@
 #!/bin/bash
 # Launches snakemake
 
-export WATERMELON_VERSION=0.3.5
 export SCRIPT_NAME=`basename $0 .sh`
 export WATERMELON_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
 export RUN_TIME=`date +"%Y%m%d_%H%M%S"`
@@ -10,6 +9,7 @@ export LOG_FILE=${LOG_DIR}/${SCRIPT_NAME}.log
 export SNAKEFILE=${WATERMELON_ROOT_DIR}/rnaseq.snakefile
 export WATERMELON_CONFIG_DIR=${WATERMELON_ROOT_DIR}/config
 export WATERMELON_SCRIPTS_DIR=${WATERMELON_ROOT_DIR}/scripts
+export WATERMELON_VERSION=$(cd $WATERMELON_ROOT_DIR; python -c 'import scripts; print(scripts.__version__)')
 
 export CONFIG_FILE='config.yaml'
 export CORES=40
@@ -188,7 +188,11 @@ set +e
 
 snakemake_command="snakemake --printshellcmds --keep-going --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} --cores ${CORES} --resources memoryInGb=${MEMORY_IN_GB} -T ${DRYRUN} ${EXTRA_ARGUMENTS}"
     echo $snakemake_command
-unbuffer $snakemake_command
+# cgates: unbuffer is a good idea, but bfx-comp6 unbuffer is broke and causes
+# crash; furthermore, the need for unbuffer will go away when we switch
+# to a better python logger (so we don't need to tee at all)
+# unbuffer $snakemake_command
+$snakemake_command
 SNAKEMAKE_EXIT=$?
 
 if [[ -z "$DRYRUN" ]]; then

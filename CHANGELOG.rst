@@ -1,9 +1,15 @@
 Changelog
 =========
 
-0.3.5 (08/01/2018)
-------------------
-- Modularize snakefile by splitting rules into individual files.
+0.3.6 (8/12/2018)
+-----------------
+- Adjusted how environment modules are versioned and loaded
+- Disabled color output to avoid errors on bfx-comp6 (a transient regression, we hope)
+- Adjusted watermelon script and rules to work consistently across comp 3,5,6
+
+0.3.5 (8/1/2018)
+----------------
+- Modularized snakefile by splitting rules into individual files.
 - Revised "all" rule to specify the minimal set of outputs.
 - Adjusted config to group dirs into single block.
 - Fixed bug that caused multiqc to crash when custom alignment dir specified

@@ -18,8 +18,9 @@ rule align_qc:
     log:
         ALIGNMENT_DIR + "06-qc/.log/align_qc.log"
     shell:
-        '''(module purge && module load watermelon_dependencies &&
-        echo 'watermelon|version|multiqc|'`multiqc --version | cut -d' ' -f2-` &&
+        '''(module purge
+        module load watermelon/{WAT_VER}
+        echo 'watermelon|version|multiqc|'`multiqc --version | cut -d' ' -f2-`
         multiqc --force \
             --exclude cutadapt \
             --exclude bowtie2 \

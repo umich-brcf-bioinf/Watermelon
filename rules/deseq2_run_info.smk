@@ -7,8 +7,9 @@ rule deseq2_run_info:
         run_info = DESEQ2_DIR + "05-run_info/run_info.txt",
         glossary = DESEQ2_DIR + "05-run_info/glossary.txt"
     run:
-        command = ('module load watermelon_dependencies && '
-                   'module list -t 2> {}').format(output['run_info'])
+        command = ('module purge && '
+                   'module load watermelon_dependencies/{} && '
+                   'module list -t 2> {}').format(WAT_VER, output['run_info'])
         subprocess.call(command, shell=True)
         with open(output['run_info'], 'a') as run_info_file:
             print('\n\nConfig\n', file=run_info_file)

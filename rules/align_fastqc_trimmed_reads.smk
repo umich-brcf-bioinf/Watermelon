@@ -9,5 +9,7 @@ rule align_fastqc_trimmed_reads:
     params:
         fastqc_dir = ALIGNMENT_DIR + "03-fastqc_reads"
     shell:
-        "module purge && module load watermelon_dependencies && "
-        "fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log}"
+        '''(module purge
+        module load watermelon_dependencies/{WAT_VER}
+        fastqc {input} -o {params.fastqc_dir}
+        ) 2>&1 | tee {log}'''

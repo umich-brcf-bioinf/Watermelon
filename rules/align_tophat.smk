@@ -24,9 +24,10 @@ rule align_tophat:
         ALIGNMENT_DIR + "04-tophat/.log/{sample}_tophat.log"
     threads: 8
     shell:
-        '''(module purge && module load watermelon_dependencies &&
-        TOPHAT_SAMPLE_OPTIONS=$(<{input.tophat_sample_options}) &&
-        set -x &&
+        '''(module purge
+        module load watermelon_dependencies/{WAT_VER}
+        TOPHAT_SAMPLE_OPTIONS=$(<{input.tophat_sample_options})
+        set -x
         tophat -p {threads} \
              --b2-very-sensitive \
              --no-coverage-search \
@@ -37,7 +38,7 @@ rule align_tophat:
              {params.tophat_alignment_options} \
              -o {params.tophat_dir}/{params.sample} \
              {input.bowtie2_index_dir}/genome \
-             {input.fastq_files} && \
-        mv {params.tophat_dir}/{params.sample}/accepted_hits.bam {params.tophat_dir}/{params.sample}/{params.sample}_accepted_hits.bam &&
+             {input.fastq_files}
+        mv {params.tophat_dir}/{params.sample}/accepted_hits.bam {params.tophat_dir}/{params.sample}/{params.sample}_accepted_hits.bam
         mv {params.tophat_dir}/{params.sample}/align_summary.txt {params.tophat_dir}/{params.sample}/{params.sample}_align_summary.txt
         ) 2>&1 | tee {log}'''

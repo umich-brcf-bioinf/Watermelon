@@ -9,5 +9,7 @@ rule align_fastqc_tophat_align:
     log:
         ALIGNMENT_DIR + "05-fastqc_align/.log/{sample}_fastqc_tophat_align.log"
     shell:
-        "module purge && module load watermelon_dependencies && "
-        "fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log} "
+        '''(module purge
+        module load watermelon_dependencies/{WAT_VER}
+        fastqc {input} -o {params.fastqc_dir}
+        ) 2>&1 | tee {log} '''

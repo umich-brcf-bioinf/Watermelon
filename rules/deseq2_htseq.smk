@@ -11,16 +11,25 @@ rule deseq2_htseq:
     log:
         DESEQ2_DIR + "01-htseq/.log/{sample}_htseq_per_sample.log"
     shell:
-        "module purge && module load watermelon_dependencies && "
-        "export MKL_NUM_THREADS={threads} && " #these exports throttle numpy processes
-        "export NUMEXPR_NUM_THREADS={threads} && "
-        "export OMP_NUM_THREADS={threads} && "
-        "python -m HTSeq.scripts.count "
-        "   -f bam "
-        "   -s {params.strand} "
-        "   -m intersection-nonempty "
-        "   -q {input.bams} "
-        "   {input.gtf} "
-        "   > {output}.tmp "
-        "   2>&1 | tee {log} && "
-        "mv {output}.tmp {output} "
+        '''(module purge
+        # cgates: This ugly bit of hackery shims small differences in the
+        # python HTSeq library across bfx-comp3,5,6. It will go away when
+        # this rule is obviated by the transition from HTSeq to Stringtie
+        if [[ $HOSTNAME =~ bfx-comp[35] ]]; then
+            module load watermelon_dependencies/{WAT_VER};
+        else
+            module load watermelon/{WAT_VER};
+        fi
+        # These exports throttle numpy processes
+        export MKL_NUM_THREADS={threads}
+        export NUMEXPR_NUM_THREADS={threads}
+        export OMP_NUM_THREADS={threads}
+        python -m HTSeq.scripts.count \
+           -f bam \
+           -s {params.strand} \
+           -m intersection-nonempty \
+           -q {input.bams} \
+           {input.gtf} \
+           > {output}.tmp
+        mv {output}.tmp {output}
+        ) 2>&1 | tee {log} '''

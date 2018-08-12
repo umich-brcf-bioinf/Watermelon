@@ -16,7 +16,8 @@ rule align_cutadapt_PE:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_cutadapt.log"
     run:
         if rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"]):
-            shell('''(module purge && module load watermelon_dependencies &&
+            shell('''(module purge
+                module load watermelon_dependencies/{WAT_VER}
                 set -x
                 cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} \
                     -u {params.trim_length_5prime} \
@@ -24,12 +25,12 @@ rule align_cutadapt_PE:
                     --trim-n -m 20 \
                     -o {output.R1}.tmp.gz \
                     -p {output.R2}.tmp.gz \
-                    {input.raw_fastq_R1} {input.raw_fastq_R2} &&
+                    {input.raw_fastq_R1} {input.raw_fastq_R2}
                 mv {output.R1}.tmp.gz {output.R1} &&
                 mv {output.R2}.tmp.gz {output.R2}
                 ) 2>&1 | tee {log} ''')
         else:
-            shell('''(ln -sf ../../{input.raw_fastq_R1} {output.R1} &&
-                ln -sf ../../{input.raw_fastq_R2} {output.R2} &&
+            shell('''(ln -sf ../../{input.raw_fastq_R1} {output.R1}
+                ln -sf ../../{input.raw_fastq_R2} {output.R2}
                 echo No trimming done
                 ) 2>&1 |tee {log} ''')

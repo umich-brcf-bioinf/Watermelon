@@ -5,7 +5,7 @@ x.y.z (MM/DD/YYYY)
 ------------------
 - Adjusted how environment modules are versioned and how rules load environment
   modules
--
+- Adjusted watermelon script and rules to work consistently across comp 3,5,6
 
 0.3.5 (08/01/2018)
 ------------------

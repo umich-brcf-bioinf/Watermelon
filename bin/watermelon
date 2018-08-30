@@ -149,7 +149,7 @@ if [[ ${#PASS_THROUGH_ARGS[@]} -gt 0 ]]; then
 fi
 
 if [ "$DAG" ]; then
-    export snakemake_command="snakemake --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} ${EXTRA_ARGUMENTS}"
+    export snakemake_command="snakemake --use-conda --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} ${EXTRA_ARGUMENTS}"
     set -o pipefail
     $snakemake_command --dag | dot -Tpdf > dag.pdf 2>/dev/null && \
     $snakemake_command --rulegraph | dot -Tpdf > dag.rulegraph.pdf 2>/dev/null
@@ -186,7 +186,7 @@ echo 0 > .watermelon.exitcode
 echo "watermelon (v${WATERMELON_VERSION}) begins"
 set +e
 
-snakemake_command="snakemake --printshellcmds --keep-going --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} --cores ${CORES} --resources memoryInGb=${MEMORY_IN_GB} -T ${DRYRUN} ${EXTRA_ARGUMENTS}"
+snakemake_command="snakemake --use-conda --printshellcmds --keep-going --configfile ${CONFIG_FILE} --snakefile ${SNAKEFILE} --cores ${CORES} --resources memoryInGb=${MEMORY_IN_GB} ${DRYRUN} ${EXTRA_ARGUMENTS}"
     echo $snakemake_command
 # cgates: unbuffer is a good idea, but bfx-comp6 unbuffer is broke and causes
 # crash; furthermore, the need for unbuffer will go away when we switch

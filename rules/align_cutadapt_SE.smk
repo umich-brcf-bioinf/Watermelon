@@ -11,7 +11,7 @@ rule align_cutadapt_SE:
         trim_length_3prime = config["trimming_options"]["trim_length_3prime"],
         trimming_options = rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"])
     log:
-        ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_cutadapt.log"
+        ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_{read}.align_cutadapt_SE.log"
     run:
         if rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"]):
             shell('''(module purge

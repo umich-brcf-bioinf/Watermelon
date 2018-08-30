@@ -15,7 +15,7 @@ Specifically this does three things:
    b) insert_mean = mean insert value
    c) insert_std_dev = insert standard deviation value
    d) read_mean = mean read length value
-   e) inner_mate_dist = inner-mate distance value
+   e) inner_mate_dist = rounded inner-mate distance value
 
 3) read_stats_bbmap accepts a sample_id, for which the calculations will be run.
 '''
@@ -93,7 +93,7 @@ def _build_read_stats(sample_id, ins_mean, ins_sd, read_data_df):
     m = _calc_mean(read_data_df)
 
     #calc_inner_mate
-    im = ins_mean - (2 * m)
+    im = int(round(ins_mean - (2 * m), 0))
 
     d = [['#sample', 'insert_mean', 'insert_std_dev','read_mean', 'inner_mate_dist'],
         [sample_id, ins_mean, ins_sd, m, im]]

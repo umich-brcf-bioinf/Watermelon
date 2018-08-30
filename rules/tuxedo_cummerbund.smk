@@ -5,9 +5,8 @@ rule tuxedo_cummerbund:
         group_replicates = TUXEDO_DIR + "05-group_replicates/{pheno}/group_replicates.txt",
         gtf_file = "references/gtf"
     output:
-        TUXEDO_DIR + "06-cummerbund/{pheno}/Plots",
         TUXEDO_DIR + "06-cummerbund/{pheno}/Plots/{pheno}_boxplot.pdf",
-        TUXEDO_DIR + "06-cummerbund/{pheno}/{pheno}_repRawCounts.txt"
+        TUXEDO_DIR + "06-cummerbund/{pheno}/{pheno}_repRawCounts.txt",
     params:
         cuff_diff_dir = TUXEDO_DIR + "01-cuffdiff/{pheno}",
         output_dir = TUXEDO_DIR + "06-cummerbund/{pheno}",

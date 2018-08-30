@@ -5,8 +5,8 @@ rule deseq2_metadata_contrasts:
         phenotype_checksum   = CONFIG_CHECKSUMS_DIR + "config-phenotypes.watermelon.md5",
         main_factor_checksum = CONFIG_CHECKSUMS_DIR + "config-main_factors.watermelon.md5"
     output:
-        sample_metadata = DESEQ2_DIR + "02-metadata_contrasts/sample_metadata.txt",
-        contrasts = DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt"
+        sample_metadata = DESEQ2_DIR + "01-metadata_contrasts/sample_metadata.txt",
+        contrasts = DESEQ2_DIR + "01-metadata_contrasts/contrasts.txt"
     params:
         phenos_with_replicates = phenotypeManager.phenotypes_with_replicates
     run:

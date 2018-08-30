@@ -1,17 +1,17 @@
 rule deseq2_diffex:
     input:
-        htseq_counts = DESEQ2_DIR + "01-htseq/htseq_merged.txt",
-        sample_metadata = DESEQ2_DIR + "02-metadata_contrasts/sample_metadata.txt",
-        contrasts = DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt",
+        counts = ALIGNMENT_DIR + '06-stringtie/gene_count_matrix.csv',
+        sample_metadata = DESEQ2_DIR + "01-metadata_contrasts/sample_metadata.txt",
+        contrasts = DESEQ2_DIR + "01-metadata_contrasts/contrasts.txt",
     output:
-        dir = DESEQ2_DIR + "03-deseq2_diffex",
-        files = expand(DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt",
+        dir = DESEQ2_DIR + "02-deseq2_diffex",
+        files = expand(DESEQ2_DIR + "02-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt",
                        zip,
                        phenotype=REPLICATE_PHENOTYPE_NAMES,
                        comparison=REPLICATE_COMPARISON_GROUPS),
     threads: 8
     log:
-        DESEQ2_DIR + "03-deseq2_diffex/.log/deseq2_DESeq2Diffex.log"
+        DESEQ2_DIR + "02-deseq2_diffex/.log/deseq2_DESeq2Diffex.log"
     params:
         fold_change = config["fold_change"],
         adjusted_pvalue = config["deseq2_adjustedPValue"],
@@ -25,7 +25,7 @@ rule deseq2_diffex:
         rm -rf {output.dir}/gene_lists
         rm -rf {output.dir}/.tmp/*
         {WATERMELON_SCRIPTS_DIR}/deseq2_diffex.R \
-            -c {input.htseq_counts} \
+            -c {input.counts} \
             -m {input.sample_metadata} \
             -f {input.contrasts} \
             -o {output.dir}/.tmp \

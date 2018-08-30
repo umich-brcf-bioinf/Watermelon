@@ -130,7 +130,7 @@ fc <- as.numeric(opt$foldChange)
 pval <- as.numeric(opt$adjustedPValue)
 
 #read in countDataFile, convert to integers if not already converted
-countData <- read.table(file=opt$countDataFile, header = TRUE, sep = '\t', row.names = 1, strip.white = TRUE, stringsAsFactors = FALSE)
+countData <- read.table(file=opt$countDataFile, header = TRUE, sep = ',', row.names = 1, strip.white = TRUE, stringsAsFactors = FALSE)
 countData <- round(countData)
 
 #read in metaDataFile
@@ -168,8 +168,8 @@ cat('Directories created...\noutput directory base:', out_dir,'\nplots summary d
 cat('creating contrast-specific (comparison-specific) output directories\n')
 for (i in 1:nrow(contrastData)){
   #dir creation
-  dir_diffex <- paste(diffexDir, contrastData$factor[i], sep = '/') 
-  dir_plots <- paste(plotsDir_comparison, contrastData$factor[i], sep = '/') 
+  dir_diffex <- paste(diffexDir, contrastData$factor[i], sep = '/')
+  dir_plots <- paste(plotsDir_comparison, contrastData$factor[i], sep = '/')
   cat('creating ', dir_diffex, '\n')
   dir.create(dir_diffex, showWarnings = FALSE, recursive = TRUE, mode = '0777') # gene_lists/contrast-specific directory
   cat('creating ', dir_plots, '\n')
@@ -235,7 +235,7 @@ for (i in names(sampleColData[1:length(sampleColData)])) {
   if (i != 'combinatoric_group'){
     pca_dir <- paste(plotsDir_comparison, i, sep='/')
     dir.create(pca_dir, recursive=TRUE)
-    pca_filename <- paste(pca_dir, 'PCAplot.pdf', sep = '/') 
+    pca_filename <- paste(pca_dir, 'PCAplot.pdf', sep = '/')
     cat(paste0('building plot: [', pca_filename, ']\n'))
     pdf(file = pca_filename)
     p <- plotPCA(rld, intgroup = i) #get PCA components
@@ -305,7 +305,7 @@ rownames(sampleDistMatrix) <- paste(rld$combinatoric_group, sep='-')
 colnames(sampleDistMatrix) <- NULL
 colors <- colorRampPalette(rev(brewer.pal(9, 'Blues')))(255)
 pdf(file = paste(plotsDir_summary,'Heatmap_Samples.pdf', sep = '/'), onefile = FALSE)
-pheatmap(sampleDistMatrix, 
+pheatmap(sampleDistMatrix,
          clustering_distance_rows=sampleDists,
          clustering_distance_cols=sampleDists,
          col=colors)
@@ -475,14 +475,14 @@ write.table(x = rldDf, file=paste(countsDir,'rlog_normalized_counts.txt', sep = 
 
 for (i in 1:nrow(contrastData)){
   #dir assignment
-  dir_diffex <- paste(diffexDir, contrastData$factor[i], sep = '/') 
-  dir_plots <- paste(plotsDir_comparison, contrastData$factor[i], sep = '/') 
-  
+  dir_diffex <- paste(diffexDir, contrastData$factor[i], sep = '/')
+  dir_plots <- paste(plotsDir_comparison, contrastData$factor[i], sep = '/')
+
   #collect references, etc
   referenceName <- contrastData$reference_level[i]
   testName <- contrastData$test_level[i]
   factorName <- contrastData$factor[i]
-  
+
   cat('\tcontrasting\n')
   #diffex analysis use generic name, subset DEGs
   testSamples <- subset(x = colData, subset = colData[,factorName] == testName & !duplicated(colData$combinatoric_group), select = combinatoric_group) #collect test samples in a list, from groups column
@@ -500,7 +500,7 @@ for (i in 1:nrow(contrastData)){
   colnames(diffexData) <- c('id','baseMean','log2FoldChange','lfcSE','stat','pvalue','padj') #rename first column
   diffexData$Condition <- testName
   diffexData$Control <- referenceName
-  
+
   cat('\tMA plot\n')
   #### MA plot and volcano plot
   #assign an calculate values based upon logFC and padj
@@ -509,15 +509,15 @@ for (i in 1:nrow(contrastData)){
   df$dot[which(df$padj <= pval & df$log2FoldChange < 0 & abs(df$log2FoldChange) >= log2(fc))] = 2
   df$dot[which(df$padj <= pval & df$log2FoldChange > 0 & abs(df$log2FoldChange) >= log2(fc))] = 1
   df$sig <- df$dot
-  
+
   #take top 10 up, down, then combine, assign label
   top <- rbind(head(subset(df, df$dot == 1), 10),head(subset(df, df$dot == 2), 10))
   top$label <- top$id
   df <- merge(x = df, y = top[,c('id','label')], by = "id", all.x = TRUE)
-  
+
   #count the number of significan up and down genes, assign value for legend
   df$dot <- factor(df$dot,levels = c(1,2,3), labels = c(paste0('Up: ', sum(df$dot == 1)),paste0('Down: ', sum(df$dot == 2)),'NS'))
-  
+
   #MA plot
   pdf(file = paste0(dir_plots,'/MAplot_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
   p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange)) + geom_point(aes(color = df$dot), size = 1) + theme_classic() + xlab('Log2 mean normalized expression') + ylab('Log2 fold-change')
@@ -530,7 +530,7 @@ for (i in 1:nrow(contrastData)){
   }
   print(p)
   dev.off()
-  
+
   #interactive MA plot
   p <- ggplot(df, aes(x = log2(baseMean+1), y = log2FoldChange, colour = df$dot, label = id)) + geom_point(size = 1) + theme_classic() + xlab('Log2 mean normalized expression') + ylab('Log2 fold-change')
   p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
@@ -541,7 +541,7 @@ for (i in 1:nrow(contrastData)){
   htmlwidgets::saveWidget(mp, file = path_name)
   delDir <- gsub(pattern = '.html', replacement = '_files', x = path_name)
   unlink(x = delDir, recursive = TRUE, force = TRUE)
-  
+
   cat('\tvolcano plot\n')
   #Volcano plot
   pdf(file = paste0(dir_plots,'/VolcanoPlot_',contrastData$base_file_name[i],'.pdf'), onefile = FALSE)
@@ -555,7 +555,7 @@ for (i in 1:nrow(contrastData)){
   }
   print(p)
   dev.off()
-  
+
   #interactive Volcano plot
   p <- ggplot(df, aes(x = log2FoldChange, y = -log10(padj), colour = df$dot, label = id)) + geom_point(size = 1) + theme_classic() + xlab('Log2 fold-change') + ylab('-Log10 adjusted p-value')
   p <- p + scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray'))
@@ -566,16 +566,15 @@ for (i in 1:nrow(contrastData)){
   htmlwidgets::saveWidget(vp, file = path_name)
   delDir <- gsub(pattern = '.html', replacement = '_files', x = path_name)
   unlink(x = delDir, recursive = TRUE, force = TRUE)
-  
+
   cat('\twriting diffex genes\n')
   #make DEG calls and select DEGs
   diffexData$Call <- rep('NO', nrow(df))
   diffexData$Call[which(diffexData$padj <= pval & abs(diffexData$log2FoldChange) >= log2(fc))] = 'YES'
   diffexData <- diffexData[order(-rank(diffexData$Call), diffexData$pvalue), ]
-  
+
   #write to individual tab-delimited txt files
   write.table(x = diffexData, file=paste0(dir_diffex,'/',contrastData$base_file_name[i], '.txt'), append = FALSE, sep = '\t', na = 'NA', row.names = FALSE, quote = FALSE)
 }
 
 cat('deseq2_diffex.R done.\n')
-

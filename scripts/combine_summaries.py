@@ -50,7 +50,7 @@ def main(sys_argv, log=_log):
         df.insert(0, _SOURCE_COLUMN, value=base_name)
         headers.add('|'.join(df.columns))
         summaries[base_name] = df
-        combined_df = pd.concat([combined_df, df], ignore_index=True)
+        combined_df = pd.concat([combined_df, df], ignore_index=True, sort=True)
 
     if len(headers) > 1:
         log('WARNING: incoming headers were not consistent')

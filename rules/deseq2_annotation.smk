@@ -1,12 +1,12 @@
 rule deseq2_annotation:
    input:
-       diffex_file= DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt",
+       diffex_file= DESEQ2_DIR + "02-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt",
        gene_info = "references/entrez_gene_info",
    output:
-       DESEQ2_DIR + "04-annotation/{phenotype}/{comparison}.annot.txt",
+       DESEQ2_DIR + "03-annotation/{phenotype}/{comparison}.annot.txt",
    params:
        genome = config["genome"],
-       output_dir = DESEQ2_DIR + "04-annotation/{comparison}",
+       output_dir = DESEQ2_DIR + "03-annotation/{comparison}",
    shell:
        "rm -rf {params.output_dir}.tmp && "
        "mkdir -p {params.output_dir}.tmp && "

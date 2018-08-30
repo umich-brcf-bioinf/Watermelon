@@ -77,26 +77,23 @@ else:
 DESEQ2_ALL = []
 if REPLICATE_PHENOTYPE_NAMES:
     DESEQ2_ALL = [
-        expand(DESEQ2_DIR + "01-htseq/{sample}_counts.txt",
-               sample=config[SAMPLES_KEY]),
-        DESEQ2_DIR + "01-htseq/htseq_merged.txt",
-        DESEQ2_DIR + "02-metadata_contrasts/sample_metadata.txt",
-        DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt",
-        expand(DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype_name}/{comparison}.txt",
+        DESEQ2_DIR + "01-metadata_contrasts/sample_metadata.txt",
+        DESEQ2_DIR + "01-metadata_contrasts/contrasts.txt",
+        expand(DESEQ2_DIR + "02-deseq2_diffex/gene_lists/{phenotype_name}/{comparison}.txt",
                zip,
                phenotype_name=REPLICATE_PHENOTYPE_NAMES,
                comparison=REPLICATE_COMPARISON_GROUPS),
-        expand(DESEQ2_DIR + "04-annotation/{phenotype_name}/{comparison}.annot.txt",
+        expand(DESEQ2_DIR + "03-annotation/{phenotype_name}/{comparison}.annot.txt",
                zip,
                phenotype_name=REPLICATE_PHENOTYPE_NAMES,
                comparison=REPLICATE_COMPARISON_GROUPS),
-        expand(DESEQ2_DIR + "06-excel/{phenotype_name}/{comparison}.xlsx",
+        expand(DESEQ2_DIR + "05-excel/{phenotype_name}/{comparison}.xlsx",
                 zip,
                 phenotype_name=REPLICATE_PHENOTYPE_NAMES,
                 comparison=REPLICATE_COMPARISON_GROUPS),
-        DESEQ2_DIR + "07-summary/deseq2_summary.txt",
-        DESEQ2_DIR + "07-summary/deseq2_summary.xlsx",
-        DELIVERABLES_DIR + "deseq2",
+        DESEQ2_DIR + "06-summary/deseq2_summary.txt",
+        DESEQ2_DIR + "06-summary/deseq2_summary.xlsx",
+        DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt",
         ]
 
 OPTIONAL_ALL = DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
@@ -114,6 +111,8 @@ include: 'rules/align_create_transcriptome_index.smk'
 include: 'rules/align_build_tophat_sample_options.smk'
 include: 'rules/align_tophat.smk'
 include: 'rules/align_fastqc_tophat_align.smk'
+include: 'rules/align_stringtie.smk'
+include: 'rules/align_stringtie_prepDE.smk'
 include: 'rules/align_qc.smk'
 include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
@@ -130,8 +129,6 @@ include: 'rules/tuxedo_run_info.smk'
 include: 'rules/tuxedo_excel.smk'
 include: 'rules/tuxedo_summary.smk'
 
-include: 'rules/deseq2_htseq.smk'
-include: 'rules/deseq2_htseq_merge.smk'
 include: 'rules/deseq2_metadata_contrasts.smk'
 include: 'rules/deseq2_diffex.smk'
 include: 'rules/deseq2_annotation.smk'

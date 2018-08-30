@@ -12,7 +12,7 @@ rule align_deliverables_alignment:
                 SAMPLE_READS),
         expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_accepted_hits_fastqc.html",
                 sample=config["samples"]),
-        alignment_stats = ALIGNMENT_DIR + "06-qc/alignment_qc.html",
+        alignment_stats = ALIGNMENT_DIR + "07-qc/alignment_qc.html",
     output:
         rnaseq_snakefile_helper.expand_sample_read_endedness(
                 DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",

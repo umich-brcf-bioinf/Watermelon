@@ -28,5 +28,7 @@ deseq2_adjustedPValue:
 alignment_options:
     library_type: fr-unstranded
     transcriptome_only: True
+    read_length: 50
+
 comparisons:
     pLabel: pval1_v_lval2

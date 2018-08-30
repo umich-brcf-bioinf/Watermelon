@@ -50,8 +50,7 @@ class WatermelonModuleTest(BfxCoreBaseTestCase):
 
     def test_python3_modules_present(self):
         missing_modules = []
-        modules = ["HTSeq",
-                   "pandas",
+        modules = ["pandas",
                    "pysam",
                    "numpy",
                    "testfixtures",

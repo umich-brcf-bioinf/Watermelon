@@ -7,7 +7,7 @@ rule tuxedo_excel:
     output:
         TUXEDO_DIR + "09-excel/{phenotype_name}/{comparison}.xlsx"
     log:
-        TUXEDO_DIR + "09-excel/.log/{phenotype_name}_diffex_excel.log"
+        TUXEDO_DIR + "09-excel/.log/{phenotype_name}_{comparison}.tuxedo_excel.log"
     shell:
         "module purge && module load python/3.6.1 && "
         "python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py "

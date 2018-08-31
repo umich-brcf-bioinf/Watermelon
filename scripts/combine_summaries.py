@@ -54,6 +54,8 @@ def main(sys_argv, log=_log):
 
     if len(headers) > 1:
         log('WARNING: incoming headers were not consistent')
+    else:
+        combined_df = combined_df[list(df.columns)]
 
     combined_df = combined_df.fillna('')
     cols = list(combined_df)

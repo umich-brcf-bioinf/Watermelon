@@ -1,16 +1,16 @@
 rule deseq2_summary:
     input:
-        input_files = expand(DESEQ2_DIR + "04-annotation/{phenotype}/{comparison}.annot.txt",
+        input_files = expand(DESEQ2_DIR + "03-annotation/{phenotype}/{comparison}.annot.txt",
                              zip,
                              phenotype=REPLICATE_PHENOTYPE_NAMES,
                              comparison=REPLICATE_COMPARISON_GROUPS),
     output:
-        summary_txt = DESEQ2_DIR + "07-summary/deseq2_summary.txt",
-        summary_xlsx = DESEQ2_DIR + "07-summary/deseq2_summary.xlsx",
+        summary_txt = DESEQ2_DIR + "06-summary/deseq2_summary.txt",
+        summary_xlsx = DESEQ2_DIR + "06-summary/deseq2_summary.xlsx",
     log:
-        DESEQ2_DIR + "07-summary/.log/deseq2_summary.log"
+        DESEQ2_DIR + "06-summary/.log/deseq2_summary.log"
     params:
-        output_dir = DESEQ2_DIR + "07-summary/",
+        output_dir = DESEQ2_DIR + "06-summary/",
     shell:
         "module purge && module load python/3.6.1 && "
         "python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py "

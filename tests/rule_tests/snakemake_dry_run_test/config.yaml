@@ -49,6 +49,7 @@ insert_size:
 alignment_options:
     transcriptome_only: True
     library_type: fr-unstranded  # fr-firststrand # fr-secondstrand
+    read_length: 50
 
 genome:
     mm10

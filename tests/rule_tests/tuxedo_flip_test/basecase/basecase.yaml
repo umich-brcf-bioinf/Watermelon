@@ -26,6 +26,7 @@ references:
 alignment_options:
     library_type: fr-unstranded
     transcriptome_only: True
+    read_length: 50
 transcriptome_index:
 
 fold_change:

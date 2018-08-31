@@ -1,0 +1,12 @@
+name: watermelon
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - snakemake=5
+  - nose
+  - testfixtures
+  - xlsxwriter
+  - xlrd
+  - conda

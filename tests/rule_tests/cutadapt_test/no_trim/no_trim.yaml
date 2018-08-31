@@ -1,5 +1,6 @@
 input_dir:
     ""
+
 alignment_output_dir:
     "alignment_results"
 
@@ -11,15 +12,12 @@ samples:
 trimming_options:
     base_quality_5prime: 0
     base_quality_3prime: 0
-    trim_length_5prime: 3
-    trim_length_3prime: 10
+    trim_length_5prime: 0
+    trim_length_3prime: 0
 
 entrez_gene_info:
     foo.txt
 genome:
-comparisons:
-fold_change:
-deseq2_adjustedPValue:
 references:
 
 insert_size:
@@ -29,5 +27,11 @@ insert_size:
 alignment_options:
     library_type: fr-unstranded
     transcriptome_only: True
+    read_length: 50
+transcriptome_index:
+comparisons:
+fold_change:
+deseq2_adjustedPValue:
+
 comparisons:
     pLabel: pval1_v_pval2

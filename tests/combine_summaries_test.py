@@ -42,7 +42,7 @@ Bf2|Bb2'''.replace('|', '\t')
             actual_df = pd.read_csv(output_base + '.txt', sep='\t')
 
         self.assertEqual(4, len(actual_df))
-        self.assertEqual(['source','foo','bar'], list(actual_df.columns))
+        self.assertEqual(['source','foo', 'bar'], list(actual_df.columns))
         rows = actual_df.iterrows()
         self.assertEqual(['summaryA', 'Af1', 'Ab1'], next(rows)[1].tolist())
         self.assertEqual(['summaryA', 'Af2', 'Ab2'], next(rows)[1].tolist())

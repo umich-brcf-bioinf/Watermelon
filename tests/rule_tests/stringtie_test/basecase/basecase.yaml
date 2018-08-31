@@ -1,13 +1,17 @@
-input_dir:
-    ""
+dirs:
+  input: input
+  alignment_output: alignment_results
+  diffex_output: diffex_results
+  deliverables_output_dir: deliverables
 
-alignment_output_dir:
-    "alignment_results"
+insert_size:
+    downsample_readcount: 30000
+    pair_length: 500
 
 phenotypes: pLabel
 samples:
-    sampleA: pval1
-    sampleB: pval2
+    sampleA: A
+    sampleB: B
 
 trimming_options:
     base_quality_5prime: 0
@@ -19,18 +23,15 @@ entrez_gene_info:
     foo.txt
 genome:
 references:
-
-insert_size:
-    downsample_readcount: 30000
-    pair_length: 500
-
 alignment_options:
     library_type: fr-unstranded
     transcriptome_only: True
+    read_length: 50
 transcriptome_index:
-comparisons:
+
 fold_change:
 deseq2_adjustedPValue:
 
 comparisons:
-    pLabel: pval1_v_pval2
+    pLabel:
+    - A_v_B

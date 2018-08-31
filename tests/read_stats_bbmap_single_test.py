@@ -221,7 +221,7 @@ class ReadStatsBbmapSingleTest(unittest.TestCase):
             actual_lines = out_dir.read('sampleA_read_stats.txt').split(b'\n')
         line_iter = iter(actual_lines)
         self.assertEqual(b'#sample\tinsert_mean\tinsert_std_dev\tread_mean\tinner_mate_dist', next(line_iter))
-        self.assertEqual(b'sampleA\t214.904\t147.733\t4.9\t205.104', next(line_iter))
+        self.assertEqual(b'sampleA\t214.904\t147.733\t4.9\t205', next(line_iter))
         self.assertEqual(b'', next(line_iter))
         self.assertRaises(StopIteration, next, line_iter)
 
@@ -243,13 +243,3 @@ class ReadStatsBbmapSingleTest(unittest.TestCase):
                                    r"No such file or directory.*/sampleA_ihist.txt",
                                    read_stats_bbmap_single.main,
                                    args)
-
-
-
-
-
-    # def test_main_lhistEmpty(self):
-    #     self.assertEqual(1, 2)
-    #
-    # def test_main_lhistInvalidHeader(self):
-    #     self.assertEqual(1, 2)

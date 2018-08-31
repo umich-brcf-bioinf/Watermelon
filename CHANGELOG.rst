@@ -3,7 +3,13 @@ Changelog
 
 x.y.z (MM/DD/YYYY)
 ------------------
--
+- Added a top-level conda environment for watermelon
+- Replaced HTSeq with stringtie; consequent renumbering of outputs
+
+  - Added new required config value alignment_option: read_length (and set
+    default to 50)
+
+- Minor adjustments throughout to handle new versions of python/snakemake/pandas
 
 0.3.6 (8/12/2018)
 -----------------

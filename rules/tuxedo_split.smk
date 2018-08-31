@@ -9,7 +9,7 @@ rule tuxedo_split:
         output_dir = TUXEDO_DIR + "07-split/{phenotype_name}",
         user_specified_comparison_list = lambda wildcards: phenotypeManager.separated_comparisons(',')[wildcards.phenotype_name],
     log:
-        TUXEDO_DIR + "07-split/.log/{phenotype_name}_tuxedo_split.log"
+        TUXEDO_DIR + "07-split/.log/{phenotype_name}_{comparison}.tuxedo_split.log"
     shell:
         "module purge && module load python/3.6.1 && "
         "python {WATERMELON_SCRIPTS_DIR}/tuxedo_split.py "

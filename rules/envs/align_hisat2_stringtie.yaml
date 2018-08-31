@@ -1,0 +1,8 @@
+channels:
+- conda-forge
+- bioconda
+- defaults
+dependencies:
+- hisat2=2.1.0
+- samtools=1.7
+- stringtie=1.3.4

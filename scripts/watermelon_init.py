@@ -184,7 +184,7 @@ _CONFIG_PRELUDE = '''# config created {timestamp}
 # 2) Add a sample group for each sample
 # 3) Add comparisons
 # 4) Review genome and references
-# 5) Review alignment options
+# 5) Review alignment options (e.g. read_length and strandedness)
 # 6) Review trimming options
 '''.format(timestamp=_timestamp())
 

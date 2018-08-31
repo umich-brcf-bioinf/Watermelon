@@ -141,7 +141,7 @@ if [[ ${SKIP_CONFIG_VALIDATION} == "" ]]; then
     ${WATERMELON_ROOT_DIR}/watermelon_config_validator-runner.py $CONFIG_FILE || exit 1
 fi
 
-${WATERMELON_ROOT_DIR}/unlocker-runner.py || exit 1
+${WATERMELON_ROOT_DIR}/unlocker-runner.py $DRYRUN $DAG || exit 1
 
 export EXTRA_ARGUMENTS=""
 if [[ ${#PASS_THROUGH_ARGS[@]} -gt 0 ]]; then

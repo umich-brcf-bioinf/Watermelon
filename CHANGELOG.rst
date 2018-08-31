@@ -9,6 +9,8 @@ x.y.z (MM/DD/YYYY)
   - Added new required config value alignment_option: read_length (and set
     default to 50)
 
+- Adjusted watermelon to enable "in-flight" dry-run/dag (executed in the
+  directory of a job currently in-progress).
 - Minor adjustments throughout to handle new versions of python/snakemake/pandas
 
 0.3.6 (8/12/2018)

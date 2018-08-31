@@ -42,9 +42,21 @@ class MockPrompt(object):
         self.prompt_was_called = True
         return self.prompt_return
 
-# TESTS_DIR = os.path.realpath(os.path.dirname(__file__))
-# WATERMELON_ROOT = os.path.dirname(TESTS_DIR)
 class UnlockerTest(unittest.TestCase):
+
+    def test_parse_command_line_args(self):
+        args = unlocker._parse_command_line_args([])
+        self.assertEquals(False, args.dryrun)
+        self.assertEquals(False, args.dag)
+
+        args = unlocker._parse_command_line_args(['--dryrun'])
+        self.assertEquals(True, args.dryrun)
+        self.assertEquals(False, args.dag)
+
+        args = unlocker._parse_command_line_args(['--dag'])
+        self.assertEquals(False, args.dryrun)
+        self.assertEquals(True, args.dag)
+
     @tempdir()
     def test_is_dir_locked(self, temp_dir):
         working_dir = temp_dir.path
@@ -64,6 +76,56 @@ class UnlockerTest(unittest.TestCase):
         self.assertEqual(True, unlocker._is_dir_locked(working_dir))
 
     @tempdir()
+    def test_main_skipsUnlockOnDryrun(self, temp_dir):
+        working_dir = temp_dir.path
+        snakemake_dir = join(working_dir, '.snakemake')
+        os.mkdir(snakemake_dir)
+        locks_dir = join(snakemake_dir, 'locks')
+        os.mkdir(locks_dir)
+        lockfile_path = join(locks_dir, 'foo')
+        with open(lockfile_path, 'w') as lockfile:
+            print("foo", file=lockfile)
+        log = StringIO()
+        mock_prompt = MockPrompt(True)
+
+        unlocker.main(sys_argv=['--dryrun'],
+                      working_dir=working_dir,
+                      log=log,
+                      prompt_to_unlock=mock_prompt.prompt)
+
+        log_lines = iter(log.getvalue().strip('\n').split('\n'))
+        self.assertEqual('skipping lock check (dryrun/dag)', next(log_lines))
+        self.assertRegexpMatches(next(log_lines), '===')
+        self.assertRaises(StopIteration, next, log_lines)
+        self.assertEqual(False, mock_prompt.prompt_was_called)
+        self.assertEqual(True, isdir(locks_dir))
+
+    @tempdir()
+    def test_main_skipsUnlockOnDag(self, temp_dir):
+        working_dir = temp_dir.path
+        snakemake_dir = join(working_dir, '.snakemake')
+        os.mkdir(snakemake_dir)
+        locks_dir = join(snakemake_dir, 'locks')
+        os.mkdir(locks_dir)
+        lockfile_path = join(locks_dir, 'foo')
+        with open(lockfile_path, 'w') as lockfile:
+            print("foo", file=lockfile)
+        log = StringIO()
+        mock_prompt = MockPrompt(True)
+
+        unlocker.main(sys_argv=['--dag'],
+                      working_dir=working_dir,
+                      log=log,
+                      prompt_to_unlock=mock_prompt.prompt)
+
+        log_lines = iter(log.getvalue().strip('\n').split('\n'))
+        self.assertEqual('skipping lock check (dryrun/dag)', next(log_lines))
+        self.assertRegexpMatches(next(log_lines), '===')
+        self.assertRaises(StopIteration, next, log_lines)
+        self.assertEqual(False, mock_prompt.prompt_was_called)
+        self.assertEqual(True, isdir(locks_dir))
+
+    @tempdir()
     def test_main_skipsUnlockOnCleanDir(self, temp_dir):
         working_dir = temp_dir.path
         locks_dir = join(working_dir, '.snakemake', 'locks')
@@ -71,7 +133,8 @@ class UnlockerTest(unittest.TestCase):
         log = StringIO()
         mock_prompt = MockPrompt(True)
 
-        unlocker.main(working_dir=working_dir,
+        unlocker.main(sys_argv=[],
+                      working_dir=working_dir,
                       log=log,
                       prompt_to_unlock=mock_prompt.prompt)
 
@@ -94,7 +157,8 @@ class UnlockerTest(unittest.TestCase):
         log = StringIO()
         mock_prompt = MockPrompt(True)
 
-        exit_code = unlocker.main(working_dir=working_dir,
+        exit_code = unlocker.main(sys_argv=[],
+                                  working_dir=working_dir,
                                   log=log,
                                   prompt_to_unlock=mock_prompt.prompt)
         log_lines = iter(log.getvalue().strip().split('\n'))
@@ -119,7 +183,8 @@ class UnlockerTest(unittest.TestCase):
         log = StringIO()
         mock_prompt = MockPrompt(False)
 
-        exit_code = unlocker.main(working_dir=working_dir,
+        exit_code = unlocker.main(sys_argv=[],
+                                  working_dir=working_dir,
                                   log=log,
                                   prompt_to_unlock=mock_prompt.prompt)
         log_lines = iter(log.getvalue().strip().split('\n'))
@@ -131,4 +196,3 @@ class UnlockerTest(unittest.TestCase):
         self.assertRaises(StopIteration, next, log_lines)
         self.assertEqual(True, mock_prompt.prompt_was_called)
         self.assertEqual(True, isdir(locks_dir))
-

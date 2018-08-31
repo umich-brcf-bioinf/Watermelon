@@ -1,0 +1,1 @@
+sampleA alignment_results/06-stringtie/sampleA.gtf

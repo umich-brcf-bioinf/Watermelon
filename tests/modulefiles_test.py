@@ -54,7 +54,6 @@ class WatermelonModuleTest(BfxCoreBaseTestCase):
                    "pysam",
                    "numpy",
                    "testfixtures",
-                   "xlsxwriter",
                    "yaml"]
         for module_name in modules:
             command = ("module purge; "
@@ -130,7 +129,6 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
     def test_python2_modules_present(self):
         missing_modules = []
         modules = ["numpy",
-                   "xlsxwriter",
                    "yaml"]
         for module_name in modules:
             command = self.build_command("python -c 'import {}'".format(module_name))
@@ -160,8 +158,7 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
                 'pheatmap',
                 'plotly',
                 'RColorBrewer',
-                'reshape2',
-                'xlsx',
+                'reshape2'
                 ]
         for lib_name in libs:
             rscript = ("Rscript --vanilla -e "

@@ -9,8 +9,8 @@ module_order:
       path_filters:
         - '*trim*'
   - fastq_screen
-  - tophat
+  - hisat2
   - fastqc:
       name: 'FastQC (aligned reads)'
       path_filters:
-        - '*_accepted_hits_fastqc*'
+        - '*_fastqc*'

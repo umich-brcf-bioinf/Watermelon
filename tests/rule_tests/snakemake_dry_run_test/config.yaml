@@ -42,10 +42,6 @@ trimming_options:
     trim_length_5prime: 0
     trim_length_3prime: 3
 
-insert_size:
-    downsample_readcount: 30000
-    pair_length: 500
-
 alignment_options:
     transcriptome_only: True
     library_type: fr-unstranded  # fr-firststrand # fr-secondstrand
@@ -55,7 +51,7 @@ genome:
     mm10
 
 references:
-    gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/noRibo_mouse.gtf
+    gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/mm10_noRibo.gtf
     bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/Bowtie2Index
     entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-    bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/BBMap/
+    hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/HISAT2_index/mm10_noRibo

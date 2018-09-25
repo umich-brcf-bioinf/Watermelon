@@ -23,10 +23,6 @@ entrez_gene_info:
 genome:
 references:
 
-insert_size:
-    downsample_readcount: 30000
-    pair_length: 500
-
 alignment_options:
     library_type: fr-unstranded
     transcriptome_only: True

@@ -13,7 +13,7 @@ Overview
 
 Watermelon interprets fastqs and configuration to produce alignments and diffex results.
 Watermelon wraps Snakemake, which in turn wraps calls to the various bioinformatic tools
-in the pipeline (e.g. cutadapt, tophat, etc.).
+in the pipeline (e.g. cutadapt, hisat2, etc.).
 
 There are two executables:
 
@@ -46,9 +46,9 @@ watermelon-init help
    usage: watermelon-init [-h] --genome_build {hg19,mm10,rn5}
                           [--job_suffix JOB_SUFFIX]
                           source_fastq_dir
-   
+
    Creates template config file and directories for a watermelon rnaseq job.
-   
+
    positional arguments:
      source_fastq_dir      Path to dir which contains samples dirs (each sample
                            dir contains one or more fastq.gz files). The sample
@@ -56,7 +56,7 @@ watermelon-init help
                            If the source_fastq_dir is outside the working dir,
                            init will make local inputs dir containing symlinks to
                            the original files.
-   
+
    optional arguments:
      -h, --help            show this help message and exit
      --genome_build {hg19,mm10,rn5}
@@ -67,7 +67,7 @@ watermelon-init help
                            rerunning a job with revised input fastq or revised
                            config; can help differentiate simultaneous watermelon
                            jobs in top/ps.)
-   
+
 
 --------------------
 watermelon help
@@ -78,11 +78,11 @@ watermelon help
   $ watermelon-init --help
    Usage: watermelon [options] -c {config_file}
    Example: watermelon -c ~/my_config.yaml
-   
+
    Executes the RNA-seq workflow by wrapping the Snakemake call, specifically setting common,
    useful defaults and passing through any unrecognized command line options through to
    snakemake. Captures all outputs in a log and times overall execution.
-   
+
    Options:
        -c, --configfile : [config.yaml] snakemake config file
        --cores [N]      : =40, use at most N cores in parallel

@@ -42,24 +42,16 @@ trimming_options:
     trim_length_5prime: 0
     trim_length_3prime: 3
 
-insert_size:
-    downsample_readcount: 30000
-    pair_length: 500
-
 alignment_options:
     transcriptome_only: True
     library_type: fr-unstranded  # fr-firststrand # fr-secondstrand
+    read_length: 50
 
 genome:
     mm10
 
 references:
-#path to reference gtf file
-    gtf: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1_tests/test_data/inputs/references/mm10_tronson/genes.gtf
-#    gtf: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Annotation/Genes
-# path to dir with bowtie index
-    bowtie2_index: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex/bowtie2
-#    bowtie2_index: /ccmb/BioinfCore/Reference_Genomes/programs/tophat/mouse/mm10/Mus_musculus/UCSC/mm10/Sequence/BowtieIndex
-# path to entrez gene info file
-    entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02/gene_info
-#    entrez_gene_info: /ccmb/BioinfCore/SoftwareDev/projects/Watermelon/genome_annotations/entrez_gene_info/2016_09_02
+    gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/mm10_noRibo.gtf
+    hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/HISAT2_index/mm10_noRibo
+    bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/Bowtie2Index
+    entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info

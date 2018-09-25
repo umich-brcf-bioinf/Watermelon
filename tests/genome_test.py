@@ -47,7 +47,7 @@ class GenomeTest(unittest.TestCase):
                          '{}: some references do not exist'.format(_GENOME_CONFIG_FILE_NAME))
 
     def test_genomes_references_well_formed(self):
-        expected_references = set(['gtf', 'bowtie2_index', 'entrez_gene_info', 'bbmap_ref'])
+        expected_references = set(['gtf', 'bowtie2_index', 'entrez_gene_info', 'hisat2_index'])
         with open(_GENOME_CONFIG_PATH, 'r') as config_file:
             genome_config = yaml.load(config_file)
         invalid_references = {}

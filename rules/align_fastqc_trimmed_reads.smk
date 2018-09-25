@@ -7,6 +7,10 @@ rule align_fastqc_trimmed_reads:
         ALIGNMENT_DIR + "03-fastqc_reads/.log/{sample}_trimmed_{read_endedness}_fastqc.log"
     params:
         fastqc_dir = ALIGNMENT_DIR + "03-fastqc_reads"
+    threads:
+        # fastqc is not multithreaded, but Java spawns way too many processes,
+        # so this keeps Snakemake from overruning the process limit.
+        2
     shell:
         '''(module purge
         module load watermelon_dependencies/{WAT_VER}

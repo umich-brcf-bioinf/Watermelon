@@ -1,4 +1,4 @@
-# stringtie alignment_results/04-tophat/sampleB/sampleB_accepted_hits.bam -p 2 -G references/gtf -b alignment_results/06-stringtie/ballgown/sampleB/ -e -o alignment_results/06-stringtie/sampleB.gtf
+# stringtie alignment_results/04-hisat2/sampleB.bam -p 2 -G references/gtf -b alignment_results/06-stringtie/ballgown/sampleB/ -e -o alignment_results/06-stringtie/sampleB.gtf
 # StringTie version 1.3.4d
 chr11	unknown	transcript	16752203	16887658	.	+	.	gene_id "Egfr"; transcript_id "NM_007912"; ref_gene_name "Egfr"; cov "0.0"; FPKM "0.000000"; TPM "0.000000";
 chr11	unknown	exon	16752203	16752570	.	+	.	gene_id "Egfr"; transcript_id "NM_007912"; exon_number "1"; ref_gene_name "Egfr"; cov "0.0";

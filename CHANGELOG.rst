@@ -3,7 +3,18 @@ Changelog
 
 x.y.z (MM/DD/YYYY)
 ------------------
-- Added a top-level conda environment for watermelon
+- Replaced Tophat2 with HISAT2; removed bbmap.
+- adjusted config:library_type to accept
+
+  - fr-unstranded
+  - unstranded
+  - forward_reverse
+  - fr-firststrand
+  - reverse_forward
+  - fr-secondstrand
+
+- Throttled fastqc to avoid Java memory overallocation
+- Upgraded MultiQC to 1.6 (and adjusted to use conda environment)
 - Replaced HTSeq with stringtie; consequent renumbering of outputs
 
   - Added new required config value alignment_option: read_length (and set
@@ -11,7 +22,9 @@ x.y.z (MM/DD/YYYY)
 
 - Adjusted watermelon to enable "in-flight" dry-run/dag (executed in the
   directory of a job currently in-progress).
-- Minor adjustments throughout to handle new versions of python/snakemake/pandas
+- Added a top-level conda environment for watermelon
+
+  - Upgraded Python 3.6.6, Snakemake 5.3.0, pandas (0.23.4)
 
 0.3.6 (8/12/2018)
 -----------------

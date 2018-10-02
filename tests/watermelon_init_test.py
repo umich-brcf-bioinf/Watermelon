@@ -466,7 +466,7 @@ foo2:
     hg19
 
 references:
-    gtf: /ccmb/BioinfCore/noRibo_human.gtf
+    gtf: /ccmb/BioinfCore/hg19_noRibo.gtf
     bowtie2_index: /ccmb/BioinfCore/iGenomes/hg19/Sequence/Bowtie2Index
     entrez_gene_info: /ccmb/BioinfCore/entrez_gene_info/2016_09_02/gene_info
 ''')

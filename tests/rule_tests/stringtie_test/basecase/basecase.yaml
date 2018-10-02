@@ -4,10 +4,6 @@ dirs:
   diffex_output: diffex_results
   deliverables_output_dir: deliverables
 
-insert_size:
-    downsample_readcount: 30000
-    pair_length: 500
-
 phenotypes: pLabel
 samples:
     sampleA: A

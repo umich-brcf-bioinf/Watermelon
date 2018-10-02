@@ -1,17 +1,7 @@
-ALL.append(expand(ALIGNMENT_DIR + '06-stringtie/{sample}.gtf', sample=config[SAMPLES_KEY]))
-
-if config['alignment_options']['library_type'] == 'fr-firststrand':
-    strand_flag = '--rf'
-elif config['alignment_options']['library_type'] == 'fr-secondstrand':
-    strand_flag = '--fr'
-elif config['alignment_options']['library_type'] == 'fr-unstranded':
-    strand_flag = ''
-
 rule align_stringtie:
     input:
         reference_checksum = CONFIG_CHECKSUMS_DIR + 'config-references.watermelon.md5',
-        #bams=ALIGNMENT_DIR + '04-hisat2/{sample}.bam',
-        bams = ALIGNMENT_DIR + '04-tophat/{sample}/{sample}_accepted_hits.bam',
+        bams = ALIGNMENT_DIR + '04-hisat2/{sample}.bam',
         gtf = 'references/gtf',
     output:
         gtf = ALIGNMENT_DIR + '06-stringtie/{sample}.gtf',
@@ -27,7 +17,7 @@ rule align_stringtie:
         'envs/align_hisat2_stringtie.yaml'
     params:
         sample = '{sample}',
-        strand_flag = strand_flag,
+        strand_flag = rnaseq_snakefile_helper.strand_option_stringtie(config),
         ballgown_path = ALIGNMENT_DIR + '06-stringtie/ballgown/{sample}/'
     threads: 8
     shell:

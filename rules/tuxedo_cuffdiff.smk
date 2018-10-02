@@ -5,7 +5,7 @@ rule tuxedo_cuffdiff:
         reference_checksum = CONFIG_CHECKSUMS_DIR + "config-references.watermelon.md5",
         fasta_file = "references/bowtie2_index/genome.fa",
         gtf_file = "references/gtf",
-        bam_files = expand(ALIGNMENT_DIR + "04-tophat/{sample}/{sample}_accepted_hits.bam",
+        bam_files = expand(ALIGNMENT_DIR + "04-hisat2/{sample}.bam",
                            sample=config[SAMPLES_KEY])
     output:
         TUXEDO_DIR + "01-cuffdiff/{pheno}/gene_exp.diff",
@@ -15,8 +15,8 @@ rule tuxedo_cuffdiff:
         output_dir = TUXEDO_DIR + "01-cuffdiff/{pheno}",
         labels = lambda wildcards : phenotypeManager.concatenated_comparison_values(',')[wildcards.pheno],
         samples = lambda wildcards : phenotypeManager.cuffdiff_samples(wildcards.pheno,
-                                                                       ALIGNMENT_DIR + "04-tophat/{sample_placeholder}/{sample_placeholder}_accepted_hits.bam"),
-        strand = rnaseq_snakefile_helper.strand_option_tophat(config["alignment_options"]["library_type"])
+                                                                       ALIGNMENT_DIR + "04-hisat2/{sample_placeholder}.bam"),
+        strand = 'fr-unstranded'
     threads: 8
     log:
         TUXEDO_DIR + "01-cuffdiff/.log/{pheno}_cuffdiff.log"

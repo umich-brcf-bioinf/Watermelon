@@ -52,7 +52,6 @@ def _parse_command_line_args(sys_argv):
         '--dryrun', dest='dryrun', action='store_true')
     parser.add_argument(
         '--dag', dest='dag', action='store_true')
-    print(sys_argv)
     return parser.parse_args(sys_argv)
 
 def main(sys_argv=None,

@@ -12,7 +12,7 @@ rule tuxedo_group_replicates:
             open(output_file_name, "w") as output_file:
             reader = csv.DictReader(input_file, delimiter='\t')
             for row in reader:
-                sample = os.path.basename(row["file"]).split("_accepted_hits.bam")[0]
+                sample = os.path.basename(row["file"]).split(".bam")[0]
                 replicate_dict[row["condition"]].append("replicate_{}: {}".format(row["replicate_num"], sample))
 
             for group, samples in replicate_dict.items():

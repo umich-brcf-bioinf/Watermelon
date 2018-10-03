@@ -497,31 +497,6 @@ class PhenotypeManagerTest(unittest.TestCase):
         self.assertEqual(['1A_v_1B', '1C_v_1D', '2A_v_2B', '2C_v_2D'],
                          actual.comparisons)
 
-    def test_cuffdiff_samples(self):
-        phenotypes = ' pLabel1 ^ pLabel2 '
-        samples = {'s1' : ' 1A ^ 2A ',
-                   's2' : ' 1A ^ 2A ',
-                   's3' : ' 1B ^    ',
-                   's4' : '    ^ 2A ',
-                   's5' : ' 1C ^ 2B ',
-                   's6' : ' 1D ^ 2B '}
-        comparison_dict = {'pLabel1' : [' 1A_v_1B\t',' 1C_v_1D '],
-                           'pLabel2' : [' 2A_v_2B']}
-        manager = PhenotypeManager({'phenotypes' : phenotypes,
-                                    'samples' : samples,
-                                    'comparisons' : comparison_dict})
-
-        actual = manager.cuffdiff_samples('pLabel1', '/foo/{sample_placeholder}.bar')
-
-        expected = '/foo/s1.bar,/foo/s2.bar /foo/s3.bar /foo/s5.bar /foo/s6.bar'
-        self.assertEqual(expected, actual)
-
-        actual = manager.cuffdiff_samples('pLabel2', '/foo/{sample_placeholder}.bar')
-
-        expected = '/foo/s1.bar,/foo/s2.bar,/foo/s4.bar /foo/s5.bar,/foo/s6.bar'
-        self.assertEqual(expected, actual)
-
-
 
 class RnaseqSnakefileHelperTest(unittest.TestCase):
     def test_cutadapt_options_noOptionsReturns0(self):

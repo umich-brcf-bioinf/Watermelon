@@ -266,34 +266,6 @@ class PhenotypeManager(object):
                                                        'phenotypes comparisons')
         return PhenotypesComparisons(phenotypes=phenotypes, comparisons=comparisons)
 
-
-    def cuffdiff_samples(self,
-                         phenotype_label,
-                         sample_file_format):
-        '''Returns a list of sample files grouped by phenotype value.
-           Each sample group represents the comma separated samples for a phenotype value.
-           Sample groups are separated by a space.
-
-           sample_file_format is format string with placeholder {sample_placeholder}'''
-
-        group_separator = ' '
-        file_separator = ','
-
-        sample_name_group = self.phenotype_sample_list[phenotype_label]
-
-        group_sample_names = defaultdict(list)
-        for phenotype_value, sample_list in sample_name_group.items():
-            for sample_name in sample_list:
-                sample_file = sample_file_format.format(sample_placeholder=sample_name)
-                group_sample_names[phenotype_value].append(sample_file)
-        group_sample_names = dict(group_sample_names)
-
-        params = []
-        for group in self.comparison_values[phenotype_label]:
-            params.append(file_separator.join(sorted(group_sample_names[group])))
-
-        return group_separator.join(params)
-
 def _strand_option(hisat2_or_stringtie, strand_option):
     if not strand_option in STRAND_CONFIG_PARAM:
         msg_format = ('ERROR: config:alignment_options:library_type={} is '

@@ -1,9 +1,14 @@
 input_dir: ./inputs/00-multiplexed_reads
 
+main_factors:  yes
 phenotypes: pLabel
 samples:
     sampleA: pval1
     sampleB: pval2
+
+comparisons:
+    pLabel:
+        - pval1_v_pval2
 
 alignment_output_dir: alignment_results
 
@@ -17,7 +22,6 @@ entrez_gene_info: foo.txt
 genome:
 references:
 transcriptome_index:
-comparisons:
 fold_change:
 deseq2_adjustedPValue:
 
@@ -25,6 +29,3 @@ alignment_options:
     library_type: fr-unstranded
     transcriptome_only: True
     read_length: 50
-
-comparisons:
-    pLabel: pval1_v_lval2

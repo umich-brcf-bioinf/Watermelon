@@ -1,7 +1,7 @@
 ALL.append([DELIVERABLES_DIR + "combined_summary.txt", DELIVERABLES_DIR + "combined_summary.xlsx"])
 
 def gene_summaries():
-    summaries = [DELIVERABLES_DIR + "tuxedo/gene_lists/tuxedo_summary.txt"]
+    summaries = [DELIVERABLES_DIR + "ballgown/gene_lists/ballgown_summary.txt"]
     if DESEQ2_ALL:
         summaries.append(DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt")
     return summaries

@@ -107,7 +107,6 @@ def main():
                 gene_name = row[0]
                 if gene_name in gene_details:
                     gene_id_symbol = gene_details[gene_name]
-
                     matching_gene_symbol_count += 1
                 else:
                     gene_id_symbol = ['.','.']

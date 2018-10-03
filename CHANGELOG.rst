@@ -4,9 +4,20 @@ Changelog
 x.y.z (MM/DD/YYYY)
 ------------------
 - Replaced Tophat2 with HISAT2; removed bbmap.
-- adjusted config:library_type to accept
+- Replaced HTSeq with stringtie; consequent renumbering of outputs
 
-  - fr-unstranded
+  - Added new required config value alignment_option: read_length (and set
+    default to 50)
+
+- Replaced Tuxedo/CuffDiff with Ballgown.
+- Added a top-level conda environment for watermelon
+
+  - Upgraded Python 3.6.6, Snakemake 5.3.0, pandas (0.23.4)
+
+- Upgraded MultiQC to 1.6 (and adjusted to use conda environment)
+- Adjusted config:library_type to accept
+
+  - fr-unstnded
   - unstranded
   - forward_reverse
   - fr-firststrand
@@ -14,17 +25,9 @@ x.y.z (MM/DD/YYYY)
   - fr-secondstrand
 
 - Throttled fastqc to avoid Java memory overallocation
-- Upgraded MultiQC to 1.6 (and adjusted to use conda environment)
-- Replaced HTSeq with stringtie; consequent renumbering of outputs
-
-  - Added new required config value alignment_option: read_length (and set
-    default to 50)
-
 - Adjusted watermelon to enable "in-flight" dry-run/dag (executed in the
   directory of a job currently in-progress).
-- Added a top-level conda environment for watermelon
 
-  - Upgraded Python 3.6.6, Snakemake 5.3.0, pandas (0.23.4)
 
 0.3.6 (8/12/2018)
 -----------------

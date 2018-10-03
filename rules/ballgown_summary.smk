@@ -1,20 +1,20 @@
-rule tuxedo_summary:
+rule ballgown_summary:
     input:
-        input_files = expand(TUXEDO_DIR + "07-split/{phenotype}/{comparison}_gene.txt",
+        input_files = expand(BALLGOWN_DIR + '02-annotate/{phenotype}/{comparison}_gene.annot.txt',
                              zip,
                              phenotype=ALL_PHENOTYPE_NAMES,
                              comparison=ALL_COMPARISON_GROUPS) +
-                       expand(TUXEDO_DIR + "07-split/{phenotype}/{comparison}_isoform.txt",
+                       expand(BALLGOWN_DIR + '02-annotate/{phenotype}/{comparison}_isoform.annot.txt',
                               zip,
                               phenotype=ALL_PHENOTYPE_NAMES,
                               comparison=ALL_COMPARISON_GROUPS)
     output:
-        summary_txt = TUXEDO_DIR + "10-summary/tuxedo_summary.txt",
-        summary_xlsx = TUXEDO_DIR + "10-summary/tuxedo_summary.xlsx",
+        summary_txt = BALLGOWN_DIR + '05-summary/ballgown_summary.txt',
+        summary_xlsx = BALLGOWN_DIR + '05-summary/ballgown_summary.xlsx',
     log:
-        TUXEDO_DIR + "10-summary/.log/tuxedo_summary.log"
+        BALLGOWN_DIR + '05-summary/.log/ballgown_summary.log'
     params:
-        output_dir = TUXEDO_DIR + "10-summary/",
+        output_dir = BALLGOWN_DIR + '05-summary/',
     shell:
         '''(module purge && module load python/3.6.1 &&
         set -v &&

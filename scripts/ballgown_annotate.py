@@ -72,7 +72,6 @@ def main():
     gene_expr = args.diffexp
     outdir = args.outdir
 
-
     tax_id = get_taxid(args.genome)
 
     outfile_tag = os.path.basename(gene_expr.replace('.txt', '.annot.txt'))
@@ -86,11 +85,11 @@ def main():
     with open(gene_info,'r') as geneinfo_file:
         next(geneinfo_file) # skip header
         reader=csv.reader(geneinfo_file,delimiter='\t')
+
         for row in reader:
             (geneinfo_tax_id, geneinfo_gene_id, geneinfo_gene_symbol, geneinfo_gene_description) = (row[0], row[1], row[2], row[8])
             if geneinfo_tax_id == tax_id:
                 gene_details[geneinfo_gene_symbol] = [geneinfo_gene_id, geneinfo_gene_description]
-
 
     #### def add_annotation(args.diffexp, outfile_name):
     all_lines = 0
@@ -100,20 +99,32 @@ def main():
         for row in reader:
             all_lines += 1
             row = [col.strip() for col in row]
-            if row[0] == 'test_id':
-                row[1] = 'gene_symbol'
-                row[2] = 'gene_id'
+            if row[0] == 'id':
+                row[0] = 'gene_symbol'
+                row.insert(1, 'gene_id')
+                row.insert(2, 'gene_desc')
+                print('\t'.join(row), file=annotated_file)
+            elif row[0] == 'gene_id':
+                row[0] = 'gene_symbol'
+                row[1] = 'tx_id'
+                row.insert(2, 'gene_id')
                 row.insert(3, 'gene_desc')
                 print('\t'.join(row), file=annotated_file)
             else:
-                left = row[0:2]
-                right = row[3:]
-                gene_name = row[1]
+                if len(row) == 7:
+                    left = row[0:1]
+                    right = row[1:]
+                else:
+                    left = row[0:2]
+                    right = row[2:]
+
+                gene_name = row[0]
                 if gene_name in gene_details:
                     gene_id_symbol = gene_details[gene_name]
                     matching_gene_symbol_count += 1
                 else:
                     gene_id_symbol = ['.','.']
+
                 outline = "\t".join(left + gene_id_symbol + right)
                 print(outline, file=annotated_file)
 

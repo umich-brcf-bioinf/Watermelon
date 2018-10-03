@@ -165,20 +165,6 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
                 missing_libs.append(lib_name)
         self.assertEquals([], missing_libs)
 
-    def test_R_tuxedo_libraries_present(self):
-        missing_libs = []
-        libs = ['cummeRbund']
-        for lib_name in libs:
-            rscript = ("Rscript --vanilla -e "
-                       "  'result<-1-require({}); "
-                       "   quit(status=result)'").format(lib_name)
-            command = self.build_command(rscript)
-            try:
-                subprocess.check_output(command, stderr=self.dev_null, shell=True)
-            except subprocess.CalledProcessError:
-                missing_libs.append(lib_name)
-        self.assertEquals([], missing_libs)
-
     def test_samtools_version(self):
         command = self.build_command("(samtools 2>&1 | grep 'Version') || echo -e samtools not loaded")
         self.check_command(command, "Version: 1.5", "wrong samtools version")

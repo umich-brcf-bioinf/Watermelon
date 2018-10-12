@@ -1,8 +1,21 @@
+GRCh38:
+    genome: GRCh38
+    fastq_screen:
+        species: human
+    hisat2_index_spliced: true
+    references:
+        fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh38/Sequence/genome.fa
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh38/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh38/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh38/HISAT2_index/GRCh38_genes
 hg19:
     genome: hg19
     fastq_screen:
         species: human
+    hisat2_index_spliced: true
     references:
+        fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/genome.fa
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/hg19_noRibo.gtf
         hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/HISAT2_index/hg19_noRibo
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/Bowtie2Index
@@ -11,7 +24,9 @@ GRCh37:
     genome: GRCh37
     fastq_screen:
         species: human
+    hisat2_index_spliced: true
     references:
+        fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/Sequence/genome.fa
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/genes.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
@@ -20,7 +35,9 @@ mm10:
     genome: mm10
     fastq_screen:
         species: mouse
+    hisat2_index_spliced: true
     references:
+        fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/genome.fa
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/mm10_noRibo.gtf
         hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/HISAT2_index/mm10_noRibo
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/Bowtie2Index
@@ -29,7 +46,9 @@ rn5:
     genome: rn5
     fastq_screen:
         species: rat
+    hisat2_index_spliced: true
     references:
+        fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/Sequence/genome.fa
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/genes.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
@@ -38,7 +57,9 @@ ce10:
     genome: ce10
     fastq_screen:
         species: celegans
+    hisat2_index_spliced: true
     references:
+        fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/Sequence/genome.fa
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/genes.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
@@ -47,7 +68,9 @@ ce11:
     genome: ce11
     fastq_screen:
         species: celegans
+    hisat2_index_spliced: true
     references:
+        fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/Sequence/genome.fa
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/genes.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
@@ -56,7 +79,9 @@ WBS235:
     genome: WBS235
     fastq_screen:
         species: celegans
+    hisat2_index_spliced: true
     references:
+        fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/Sequence/genome.fa
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/genes.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
@@ -65,8 +90,32 @@ GRCz10:
     genome: GRCz10
     fastq_screen:
         species: zebrafish
+    hisat2_index_spliced: true
     references:
+        fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/Sequence/genome.fa
         gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/genes.gtf
         bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/Sequence/Bowtie2Index
         entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
         hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/HISAT2_index/GRCz10_genes
+ecoMG1655:
+    genome: ecoMG1655
+    fastq_screen:
+        species: ecoli
+    hisat2_index_spliced: false
+    references:
+        fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ecoMG1655/Sequence/genome.fa
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ecoMG1655/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ecoMG1655/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ecoMG1655/HISAT2_index/ecoMG1655_genes
+ecoUTI89:
+    genome: ecoUTI89
+    fastq_screen:
+        species: ecoli
+    hisat2_index_spliced: false
+    references:
+        fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ecoUTI89/Sequence/genome.fa
+        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ecoUTI89/genes.gtf
+        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ecoUTI89/Sequence/Bowtie2Index
+        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ecoUTI89/HISAT2_index/ecoUTI89_genes

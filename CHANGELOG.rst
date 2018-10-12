@@ -10,6 +10,7 @@ x.y.z (MM/DD/YYYY)
     default to 50)
 
 - Replaced Tuxedo/CuffDiff with Ballgown.
+- Added a stand-alone Snakefile, hisat2_index.smk, to generate HISAT2 indices as necessary
 - Added a top-level conda environment for watermelon
 
   - Upgraded Python 3.6.6, Snakemake 5.3.0, pandas (0.23.4)
@@ -17,7 +18,7 @@ x.y.z (MM/DD/YYYY)
 - Upgraded MultiQC to 1.6 (and adjusted to use conda environment)
 - Adjusted config:library_type to accept
 
-  - fr-unstnded
+  - fr-unstranded
   - unstranded
   - forward_reverse
   - fr-firststrand

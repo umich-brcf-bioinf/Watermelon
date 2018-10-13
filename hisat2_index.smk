@@ -37,16 +37,22 @@ def build_spliced_flags(wildcards):
 
 rule all:
     input:
-        expand(OUTPUT_DIR + 'genome.{n}.ht2', n = range(1,9))
+        OUTPUT_DIR + 'hisat2-inspect.summary',
 
 rule align_create_hisat2_index:
+    '''
+We run a hisat2-inspect following the index creation to
+a) validate the index and
+b) gracefully allow the index builder to choose between a small index
+   (suffix .ht2) and large index (suffix .ht21) without confusing snakemake.
+'''
     input:
         gtf = GENOME['references']['gtf'],
         fasta = GENOME['references']['fasta'],
     output:
-        expand(OUTPUT_DIR + 'genome.{n}.ht2', n = range(1,9)),
+        OUTPUT_DIR + 'hisat2-inspect.summary',
     log:
-        OUTPUT_DIR + '.log/align_create_hisat2_index.log'
+        OUTPUT_DIR + '.log/align_create_hisat2_index.log',
     benchmark:
         OUTPUT_DIR + 'benchmarks/align_create_hisat2_index.benchmark.txt'
     conda:
@@ -61,4 +67,7 @@ rule align_create_hisat2_index:
         hisat2-build -p {threads} \
             {params.spliced_flags} {input.fasta} \
             {OUTPUT_DIR}/genome
+        hisat2-inspect --summary {OUTPUT_DIR}/genome \
+            | tee {OUTPUT_DIR}/.hisat2-inspect.summary.tmp
+        mv {OUTPUT_DIR}/.hisat2-inspect.summary.tmp {OUTPUT_DIR}/hisat2-inspect.summary
         ) 2>&1 | tee {log}'''

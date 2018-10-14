@@ -1,73 +1,85 @@
-'''Build a HISAT2 index for a specified genome
+'''Build a HISAT2 index for all genomes in config
 
 e.g.:
 First adjust config/genome_references.yaml to set
   references:hisat_2, fasta, gtf
 Then,
-$ snakemake --use-conda --snakefile hisat2_index.smk --cores=8 -p --config genome=ce10
+$ snakemake --use-conda --snakefile hisat2_index.smk --cores=8 -p
 
 Finally: Jazzhands!
 '''
 
 from os.path import join
+from argparse import Namespace
 configfile: 'config/genome_references.yaml'
 
-GENOME = config[config['genome']]
+def get_genome_config(wildcards):
+    genome = config[wildcards.genome]
+    genome_config = Namespace()
+    genome_config.output_dir = join(genome['references']['hisat2_index'], '')
+    genome_config.gtf = genome['references']['gtf']
+    genome_config.fasta = genome['references']['fasta']
+    genome_config.spliced = genome['hisat2_index_spliced']
+    genome_config.exon_file = genome_config.output_dir + 'exon.tmp'
+    genome_config.ss_file = genome_config.output_dir + 'ss.tmp'
+    genome_config.spliced_commands = _build_spliced_commands(genome_config)
+    genome_config.spliced_flags = _build_spliced_flags(genome_config)
+    return genome_config
 
-OUTPUT_DIR = join(GENOME['references']['hisat2_index'], '')
-TMP_EXON_FILE = OUTPUT_DIR + 'exon.tmp'
-TMP_SS_FILE = OUTPUT_DIR + 'ss.tmp'
-
-def build_spliced_commands(gtf):
+def _build_spliced_commands(genome_config):
     commands = ''
-    if GENOME['hisat2_index_spliced']:
+    if genome_config.spliced:
         commands = '''
-            hisat2_extract_exons.py {gtf} > {exon_file}
-            hisat2_extract_splice_sites.py {gtf} > {ss_file}''' \
-                .format(gtf=gtf,
-                        exon_file=TMP_EXON_FILE,
-                        ss_file=TMP_SS_FILE)
+            hisat2_extract_exons.py {gtf} > {exon_file} && hisat2_extract_splice_sites.py {gtf} > {ss_file}''' \
+                .format(gtf=genome_config.gtf,
+                        exon_file=genome_config.exon_file,
+                        ss_file=genome_config.ss_file)
     return commands
 
-def build_spliced_flags(wildcards):
+def _build_spliced_flags(genome_config):
     flag = ''
-    if GENOME['hisat2_index_spliced']:
-        flag = '--exon {} --ss {}'.format(TMP_EXON_FILE, TMP_SS_FILE)
+    if genome_config.spliced:
+        flag = '--exon {} --ss {}'\
+            .format(genome_config.exon_file, genome_config.ss_file)
     return flag
+
+get_output = lambda genome: join(config[genome]['references']['hisat2_index'], genome+'.summary')
+OUTPUTS = [get_output(genome) for genome in config]
 
 rule all:
     input:
-        OUTPUT_DIR + 'hisat2-inspect.summary',
+        OUTPUTS,
 
 rule align_create_hisat2_index:
     '''
 We run a hisat2-inspect following the index creation to
 a) validate the index and
 b) gracefully allow the index builder to choose between a small index
-   (suffix .ht2) and large index (suffix .ht21) without confusing snakemake.
+   (suffix .ht2) and large index (suffix .ht21) without confusing Snakemake.
 '''
     input:
-        gtf = GENOME['references']['gtf'],
-        fasta = GENOME['references']['fasta'],
+        gtf = lambda x: get_genome_config(x).gtf,
+        fasta = lambda x: get_genome_config(x).fasta,
     output:
-        OUTPUT_DIR + 'hisat2-inspect.summary',
+        '{output_dir}/{genome}.summary',
     log:
-        OUTPUT_DIR + '.log/align_create_hisat2_index.log',
+        '{output_dir}/.log/align_create_hisat2_index.{genome}.log',
     benchmark:
-        OUTPUT_DIR + 'benchmarks/align_create_hisat2_index.benchmark.txt'
+        '{output_dir}/benchmarks/align_create_hisat2_index.{genome}.benchmark.txt'
     conda:
         'rules/envs/align_hisat2_stringtie.yaml'
     params:
-        spliced_commands = lambda wildcards, input: build_spliced_commands(input.gtf),
-        spliced_flags = lambda wildcards: build_spliced_flags(wildcards),
+        output_dir = lambda x: get_genome_config(x).output_dir,
+        spliced_commands = lambda x: get_genome_config(x).spliced_commands,
+        spliced_flags = lambda x: get_genome_config(x).spliced_flags,
     threads: 8
     shell:
         '''(
         {params.spliced_commands}
         hisat2-build -p {threads} \
             {params.spliced_flags} {input.fasta} \
-            {OUTPUT_DIR}/genome
-        hisat2-inspect --summary {OUTPUT_DIR}/genome \
-            | tee {OUTPUT_DIR}/.hisat2-inspect.summary.tmp
-        mv {OUTPUT_DIR}/.hisat2-inspect.summary.tmp {OUTPUT_DIR}/hisat2-inspect.summary
+            {params.output_dir}/genome
+        hisat2-inspect --summary {params.output_dir}/genome \
+            | tee {output}.tmp
+        mv {output}.tmp {output}
         ) 2>&1 | tee {log}'''

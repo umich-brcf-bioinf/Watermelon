@@ -11,7 +11,7 @@ import argparse
 from collections import defaultdict
 
 WARNING_PERCENTAGE_ANNOTATED_CUTOFF = 50
-TAXONOMY = {'hg19': '9606', 'GRCh37': '9606',   # human
+TAXONOMY = {'hg19': '9606', 'GRCh37': '9606', 'hg38': '9606', 'GRCh38': '9606',   # human
             'mm10': '10090', 'mm9': '10090',    # mouse
             'rn5': '10116', 'rn6': '10116',     # rat
             'ce10': '6239', 'ce11': '6239', 'WS220': '6239', 'WBS235': '6239',   # c. elegans

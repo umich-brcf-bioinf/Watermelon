@@ -84,7 +84,7 @@ You can review benchmarks like so::
 
   cd /ccmb/BioinfCore/Common/pipelines/Watermelon/references
   awk 'BEGIN {OFS="\t"} NR==1 {print "#file",$0} FNR>1 {split(FILENAME, a, "/"); print a[6],$0}' `find . -maxdepth 5 -path '*/benchmarks/*' -name '*benchmark.txt' | sort` | column -t
-
+  
   #file                                              s           h:m:s    max_rss    max_vms    max_uss    max_pss    io_in     io_out     mean_load
   align_create_hisat2_index.ce10.benchmark.txt       242.2707    0:04:02  13695.97   14586.54   13691.81   13692.32   97.55     2857.31    0.00
   align_create_hisat2_index.ce11.benchmark.txt       206.4044    0:03:26  5446.36    9531.71    5442.03    5442.57    97.58     2874.23    0.00

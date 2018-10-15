@@ -1,72 +1,147 @@
+# This yaml defines the genome specific elements injected into a analysis.yaml conf
+# To add a new genome, add a new sectoin and (if necessary) build the HISAT2 index:
+# snakemake --use-conda --snakefile hisat2_index.smk --cores=8 -p
+
+hg38:
+    genome: hg38
+    fastq_screen:
+        species: human
+    hisat2_index_spliced: true
+    references:
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/hg38/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/hg38/genes.gtf
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/hg38/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/hg38/HISAT2_index/hg38_genes
+GRCh38:
+    genome: GRCh38
+    fastq_screen:
+        species: human
+    hisat2_index_spliced: true
+    references:
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCh38/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCh38/genes.gtf
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCh38/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCh38/HISAT2_index/GRCh38_genes
 hg19:
     genome: hg19
     fastq_screen:
         species: human
+    hisat2_index_spliced: true
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/hg19_noRibo.gtf
-        hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/HISAT2_index/hg19_noRibo
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/hg19/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/hg19/hg19_noRibo.gtf
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/hg19/HISAT2_index/hg19_noRibo
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/hg19/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
 GRCh37:
     genome: GRCh37
     fastq_screen:
         species: human
+    hisat2_index_spliced: true
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/HISAT2_index/GRCh37_genes
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCh37/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCh37/genes.gtf
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCh37/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCh37/HISAT2_index/GRCh37_genes
 mm10:
     genome: mm10
     fastq_screen:
         species: mouse
+    hisat2_index_spliced: true
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/mm10_noRibo.gtf
-        hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/HISAT2_index/mm10_noRibo
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/mm10/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/mm10/mm10_noRibo.gtf
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/mm10/HISAT2_index/mm10_noRibo
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/mm10/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
 rn5:
     genome: rn5
     fastq_screen:
         species: rat
+    hisat2_index_spliced: true
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/HISAT2_index/rn5_genes
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/rn5/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/rn5/genes.gtf
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/rn5/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/rn5/HISAT2_index/rn5_genes
+rn6:
+    genome: rn6
+    fastq_screen:
+        species: rat
+    hisat2_index_spliced: true
+    references:
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/rn6/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/rn6/genes.gtf
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/rn6/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/rn6/HISAT2_index/rn6_genes
 ce10:
     genome: ce10
     fastq_screen:
         species: celegans
+    hisat2_index_spliced: true
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/HISAT2_index/ce10_genes
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/ce10/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/ce10/genes.gtf
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/ce10/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/ce10/HISAT2_index/ce10_genes
 ce11:
     genome: ce11
     fastq_screen:
         species: celegans
+    hisat2_index_spliced: true
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/HISAT2_index/ce11_genes
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/ce11/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/ce11/genes.gtf
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/ce11/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/ce11/HISAT2_index/ce11_genes
 WBS235:
     genome: WBS235
     fastq_screen:
         species: celegans
+    hisat2_index_spliced: true
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/HISAT2_index/WBS235_genes
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/WBS235/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/WBS235/genes.gtf
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/WBS235/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/WBS235/HISAT2_index/WBS235_genes
 GRCz10:
     genome: GRCz10
     fastq_screen:
         species: zebrafish
+    hisat2_index_spliced: true
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/HISAT2_index/GRCz10_genes
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCz10/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCz10/genes.gtf
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCz10/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCz10/HISAT2_index/GRCz10_genes
+ecoMG1655:
+    genome: ecoMG1655
+    fastq_screen:
+        species: ecoli
+    hisat2_index_spliced: false
+    references:
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/ecoMG1655/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/ecoMG1655/genes.gtf
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/ecoMG1655/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/ecoMG1655/HISAT2_index/ecoMG1655_genes
+ecoUTI89:
+    genome: ecoUTI89
+    fastq_screen:
+        species: ecoli
+    hisat2_index_spliced: false
+    references:
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/ecoUTI89/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/ecoUTI89/genes.gtf
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/ecoUTI89/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/ecoUTI89/HISAT2_index/ecoUTI89_genes

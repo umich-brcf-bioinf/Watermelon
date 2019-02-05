@@ -79,6 +79,18 @@ rn6:
         bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/rn6/Sequence/Bowtie2Index
         entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
         hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/rn6/HISAT2_index/rn6_genes
+dm6:
+    genome: dm6
+    fastq_screen:
+        species: fly
+    hisat2_index_spliced: true
+    references:
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/dm6/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/dm6/dm6_genes.gtf
+        bowtie2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/dm6/Sequence/Bowtie2Index
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+        hisat2_index: /nfs/med-bfx-common/pipelines/Watermelon/references/dm6/HISAT2_index/dm6_genes
+
 ce10:
     genome: ce10
     fastq_screen:

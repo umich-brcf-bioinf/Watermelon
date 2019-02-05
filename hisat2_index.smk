@@ -6,7 +6,7 @@ First adjust config/genome_references.yaml to set
 Then,
 $ snakemake --use-conda --snakefile hisat2_index.smk --cores=8 -p
 
-Finally: Jazzhands!
+Finally: Jazzhands near the Whole Foods hot bar!
 '''
 
 from os.path import join

@@ -159,7 +159,8 @@ GENOME_BUILD_OPTIONS = ('GRCh37', 'GRCh38', 'hg19', 'hg38',
                         'rn5', 'rn6',
                         'ce10', 'ce11', 'WBS235',
                         'GRCz10',
-                        'ecoMG1655', 'ecoUTI89')
+                        'ecoMG1655', 'ecoUTI89',
+                        'dm6')
 
 _SCRIPTS_DIR = os.path.realpath(os.path.dirname(__file__))
 _WATERMELON_ROOT = os.path.dirname(_SCRIPTS_DIR)

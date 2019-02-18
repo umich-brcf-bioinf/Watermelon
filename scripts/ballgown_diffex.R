@@ -64,6 +64,7 @@ handle_comparisons = function(yaml) {
         function(comparison){
             tmp = data.frame(t(sapply(comparison, versus_split, USE.NAMES = FALSE)))
             colnames(tmp) = c('exp', 'con')
+            tmp$out_name = apply(tmp, 1, paste, collapse = '_v_')
             return(tmp)
         }
     )
@@ -76,6 +77,9 @@ yaml = read_yaml(config_file)
 
 diffex_dir = yaml$diffex_output_dir
 results_dir = sprintf('%s/ballgown/01-ballgown_diffex', diffex_dir)
+counts_dir = sprintf('%s/counts', results_dir)
+gene_lists_dir = sprintf('%s/gene_lists', results_dir)
+
 ballgown_inputs_dir = sprintf('%s/ballgown', stringtie_dir)
 
 sample_paths = list.files(ballgown_inputs_dir, full.names = TRUE)
@@ -91,7 +95,7 @@ comparisons = handle_comparisons(yaml)
 comparison_types = names(comparisons)
 
 fdr_cutoff = yaml$deseq2_adjustedPValue
-fc_cutoff = yaml$fold_change
+fc_cutoff = log2(yaml$fold_change)
 
 #######################################
 message('Reading ballgown input')
@@ -117,22 +121,42 @@ gtf_dict = iso_fpkms[, c('t_id', 'gene_id', 't_name', 'chr', 'start', 'end', 'st
 iso_col_keep = c('t_id', 'gene_id', 't_name', 'chr', 'start', 'end', 'strand', grep('FPKM', colnames(iso_fpkms), value = T))
 iso_fpkms = iso_fpkms[, iso_col_keep]
 
+###################
+# Write both to a tab-delimited file
+gene_fpkm_file = sprintf('%s/gene_fpkms.txt', counts_dir)
+iso_fpkm_file = sprintf('%s/iso_fpkms.txt', counts_dir)
+
+message(sprintf('Writing gene FPKMs to %s', gene_fpkm_file))
+write.table(gene_fpkms, file = gene_fpkm_file, sep = '\t', row.names = F, col.names = T, quote = F)
+
+message(sprintf('Writing isoform FPKMs to %s', iso_fpkm_file))
+write.table(iso_fpkms, file = iso_fpkm_file, sep = '\t', row.names = F, col.names = T, quote = F)
+
 #######################################
 # Loop through the comparison types, and the comparisons
+
+# List container for all the results
+de_results = list()
+
 for(type in comparison_types) {
     message(sprintf('On %s comparison type', type))
     # What are all the comparisons to be done based on the type?
     type_comparisons = comparisons[[type]]
 
     # Setup the results directories
-    de_dir = sprintf('%s/%s', results_dir, type)
+    de_dir = sprintf('%s/%s', gene_lists_dir, type)
+
+    # List container named type_comparisons with gene and isoform sublists
+    type_de_results = list()
 
     # Do the gene-level and isoform-level tests for DE
     for(i in 1:nrow(type_comparisons)) {
         # Extract experiment name and control name for convenience
         exp = as.character(type_comparisons[i, 'exp'])
         con = as.character(type_comparisons[i, 'con'])
-        out_name = paste(exp, con, sep='_v_')
+        out_name = as.character(type_comparisons[i, 'out_name'])
+
+        type_de_results[[out_name]] = list()
 
         message(sprintf('On %s vs %s comparison', exp, con))
         # Wow this is BAD. Why not just extend SummarizedExperiment?
@@ -148,9 +172,10 @@ for(type in comparison_types) {
             getFC = TRUE)
         # Order by qval, and remove the feature column
         gene_results = gene_results[order(gene_results$qval, gene_results$fc), c('id', 'fc', 'pval', 'qval')]
+        gene_results$log2fc = log2(gene_results$fc)
         gene_results$Condition = exp
         gene_results$Control = con
-        gene_results$diff_exp = ifelse(gene_results$fc > fc_cutoff & gene_results$qval < fdr_cutoff, 'Yes', 'No')
+        gene_results$diff_exp = ifelse(abs(gene_results$log2fc) >= fc_cutoff & gene_results$qval < fdr_cutoff, 'YES', 'NO')
 
         iso_results = stattest(
             gown = sub_bg_data,
@@ -168,14 +193,30 @@ for(type in comparison_types) {
             all.y = TRUE)
         # Order by qval, and remove the feature and t_id columns
         iso_results = iso_results[order(iso_results$qval, iso_results$fc), setdiff(colnames(iso_results), c('t_id','feature'))]
+        iso_results$log2fc = log2(iso_results$fc)
         iso_results$Condition = exp
         iso_results$Control = con
-        iso_results$diff_exp = ifelse(iso_results$fc > fc_cutoff & iso_results$qval < fdr_cutoff, 'Yes', 'No')
 
-        write.table(gene_results, file = sprintf('%s/%s_gene.txt', de_dir, out_name), sep='\t', col.names = T, row.names = F, quote = F)
-        write.table(iso_results, file = sprintf('%s/%s_isoform.txt', de_dir, out_name), sep='\t', col.names = T, row.names = F, quote = F)
+        iso_results$diff_exp = ifelse(abs(iso_results$log2fc) >= fc_cutoff & iso_results$qval < fdr_cutoff, 'YES', 'NO')
+
+        # Append to the type_de_results
+        type_de_results[[out_name]] = list(gene_list = gene_results, isoform_list = iso_results)
+
+        gene_list_file = sprintf('%s/%s_gene.txt', de_dir, out_name)
+        message(sprintf('Writing gene list to %s', gene_list_file))
+        write.table(gene_results, file = gene_list_file, sep='\t', col.names = T, row.names = F, quote = F)
+
+        iso_list_file = sprintf('%s/%s_isoform.txt', de_dir, out_name)
+        message(sprintf('Writing isoform list to %s', iso_list_file))
+        write.table(iso_results, file = iso_list_file, sep='\t', col.names = T, row.names = F, quote = F)
     }
+
+    de_results[[type]] = type_de_results
 }
 
-# message('Saving ballgown RData')
-# save(bg_data, file = sprintf('%s/ballgown_data.rda', results_dir), compress = 'xz')
+# Save the rda file that gets passed on to plotting rule
+ballgown_rda_file = sprintf('%s/ballgown_data.rda', results_dir)
+save_list = c('yaml', 'comparisons', 'comparison_types', 'bg_data', 'gene_fpkms', 'iso_fpkms', 'gtf_dict', 'de_results')
+
+message(sprintf('Saving ballgown RData to %s', ballgown_rda_file))
+save(list = save_list, file = ballgown_rda_file)

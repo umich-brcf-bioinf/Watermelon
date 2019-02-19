@@ -130,7 +130,7 @@ fc <- as.numeric(opt$foldChange)
 pval <- as.numeric(opt$adjustedPValue)
 
 #read in countDataFile, convert to integers if not already converted
-countData <- read.table(file=opt$countDataFile, header = TRUE, sep = ',', row.names = 1, strip.white = TRUE, stringsAsFactors = FALSE)
+countData <- read.table(file=opt$countDataFile, header = TRUE, sep = ',', row.names = 1, strip.white = TRUE, quote = '', stringsAsFactors = FALSE)
 countData <- round(countData)
 
 #read in metaDataFile

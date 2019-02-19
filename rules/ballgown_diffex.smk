@@ -14,8 +14,8 @@ rule ballgown_diffex:
         gene_counts = BALLGOWN_DIR + '01-ballgown_diffex/counts/gene_fpkms.txt',
         iso_counts = BALLGOWN_DIR + '01-ballgown_diffex/counts/iso_fpkms.txt',
         rda = BALLGOWN_DIR + '01-ballgown_diffex/ballgown_data.rda',
-    benchmark:
-        'benchmarks/ballgown_diffex.benchmark.txt'
+    # benchmark:
+    #     'benchmarks/ballgown_diffex.benchmark.txt'
     conda:
         'envs/ballgown_diffex.yaml'
     params:

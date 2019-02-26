@@ -75,7 +75,7 @@ handle_comparisons = function(yaml) {
 # yaml parsing
 yaml = read_yaml(config_file)
 
-diffex_dir = yaml$diffex_output_dir
+diffex_dir = yaml$dir$diffex_output
 results_dir = sprintf('%s/ballgown/01-ballgown_diffex', diffex_dir)
 counts_dir = sprintf('%s/counts', results_dir)
 gene_lists_dir = sprintf('%s/gene_lists', results_dir)
@@ -198,6 +198,10 @@ for(type in comparison_types) {
         iso_results$Control = con
 
         iso_results$diff_exp = ifelse(abs(iso_results$log2fc) >= fc_cutoff & iso_results$qval < fdr_cutoff, 'YES', 'NO')
+
+        # Sort by diff_exp, then qval
+        gene_results = gene_results[order(-rank(gene_results$diff_exp), gene_results$qval), ]
+        iso_results = iso_results[order(-rank(iso_results$diff_exp), iso_results$qval), ]
 
         # Append to the type_de_results
         type_de_results[[out_name]] = list(gene_list = gene_results, isoform_list = iso_results)

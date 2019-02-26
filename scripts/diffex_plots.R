@@ -27,6 +27,7 @@ library(yaml)
 
 
 plot_boxplot = function(mat, title, y_label, out_name = 'BoxPlot.pdf') {
+
     tidy_mat = tidyr::gather(as_tibble(mat), key = 'sample', value = 'counts')
 
     box_plot = ggplot(tidy_mat, aes(x = sample, y = counts)) +
@@ -42,7 +43,16 @@ plot_boxplot = function(mat, title, y_label, out_name = 'BoxPlot.pdf') {
 }
 
 
-plot_sample_correlation_heatmap = function(mat, out_name = 'SampleHeatmap.pdf') {
+plot_sample_correlation_heatmap = function(mat, pdata, factor_name, out_name = 'SampleHeatmap.pdf') {
+
+    if(!(factor_name %in% colnames(pdata))) {
+        stop(sprintf('factor_name = %s is not in columns of pdata.', factor_name))
+    }
+
+    annot_df = data.frame(
+        Group = pdata[, factor_name],
+        row.names = pdata$sample
+    )
 
     dist_obj = dist(t(mat), method = 'euclidean', diag = T, upper = T)
     hclust_obj = hclust(dist_obj, method = 'complete')
@@ -51,8 +61,9 @@ plot_sample_correlation_heatmap = function(mat, out_name = 'SampleHeatmap.pdf') 
     pdf(file = file.path(plots_dir, 'summary_plots', out_name), height = 8, width = 8)
         pheatmap(
             mat = dist_mat,
-            cluster_rows = hclust_obj,
-            cluster_cols = hclust_obj,
+            cluster_rows = TRUE,
+            cluster_cols = TRUE,
+            annotation_col = annot_df,
             color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
         )
     dev.off()
@@ -61,13 +72,67 @@ plot_sample_correlation_heatmap = function(mat, out_name = 'SampleHeatmap.pdf') 
 }
 
 
-plot_top_variably_expressed_heatmap = function() {
+plot_top_variably_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out_name = 'Heatmap_TopVar.pdf') {
 
+    if(!(factor_name %in% colnames(pdata))) {
+        stop(sprintf('factor_name = %s is not in columns of pdata.', factor_name))
+    }
+
+    annot_df = data.frame(
+        Group = pdata[, factor_name],
+        row.names = pdata$sample
+    )
+
+    # Calculate PCA on top_n variable genes
+    top_var_mat = mat[order(matrixStats::rowVars(mat), decreasing = T), ][1:top_n, ]
+
+    pdf(file = file.path(plots_dir, 'summary_plots', out_name), height = 20, width = 10)
+        pheatmap(
+            mat = top_var_mat,
+            scale= 'row',
+            cluster_rows = TRUE,
+            cluster_cols = TRUE,
+            show_rownames = FALSE,
+            annotation_col = annot_df,
+            fontsize = 7,
+            fontsize_row = 7,
+            las = 2,
+            main = sprintf('Top %s variably expressed genes', top_n),
+            color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
+        )
+    dev.off()
 }
 
 
-plot_top_expressed_heatmap = function() {
+plot_top_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out_name = 'Heatmap_TopExp.pdf') {
 
+    if(!(factor_name %in% colnames(pdata))) {
+        stop(sprintf('factor_name = %s is not in columns of pdata.', factor_name))
+    }
+
+    annot_df = data.frame(
+        Group = pdata[, factor_name],
+        row.names = pdata$sample
+    )
+
+    # Calculate PCA on top_n variable genes
+    top_exp_mat = mat[order(rowMeans(mat), decreasing = T), ][1:top_n, ]
+
+    pdf(file = file.path(plots_dir, 'summary_plots', out_name), height = 20, width = 10)
+        pheatmap(
+            mat = top_exp_mat,
+            scale= 'row',
+            cluster_rows = TRUE,
+            cluster_cols = TRUE,
+            show_rownames = FALSE,
+            annotation_col = annot_df,
+            fontsize = 7,
+            fontsize_row = 7,
+            las = 2,
+            main = sprintf('Top %s expressed genes', top_n),
+            color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
+        )
+    dev.off()
 }
 
 
@@ -256,12 +321,15 @@ if(method == 'ballgown') {
 
 # Boxplot
 
-log2_boxplot = plot_boxplot(mat = mat, title = 'log2 FPKMs', y_label = 'log2(FPKM)')
+log2_boxplot = plot_boxplot(mat = mat, title = 'log2 FPKMs', y_label = 'log2(FPKM)', out_name = 'BoxPlot.pdf')
 
 ########################################################
 # Heatmaps
 
-log2_heatmap = plot_sample_correlation_heatmap(mat = mat)
+log2_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata, factor_name = 'day', out_name = 'SampleHeatmap.pdf')
+
+plot_top_variably_expressed_heatmap(mat = mat, pdata = pdata, factor_name = 'day', top_n = 1000, out_name = 'Heatmap_TopVar.pdf')
+plot_top_expressed_heatmap(mat = mat, pdata = pdata, factor_name = 'day', top_n = 1000, out_name = 'Heatmap_TopExp.pdf')
 
 ########################################################
 # PCA and MDS plots for each of the factor_names

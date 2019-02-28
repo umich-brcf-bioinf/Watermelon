@@ -12,6 +12,7 @@ config_file = opt$config_file
 ########################################################
 
 library(ballgown)
+library(DESeq2)
 library(dplyr)
 library(GGally)
 library(ggfortify)
@@ -153,7 +154,15 @@ add_replicate_col = function(pdata, factor_name) {
 }
 
 
-plot_PCA = function(mat, pdata, factor_name, top_n = 1000, out_name = 'PCAplot.pdf') {
+plot_PCA = function(mat, pdata, factor_name, top_n = 500, dims = c('PC1','PC2'), out_name = 'PCAplot.pdf') {
+
+    # Check for validly formatted dims
+    if(!all(grepl('PC\\d{1,}', dims))) {
+        stop("dims parameter must be e.g. c('PC1','PC2'). That is, any valid PC from prcomp.")
+    }
+
+    # Pull digits from dims
+    pc_digits = as.integer(gsub('PC','',dims))
 
     # Add replicate column
     pdata = add_replicate_col(pdata, factor_name)
@@ -161,28 +170,28 @@ plot_PCA = function(mat, pdata, factor_name, top_n = 1000, out_name = 'PCAplot.p
     # Calculate PCA on top_n variable genes
     top_var_mat = mat[order(matrixStats::rowVars(mat), decreasing = T), ][1:top_n, ]
 
-    pca = prcomp(top_var_mat, retx = TRUE, scale = TRUE)
+    pca = prcomp(t(top_var_mat), retx = TRUE)
     pca_df = data.frame(
-        sample = rownames(pca$rotation),
-        PC1 = pca$rotation[, 'PC1'],
-        PC2 = pca$rotation[, 'PC2'],
+        sample = rownames(pca$x),
+        x = pca$x[, dims[1]],
+        y = pca$x[, dims[2]],
         stringsAsFactors = F
     )
 
-    # Compute variance explained
-    var_explained = round((pca$sdev^2 / sum(pca$sdev^2))*100, 1)
+    # Compute variance explained and extract for the correct dimensions
+    var_explained = round((pca$sdev^2 / sum(pca$sdev^2))*100, 1)[pc_digits]
 
     # Join the pca_df with pdata to get the replicates and factor_name columns
     pca_df = merge(pca_df, pdata, by = 'sample', all.x = T)
 
     # Plot PCA
-    pca_plot = ggplot(pca_df, aes(x = PC1, y = PC2, color = replicate)) +
+    pca_plot = ggplot(pca_df, aes(x = x, y = y, color = replicate)) +
         geom_point(aes_string(shape = factor_name)) +
         labs(
-            title = sprintf('%s PCA plot', factor_name),
+            title = sprintf('%s PCA plot in dims. %s and %s', factor_name, dims[1], dims[2]),
             subtitle = sprintf('Using top %s variable genes', top_n),
-            x = sprintf('PC1: %s%% variance', var_explained[1]),
-            y = sprintf('PC2: %s%% variance', var_explained[2])) +
+            x = sprintf('%s: %s%% variance', dims[1], var_explained[1]),
+            y = sprintf('%s: %s%% variance', dims[2], var_explained[2])) +
         theme_bw()
     ggsave(filename = file.path(plots_dir, 'comparison_plots', factor_name, out_name), plot = pca_plot, height = 8, width = 8, dpi = 300)
 
@@ -190,13 +199,20 @@ plot_PCA = function(mat, pdata, factor_name, top_n = 1000, out_name = 'PCAplot.p
 }
 
 
-plot_MDS = function(mat, pdata, factor_name, top_n = 1000, out_name = 'MDSplot.pdf') {
+plot_MDS = function(mat, pdata, factor_name, top_n = 500, dims = c(1,2), out_name = 'MDSplot.pdf') {
+
+    if(!is(dims, 'numeric')) {
+        stop('dims must be numeric, e.g. c(1,2).')
+    }
+    if(!all(dims < 10)) {
+        stop('dims should not exceed the 9th dimension.')
+    }
 
     # Add replicate column
     pdata = add_replicate_col(pdata, factor_name)
 
     # Calculate MDS and pull relevant parts for the plot
-    mds = limma::plotMDS(x = mat, top = top_n, plot = FALSE, gene.selection = 'common')
+    mds = limma::plotMDS(x = mat, top = top_n, dim.plot = dims, plot = FALSE, gene.selection = 'common')
     mds_df = data.frame(
         sample = rownames(mds$cmdscale.out),
         x = mds$x,
@@ -211,10 +227,10 @@ plot_MDS = function(mat, pdata, factor_name, top_n = 1000, out_name = 'MDSplot.p
     mds_plot = ggplot(mds_df, aes(x = x, y = y, color = replicate)) +
         geom_point(aes_string(shape = factor_name)) +
         labs(
-            title = sprintf('%s MDS plot', factor_name),
+            title = sprintf('%s MDS plot in dims. %s and %s', factor_name, dims[1], dims[2]),
             subtitle = sprintf('Using top %s variable genes', top_n),
-            x = 'Dim 1',
-            y = 'Dim 2') +
+            x = sprintf('Dim %s', dims[1]),
+            y = sprintf('Dim %s', dims[2])) +
         theme_bw()
     ggsave(filename = file.path(plots_dir, 'comparison_plots', factor_name, out_name), plot = mds_plot, height = 8, width = 8, dpi = 300)
 
@@ -291,8 +307,6 @@ fdr_cutoff = yaml$deseq2_adjustedPValue
 logfc_cutoff = log2(yaml$fold_change)
 
 diffex_dir = yaml$diffex_output_dir
-results_dir = sprintf('%s/ballgown/01-ballgown_diffex', diffex_dir)
-plots_dir = sprintf('%s/plots', results_dir)
 
 ########################################################
 # Load data
@@ -301,19 +315,29 @@ load(diffex_rda)
 
 if('bg_data' %in% ls()) {
     method = 'ballgown'
-    boxplot_y_lab = 'log2(FPKM)'
-    pdata = pData(bg_data)
-} else {
-    method = 'deseq2'
-    boxplot_y_lab = 'log2(counts)'
-}
 
-# Setup FPKM matrix for use in PCA and heatmaps
-if(method == 'ballgown') {
+    results_dir = sprintf('%s/ballgown/01-ballgown_diffex', diffex_dir)
+    plots_dir = sprintf('%s/plots', results_dir)
+
+    pdata = pData(bg_data)
+
     mat = log2(as.matrix(gene_fpkms[,-1]) + 1)
     colnames(mat) = gsub('FPKM.','', colnames(mat))
-} else {
 
+    boxplot_y_lab = 'log2(FPKM)'
+} else {
+    method = 'deseq2'
+
+    results_dir = sprintf('%s/deseq2/02-deseq2_diffex', diffex_dir)
+    plots_dir = sprintf('%s/plots', results_dir)
+
+    pdata = data.frame(colData(rld))
+    colnames(pdata)[1] = 'sample'
+
+    mat = as.matrix(assay(rld))
+
+    boxplot_title = 'Rlog normalized counts'
+    boxplot_y_lab = 'log2(counts)'
 }
 
 ########################################################
@@ -321,7 +345,7 @@ if(method == 'ballgown') {
 
 # Boxplot
 
-log2_boxplot = plot_boxplot(mat = mat, title = 'log2 FPKMs', y_label = 'log2(FPKM)', out_name = 'BoxPlot.pdf')
+log2_boxplot = plot_boxplot(mat = mat, title = boxplot_title, y_label = boxplot_y_lab, out_name = 'BoxPlot.pdf')
 
 ########################################################
 # Heatmaps
@@ -334,11 +358,11 @@ plot_top_expressed_heatmap(mat = mat, pdata = pdata, factor_name = 'day', top_n 
 ########################################################
 # PCA and MDS plots for each of the factor_names
 
-factor_names = setdiff(colnames(pData(bg_data)), 'sample')
+factor_names = setdiff(colnames(pdata), 'sample')
 for(factor_name in factor_names) {
 
-    log2_pca = plot_PCA(mat = mat, pdata = pdata, factor_name = factor_name, top_n = 1000, out_name = 'PCAplot.pdf')
-    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = factor_name, top_n = 1000, out_name = 'MDSplot.pdf')
+    log2_pca = plot_PCA(mat = mat, pdata = pdata, factor_name = factor_name, top_n = 500, dims = c('PC1','PC2'), out_name = 'PCAplot.pdf')
+    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = factor_name, top_n = 500, dims = c(1,2), out_name = 'MDSplot.pdf')
 
 }
 

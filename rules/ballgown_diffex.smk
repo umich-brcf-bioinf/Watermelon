@@ -14,8 +14,8 @@ rule ballgown_diffex:
         gene_counts = BALLGOWN_DIR + '01-ballgown_diffex/counts/gene_fpkms.txt',
         iso_counts = BALLGOWN_DIR + '01-ballgown_diffex/counts/iso_fpkms.txt',
         rda = BALLGOWN_DIR + '01-ballgown_diffex/ballgown_data.rda',
-    # benchmark:
-    #     'benchmarks/ballgown_diffex.benchmark.txt'
+    log:
+        BALLGOWN_DIR + '01-ballgown_diffex/.log/deseq2_DESeq2Diffex.log'
     conda:
         'envs/ballgown_diffex.yaml'
     params:
@@ -23,7 +23,8 @@ rule ballgown_diffex:
         configfile_path = CONFIGFILE_PATH
     shell:
         '''
-        Rscript {WATERMELON_SCRIPTS_DIR}/ballgown_diffex.R \
+        (Rscript {WATERMELON_SCRIPTS_DIR}/ballgown_diffex.R \
             --stringtie_dir {params.stringtie_dir} \
             --config_file {params.configfile_path}
+        ) 2>&1 | tee {log}
         '''

@@ -44,6 +44,7 @@ ALL_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_all_tuple.compar
 REPLICATE_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_replicates_tuple.phenotypes
 REPLICATE_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_replicates_tuple.comparisons
 
+PHENOTYPES = list(set(ALL_PHENOTYPE_NAMES))
 
 rnaseq_snakefile_helper.init_references(config["references"])
 rnaseq_snakefile_helper.checksum_reset_all(CONFIG_CHECKSUMS_DIR,
@@ -117,6 +118,7 @@ include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
 
 include: 'rules/ballgown_diffex.smk'
+include: 'rules/ballgown_plots.smk'
 include: 'rules/ballgown_annotation.smk'
 include: 'rules/ballgown_run_info.smk'
 include: 'rules/ballgown_excel.smk'
@@ -124,6 +126,7 @@ include: 'rules/ballgown_summary.smk'
 
 include: 'rules/deseq2_metadata_contrasts.smk'
 include: 'rules/deseq2_diffex.smk'
+include: 'rules/deseq2_plots.smk'
 include: 'rules/deseq2_annotation.smk'
 include: 'rules/deseq2_run_info.smk'
 include: 'rules/deseq2_excel.smk'

@@ -20,6 +20,7 @@ library(ggplot2)
 library(ggrepel)
 library(pheatmap)
 library(RColorBrewer)
+library(stringr)
 library(tidyr)
 library(yaml)
 
@@ -188,7 +189,7 @@ plot_PCA = function(mat, pdata, factor_name, top_n = 500, dims = c('PC1','PC2'),
     pca_plot = ggplot(pca_df, aes(x = x, y = y, color = replicate)) +
         geom_point(aes_string(shape = factor_name)) +
         labs(
-            title = sprintf('%s PCA plot in dims. %s and %s', factor_name, dims[1], dims[2]),
+            title = sprintf('%s PCA plot', factor_name),
             subtitle = sprintf('Using top %s variable genes', top_n),
             x = sprintf('%s: %s%% variance', dims[1], var_explained[1]),
             y = sprintf('%s: %s%% variance', dims[2], var_explained[2])) +
@@ -227,7 +228,7 @@ plot_MDS = function(mat, pdata, factor_name, top_n = 500, dims = c(1,2), out_nam
     mds_plot = ggplot(mds_df, aes(x = x, y = y, color = replicate)) +
         geom_point(aes_string(shape = factor_name)) +
         labs(
-            title = sprintf('%s MDS plot in dims. %s and %s', factor_name, dims[1], dims[2]),
+            title = sprintf('%s MDS plot', factor_name),
             subtitle = sprintf('Using top %s variable genes', top_n),
             x = sprintf('Dim %s', dims[1]),
             y = sprintf('Dim %s', dims[2])) +
@@ -248,14 +249,19 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), comparison_ty
         pval = 'pval'
         padj = 'qval'
         gene_id = 'id'
+        de_call = 'diff_exp'
     } else {
-        stop('Sorry, deseq2 is not yet supported.')
+        log2fc = 'log2FoldChange'
+        pval = 'pvalue'
+        padj = 'padj'
+        gene_id = 'id'
+        de_call = 'Call'
     }
 
     # Add direction column
     de_list$direction = 'NS'
-    de_list$direction[de_list$diff_exp == 'YES' & de_list$log2fc <= 0] = 'Down'
-    de_list$direction[de_list$diff_exp == 'YES' & de_list$log2fc > 0] = 'Up'
+    de_list$direction[de_list[, de_call] == 'YES' & de_list[, log2fc] <= 0] = 'Down'
+    de_list$direction[de_list[, de_call] == 'YES' & de_list[, log2fc] > 0] = 'Up'
     de_list$direction = factor(de_list$direction, levels = c('Up', 'Down', 'NS'))
 
     if(unique(de_list$direction == 'NS')) {
@@ -263,7 +269,7 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), comparison_ty
     }
 
     # Transform qval to -log10 scale
-    de_list$log10qval = -log10(de_list$qval)
+    de_list$log10qval = -log10(de_list[, padj])
 
     # Add top 10 Up and 10 Down gene labels
     top = rbind(
@@ -273,10 +279,10 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), comparison_ty
     de_list = merge(x = de_list, y = top[, c('id','label')], by = 'id', all.x = TRUE, sort = FALSE)
 
     # Volcano Plot
-    volcano_plot = ggplot(de_list, aes_string(x = 'log2fc', y = 'log10qval', color = 'direction')) +
+    volcano_plot = ggplot(de_list, aes_string(x = log2fc, y = 'log10qval', color = 'direction')) +
         geom_point(size = 1) +
         scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray')) +
-        geom_vline(xintercept = c(0, -1*fc_cutoff, fc_cutoff), linetype = c(1, 2, 2), color = c('black', 'black', 'black')) +
+        geom_vline(xintercept = c(0, -1*logfc_cutoff, logfc_cutoff), linetype = c(1, 2, 2), color = c('black', 'black', 'black')) +
         geom_hline(yintercept = -log10(fdr_cutoff), linetype = 2, color = 'black') +
         labs(
             title = sprintf('%s_v_%s', exp_name, con_name),
@@ -306,6 +312,8 @@ yaml = read_yaml(config_file)
 fdr_cutoff = yaml$deseq2_adjustedPValue
 logfc_cutoff = log2(yaml$fold_change)
 
+phenotypes = str_trim(unlist(str_split(yaml$phenotypes, '\\^')))
+
 diffex_dir = yaml$diffex_output_dir
 
 ########################################################
@@ -324,6 +332,7 @@ if('bg_data' %in% ls()) {
     mat = log2(as.matrix(gene_fpkms[,-1]) + 1)
     colnames(mat) = gsub('FPKM.','', colnames(mat))
 
+    boxplot_title = 'FPKMs'
     boxplot_y_lab = 'log2(FPKM)'
 } else {
     method = 'deseq2'
@@ -344,45 +353,52 @@ if('bg_data' %in% ls()) {
 # Plots
 
 # Boxplot
-
+message('Plotting boxplots')
 log2_boxplot = plot_boxplot(mat = mat, title = boxplot_title, y_label = boxplot_y_lab, out_name = 'BoxPlot.pdf')
 
 ########################################################
 # Heatmaps
 
+message('Plotting sample heatmap')
 log2_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata, factor_name = 'day', out_name = 'SampleHeatmap.pdf')
 
+message('Plotting top variably expressed genes heatmap')
 plot_top_variably_expressed_heatmap(mat = mat, pdata = pdata, factor_name = 'day', top_n = 1000, out_name = 'Heatmap_TopVar.pdf')
+
+message('Plotting top expressed genes heatmap')
 plot_top_expressed_heatmap(mat = mat, pdata = pdata, factor_name = 'day', top_n = 1000, out_name = 'Heatmap_TopExp.pdf')
 
 ########################################################
 # PCA and MDS plots for each of the factor_names
 
-factor_names = setdiff(colnames(pdata), 'sample')
-for(factor_name in factor_names) {
+for(phenotype in phenotypes) {
 
-    log2_pca = plot_PCA(mat = mat, pdata = pdata, factor_name = factor_name, top_n = 500, dims = c('PC1','PC2'), out_name = 'PCAplot.pdf')
-    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = factor_name, top_n = 500, dims = c(1,2), out_name = 'MDSplot.pdf')
+    message(sprintf('Plotting PCA for %s', phenotype))
+    log2_pca = plot_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC1','PC2'), out_name = 'PCAplot.pdf')
+
+    message(sprintf('Plotting MDS for %s', phenotype))
+    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c(1,2), out_name = 'MDSplot.pdf')
 
 }
 
 ########################################################
 # Volcano plot for each comparison
 
-for(comparison_type in comparison_types) {
-    # What are all the comparisons to be done based on the type?
-    all_comparisons = comparisons[[comparison_type]]
+for(comparison_type in names(de_results)) {
+
+    comparisons = names(de_results[[comparison_type]])
 
     # Do the gene-level and isoform-level tests for DE
-    for(i in 1:nrow(all_comparisons)) {
+    for(comparison in comparisons) {
+
         # Extract experiment name and control name for convenience
-        exp = as.character(all_comparisons[i, 'exp'])
-        con = as.character(all_comparisons[i, 'con'])
-        out_name = as.character(all_comparisons[i, 'out_name'])
+        out_name = comparison
+        exp = unlist(str_split(out_name, '_v_'))[1]
+        con = unlist(str_split(out_name, '_v_'))[2]
 
         message(sprintf('Plotting volcano plot for %s %s', comparison_type, out_name))
 
-        gene_list = de_results[[comparison_type]][[out_name]][['gene_list']]
+        gene_list = data.frame(de_results[[comparison_type]][[comparison]][['gene_list']])
 
         volcano_plot = plot_volcano(
             de_list = gene_list,

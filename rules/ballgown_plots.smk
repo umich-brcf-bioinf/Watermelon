@@ -8,6 +8,10 @@ rule ballgown_plots:
         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/comparison_plots/{phenotype_name}/VolcanoPlot_{comparison}.pdf',
+               zip,
+               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+               comparison=REPLICATE_COMPARISON_GROUPS),
     log:
         BALLGOWN_DIR + '01-ballgown_diffex/.log/ballgown_plots.log'
     conda:

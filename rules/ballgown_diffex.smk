@@ -15,7 +15,7 @@ rule ballgown_diffex:
         iso_counts = BALLGOWN_DIR + '01-ballgown_diffex/counts/iso_fpkms.txt',
         rda = BALLGOWN_DIR + '01-ballgown_diffex/ballgown_data.rda',
     log:
-        BALLGOWN_DIR + '01-ballgown_diffex/.log/deseq2_DESeq2Diffex.log'
+        BALLGOWN_DIR + '01-ballgown_diffex/.log/ballgown_diffex.log'
     conda:
         'envs/ballgown_diffex.yaml'
     params:

@@ -78,6 +78,7 @@ else:
     FASTQ_SCREEN_DELIVERABLES = []
 
 DESEQ2_ALL = []
+BALLGOWN_ALL = []
 if REPLICATE_PHENOTYPE_NAMES:
     DESEQ2_ALL = [
         DESEQ2_DIR + "01-metadata_contrasts/sample_metadata.txt",
@@ -97,9 +98,39 @@ if REPLICATE_PHENOTYPE_NAMES:
         DESEQ2_DIR + "06-summary/deseq2_summary.txt",
         DESEQ2_DIR + "06-summary/deseq2_summary.xlsx",
         DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt",
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/PCAplot.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/MDSplot.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
         ]
+    BALLGOWN_ALL = [
+        expand(ALIGNMENT_DIR + '06-stringtie/ballgown/{sample}/{bgown_prefixes}.ctab',
+               sample=config[SAMPLES_KEY],
+               bgown_prefixes=['e2t','e_data','i2t','i_data','t_data']),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/gene_lists/{phenotype}/{comparison}_gene.txt',
+                zip,
+                phenotype=ALL_PHENOTYPE_NAMES,
+                comparison=ALL_COMPARISON_GROUPS),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/gene_lists/{phenotype}/{comparison}_isoform.txt',
+                zip,
+                phenotype=ALL_PHENOTYPE_NAMES,
+                comparison=ALL_COMPARISON_GROUPS),
+        BALLGOWN_DIR + '01-ballgown_diffex/counts/gene_fpkms.txt',
+        BALLGOWN_DIR + '01-ballgown_diffex/counts/iso_fpkms.txt',
+        BALLGOWN_DIR + '01-ballgown_diffex/ballgown_data.rda',
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/PCAplot.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/MDSplot.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
+    ]
 
-OPTIONAL_ALL = DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
+
+
+OPTIONAL_ALL = BALLGOWN_ALL + DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
 
 ALL = [OPTIONAL_ALL]
 

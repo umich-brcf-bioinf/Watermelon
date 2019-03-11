@@ -28,18 +28,26 @@ library(yaml)
 # Define plotting functions
 
 
-plot_boxplot = function(mat, title, y_label, out_name = 'BoxPlot.pdf') {
+plot_boxplot = function(mat, pdata, factor_name, title, y_label, out_name = 'BoxPlot.pdf') {
 
-    tidy_mat = tidyr::gather(as_tibble(mat), key = 'sample', value = 'counts')
+    annot_df = data.frame(
+        sample = pdata$sample,
+        Group = factor(pdata[, factor_name]),
+        row.names = pdata$sample,
+        stringsAsFactors = F
+    )
 
-    box_plot = ggplot(tidy_mat, aes(x = sample, y = counts)) +
+    tidy_mat = tidyr::gather(as_tibble(mat), key = 'sample', value = 'counts') %>%
+        left_join(annot_df, by = 'sample')
+
+    box_plot = ggplot(tidy_mat, aes(x = sample, y = counts, fill = Group)) +
         geom_boxplot(notch = TRUE) +
         labs(
             title = title,
             x = '',
             y = y_label) +
         theme_bw() + theme(axis.text.x = element_text(angle = 90))
-    ggsave(filename = file.path(plots_dir, 'summary_plots', out_name), plot = box_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = box_plot, height = 8, width = 8, dpi = 300)
 
     return(box_plot)
 }
@@ -60,7 +68,7 @@ plot_sample_correlation_heatmap = function(mat, pdata, factor_name, out_name = '
     hclust_obj = hclust(dist_obj, method = 'complete')
     dist_mat = as.matrix(dist_obj)
 
-    pdf(file = file.path(plots_dir, 'summary_plots', out_name), height = 8, width = 8)
+    pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, out_name), height = 8, width = 8)
         pheatmap(
             mat = dist_mat,
             cluster_rows = TRUE,
@@ -88,7 +96,7 @@ plot_top_variably_expressed_heatmap = function(mat, pdata, factor_name, top_n = 
     # Calculate PCA on top_n variable genes
     top_var_mat = mat[order(matrixStats::rowVars(mat), decreasing = T), ][1:top_n, ]
 
-    pdf(file = file.path(plots_dir, 'summary_plots', out_name), height = 20, width = 10)
+    pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, out_name), height = 20, width = 10)
         pheatmap(
             mat = top_var_mat,
             scale= 'row',
@@ -120,7 +128,7 @@ plot_top_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out
     # Calculate PCA on top_n variable genes
     top_exp_mat = mat[order(rowMeans(mat), decreasing = T), ][1:top_n, ]
 
-    pdf(file = file.path(plots_dir, 'summary_plots', out_name), height = 20, width = 10)
+    pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, out_name), height = 20, width = 10)
         pheatmap(
             mat = top_exp_mat,
             scale= 'row',
@@ -194,7 +202,7 @@ plot_PCA = function(mat, pdata, factor_name, top_n = 500, dims = c('PC1','PC2'),
             x = sprintf('%s: %s%% variance', dims[1], var_explained[1]),
             y = sprintf('%s: %s%% variance', dims[2], var_explained[2])) +
         theme_bw()
-    ggsave(filename = file.path(plots_dir, 'comparison_plots', factor_name, out_name), plot = pca_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = pca_plot, height = 8, width = 8, dpi = 300)
 
     return(pca_plot)
 }
@@ -233,7 +241,7 @@ plot_MDS = function(mat, pdata, factor_name, top_n = 500, dims = c(1,2), out_nam
             x = sprintf('Dim %s', dims[1]),
             y = sprintf('Dim %s', dims[2])) +
         theme_bw()
-    ggsave(filename = file.path(plots_dir, 'comparison_plots', factor_name, out_name), plot = mds_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = mds_plot, height = 8, width = 8, dpi = 300)
 
     return(mds_plot)
 }
@@ -352,26 +360,22 @@ if('bg_data' %in% ls()) {
 ########################################################
 # Plots
 
-# Boxplot
-message('Plotting boxplots')
-log2_boxplot = plot_boxplot(mat = mat, title = boxplot_title, y_label = boxplot_y_lab, out_name = 'BoxPlot.pdf')
-
 ########################################################
-# Heatmaps
-
-message('Plotting sample heatmap')
-log2_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata, factor_name = 'day', out_name = 'SampleHeatmap.pdf')
-
-message('Plotting top variably expressed genes heatmap')
-plot_top_variably_expressed_heatmap(mat = mat, pdata = pdata, factor_name = 'day', top_n = 1000, out_name = 'Heatmap_TopVar.pdf')
-
-message('Plotting top expressed genes heatmap')
-plot_top_expressed_heatmap(mat = mat, pdata = pdata, factor_name = 'day', top_n = 1000, out_name = 'Heatmap_TopExp.pdf')
-
-########################################################
-# PCA and MDS plots for each of the factor_names
+# PCA and MDS plots for each of the phenotypes
 
 for(phenotype in phenotypes) {
+
+    message(sprintf('Plotting boxplots for %s', phenotype))
+    log2_boxplot = plot_boxplot(mat = mat, pdata = pdata, factor_name = phenotype, title = boxplot_title, y_label = boxplot_y_lab, out_name = 'BoxPlot.pdf')
+
+    message(sprintf('Plotting sample heatmap for %s', phenotype))
+    log2_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata, factor_name = phenotype, out_name = 'SampleHeatmap.pdf')
+
+    message(sprintf('Plotting top variably expressed genes heatmap for %s', phenotype))
+    plot_top_variably_expressed_heatmap(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, out_name = 'Heatmap_TopVar.pdf')
+
+    message(sprintf('Plotting top expressed genes heatmap for %s', phenotype))
+    plot_top_expressed_heatmap(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, out_name = 'Heatmap_TopExp.pdf')
 
     message(sprintf('Plotting PCA for %s', phenotype))
     log2_pca = plot_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC1','PC2'), out_name = 'PCAplot.pdf')

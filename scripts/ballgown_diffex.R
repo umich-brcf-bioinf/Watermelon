@@ -163,6 +163,8 @@ for(type in comparison_types) {
         sub_bg_data = subset(bg_data, sprintf('%s == "%s" | %s == "%s"', type, exp, type, con), genomesubset = FALSE)
         # Relevel the factor so the reference is correct
         pData(sub_bg_data)[, type] = relevel(pData(sub_bg_data)[, type], ref = con)
+        # NOTE: We have subsetted the bg_data, so the library normalization, etc. is on the subset
+        # Because there is no notion of contrast in ballgown, there is no way to 
 
         gene_results = stattest(
             gown = sub_bg_data,

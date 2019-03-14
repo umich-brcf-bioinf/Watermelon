@@ -104,9 +104,9 @@ if REPLICATE_PHENOTYPE_NAMES:
         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/comparison_plots/{phenotype_name}/VolcanoPlot_{comparison}.pdf',
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/comparison_plots/{phenotype}/VolcanoPlot_{comparison}.pdf',
                zip,
-               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+               phenotype=REPLICATE_PHENOTYPE_NAMES,
                comparison=REPLICATE_COMPARISON_GROUPS),
         ]
     BALLGOWN_ALL = [
@@ -130,9 +130,9 @@ if REPLICATE_PHENOTYPE_NAMES:
         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
-        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/comparison_plots/{phenotype_name}/VolcanoPlot_{comparison}.pdf',
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/comparison_plots/{phenotype}/VolcanoPlot_{comparison}.pdf',
                zip,
-               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+               phenotype=REPLICATE_PHENOTYPE_NAMES,
                comparison=REPLICATE_COMPARISON_GROUPS),
     ]
 

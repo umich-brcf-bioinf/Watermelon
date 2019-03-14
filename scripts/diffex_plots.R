@@ -64,6 +64,7 @@ plot_sample_correlation_heatmap = function(mat, pdata, factor_name, out_name = '
         row.names = pdata$sample
     )
 
+    # Calculate the distance matrix and clustering object
     dist_obj = dist(t(mat), method = 'euclidean', diag = T, upper = T)
     hclust_obj = hclust(dist_obj, method = 'complete')
     dist_mat = as.matrix(dist_obj)
@@ -93,7 +94,7 @@ plot_top_variably_expressed_heatmap = function(mat, pdata, factor_name, top_n = 
         row.names = pdata$sample
     )
 
-    # Calculate PCA on top_n variable genes
+    # Calculate the top_n variable genes and put them in decreasing order
     top_var_mat = mat[order(matrixStats::rowVars(mat), decreasing = T), ][1:top_n, ]
 
     pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, out_name), height = 20, width = 10)
@@ -125,7 +126,7 @@ plot_top_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out
         row.names = pdata$sample
     )
 
-    # Calculate PCA on top_n variable genes
+    # Calculate the top_n expressed genes and put them in decreasing order
     top_exp_mat = mat[order(rowMeans(mat), decreasing = T), ][1:top_n, ]
 
     pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, out_name), height = 20, width = 10)
@@ -176,9 +177,10 @@ plot_PCA = function(mat, pdata, factor_name, top_n = 500, dims = c('PC1','PC2'),
     # Add replicate column
     pdata = add_replicate_col(pdata, factor_name)
 
-    # Calculate PCA on top_n variable genes
+    # Calculate the top_n variable genes and put them in decreasing order
     top_var_mat = mat[order(matrixStats::rowVars(mat), decreasing = T), ][1:top_n, ]
 
+    # Compute the PCA, I looked at the DESeq2 code to match the result in the previous plots
     pca = prcomp(t(top_var_mat), retx = TRUE)
     pca_df = data.frame(
         sample = rownames(pca$x),
@@ -251,7 +253,7 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), comparison_ty
 
     method = match.arg(method)
 
-    # Determine the correct columns on the basis of deseq2 or ballgown
+    # Determine the correct column names on the basis of deseq2 or ballgown
     if(method == 'ballgown') {
         log2fc = 'log2fc'
         pval = 'pval'
@@ -271,6 +273,7 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), comparison_ty
     de_list$direction[de_list[, de_call] == 'YES' & de_list[, log2fc] <= 0] = 'Down'
     de_list$direction[de_list[, de_call] == 'YES' & de_list[, log2fc] > 0] = 'Up'
 
+    # Determine direction labels (with number per)
     direction_table = table(de_list$direction)
 
     if('Up' %in% names(direction_table)) {
@@ -304,6 +307,7 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), comparison_ty
     de_list$log10qval = -log10(de_list[, padj])
 
     # Add top 10 Up and 10 Down gene labels
+    # de_list is assumed to be ordered by Call/diff_exp and then qvalue from deseq2_diffex.R and ballgown_diffex.R
     top = rbind(
         head(subset(de_list, direction == 'Up'), 10),
         head(subset(de_list, direction == 'Down'), 10))
@@ -321,12 +325,10 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), comparison_ty
             x = 'Log2 fold-change',
             y = '-Log10 adjusted q-value') +
         theme_classic()
-
     # Add gene symbol labels
     if(!all(is.na(de_list$label))) {
         volcano_plot = volcano_plot + ggrepel::geom_label_repel(label = de_list$label, force = 3, segment.alpha = 0.4)
     }
-
     ggsave(filename = file.path(plots_dir, 'comparison_plots', comparison_type, out_name), plot = volcano_plot, height = 8, width = 8, dpi = 300)
 
     return(volcano_plot)

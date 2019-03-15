@@ -164,8 +164,7 @@ add_replicate_col = function(pdata, factor_name) {
 }
 
 
-plot_PCA = function(mat, pdata, factor_name, top_n = 500, dims = c('PC1','PC2'), out_name = 'PCAplot.pdf') {
-
+compute_PCA = function(mat, pdata, factor_name, top_n = 500, dims = c('PC1','PC2')) {
     # Check for validly formatted dims
     if(!all(grepl('PC\\d{1,}', dims))) {
         stop("dims parameter must be e.g. c('PC1','PC2'). That is, any valid PC from prcomp.")
@@ -190,10 +189,49 @@ plot_PCA = function(mat, pdata, factor_name, top_n = 500, dims = c('PC1','PC2'),
     )
 
     # Compute variance explained and extract for the correct dimensions
+    all_var_explained = round((pca$sdev^2 / sum(pca$sdev^2))*100, 1)
     var_explained = round((pca$sdev^2 / sum(pca$sdev^2))*100, 1)[pc_digits]
 
     # Join the pca_df with pdata to get the replicates and factor_name columns
     pca_df = merge(pca_df, pdata, by = 'sample', all.x = T)
+
+    return(list(all_var_explained = all_var_explained, var_explained = var_explained, pca_df = pca_df, factor_name = factor_name, top_n = top_n, dims = dims))
+}
+
+
+plot_scree = function(compute_PCA_result, out_name = 'ScreePlot.pdf') {
+    pca_df = compute_PCA_result[['pca_df']]
+    all_var_explained = compute_PCA_result[['all_var_explained']]
+    top_n = compute_PCA_result[['top_n']]
+    factor_name = compute_PCA_result[['factor_name']]
+
+    scree_tbl = as_tibble(data.frame(
+        PC = factor(paste0('PC', seq_along(all_var_explained)), level = paste0('PC', seq_along(all_var_explained))),
+        var_explained = all_var_explained, stringsAsFactors = F))
+    scree_tbl = scree_tbl[1:min(10, nrow(scree_tbl)), ]
+
+    # Plot scree
+    scree_plot = ggplot(scree_tbl, aes(x = PC, y = var_explained)) + geom_bar(stat = 'identity') +
+        labs(
+            title = sprintf('%s Scree plot', factor_name),
+            subtitle = sprintf('PCA computed with top %s variable genes', top_n),
+            x = 'Principal Component',
+            y = 'Percent Variance Explained'
+        ) +
+        theme_bw()
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = scree_plot, height = 8, width = 8, dpi = 300)
+
+    return(scree_plot)
+}
+
+
+plot_PCA = function(compute_PCA_result, out_name = 'PCAplot.pdf') {
+
+    pca_df = compute_PCA_result[['pca_df']]
+    var_explained = compute_PCA_result[['var_explained']]
+    top_n = compute_PCA_result[['top_n']]
+    factor_name = compute_PCA_result[['factor_name']]
+    dims = compute_PCA_result[['dims']]
 
     # Plot PCA
     pca_plot = ggplot(pca_df, aes(x = x, y = y, color = replicate)) +
@@ -403,8 +441,14 @@ for(phenotype in phenotypes) {
     message(sprintf('Plotting top expressed genes heatmap for %s', phenotype))
     plot_top_expressed_heatmap(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, out_name = 'Heatmap_TopExp.pdf')
 
-    message(sprintf('Plotting PCA for %s', phenotype))
-    log2_pca = plot_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC1','PC2'), out_name = 'PCAplot.pdf')
+    message(sprintf('Plotting PCA for %s in dim 1 and 2', phenotype))
+    pca_result_12 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC1','PC2'))
+    scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_name = 'ScreePlot.pdf')
+    log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_name = 'PCAplot_12.pdf')
+
+    message(sprintf('Plotting PCA for %s in dim 1 and 2', phenotype))
+    pca_result_23 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC2','PC3'))
+    log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_name = 'PCAplot_23.pdf')
 
     message(sprintf('Plotting MDS for %s', phenotype))
     log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c(1,2), out_name = 'MDSplot.pdf')

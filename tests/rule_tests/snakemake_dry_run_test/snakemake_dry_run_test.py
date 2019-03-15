@@ -57,7 +57,7 @@ class SnakemakeDryRunTest(unittest.TestCase):
         actual_job_counts['jobs'] = total_count
         self.maxDiff=None
         expected_job_counts = {
-            'jobs': '90',
+            'jobs': '92',
             'align_concat_reads': '8',
             'align_cutadapt_SE': '8',
             'align_deliverables_alignment': '1',
@@ -75,11 +75,13 @@ class SnakemakeDryRunTest(unittest.TestCase):
             'deseq2_diffex': '1',
             'deseq2_excel': '7',
             'deseq2_metadata_contrasts': '1',
+            'deseq2_plots': '1',
             'deseq2_run_info': '1',
             'deseq2_summary': '1',
-            'ballgown_diffex': '1',
             'ballgown_annotation': '7',
+            'ballgown_diffex': '1',
             'ballgown_excel': '7',
+            'ballgown_plots': '1',
             'ballgown_run_info': '1',
             'ballgown_summary': '1'}
         self.assertEqual(expected_job_counts, actual_job_counts)

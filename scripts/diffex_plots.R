@@ -443,10 +443,12 @@ for(phenotype in phenotypes) {
 
     message(sprintf('Plotting PCA for %s in dim 1 and 2', phenotype))
     pca_result_12 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC1','PC2'))
-    scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_name = 'ScreePlot.pdf')
     log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_name = 'PCAplot_12.pdf')
 
-    message(sprintf('Plotting PCA for %s in dim 1 and 2', phenotype))
+    message('Plotting scree')
+    scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_name = 'ScreePlot.pdf')
+
+    message(sprintf('Plotting PCA for %s in dim 2 and 3', phenotype))
     pca_result_23 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC2','PC3'))
     log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_name = 'PCAplot_23.pdf')
 

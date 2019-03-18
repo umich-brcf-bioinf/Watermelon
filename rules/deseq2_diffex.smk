@@ -16,10 +16,10 @@ rule deseq2_diffex:
         dir = DESEQ2_DIR + '02-deseq2_diffex',
         fold_change = config['fold_change'],
         adjusted_pvalue = config['deseq2_adjustedPValue'],
+    conda:
+        'envs/diffex.yaml'
     shell:
-        '''(module purge
-        module load watermelon_dependencies/{WAT_VER}
-        rm -rf {params.dir}/counts
+        '''(rm -rf {params.dir}/counts
         rm -rf {params.dir}/gene_lists
         rm -rf {params.dir}/.tmp/*
         {WATERMELON_SCRIPTS_DIR}/deseq2_diffex.R \
@@ -32,5 +32,4 @@ rule deseq2_diffex:
             --threads={threads}
         mv {params.dir}/.tmp/* {params.dir}
         touch {params.dir}
-        rm -f Rplots.pdf #Some part of R generates this empty (nuisance) plot
         ) 2>&1 | tee {log}'''

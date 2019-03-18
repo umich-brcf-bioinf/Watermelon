@@ -1,8 +1,8 @@
 rule deseq2_diffex:
     input:
         counts = ALIGNMENT_DIR + '06-stringtie/gene_count_matrix.csv',
-#        sample_metadata_file = config['diffex']['sample_metadata_file'],
-#        comparisons_file = config['diffex']['comparisons_file'],
+        sample_metadata_file = config['diffex']['sample_description_file'],
+        comparisons_file = config['diffex']['comparison_file'],
     output:
         files = expand(DESEQ2_DIR + '02-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt',
                        zip,
@@ -19,7 +19,6 @@ rule deseq2_diffex:
     conda:
         'envs/diffex.yaml'
     shell:
-        #TODO this script will need to be adjusted to consume the new files
         '''(
         rm -rf {params.dir}/counts
         rm -rf {params.dir}/plots
@@ -27,8 +26,8 @@ rule deseq2_diffex:
         rm -rf {params.dir}/.tmp/*
         {WATERMELON_SCRIPTS_DIR}/deseq2_diffex.R \
             -c {input.counts} \
-            -m input.sample_metadata_file \
-            -f input.comparisons_file \
+            -m {input.sample_metadata_file} \
+            -f {input.comparisons_file} \
             -o {params.dir}/.tmp \
             --foldChange={params.fold_change} \
             --adjustedPValue={params.adjusted_pvalue} \

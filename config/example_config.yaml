@@ -1,3 +1,6 @@
+diffex:
+  sample_description_file: config/sample_description.csv
+  comparison_file: config/comparison.yaml
 dirs:
   input:
     /ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1_tests/test_data/inputs/00-multiplexed_reads

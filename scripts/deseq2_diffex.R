@@ -1,5 +1,8 @@
 #!/usr/bin/env Rscript
 
+#TODO this script will need to be adjusted to consume the new files
+
+
 #######
 # Perform differential expression analysis using DESeq2
 # Can be single or multi-factor, and multi-level (will use combined factor approach)

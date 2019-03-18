@@ -10,7 +10,6 @@ import yaml
 
 import scripts
 import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
-import scripts.deseq2_helper as deseq2_helper
 
 WAT_VER = scripts.__version__
 WATERMELON_CONFIG_DIR = os.path.join(os.environ.get('WATERMELON_CONFIG_DIR', srcdir('config')), '')
@@ -24,7 +23,6 @@ DIFFEX_DIR = os.path.join(_DIRS.get("diffex_output", "diffex_results"), "")
 DELIVERABLES_DIR = os.path.join(_DIRS.get("deliverables_output", "deliverables"), "")
 DESEQ2_DIR = os.path.join(DIFFEX_DIR, "deseq2", "")
 BALLGOWN_DIR = os.path.join(DIFFEX_DIR, "ballgown", "")
-CONFIG_CHECKSUMS_DIR = os.path.join(".config_checksums", "")
 
 CONFIGFILE_PATH = workflow.overwrite_configfile
 
@@ -46,10 +44,6 @@ REPLICATE_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_replicates
 
 
 rnaseq_snakefile_helper.init_references(config["references"])
-rnaseq_snakefile_helper.checksum_reset_all(CONFIG_CHECKSUMS_DIR,
-                                           config=config,
-                                           phenotype_comparisons=config['comparisons'],
-                                           phenotype_samples=phenotypeManager.phenotype_sample_list)
 
 SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(INPUT_DIR, config[SAMPLES_KEY])
 
@@ -79,8 +73,6 @@ else:
 DESEQ2_ALL = []
 if REPLICATE_PHENOTYPE_NAMES:
     DESEQ2_ALL = [
-        DESEQ2_DIR + "01-metadata_contrasts/sample_metadata.txt",
-        DESEQ2_DIR + "01-metadata_contrasts/contrasts.txt",
         expand(DESEQ2_DIR + "02-deseq2_diffex/gene_lists/{phenotype_name}/{comparison}.txt",
                zip,
                phenotype_name=REPLICATE_PHENOTYPE_NAMES,
@@ -118,20 +110,19 @@ include: 'rules/align_deliverables_fastq_screen.smk'
 
 include: 'rules/ballgown_diffex.smk'
 include: 'rules/ballgown_annotation.smk'
-include: 'rules/ballgown_run_info.smk'
 include: 'rules/ballgown_excel.smk'
 include: 'rules/ballgown_summary.smk'
 
-include: 'rules/deseq2_metadata_contrasts.smk'
 include: 'rules/deseq2_diffex.smk'
 include: 'rules/deseq2_annotation.smk'
-include: 'rules/deseq2_run_info.smk'
 include: 'rules/deseq2_excel.smk'
 include: 'rules/deseq2_summary.smk'
 
 include: 'rules/deliverables_ballgown.smk'
 include: 'rules/deliverables_deseq2.smk'
 include: 'rules/deliverables_combined_summary.smk'
+#include: 'rules/deliverables_run_info.smk'
+
 
 rule all:
     input:

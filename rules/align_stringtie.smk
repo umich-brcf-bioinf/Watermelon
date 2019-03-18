@@ -1,6 +1,5 @@
 rule align_stringtie:
     input:
-        reference_checksum = CONFIG_CHECKSUMS_DIR + 'config-references.watermelon.md5',
         bams = ALIGNMENT_DIR + '04-hisat2/{sample}.bam',
         gtf = 'references/gtf',
     output:

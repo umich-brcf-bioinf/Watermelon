@@ -21,7 +21,7 @@ TAXONOMY = {'hg19': '9606', 'GRCh37': '9606', 'hg38': '9606', 'GRCh38': '9606', 
             'TAIR9': '3702', 'TAIR10': '3702',  # arabidopis
             'MSU6': '4530',                     # rice
             'ecoMG1655': '511145', 'ecoUTI89': '364106', # ecoli
-
+            'dm6': 7227, #drosophila
             }
 
 def time_stamp():

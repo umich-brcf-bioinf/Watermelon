@@ -1,7 +1,5 @@
 rule ballgown_annotation:
     input:
-        genome_checksum = CONFIG_CHECKSUMS_DIR + "config-genome.watermelon.md5",
-        reference_checksum = CONFIG_CHECKSUMS_DIR + "config-references.watermelon.md5",
         gene_diff_exp = BALLGOWN_DIR + "01-ballgown_diffex/{phenotype}/{comparison}_gene.txt",
         isoform_diff_exp = BALLGOWN_DIR + "01-ballgown_diffex/{phenotype}/{comparison}_isoform.txt",
         entrez_gene_info = "references/entrez_gene_info"

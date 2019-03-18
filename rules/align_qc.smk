@@ -1,6 +1,5 @@
 rule align_qc:
     input:
-        sample_checksum = CONFIG_CHECKSUMS_DIR + "config-samples.watermelon.md5",
         raw_read_fastq_files = rnaseq_snakefile_helper.expand_sample_read_endedness(\
             ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",
             SAMPLE_READS),

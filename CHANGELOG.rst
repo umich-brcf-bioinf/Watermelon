@@ -29,6 +29,11 @@ x.y.z (MM/DD/YYYY)
 - Adjusted watermelon to enable "in-flight" dry-run/dag (executed in the
   directory of a job currently in-progress).
 
+- Added dm6 support
+- Removed checksum logic in anticipation of improved sample description/
+  comparison model
+
+
 
 0.3.6 (8/12/2018)
 -----------------

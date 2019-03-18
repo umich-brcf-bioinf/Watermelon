@@ -1,6 +1,5 @@
 rule align_cutadapt_SE:
     input:
-        trimming_options_checksum = CONFIG_CHECKSUMS_DIR + "config-trimming_options.watermelon.md5",
         raw_fastq = ALIGNMENT_DIR + "01-raw_reads/{sample}_{read}_SE.fastq.gz",
     output:
         ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read}_SE.fastq.gz",

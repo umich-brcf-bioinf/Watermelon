@@ -4,23 +4,23 @@ rule deseq2_diffex:
 #        sample_metadata_file = config['diffex']['sample_metadata_file'],
 #        comparisons_file = config['diffex']['comparisons_file'],
     output:
-        files = expand(DESEQ2_DIR + "02-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt",
+        files = expand(DESEQ2_DIR + '02-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt',
                        zip,
                        phenotype=REPLICATE_PHENOTYPE_NAMES,
                        comparison=REPLICATE_COMPARISON_GROUPS),
+        rda = DESEQ2_DIR + '02-deseq2_diffex/deseq2_data.rda',
     threads: 8
     log:
-        DESEQ2_DIR + "02-deseq2_diffex/.log/deseq2_DESeq2Diffex.log"
+        DESEQ2_DIR + '02-deseq2_diffex/.log/deseq2_DESeq2Diffex.log'
     params:
-        dir = DESEQ2_DIR + "02-deseq2_diffex",
-        fold_change = config["fold_change"],
-        adjusted_pvalue = config["deseq2_adjustedPValue"],
-    resources:
-        memoryInGb = 16
+        dir = DESEQ2_DIR + '02-deseq2_diffex',
+        fold_change = config['fold_change'],
+        adjusted_pvalue = config['deseq2_adjustedPValue'],
+    conda:
+        'envs/diffex.yaml'
     shell:
         #TODO this script will need to be adjusted to consume the new files
-        '''(module purge
-        module load watermelon_dependencies/{WAT_VER}
+        '''(
         rm -rf {params.dir}/counts
         rm -rf {params.dir}/plots
         rm -rf {params.dir}/gene_lists
@@ -32,10 +32,7 @@ rule deseq2_diffex:
             -o {params.dir}/.tmp \
             --foldChange={params.fold_change} \
             --adjustedPValue={params.adjusted_pvalue} \
-            --threads={threads} \
-            --javaMemoryInGb={resources.memoryInGb} \
-            --pandocMemoryInGb={resources.memoryInGb}
+            --threads={threads}
         mv {params.dir}/.tmp/* {params.dir}
         touch {params.dir}
-        rm -f Rplots.pdf #Some part of R generates this empty (nuisance) plot
         ) 2>&1 | tee {log}'''

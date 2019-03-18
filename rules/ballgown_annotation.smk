@@ -1,7 +1,7 @@
 rule ballgown_annotation:
     input:
-        gene_diff_exp = BALLGOWN_DIR + "01-ballgown_diffex/{phenotype}/{comparison}_gene.txt",
-        isoform_diff_exp = BALLGOWN_DIR + "01-ballgown_diffex/{phenotype}/{comparison}_isoform.txt",
+        gene_diff_exp = BALLGOWN_DIR + "01-ballgown_diffex/gene_lists/{phenotype}/{comparison}_gene.txt",
+        isoform_diff_exp = BALLGOWN_DIR + "01-ballgown_diffex/gene_lists/{phenotype}/{comparison}_isoform.txt",
         entrez_gene_info = "references/entrez_gene_info"
     output:
         gene_annot = BALLGOWN_DIR + "02-annotate/{phenotype}/{comparison}_gene.annot.txt",

@@ -4,10 +4,6 @@ rule deliverables_ballgown:
                        zip,
                        phenotype_name=ALL_PHENOTYPE_NAMES,
                        comparison=ALL_COMPARISON_GROUPS),
-        # diffex_raw_counts = expand(BALLGOWN_DIR + "06-cummerbund/{phenotype_name}/{phenotype_name}_repRawCounts.txt",
-        #                            phenotype_name=ALL_PHENOTYPE_NAMES),
-        # plots = expand(BALLGOWN_DIR + "06-cummerbund/{phenotype_name}/Plots/{phenotype_name}_boxplot.pdf",
-        #                phenotype_name=ALL_PHENOTYPE_NAMES),
         summary_txt = BALLGOWN_DIR + '05-summary/ballgown_summary.txt',
         summary_xlsx = BALLGOWN_DIR + '05-summary/ballgown_summary.xlsx',
     output:
@@ -16,8 +12,8 @@ rule deliverables_ballgown:
         final_dir = DELIVERABLES_DIR + 'ballgown',
         tmp_dir = DELIVERABLES_DIR + 'ballgown.tmp',
         source_gene_list_dir = BALLGOWN_DIR +  '/04-excel',
-        source_counts_dir =  BALLGOWN_DIR +  '/06-cummerbund',
-        source_plots_dir =  BALLGOWN_DIR +  '/06-cummerbund',
+        source_counts_dir =  BALLGOWN_DIR + '01-ballgown_diffex/counts',
+        source_plots_dir =  BALLGOWN_DIR + '01-ballgown_diffex/plots',
     shell:
         """
         rm -rf {params.final_dir} {params.tmp_dir}

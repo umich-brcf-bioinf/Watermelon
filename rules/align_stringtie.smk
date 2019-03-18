@@ -10,8 +10,8 @@ rule align_stringtie:
         prep_input = ALIGNMENT_DIR + '06-stringtie/{sample}_prepDE_input.txt'
     log:
         ALIGNMENT_DIR + '06-stringtie/.log/{sample}.align_stringtie.log'
-    benchmark:
-        'benchmarks/{sample}.align_stringtie.benchmark.txt'
+    # benchmark:
+    #     'benchmarks/{sample}.align_stringtie.benchmark.txt'
     conda:
         'envs/align_hisat2_stringtie.yaml'
     params:

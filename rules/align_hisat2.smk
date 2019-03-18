@@ -8,8 +8,8 @@ rule align_hisat2:
     output:
         bam = ALIGNMENT_DIR + "04-hisat2/{sample}.bam",
         summary = ALIGNMENT_DIR + "04-hisat2/{sample}_align_summary.txt",
-    benchmark:
-        "benchmarks/{sample}.align_hisat2.benchmark.txt"
+    # benchmark:
+    #     "benchmarks/{sample}.align_hisat2.benchmark.txt"
     conda:
         'envs/align_hisat2_stringtie.yaml'
     params:

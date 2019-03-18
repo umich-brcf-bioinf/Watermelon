@@ -13,8 +13,8 @@ rule align_stringtie_prepDE:
         transcript_counts = ALIGNMENT_DIR + '06-stringtie/transcript_count_matrix.csv',
     log:
         ALIGNMENT_DIR + '06-stringtie/.log/align_stringtie_prepDE.log'
-    benchmark:
-        'benchmarks/align_stringtie_prepDE.benchmark.txt'
+    # benchmark:
+    #     'benchmarks/align_stringtie_prepDE.benchmark.txt'
     conda:
         'envs/align_hisat2_stringtie.yaml'
     params:

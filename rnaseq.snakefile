@@ -42,6 +42,7 @@ ALL_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_all_tuple.compar
 REPLICATE_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_replicates_tuple.phenotypes
 REPLICATE_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_replicates_tuple.comparisons
 
+PHENOTYPES = list(set(ALL_PHENOTYPE_NAMES))
 
 rnaseq_snakefile_helper.init_references(config["references"])
 
@@ -71,6 +72,7 @@ else:
     FASTQ_SCREEN_DELIVERABLES = []
 
 DESEQ2_ALL = []
+BALLGOWN_ALL = []
 if REPLICATE_PHENOTYPE_NAMES:
     DESEQ2_ALL = [
         expand(DESEQ2_DIR + "02-deseq2_diffex/gene_lists/{phenotype_name}/{comparison}.txt",
@@ -88,9 +90,51 @@ if REPLICATE_PHENOTYPE_NAMES:
         DESEQ2_DIR + "06-summary/deseq2_summary.txt",
         DESEQ2_DIR + "06-summary/deseq2_summary.xlsx",
         DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt",
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/PCAplot_12.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/PCAplot_23.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/ScreePlot.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/MDSplot.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/comparison_plots/{phenotype}/VolcanoPlot_{comparison}.pdf',
+               zip,
+               phenotype=REPLICATE_PHENOTYPE_NAMES,
+               comparison=REPLICATE_COMPARISON_GROUPS),
         ]
+    BALLGOWN_ALL = [
+        expand(ALIGNMENT_DIR + '06-stringtie/ballgown/{sample}/{bgown_prefixes}.ctab',
+               sample=config[SAMPLES_KEY],
+               bgown_prefixes=['e2t','e_data','i2t','i_data','t_data']),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/gene_lists/{phenotype}/{comparison}_gene.txt',
+                zip,
+                phenotype=ALL_PHENOTYPE_NAMES,
+                comparison=ALL_COMPARISON_GROUPS),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/gene_lists/{phenotype}/{comparison}_isoform.txt',
+                zip,
+                phenotype=ALL_PHENOTYPE_NAMES,
+                comparison=ALL_COMPARISON_GROUPS),
+        BALLGOWN_DIR + '01-ballgown_diffex/counts/gene_fpkms.txt',
+        BALLGOWN_DIR + '01-ballgown_diffex/counts/iso_fpkms.txt',
+        BALLGOWN_DIR + '01-ballgown_diffex/ballgown_data.rda',
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/PCAplot_12.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/PCAplot_23.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/ScreePlot.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/MDSplot.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
+        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/comparison_plots/{phenotype}/VolcanoPlot_{comparison}.pdf',
+               zip,
+               phenotype=REPLICATE_PHENOTYPE_NAMES,
+               comparison=REPLICATE_COMPARISON_GROUPS),
+    ]
 
-OPTIONAL_ALL = DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
+
+
+OPTIONAL_ALL = BALLGOWN_ALL + DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
 
 ALL = [OPTIONAL_ALL]
 
@@ -109,11 +153,13 @@ include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
 
 include: 'rules/ballgown_diffex.smk'
+include: 'rules/ballgown_plots.smk'
 include: 'rules/ballgown_annotation.smk'
 include: 'rules/ballgown_excel.smk'
 include: 'rules/ballgown_summary.smk'
 
 include: 'rules/deseq2_diffex.smk'
+include: 'rules/deseq2_plots.smk'
 include: 'rules/deseq2_annotation.smk'
 include: 'rules/deseq2_excel.smk'
 include: 'rules/deseq2_summary.smk'

@@ -2,10 +2,9 @@ rule deseq2_plots:
     input:
         DESEQ2_DIR + '02-deseq2_diffex/deseq2_data.rda',
     output:
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/PCAplot_12.pdf', phenotype = PHENOTYPES),
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/PCAplot_23.pdf', phenotype = PHENOTYPES),
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/ScreePlot.pdf', phenotype = PHENOTYPES),
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/MDSplot.pdf', phenotype = PHENOTYPES),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf', phenotype = PHENOTYPES, dim = ['12','23'], ngenes = ['100','500']),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/MDSplot_{dim}_top{ngenes}.pdf', phenotype = PHENOTYPES, dim = ['12','23'], ngenes = ['100','500']),
+        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf', phenotype = PHENOTYPES, ngenes = ['100','500']),
         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),

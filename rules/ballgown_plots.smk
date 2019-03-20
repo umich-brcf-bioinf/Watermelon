@@ -16,13 +16,12 @@ rule ballgown_plots:
     log:
         BALLGOWN_DIR + '01-ballgown_diffex/.log/ballgown_plots.log'
     conda:
-        'envs/ballgown_diffex.yaml'
+        'envs/diffex.yaml'
     params:
         configfile_path = CONFIGFILE_PATH
     shell:
-        '''
-        Rscript {WATERMELON_SCRIPTS_DIR}/diffex_plots.R \
+        '''(Rscript {WATERMELON_SCRIPTS_DIR}/diffex_plots.R \
             --diffex_rda {input} \
             --config_file {params.configfile_path}
         rm -f Rplots.pdf #Some part of R generates this empty (nuisance) plot
-        '''
+        ) 2>&1 | tee {log}'''

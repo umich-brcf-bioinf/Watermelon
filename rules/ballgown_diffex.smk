@@ -17,7 +17,7 @@ rule ballgown_diffex:
     log:
         BALLGOWN_DIR + '01-ballgown_diffex/.log/ballgown_diffex.log'
     conda:
-        'envs/ballgown_diffex.yaml'
+        'envs/diffex.yaml'
     params:
         stringtie_dir = ALIGNMENT_DIR + '06-stringtie/',
         configfile_path = CONFIGFILE_PATH

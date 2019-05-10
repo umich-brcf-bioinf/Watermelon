@@ -28,15 +28,17 @@ x.y.z (MM/DD/YYYY)
 - Throttled fastqc to avoid Java memory overallocation
 - Adjusted watermelon to enable "in-flight" dry-run/dag (executed in the
   directory of a job currently in-progress).
-
+- Added dm6 support
+- Removed checksum logic in anticipation of improved sample description/
+  comparison model
 - Refactor diffex plots
 
   - DESeq2 and ballgown use the same plotting script, which requires an RData
     object from the respective diffex scripts.
   - Move plotting out of deseq2_diffex.R script
 
- - A diffex.yaml conda environment contains all libraries needed for DESeq2, ballgown,
-   and plotting. It is thus used by both diffex scripts as well as for plotting.
+- A diffex.yaml conda environment contains all libraries needed for DESeq2, ballgown,
+  and plotting. It is thus used by both diffex scripts as well as for plotting.
 
 
 

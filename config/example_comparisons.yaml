@@ -1,0 +1,17 @@
+comparisons:
+    gender:
+        design: '~ 0 + gender'
+        contrasts:
+            Me_v_Fe: Me - Fe
+    diet:
+        design: '~ 0 + diet + gender'
+        contrasts:
+            HF_v_ND: HF - ND
+            HF_v_
+
+
+fold_change:
+    1.5
+
+deseq2_adjustedPValue:
+    0.05

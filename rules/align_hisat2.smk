@@ -1,7 +1,5 @@
 rule align_hisat2:
     input:
-        alignment_options_checksum = CONFIG_CHECKSUMS_DIR + "config-alignment_options.watermelon.md5",
-        reference_checksum = CONFIG_CHECKSUMS_DIR + "config-references.watermelon.md5",
         transcriptome_index = expand('references/hisat2_index/genome.{n}.ht2', n = range(1,9)),
         fastq_files = lambda wildcards: rnaseq_snakefile_helper.expand_sample_read_endedness(\
                 ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read_endedness}.fastq.gz",

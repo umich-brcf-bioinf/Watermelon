@@ -1,8 +1,7 @@
 rule deseq2_excel:
     input:
         gene = DESEQ2_DIR + "03-annotation/{phenotype}/{comparison}.annot.txt",
-        glossary = DESEQ2_DIR + "04-run_info/glossary.txt",
-        run_info = DESEQ2_DIR + "04-run_info/run_info.txt"
+        glossary = WATERMELON_SCRIPTS_DIR + 'deseq2_glossary.txt',
     output:
         annotated_file = DESEQ2_DIR + "05-excel/{phenotype}/{comparison}.xlsx",
     log:

@@ -84,14 +84,6 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
                    "python --version 2>&1").format(_MODULES_DIR, WAT_VER)
         self.check_command(command, "Python 2.7.9", "wrong python version")
 
-    def test_bowtie_version(self):
-        command = self.build_command("bowtie2 --version | awk 'NR==1 {print $NF}'")
-        self.check_command(command, "2.2.1", "wrong bowtie2 version")
-
-    def test_cufflinks_version(self):
-        command = self.build_command("cufflinks 2>&1 | awk 'NR==1'")
-        self.check_command(command, "cufflinks v2.2.1", "wrong cufflinks version")
-
     def test_cutadapt_version(self):
         command = self.build_command("cutadapt --version 2>&1")
         self.check_command(command, "1.8.1", "wrong cutadapt version")
@@ -129,39 +121,6 @@ class WatermelonRnaseqModuleTest(BfxCoreBaseTestCase):
             except subprocess.CalledProcessError:
                 missing_modules.append(module_name)
         self.assertEquals([], missing_modules)
-
-    def test_R_version(self):
-        command = self.build_command("Rscript --version 2>&1")
-        self.check_command(command, "version 3.3", "wrong R version")
-
-    def test_R_deseq2_libraries_present(self):
-        missing_libs = []
-        libs = ['BiocParallel',
-                'calibrate',
-                'data.table',
-                'DESeq2',
-                'genefilter',
-                'geneplotter',
-                'GGally',
-                'ggfortify',
-                'ggplot2',
-                'ggrepel',
-                'optparse',
-                'pheatmap',
-                'plotly',
-                'RColorBrewer',
-                'reshape2',
-                ]
-        for lib_name in libs:
-            rscript = ("Rscript --vanilla -e "
-                       "  'result<-1-require({}); "
-                       "   quit(status=result)'").format(lib_name)
-            command = self.build_command(rscript)
-            try:
-                subprocess.check_output(command, stderr=self.dev_null, shell=True)
-            except subprocess.CalledProcessError:
-                missing_libs.append(lib_name)
-        self.assertEquals([], missing_libs)
 
     def test_samtools_version(self):
         command = self.build_command("(samtools 2>&1 | grep 'Version') || echo -e samtools not loaded")

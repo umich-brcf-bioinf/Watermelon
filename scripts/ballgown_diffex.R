@@ -11,52 +11,17 @@ config_file = opt$config_file
 
 #######################################
 
-library(yaml)
-library(stringr)
 library(ballgown)
+library(readr)
+library(stringr)
+library(yaml)
 
 #######################################
-
-carat_cleanup = function(str) {
-    tmp = unlist(strsplit(str, '^', fixed = TRUE))
-    tmp = str_trim(tmp)
-    return(tmp)
-}
 
 versus_split = function(str) {
     tmp = unlist(strsplit(str, '_v_', fixed = TRUE))
     tmp = str_trim(tmp)
     return(tmp)
-}
-
-handle_phenotype_data = function(yaml, sample_paths) {
-    yaml_phenotypes = carat_cleanup(yaml$phenotypes)
-
-    yaml_samples = names(yaml$samples)
-
-    yaml_phenotype_data = sapply(yaml_samples,
-        function(sample){
-            carat_cleanup(yaml$samples[[sample]])
-        }, USE.NAMES = FALSE)
-
-    # If there is only one phenotype attribute per sample
-    if(class(yaml_phenotype_data) == 'character') {
-        df = data.frame(yaml_phenotype_data)
-        colnames(df) = yaml_phenotypes
-    } else {
-        df = data.frame(t(yaml_phenotype_data))
-        colnames(df) = yaml_phenotypes
-    }
-
-    # Construct the pdata object by adding the column of sample names and match
-    # them in the order of the sample_paths
-    pdata = data.frame(
-        sample = yaml_samples,
-        df
-    )
-    pdata = pdata[match(basename(sample_paths), pdata$sample), ]
-
-    return(pdata)
 }
 
 handle_comparisons = function(yaml) {
@@ -73,32 +38,36 @@ handle_comparisons = function(yaml) {
 
 #######################################
 # yaml parsing
-yaml = read_yaml(config_file)
 
-diffex_dir = yaml$dir$diffex_output
+yaml = read_yaml(config_file)
+diffex_yaml = read_yaml(yaml$diffex$comparison_file)
+
+# Establish directories
+diffex_dir = yaml$dirs$diffex_output
 results_dir = sprintf('%s/ballgown/01-ballgown_diffex', diffex_dir)
 counts_dir = sprintf('%s/counts', results_dir)
 gene_lists_dir = sprintf('%s/gene_lists', results_dir)
-
 ballgown_inputs_dir = sprintf('%s/ballgown', stringtie_dir)
 
+# Get phenotyp matrix
+pdata = read_csv(yaml$diffex$sample_description_file)
+
+# Establish comparisons
+comparisons = handle_comparisons(diffex_yaml)
+comparison_types = names(comparisons)
+
+# Establish cutoffs
+fdr_cutoff = diffex_yaml$deseq2_adjustedPValue
+fc_cutoff = log2(diffex_yaml$fold_change)
+
+#######################################
+message('Reading ballgown input')
 sample_paths = list.files(ballgown_inputs_dir, full.names = TRUE)
 
 if(length(sample_paths) == 0) {
     stop(sprintf('No directories listed in %s', ballgown_inputs_dir))
 }
 
-pdata = handle_phenotype_data(yaml, sample_paths)
-
-comparisons = handle_comparisons(yaml)
-
-comparison_types = names(comparisons)
-
-fdr_cutoff = yaml$deseq2_adjustedPValue
-fc_cutoff = log2(yaml$fold_change)
-
-#######################################
-message('Reading ballgown input')
 bg_data = ballgown(samples = sample_paths, meas = 'all', pData = pdata)
 
 ###################
@@ -164,7 +133,7 @@ for(type in comparison_types) {
         # Relevel the factor so the reference is correct
         pData(sub_bg_data)[, type] = relevel(pData(sub_bg_data)[, type], ref = con)
         # NOTE: We have subsetted the bg_data, so the library normalization, etc. is on the subset
-        # Because there is no notion of contrast in ballgown, there is no way to 
+        # Because there is no notion of contrast in ballgown, there is no way to
 
         gene_results = stattest(
             gown = sub_bg_data,

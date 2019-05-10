@@ -1,37 +1,26 @@
 rule deseq2_diffex:
     input:
         counts = ALIGNMENT_DIR + '06-stringtie/gene_count_matrix.csv',
-        sample_metadata_file = config['diffex']['sample_description_file'],
-        comparisons_file = config['diffex']['comparison_file'],
     output:
-        files = expand(DESEQ2_DIR + '02-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt',
+        gene_lists = expand(DESEQ2_DIR + '01-deseq2_diffex/gene_lists/{phenotype}/{comparison}.txt',
                        zip,
                        phenotype=REPLICATE_PHENOTYPE_NAMES,
                        comparison=REPLICATE_COMPARISON_GROUPS),
-        rda = DESEQ2_DIR + '02-deseq2_diffex/deseq2_data.rda',
+        counts = expand(DESEQ2_DIR + '01-deseq2_diffex/counts/{count_type}_counts.txt'
+                       count_type = ['raw','depth_normalized','rlog_normalized']),
+        rda = DESEQ2_DIR + '01-deseq2_diffex/deseq2_data.rda',
     threads: 8
     log:
-        DESEQ2_DIR + '02-deseq2_diffex/.log/deseq2_DESeq2Diffex.log'
+        DESEQ2_DIR + '01-deseq2_diffex/.log/deseq2_DESeq2Diffex.log'
     params:
-        dir = DESEQ2_DIR + '02-deseq2_diffex',
-        fold_change = config['fold_change'],
-        adjusted_pvalue = config['deseq2_adjustedPValue'],
+        dir = DESEQ2_DIR + '01-deseq2_diffex',
+        configfile_path = CONFIGFILE_PATH
     conda:
         'envs/diffex.yaml'
     shell:
-        '''(
-        rm -rf {params.dir}/counts
-        rm -rf {params.dir}/plots
-        rm -rf {params.dir}/gene_lists
-        rm -rf {params.dir}/.tmp/*
-        {WATERMELON_SCRIPTS_DIR}/deseq2_diffex.R \
-            -c {input.counts} \
-            -m {input.sample_metadata_file} \
-            -f {input.comparisons_file} \
-            -o {params.dir}/.tmp \
-            --foldChange={params.fold_change} \
-            --adjustedPValue={params.adjusted_pvalue} \
-            --threads={threads}
-        mv {params.dir}/.tmp/* {params.dir}
+        '''({WATERMELON_SCRIPTS_DIR}/deseq2_diffex.R \
+            --count_file {input.counts} \
+            --config_file {params.configfile_path} \
+            --threads {threads}
         touch {params.dir}
         ) 2>&1 | tee {log}'''

@@ -497,31 +497,6 @@ class PhenotypeManagerTest(unittest.TestCase):
         self.assertEqual(['1A_v_1B', '1C_v_1D', '2A_v_2B', '2C_v_2D'],
                          actual.comparisons)
 
-    def test_cuffdiff_samples(self):
-        phenotypes = ' pLabel1 ^ pLabel2 '
-        samples = {'s1' : ' 1A ^ 2A ',
-                   's2' : ' 1A ^ 2A ',
-                   's3' : ' 1B ^    ',
-                   's4' : '    ^ 2A ',
-                   's5' : ' 1C ^ 2B ',
-                   's6' : ' 1D ^ 2B '}
-        comparison_dict = {'pLabel1' : [' 1A_v_1B\t',' 1C_v_1D '],
-                           'pLabel2' : [' 2A_v_2B']}
-        manager = PhenotypeManager({'phenotypes' : phenotypes,
-                                    'samples' : samples,
-                                    'comparisons' : comparison_dict})
-
-        actual = manager.cuffdiff_samples('pLabel1', '/foo/{sample_placeholder}.bar')
-
-        expected = '/foo/s1.bar,/foo/s2.bar /foo/s3.bar /foo/s5.bar /foo/s6.bar'
-        self.assertEqual(expected, actual)
-
-        actual = manager.cuffdiff_samples('pLabel2', '/foo/{sample_placeholder}.bar')
-
-        expected = '/foo/s1.bar,/foo/s2.bar,/foo/s4.bar /foo/s5.bar,/foo/s6.bar'
-        self.assertEqual(expected, actual)
-
-
 
 class RnaseqSnakefileHelperTest(unittest.TestCase):
     def test_cutadapt_options_noOptionsReturns0(self):
@@ -542,46 +517,54 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
                                rnaseq_snakefile_helper.cutadapt_options,
                                params)
 
-    def test_tophat_options_whenTrue(self):
-        config_alignment_options = {'transcriptome_only' : True}
-        actual = rnaseq_snakefile_helper.tophat_options(config_alignment_options)
-        self.assertEqual(' --transcriptome-only ', actual)
+    def test_check_strand_option_stringtie_validOptions(self):
+        make_config = lambda x: {'alignment_options': {'library_type': x}}
+        check_assert = lambda expected, input: self.assertEqual(expected, rnaseq_snakefile_helper.strand_option_stringtie(make_config(input)))
+        check_assert('', 'fr-unstranded')
+        check_assert('--rf', 'fr-firststrand')
+        check_assert('--fr', 'fr-secondstrand')
+        check_assert('', 'unstranded')
+        check_assert('--rf', 'reverse_forward')
+        check_assert('--fr', 'forward_reverse')
 
-    def test_tophat_options_whenFalse(self):
-        config_alignment_options = {'transcriptome_only' : False}
-        actual = rnaseq_snakefile_helper.tophat_options(config_alignment_options)
-        self.assertEqual(' --no-novel-juncs ', actual)
-
-    def test_tophat_options_raisesWhenInvalid(self):
-        config_alignment_options = {'transcriptome_only' : 'foo'}
-        self.assertRaisesRegex(ValueError,
-                               r'config:alignment_options:transcriptome_only.*True.*False',
-                               rnaseq_snakefile_helper.tophat_options,
-                               config_alignment_options)
-
-    def test_check_strand_option_htseq_validOptions(self):
-        check = rnaseq_snakefile_helper.strand_option_htseq
-        self.assertEqual('no', check('fr-unstranded'))
-        self.assertEqual('reverse', check('fr-firststrand'))
-        self.assertEqual('yes', check('fr-secondstrand'))
-
-    def test_check_strand_option_htseq_invalidOption(self):
+    def test_check_strand_option_stringtie_invalidOption(self):
+        make_config = lambda x: {'alignment_options': {'library_type': x}}
         self.assertRaisesRegex(ValueError,
                                r'ERROR: .*=foo.*not valid',
-                               rnaseq_snakefile_helper.strand_option_htseq,
-                               'foo')
+                               rnaseq_snakefile_helper.strand_option_stringtie,
+                               make_config('foo'))
 
-    def test_check_strand_option_tophat_validOptions(self):
-        check = rnaseq_snakefile_helper.strand_option_tophat
-        self.assertEqual('fr-unstranded', check('fr-unstranded'))
-        self.assertEqual('fr-firststrand', check('fr-firststrand'))
-        self.assertEqual('fr-secondstrand', check('fr-secondstrand'))
+    def test_check_strand_option_hisat2_validOptions(self):
+        make_config = lambda x: {'alignment_options': {'library_type': x}}
+        check_assert = lambda expected, input: self.assertEqual(expected, rnaseq_snakefile_helper.strand_option_hisat2(make_config(input)))
+        check_assert('', 'fr-unstranded')
+        check_assert('--rna-strandness RF', 'fr-firststrand')
+        check_assert('--rna-strandness FR', 'fr-secondstrand')
+        check_assert('', 'unstranded')
+        check_assert('--rna-strandness RF', 'reverse_forward')
+        check_assert('--rna-strandness FR', 'forward_reverse')
 
-    def test_check_strand_option_tophat_invalidOption(self):
+    def test_check_strand_option_hisat2_invalidOption(self):
+        make_config = lambda x: {'alignment_options': {'library_type': x}}
         self.assertRaisesRegex(ValueError,
                                r'ERROR: .*=foo.*not valid',
-                               rnaseq_snakefile_helper.strand_option_tophat,
-                               'foo')
+                               rnaseq_snakefile_helper.strand_option_hisat2,
+                               make_config('foo'))
+
+    def test_hisat_detect_paired_end(self):
+        self.assertEqual('-U foo.R1.fastq',
+                         rnaseq_snakefile_helper.hisat_detect_paired_end(['foo.R1.fastq']))
+        self.assertEqual('-1 foo.R1.fastq -2 foo.R2.fastq',
+                         rnaseq_snakefile_helper.hisat_detect_paired_end(['foo.R1.fastq', 'foo.R2.fastq']))
+        self.assertRaisesRegex(ValueError,
+                               r'Found 0 fastqs',
+                               rnaseq_snakefile_helper.hisat_detect_paired_end,
+                               [])
+        self.assertRaisesRegex(ValueError,
+                               r'Found 3 fastqs',
+                               rnaseq_snakefile_helper.hisat_detect_paired_end,
+                               ['1', '2', '3'])
+
 
     def test_get_sample_reads(self):
         with TempDirectory() as temp_dir:
@@ -719,76 +702,6 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
         actual = rnaseq_snakefile_helper.expand_sample_read_endedness(sample_read_endedness_format,
                                                                       all_flattened_sample_reads)
         self.assertEqual([], actual)
-
-    def test_tophat_paired_end_flags(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\tinsert_std_dev\n42.3\t14.9', )
-            actual = rnaseq_snakefile_helper.tophat_paired_end_flags(read_stats_filename)
-        self.assertEqual('--mate-inner-dist 42 --mate-std-dev 15', actual)
-
-    def test_tophat_paired_end_flags_suppressedIfFileMissing(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            actual = rnaseq_snakefile_helper.tophat_paired_end_flags(read_stats_filename)
-        self.assertEqual('', actual)
-
-    def test_tophat_paired_end_flags_suppressedIfNoFileMissing(self):
-        actual = rnaseq_snakefile_helper.tophat_paired_end_flags()
-        self.assertEqual('', actual)
-
-    def test_tophat_paired_end_flags_raisesWhenMissingAllRequiredHeaders(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'foo\n42')
-            self.assertRaisesRegexp(ValueError,
-                                    r'missing.*inner_mate_dist,insert_std_dev.*s0_read_stats.txt',
-                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
-                                    read_stats_filename)
-
-    def test_tophat_paired_end_flags_raisesWhenMissingInsertStdDev(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\n42')
-            self.assertRaisesRegexp(ValueError,
-                                    r'missing.*insert_std_dev.*s0_read_stats.txt',
-                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
-                                    read_stats_filename)
-
-    def test_tophat_paired_end_flags_raisesWhenMissingInnerMateDist(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'insert_std_dev\n42')
-            self.assertRaisesRegexp(ValueError,
-                                    r'missing.*inner_mate_dist.*s0_read_stats.txt',
-                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
-                                    read_stats_filename)
-
-    def test_tophat_paired_end_flags_raisesOnMissingData(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\tinsert_std_dev\n')
-            self.assertRaisesRegexp(ValueError,
-                                    r'missing data row in.*s0_read_stats.txt',
-                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
-                                    read_stats_filename)
-
-    def test_tophat_paired_end_flags_raisesOnInvalidData(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\tinsert_std_dev\nHello\tWorld')
-            self.assertRaisesRegexp(ValueError,
-                                    r'invalid number.*inner_mate_dist:Hello,insert_std_dev:World.*in.*s0_read_stats.txt',
-                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
-                                    read_stats_filename)
-
-    def test_tophat_paired_end_flags_ignoresExtraData(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\tinsert_std_dev\trelationship_status\n42.3\t14.9\tcomplicated', )
-            actual = rnaseq_snakefile_helper.tophat_paired_end_flags(read_stats_filename)
-        self.assertEqual('--mate-inner-dist 42 --mate-std-dev 15', actual)
-
 
     def test_expand_read_stats_if_paired(self):
         filename_format = 's={sample}'

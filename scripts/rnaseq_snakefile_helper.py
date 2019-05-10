@@ -25,12 +25,16 @@ FILE_EXTENSION = '.watermelon.md5'
 '''Appended to all checksum filenames; must be very distinctive to ensure the module can
 unambiguously identify and safely remove extraneous checksums.'''
 
-TOPHAT_NAME = 'tophat'
-HTSEQ_NAME = 'htseq'
+HISAT2_NAME = 'HISAT2'
+STRINGTIE_NAME = 'stringtie'
 
-STRAND_CONFIG_PARAM = { 'fr-unstranded' : {TOPHAT_NAME: 'fr-unstranded', HTSEQ_NAME: 'no'},
-                        'fr-firststrand' : {TOPHAT_NAME : 'fr-firststrand', HTSEQ_NAME: 'reverse'},
-                        'fr-secondstrand' : {TOPHAT_NAME : 'fr-secondstrand', HTSEQ_NAME: 'yes'} }
+STRAND_CONFIG_PARAM = { 'fr-unstranded' : {HISAT2_NAME: '', STRINGTIE_NAME: ''},
+                        'fr-firststrand' : {HISAT2_NAME : '--rna-strandness RF', STRINGTIE_NAME: '--rf'},
+                        'fr-secondstrand' : {HISAT2_NAME : '--rna-strandness FR', STRINGTIE_NAME: '--fr'},
+                        'unstranded' : {HISAT2_NAME: '', STRINGTIE_NAME: ''},
+                        'reverse_forward' : {HISAT2_NAME : '--rna-strandness RF', STRINGTIE_NAME: '--rf'},
+                        'forward_reverse' : {HISAT2_NAME : '--rna-strandness FR', STRINGTIE_NAME: '--fr'},
+                        }
 
 def _mkdir(newdir):
     """works the way a good mkdir should :)
@@ -262,47 +266,30 @@ class PhenotypeManager(object):
                                                        'phenotypes comparisons')
         return PhenotypesComparisons(phenotypes=phenotypes, comparisons=comparisons)
 
-
-    def cuffdiff_samples(self,
-                         phenotype_label,
-                         sample_file_format):
-        '''Returns a list of sample files grouped by phenotype value.
-           Each sample group represents the comma separated samples for a phenotype value.
-           Sample groups are separated by a space.
-
-           sample_file_format is format string with placeholder {sample_placeholder}'''
-
-        group_separator = ' '
-        file_separator = ','
-
-        sample_name_group = self.phenotype_sample_list[phenotype_label]
-
-        group_sample_names = defaultdict(list)
-        for phenotype_value, sample_list in sample_name_group.items():
-            for sample_name in sample_list:
-                sample_file = sample_file_format.format(sample_placeholder=sample_name)
-                group_sample_names[phenotype_value].append(sample_file)
-        group_sample_names = dict(group_sample_names)
-
-        params = []
-        for group in self.comparison_values[phenotype_label]:
-            params.append(file_separator.join(sorted(group_sample_names[group])))
-
-        return group_separator.join(params)
-
-def _strand_option(tuxedo_or_htseq, strand_option):
+def _strand_option(hisat2_or_stringtie, strand_option):
     if not strand_option in STRAND_CONFIG_PARAM:
         msg_format = ('ERROR: config:alignment_options:library_type={} is '
                       'not valid. Valid library_type options are: {}')
         msg = msg_format.format(strand_option, ','.join(STRAND_CONFIG_PARAM.keys()))
         raise ValueError(msg)
-    return STRAND_CONFIG_PARAM[strand_option][tuxedo_or_htseq]
+    return STRAND_CONFIG_PARAM[strand_option][hisat2_or_stringtie]
 
-def strand_option_tophat(config_strand_option):
-    return _strand_option(TOPHAT_NAME, config_strand_option)
+def strand_option_hisat2(config):
+    config_strand_option = config["alignment_options"]["library_type"]
+    return _strand_option(HISAT2_NAME, config_strand_option)
 
-def strand_option_htseq(config_strand_option):
-    return _strand_option(HTSEQ_NAME, config_strand_option)
+def strand_option_stringtie(config):
+    config_strand_option = config["alignment_options"]["library_type"]
+    return _strand_option(STRINGTIE_NAME, config_strand_option)
+
+def hisat_detect_paired_end(fastqs):
+    if len(fastqs) == 2:
+        return('-1 ' + fastqs[0] + ' -2 ' + fastqs[1])
+    elif len(fastqs) == 1:
+        return('-U ' + fastqs[0])
+    else:
+        msg_format = 'Found {} fastqs ({}); expected either 1 or 2 fastq files/sample'
+        raise ValueError(msg_format.format(len(fastqs), ','.join(fastqs)))
 
 def cutadapt_options(trim_params):
     run_trimming_options = 0
@@ -314,16 +301,6 @@ def cutadapt_options(trim_params):
         if value != 0:
             run_trimming_options = 1
     return run_trimming_options
-
-def tophat_options(alignment_options):
-    options = ""
-    if not isinstance(alignment_options["transcriptome_only"], bool):
-        raise ValueError("config:alignment_options:transcriptome_only must be True or False")
-    if alignment_options["transcriptome_only"]:
-        options += " --transcriptome-only "
-    else:
-        options += " --no-novel-juncs "  # used in Legacy for transcriptome + genome alignment
-    return options
 
 def _get_sample_reads(fastq_base_dir, samples):
     sample_reads = {}
@@ -354,48 +331,6 @@ def expand_sample_read_endedness(sample_read_endedness_format,
                            zip,
                            sample=samples,
                            read_endedness=reads)
-
-def tophat_paired_end_flags(read_stats_filename=None):
-    def read_values(filename, expected_headers):
-        with open(filename, mode='r') as infile:
-            try:
-                row = next(csv.DictReader(infile, delimiter='\t'))
-            except StopIteration:
-                raise ValueError('missing data row in [{}]'.format(filename))
-        missing_headers = sorted(expected_headers - row.keys())
-        if missing_headers:
-            msg = 'missing [{}] in header of [{}]'.format(','.join(missing_headers),
-                                                          read_stats_filename)
-            raise ValueError(msg)
-        return row
-
-    def parse_values(filename, row, headers):
-        parsed_row = {}
-        invalid_values = {}
-        for header in headers:
-            value = row[header]
-            try:
-                parsed_row[header] = str(int(round(float(value))))
-            except ValueError:
-                invalid_values[header]=value
-        if invalid_values:
-            header_values = ','.join(['{}:{}'.format(h,v) for h,v in sorted(invalid_values.items())])
-            msg = 'invalid number(s) [{}] in {}'.format(header_values, read_stats_filename)
-            raise ValueError(msg)
-        return parsed_row
-
-    header_flag = {'insert_std_dev': '--mate-std-dev',
-                   'inner_mate_dist': '--mate-inner-dist'}
-    result = []
-    if read_stats_filename and os.path.exists(read_stats_filename):
-        raw_values = read_values(read_stats_filename, header_flag.keys())
-        parsed_values = parse_values(read_stats_filename,
-                                     raw_values,
-                                     header_flag.keys())
-        for header, flag in sorted(header_flag.items()):
-            result.append(flag)
-            result.append(parsed_values[header])
-    return ' '.join(result)
 
 def expand_read_stats_if_paired(read_stats_filename_format,
                                 flattened_sample_reads,

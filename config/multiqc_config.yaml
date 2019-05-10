@@ -3,14 +3,19 @@ intro_text: ''
 
 no_version_check: True
 
+fn_ignore_paths:
+  - '*/.log/'
+
 module_order:
   - fastqc:
       name: 'FastQC (trimmed sequences)'
       path_filters:
         - '*trim*'
   - fastq_screen
-  - tophat
+  - hisat2:
+      path_filters:
+        - '*_align_summary*'
   - fastqc:
       name: 'FastQC (aligned reads)'
       path_filters:
-        - '*_accepted_hits_fastqc*'
+        - '*-fastqc_align*'

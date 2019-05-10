@@ -1,0 +1,10 @@
+channels:
+- bioconda
+- conda-forge
+- defaults
+dependencies:
+- bioconductor-ballgown=2.10.0
+- r-yaml
+- r-stringr
+- r-optparse
+- libiconv=1.15

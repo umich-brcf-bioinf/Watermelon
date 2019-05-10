@@ -23,8 +23,10 @@ ALIGNMENT_DIR = os.path.join(_DIRS.get("alignment_output", "alignment_results"),
 DIFFEX_DIR = os.path.join(_DIRS.get("diffex_output", "diffex_results"), "")
 DELIVERABLES_DIR = os.path.join(_DIRS.get("deliverables_output", "deliverables"), "")
 DESEQ2_DIR = os.path.join(DIFFEX_DIR, "deseq2", "")
-TUXEDO_DIR = os.path.join(DIFFEX_DIR, "tuxedo", "")
+BALLGOWN_DIR = os.path.join(DIFFEX_DIR, "ballgown", "")
 CONFIG_CHECKSUMS_DIR = os.path.join(".config_checksums", "")
+
+CONFIGFILE_PATH = workflow.overwrite_configfile
 
 COMPARISON_INFIX = '_v_'
 DELIMITER = '^'
@@ -106,28 +108,19 @@ include: 'rules/align_cutadapt_PE.smk'
 include: 'rules/align_fastq_screen_biotype.smk'
 include: 'rules/align_fastq_screen_multi_species.smk'
 include: 'rules/align_fastqc_trimmed_reads.smk'
-include: 'rules/align_insert_size_PE.smk'
-include: 'rules/align_create_transcriptome_index.smk'
-include: 'rules/align_build_tophat_sample_options.smk'
-include: 'rules/align_tophat.smk'
-include: 'rules/align_fastqc_tophat_align.smk'
+include: 'rules/align_hisat2.smk'
+include: 'rules/align_fastqc_align.smk'
 include: 'rules/align_stringtie.smk'
 include: 'rules/align_stringtie_prepDE.smk'
 include: 'rules/align_qc.smk'
 include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
 
-include: 'rules/tuxedo_cuffdiff.smk'
-include: 'rules/tuxedo_flip.smk'
-include: 'rules/tuxedo_flag.smk'
-include: 'rules/tuxedo_annotate.smk'
-include: 'rules/tuxedo_group_replicates.smk'
-include: 'rules/tuxedo_cummerbund.smk'
-include: 'rules/tuxedo_split.smk'
-include: 'rules/tuxedo_last_split.smk'
-include: 'rules/tuxedo_run_info.smk'
-include: 'rules/tuxedo_excel.smk'
-include: 'rules/tuxedo_summary.smk'
+include: 'rules/ballgown_diffex.smk'
+include: 'rules/ballgown_annotation.smk'
+include: 'rules/ballgown_run_info.smk'
+include: 'rules/ballgown_excel.smk'
+include: 'rules/ballgown_summary.smk'
 
 include: 'rules/deseq2_metadata_contrasts.smk'
 include: 'rules/deseq2_diffex.smk'
@@ -136,7 +129,7 @@ include: 'rules/deseq2_run_info.smk'
 include: 'rules/deseq2_excel.smk'
 include: 'rules/deseq2_summary.smk'
 
-include: 'rules/deliverables_tuxedo.smk'
+include: 'rules/deliverables_ballgown.smk'
 include: 'rules/deliverables_deseq2.smk'
 include: 'rules/deliverables_combined_summary.smk'
 

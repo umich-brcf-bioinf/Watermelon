@@ -9,10 +9,6 @@ fold_change:
 deseq2_adjustedPValue:
     0.05
 
-insert_size:
-    downsample_readcount: 30000
-    pair_length: 500
-
 trimming_options:
     base_quality_5prime: 0
     base_quality_3prime: 13
@@ -21,7 +17,7 @@ trimming_options:
 
 alignment_options:
     transcriptome_only: True
-    library_type: fr-unstranded   #fr-firststrand   #fr-secondstrand
+    library_type: unstranded #forward_reverse #reverse_forward
     read_length: 50
 
 fastq_screen:

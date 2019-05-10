@@ -1,5 +1,5 @@
-ALL.append([ALIGNMENT_DIR + '06-stringtie/gene_count_matrix.csv',
-            ALIGNMENT_DIR + '06-stringtie/transcript_count_matrix.csv'])
+# ALL.append([ALIGNMENT_DIR + '06-stringtie/gene_count_matrix.csv',
+#             ALIGNMENT_DIR + '06-stringtie/transcript_count_matrix.csv'])
 
 rule align_stringtie_prepDE:
     input:

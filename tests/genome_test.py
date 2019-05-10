@@ -4,7 +4,7 @@ from __future__ import print_function, absolute_import, division
 from os.path import dirname, exists, join, realpath
 import scripts.watermelon_init as watermelon_init
 import scripts.deseq2_annotate as deseq2_annotate
-import scripts.tuxedo_annotate as tuxedo_annotate
+import scripts.ballgown_annotate as ballgown_annotate
 import unittest
 import yaml
 
@@ -27,10 +27,10 @@ class GenomeTest(unittest.TestCase):
         unannotated = set(genome_config.keys()) -  set(deseq2_annotate.TAXONOMY.keys())
         self.assertEqual(unannotated, set())
 
-    def test_all_genomes_annotated_tuxedo(self):
+    def test_all_genomes_annotated_ballgown(self):
         with open(_GENOME_CONFIG_PATH, 'r') as config_file:
             genome_config = yaml.load(config_file)
-        unannotated = set(genome_config.keys()) -  set(tuxedo_annotate.TAXONOMY.keys())
+        unannotated = set(genome_config.keys()) -  set(ballgown_annotate.TAXONOMY.keys())
         self.assertEqual(unannotated, set())
 
     def test_genomes_references_exist(self):
@@ -47,7 +47,8 @@ class GenomeTest(unittest.TestCase):
                          '{}: some references do not exist'.format(_GENOME_CONFIG_FILE_NAME))
 
     def test_genomes_references_well_formed(self):
-        expected_references = set(['gtf', 'bowtie2_index', 'entrez_gene_info', 'bbmap_ref'])
+        expected_references = set(['fasta', 'gtf', 'bowtie2_index',
+                                   'entrez_gene_info', 'hisat2_index'])
         with open(_GENOME_CONFIG_PATH, 'r') as config_file:
             genome_config = yaml.load(config_file)
         invalid_references = {}

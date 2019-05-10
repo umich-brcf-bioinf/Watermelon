@@ -45,7 +45,7 @@ class StringtieTest(unittest.TestCase):
 
     def _snakemake(self, configfile_path, source_expected_dir, source_working_dir):
         with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path  # '/tmp/foo'
+            temp_dir_path = temp_dir.path  #'/tmp/cgates'
             tmp_expected_dir = os.path.join(temp_dir_path, 'expected')
             shutil.copytree(source_expected_dir, tmp_expected_dir)
             tmp_actual_dir = os.path.join(temp_dir_path, 'actual')

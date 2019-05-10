@@ -8,10 +8,12 @@ rule deseq2_excel:
         DESEQ2_DIR + "05-excel/.log/{phenotype}_{comparison}.diffex_excel.log"
     params:
         output_dir = DESEQ2_DIR + "05-excel/",
-    shell:
-        "module purge && module load python/3.6.1 && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py "
-        " -g {input.gene}"
-        " --glossary {input.glossary} "
-        " {output.annotated_file} "
-        " 2>&1 | tee {log} "
+    conda:
+        'envs/deseq2_excel.yaml'
+    shell:'''(
+        python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py \
+            -g {input.gene} \
+            --glossary {input.glossary} \
+            --info_filepath {input.run_info} \
+            {output.annotated_file}
+        ) 2>&1 | tee {log} '''

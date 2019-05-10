@@ -219,7 +219,7 @@ plot_scree = function(compute_PCA_result, out_name = 'ScreePlot.pdf') {
             y = 'Percent Variance Explained'
         ) +
         theme_bw()
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = scree_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = scree_plot, height = 6, width = 6, dpi = 300)
 
     return(scree_plot)
 }
@@ -242,7 +242,7 @@ plot_PCA = function(compute_PCA_result, out_name = 'PCAplot.pdf') {
             x = sprintf('%s: %s%% variance', dims[1], var_explained[1]),
             y = sprintf('%s: %s%% variance', dims[2], var_explained[2])) +
         theme_bw()
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = pca_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = pca_plot, height = 6, width = 6, dpi = 300)
 
     return(pca_plot)
 }
@@ -281,7 +281,7 @@ plot_MDS = function(mat, pdata, factor_name, top_n = 500, dims = c(1,2), out_nam
             x = sprintf('Dim %s', dims[1]),
             y = sprintf('Dim %s', dims[2])) +
         theme_bw()
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = mds_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = mds_plot, height = 6, width = 6, dpi = 300)
 
     return(mds_plot)
 }
@@ -441,19 +441,43 @@ for(phenotype in phenotypes) {
     message(sprintf('Plotting top expressed genes heatmap for %s', phenotype))
     plot_top_expressed_heatmap(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, out_name = 'Heatmap_TopExp.pdf')
 
-    message(sprintf('Plotting PCA for %s in dim 1 and 2', phenotype))
+    # PCA top 500
+    message(sprintf('Plotting PCA for %s in dim 1 and 2, top 500', phenotype))
     pca_result_12 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC1','PC2'))
-    log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_name = 'PCAplot_12.pdf')
+    log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_name = 'PCAplot_12_top500.pdf')
 
-    message('Plotting scree')
-    scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_name = 'ScreePlot.pdf')
-
-    message(sprintf('Plotting PCA for %s in dim 2 and 3', phenotype))
+    message(sprintf('Plotting PCA for %s in dim 2 and 3, top 500', phenotype))
     pca_result_23 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC2','PC3'))
-    log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_name = 'PCAplot_23.pdf')
+    log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_name = 'PCAplot_23_top500.pdf')
 
-    message(sprintf('Plotting MDS for %s', phenotype))
-    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c(1,2), out_name = 'MDSplot.pdf')
+    message('Plotting scree, top 500')
+    scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_name = 'ScreePlot_top500.pdf')
+
+    # PCA top 100
+    message(sprintf('Plotting PCA for %s in dim 1 and 2, top 100', phenotype))
+    pca_result_12 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c('PC1','PC2'))
+    log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_name = 'PCAplot_12_top100.pdf')
+
+    message(sprintf('Plotting PCA for %s in dim 2 and 3, top 100', phenotype))
+    pca_result_23 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c('PC2','PC3'))
+    log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_name = 'PCAplot_23_top100.pdf')
+
+    message('Plotting scree, top 100')
+    scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_name = 'ScreePlot_top100.pdf')
+
+    # MDS top 500
+    message(sprintf('Plotting MDS for %s in dim 1 and 2, top 500', phenotype))
+    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c(1,2), out_name = 'MDSplot_12_top500.pdf')
+
+    message(sprintf('Plotting MDS for %s in dim 1 and 2, top 500', phenotype))
+    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c(2,3), out_name = 'MDSplot_23_top500.pdf')
+
+    # MDS top 100
+    message(sprintf('Plotting MDS for %s in dim 1 and 2, top 500', phenotype))
+    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c(1,2), out_name = 'MDSplot_12_top100.pdf')
+
+    message(sprintf('Plotting MDS for %s in dim 1 and 2, top 500', phenotype))
+    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c(2,3), out_name = 'MDSplot_23_top100.pdf')
 
 }
 

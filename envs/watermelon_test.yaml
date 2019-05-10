@@ -1,4 +1,4 @@
-name: watermelon
+name: watermelon_test
 channels:
   - bioconda
   - conda-forge
@@ -6,3 +6,7 @@ channels:
 dependencies:
   - snakemake=5
   - conda
+  - nose
+  - testfixtures
+  - xlsxwriter
+  - xlrd

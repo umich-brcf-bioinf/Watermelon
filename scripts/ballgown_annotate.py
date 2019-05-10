@@ -113,7 +113,7 @@ def main():
                 row.insert(3, 'gene_desc')
                 print('\t'.join(row), file=annotated_file)
             else:
-                if len(row) == 7:
+                if len(row) == 8:
                     left = row[0:1]
                     right = row[1:]
                 else:

@@ -158,6 +158,7 @@ GENOME_BUILD_OPTIONS = ('GRCh37', 'GRCh38', 'hg19', 'hg38',
                         'mm10',
                         'rn5', 'rn6',
                         'ce10', 'ce11', 'WBS235',
+                        'dm6',
                         'GRCz10',
                         'ecoMG1655', 'ecoUTI89',
                         'dm6')

@@ -1,61 +1,27 @@
-diffex:
-  sample_description_file: config/sample_description.csv
-  comparison_file: config/comparison.yaml
-
 dirs:
-  input:
-    /ccmb/BioinfCore/SoftwareDev/projects/Watermelon_spike/Tronson_RS1_tests/test_data/inputs/00-multiplexed_reads
+  input: /ccmb/BioinfCore/ActiveProjects/rcavalca/test_lumeng/inputs/01-source_samples
   alignment_output: alignment_results
   diffex_output: diffex_results
   deliverables_output_dir: deliverables
 
-main_factors:  yes     ^  yes   ^    no          ^   no
-phenotypes:    gender  ^  diet  ^    male.diet   ^   female.diet
-samples:
-    Sample_61483: Me     ^   HF   ^      HF        ^
-    Sample_61484: Me     ^   ND   ^      ND        ^
-    Sample_61485: Me     ^   HF   ^      HF        ^
-    Sample_61486:       ^   ND   ^                ^    ND
-    Sample_61504: Fe     ^   HF   ^                ^    HF
-    Sample_61505: Fe     ^   HF   ^                ^    HF
-    Sample_61506: Fe     ^   DRG  ^                ^    DRG
-    Sample_61490:       ^   DRG  ^                ^    DRG
+genome: hg19
+references:
+    hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/HISAT2_index/hg19_noRibo
+    bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/Bowtie2Index
+    entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+    gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/hg19_noRibo.gtf
 
-comparisons:
-    gender:
-    - Me_v_Fe
-    diet:
-    - HF_v_ND
-    - HF_v_DRG
-    - ND_v_DRG
-    male.diet:
-    - HF_v_ND
-    female.diet:
-    - HF_v_ND
-    - HF_v_DRG
-
-fold_change:
-    1.5
-
-deseq2_adjustedPValue:
-    0.05
-
-trimming_options:
-    base_quality_5prime: 0
-    base_quality_3prime: 0
-    trim_length_5prime: 0
-    trim_length_3prime: 3
+sample_description_file: example_sample_description.csv
 
 alignment_options:
-    transcriptome_only: True
-    library_type: fr-unstranded  # fr-firststrand # fr-secondstrand
     read_length: 50
+    library_type: fr-unstranded
+    transcriptome_only: true
 
-genome:
-    mm10
+trimming_options:
+    base_quality_3prime: 13
+    base_quality_5prime: 0
+    trim_length_3prime: 0
+    trim_length_5prime: 3
 
-references:
-    gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/mm10_noRibo.gtf
-    hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/HISAT2_index/mm10_noRibo
-    bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/Bowtie2Index
-    entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+comparison_config: example_comparisons.yaml

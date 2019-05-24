@@ -23,13 +23,14 @@ from scripts.watermelon_config import DEFAULT_PHENOTYPE_DELIM
 
 HISAT2_NAME = 'HISAT2'
 STRINGTIE_NAME = 'stringtie'
+RSEM_NAME = 'rsem'
 
-STRAND_CONFIG_PARAM = { 'fr-unstranded' : {HISAT2_NAME: '', STRINGTIE_NAME: ''},
-                        'fr-firststrand' : {HISAT2_NAME : '--rna-strandness RF', STRINGTIE_NAME: '--rf'},
-                        'fr-secondstrand' : {HISAT2_NAME : '--rna-strandness FR', STRINGTIE_NAME: '--fr'},
-                        'unstranded' : {HISAT2_NAME: '', STRINGTIE_NAME: ''},
-                        'reverse_forward' : {HISAT2_NAME : '--rna-strandness RF', STRINGTIE_NAME: '--rf'},
-                        'forward_reverse' : {HISAT2_NAME : '--rna-strandness FR', STRINGTIE_NAME: '--fr'},
+STRAND_CONFIG_PARAM = { 'fr-unstranded' : {HISAT2_NAME: '', STRINGTIE_NAME: '', RSEM_NAME: ''},
+                        'fr-firststrand' : {HISAT2_NAME : '--rna-strandness RF', STRINGTIE_NAME: '--rf', RSEM_NAME: '--strandedness reverse'},
+                        'fr-secondstrand' : {HISAT2_NAME : '--rna-strandness FR', STRINGTIE_NAME: '--fr', RSEM_NAME: '--strandedness forward'},
+                        'unstranded' : {HISAT2_NAME: '', STRINGTIE_NAME: '', RSEM_NAME: ''},
+                        'reverse_forward' : {HISAT2_NAME : '--rna-strandness RF', STRINGTIE_NAME: '--rf', RSEM_NAME: '--strandedness reverse'},
+                        'forward_reverse' : {HISAT2_NAME : '--rna-strandness FR', STRINGTIE_NAME: '--fr', RSEM_NAME: '--strandedness forward'},
                         }
 
 def _mkdir(newdir):
@@ -192,13 +193,13 @@ class PhenotypeManager(object):
                                                        'phenotypes comparisons')
         return PhenotypesComparisons(phenotypes=phenotypes, comparisons=comparisons)
 
-def _strand_option(hisat2_or_stringtie, strand_option):
+def _strand_option(program_name, strand_option):
     if not strand_option in STRAND_CONFIG_PARAM:
         msg_format = ('ERROR: config:alignment_options:library_type={} is '
                       'not valid. Valid library_type options are: {}')
         msg = msg_format.format(strand_option, ','.join(STRAND_CONFIG_PARAM.keys()))
         raise ValueError(msg)
-    return STRAND_CONFIG_PARAM[strand_option][hisat2_or_stringtie]
+    return STRAND_CONFIG_PARAM[strand_option][program_name]
 
 def strand_option_hisat2(config):
     config_strand_option = config["alignment_options"]["library_type"]
@@ -208,11 +209,24 @@ def strand_option_stringtie(config):
     config_strand_option = config["alignment_options"]["library_type"]
     return _strand_option(STRINGTIE_NAME, config_strand_option)
 
+def strand_option_rsem(config):
+    config_strand_option = config["alignment_options"]["library_type"]
+    return _strand_option(RSEM_NAME, config_strand_option)
+
 def hisat_detect_paired_end(fastqs):
     if len(fastqs) == 2:
         return('-1 ' + fastqs[0] + ' -2 ' + fastqs[1])
     elif len(fastqs) == 1:
         return('-U ' + fastqs[0])
+    else:
+        msg_format = 'Found {} fastqs ({}); expected either 1 or 2 fastq files/sample'
+        raise ValueError(msg_format.format(len(fastqs), ','.join(fastqs)))
+
+def detect_paired_end_bool(fastqs):
+    if len(fastqs) == 2:
+        return(True)
+    elif len(fastqs) == 1:
+        return(False)
     else:
         msg_format = 'Found {} fastqs ({}); expected either 1 or 2 fastq files/sample'
         raise ValueError(msg_format.format(len(fastqs), ','.join(fastqs)))

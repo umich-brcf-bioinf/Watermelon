@@ -1,7 +1,3 @@
-from os.path import join
-
-#_star_config = config['genome_reference']['star']
-_star_config = {'genome_dir' : '/ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/RSEM_ref'}
 
 rule rsem_star_align:
     input:
@@ -10,18 +6,14 @@ rule rsem_star_align:
                 SAMPLE_READS,
                 wildcards.sample),
         #This portion determines if a new reference must be created
-        genomeParameters = join(\
-                ALIGNMENT_DIR,
-               '03-rsem_star_genome_generate',
-               'genomeParameters.txt'
-               ),
+        genomeParameters = ALIGNMENT_DIR + '03-rsem_star_genome_generate/genomeParameters.txt'
     output:
-        join(ALIGNMENT_DIR , '04-rsem_star_align', '{sample}.genes.results'),
-        join(ALIGNMENT_DIR , '04-rsem_star_align', '{sample}.isoforms.results'),
-        join(ALIGNMENT_DIR , '04-rsem_star_align', '{sample}.genome.bam'),
-        join(ALIGNMENT_DIR , '04-rsem_star_align', '{sample}.transcript.bam'),
+        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results',
+        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results',
+        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam',
+        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam',
     log:
-        join(ALIGNMENT_DIR + '04-rsem_star_align', '.log', '{sample}.rsem_star_align.log')
+        ALIGNMENT_DIR + '04-rsem_star_align/.log/{sample}.rsem_star_align.log'
     conda:
         '../envs/rsem_star.yaml'
     benchmark:
@@ -30,12 +22,8 @@ rule rsem_star_align:
     resources:
         mem_gb=30
     params:
-        rsem_ref_base = join(\
-            ALIGNMENT_DIR,
-            '03-rsem_star_genome_generate',
-            config['rsem_ref_prefix']
-            ),
-        outFileNamePrefix = join(ALIGNMENT_DIR, '04-rsem_star_align', '{sample}'),
+        rsem_ref_base = ALIGNMENT_DIR + '03-rsem_star_genome_generate' + config['rsem_ref_prefix'],
+        outFileNamePrefix = ALIGNMENT_DIR + '04-rsem_star_align/{sample}',
         paired_end = lambda wildcards, input: '--paired-end' if rnaseq_snakefile_helper.detect_paired_end_bool(input.fastq_files) else '',
         strand_flag = rnaseq_snakefile_helper.strand_option_rsem(config)
     shell: '''(

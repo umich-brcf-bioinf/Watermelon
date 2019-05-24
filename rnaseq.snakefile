@@ -103,13 +103,6 @@ if REPLICATE_PHENOTYPE_NAMES:
                comparison=REPLICATE_COMPARISON_GROUPS),
         ]
     BALLGOWN_ALL = [
-        expand(ALIGNMENT_DIR + '06-stringtie/ballgown/{sample}/{bgown_prefixes}.ctab',
-               sample=config[SAMPLES_KEY],
-               bgown_prefixes=['e2t','e_data','i2t','i_data','t_data']),
-        expand(BALLGOWN_DIR + '01-ballgown_diffex/gene_lists/{phenotype}/{comparison}_gene.txt',
-                zip,
-                phenotype=ALL_PHENOTYPE_NAMES,
-                comparison=ALL_COMPARISON_GROUPS),
         expand(BALLGOWN_DIR + '01-ballgown_diffex/gene_lists/{phenotype}/{comparison}_isoform.txt',
                 zip,
                 phenotype=ALL_PHENOTYPE_NAMES,
@@ -134,16 +127,14 @@ if REPLICATE_PHENOTYPE_NAMES:
         expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results', sample=config[SAMPLES_KEY].keys()),
         expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results', sample=config[SAMPLES_KEY].keys()),
         expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam', sample=config[SAMPLES_KEY].keys()),
-        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY].keys()),
-        ALIGNMENT_DIR + '04-rsem_star_align/gene_results_files.txt',
-        ALIGNMENT_DIR + '04-rsem_star_align/transcript_results_files.txt'
+        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY].keys())
     ]
 
 
 OPTIONAL_ALL = BALLGOWN_ALL + DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
 
 #ALL = [OPTIONAL_ALL]
-ALL = RSEM_ALL #+ DESEQ2_ALL
+ALL = RSEM_ALL + BALLGOWN_ALL #+ DESEQ2_ALL
 
 include: 'rules/align_concat_reads.smk'
 include: 'rules/align_cutadapt_SE.smk'
@@ -159,19 +150,17 @@ include: 'rules/align_fastqc_trimmed_reads.smk'
 #include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
 
-# include: 'rules/ballgown_diffex.smk'
-# include: 'rules/ballgown_plots.smk'
-# include: 'rules/ballgown_annotation.smk'
-# include: 'rules/ballgown_excel.smk'
-# include: 'rules/ballgown_summary.smk'
+include: 'rules/ballgown_diffex.smk'
+include: 'rules/ballgown_plots.smk'
+include: 'rules/ballgown_annotation.smk'
+include: 'rules/ballgown_excel.smk'
+include: 'rules/ballgown_summary.smk'
 
 #include: 'rules/deseq2_diffex.smk'
 #include: 'rules/deseq2_plots.smk'
 #include: 'rules/deseq2_annotation.smk'
 #include: 'rules/deseq2_excel.smk'
 #include: 'rules/deseq2_summary.smk'
-
-include: 'rules/rsem_gather_resultsfilenames.smk'
 
 include: 'rules/align_rsem_star.smk'
 include: 'rules/rsem_star_genome_generate.smk'

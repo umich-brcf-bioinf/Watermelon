@@ -1,13 +1,16 @@
 library(optparse)
 
 option_list = list(
-    make_option('--stringtie_dir', type='character', help='[Required] Path to working directory'),
+    make_option('--rsem_dir', type='character', help='[Required] Path to working directory'),
     make_option('--config_file', type='character', help='[Required] Path to configfile')
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
-stringtie_dir = opt$stringtie_dir
-config_file = opt$config_file
+rsem_dir = opt$rsem_dir
+#config_file = opt$config_file
+
+rsem_dir = "/nfs/med-bfx-activeprojects/trsaari/example_output_Watermelon/alignment_results/04-rsem_star_align" #TWS DEBUG
+config_file = "/nfs/med-bfx-activeprojects/trsaari/Watermelon/config/config_190521_test.yaml" #TWS DEBUG
 
 #######################################
 
@@ -36,21 +39,31 @@ handle_comparisons = function(yaml) {
     return(comps)
 }
 
+get.samplenames.from.dir <- function(results.dir) {
+  fnames <- list.files(results.dir)
+  iso.fnames <- fnames[grepl(".isoforms.results", fnames)]
+  sample.names <- sub(".isoforms.results", "", iso.fnames, fixed=T)
+  return(sample.names)
+}
+
 #######################################
 # yaml parsing
 
 yaml = read_yaml(config_file)
-diffex_yaml = read_yaml(yaml$diffex$comparison_file)
+#diffex_yaml = read_yaml(yaml$diffex$comparison_file)
+diffex_yaml = read_yaml("/nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_comparisons.yaml") #TWS DEBUG
 
 # Establish directories
 diffex_dir = yaml$dirs$diffex_output
 results_dir = sprintf('%s/ballgown/01-ballgown_diffex', diffex_dir)
 counts_dir = sprintf('%s/counts', results_dir)
 gene_lists_dir = sprintf('%s/gene_lists', results_dir)
-ballgown_inputs_dir = sprintf('%s/ballgown', stringtie_dir)
+#ballgown_inputs_dir = sprintf('%s/ballgown', stringtie_dir)
+ballgown_inputs_dir = sprintf('%s/ballgown', rsem_dir)
 
 # Get phenotyp matrix
-pdata = read_csv(yaml$diffex$sample_description_file)
+#pdata = read_csv(yaml$diffex$sample_description_file)
+pdata = read_csv("/nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_sample_description_subset.csv") #TWS DEBUG
 
 # Establish comparisons
 comparisons = handle_comparisons(diffex_yaml)
@@ -61,14 +74,18 @@ fdr_cutoff = diffex_yaml$deseq2_adjustedPValue
 fc_cutoff = log2(diffex_yaml$fold_change)
 
 #######################################
-message('Reading ballgown input')
-sample_paths = list.files(ballgown_inputs_dir, full.names = TRUE)
+#message('Reading ballgown input')
+# sample_paths = list.files(ballgown_inputs_dir, full.names = TRUE) #TWS - This isn't needed for rsem input
 
-if(length(sample_paths) == 0) {
-    stop(sprintf('No directories listed in %s', ballgown_inputs_dir))
-}
+# if(length(sample_paths) == 0) {
+#     stop(sprintf('No directories listed in %s', ballgown_inputs_dir))
+# }
 
-bg_data = ballgown(samples = sample_paths, meas = 'all', pData = pdata)
+yaml$references$gtf <- "/nfs/med-bfx-activeprojects/trsaari/sandbox/hg19_noRibo.gtf" #TWS DEBUG
+pdata = as.data.frame(pdata) #TWS DEBUG
+
+rsem_samplenames <- get.samplenames.from.dir(rsem_dir)
+bg_data = ballgownrsem(dir=rsem_dir, samples=rsem_samplenames, gtf=yaml$references$gtf, meas = 'all', pData = pdata)
 
 ###################
 # Pull out gene-level FPKMs

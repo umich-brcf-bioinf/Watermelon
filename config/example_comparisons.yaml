@@ -1,17 +1,84 @@
-comparisons:
-    gender:
-        design: '~ 0 + gender'
-        contrasts:
-            Me_v_Fe: Me - Fe
-    diet:
-        design: '~ 0 + diet + gender'
-        contrasts:
-            HF_v_ND: HF - ND
-            HF_v_
+# Based on /ccmb/BioinfCore/ActiveProjects/rcavalca/test_lumeng
 
+fold_change: 1.5
+adjustedPValue: 0.05
 
-fold_change:
-    1.5
+# diffex_results/pheno/DESeq2/pheno^DM^NDM
+# diffex_results/pheno/ballgown
+pheno:
+    DESeq2:
+        DESeq2:
+            full: ~ 0 + pheno
+            reduced: ~ 0
+            betaPrior: true
+        results:
+            contrasts:
+                - [pheno, DM, NDM]
+    ballgown:
+        stattest:
+            pData: example_sample_description.csv
+            feature: transcript
+            meas: FPKM
+            covariate: pheno # And how do we ensure correct reference factor?
 
-deseq2_adjustedPValue:
-    0.05
+# diffex_results/pheno_gender_corrected/DESeq2/pheno^DM^NDM
+# diffex_results/pheno_gender_corrected/ballgown
+pheno_gender_corrected:
+    DESeq2:
+        DESeq2:
+            full: ~ 0 + pheno + Gend
+            reduced: ~ 0 + Gend
+            betaPrior: true
+        results:
+            contrasts:
+                - [pheno, DM, NDM]
+    ballgown:
+        stattest:
+            pData: example_sample_description.csv
+            feature: transcript
+            meas: FPKM
+            covariate: pheno
+            adjustvars: Gend
+
+# Equivalent to ballgown sub-block above?
+# diffex_results/pheno_gender_corrected_alt_ballgown/ballgown
+pheno_gender_corrected_alt_ballgown:
+    ballgown:
+        stattest:
+            pData: example_sample_description.csv
+            feature: transcript
+            meas: FPKM
+            mod: ~ 0 + pheno + Gend
+            mod0: ~ 0 + Gend
+
+# diffex_results/pheno_male/DESeq2/pheno.male^DM.male^NDM.male
+# diffex_results/pheno_male/ballgown
+pheno_male:
+    DESeq2:
+        DESeq2:
+            full: ~ 0 + pheno.male
+            reduced: ~ 0
+            betaPrior: true
+        results:
+            contrasts:
+                - [pheno.male, DM.male, NDM.male] # Do we have to subset the data ourselves or will DESeq2 do it?
+    ballgown:
+        stattest:
+            pData: example_sample_description.csv
+            feature: transcript
+            meas: FPKM
+            covariate: pheno.male # Do we have to subset the data ourselves or will ballgown do it?
+
+# Note we can do both male and female tests within the same model in DESeq2, but not in ballgown
+# diffex_results/pheno_gender/DESeq2/pheno.Gend^DM.male^NDM.male
+# diffex_results/pheno_gender/DESeq2/pheno.Gend^DM.fem^NDM.fem
+pheno_gender:
+    DESeq2:
+        DESeq2:
+            full: ~ 0 + pheno.Gend
+            reduced: ~ 0
+            betaPrior: true
+        results:
+            contrasts:
+                - [pheno.Gend, DM.male, NDM.male] # Do we have to subset the data ourselves or will DESeq2 do it?
+                - [pheno.Gend, DM.fem, NDM.fem] # Do we have to subset the data ourselves or will DESeq2 do it?

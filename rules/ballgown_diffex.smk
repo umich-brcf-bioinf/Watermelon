@@ -1,7 +1,7 @@
 rule ballgown_diffex:
     input:
-        gtfs = expand(ALIGNMENT_DIR + '06-stringtie/{sample}.gtf', sample=config[SAMPLES_KEY]),
-        ballgown = expand(ALIGNMENT_DIR + '06-stringtie/ballgown/{sample}/{bgown_prefixes}.ctab', sample=config[SAMPLES_KEY], bgown_prefixes=['e2t','e_data','i2t','i_data','t_data']),
+        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results', sample=config[SAMPLES_KEY]),
+        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results', sample=config[SAMPLES_KEY])
     output:
         gene_files = expand(BALLGOWN_DIR + '01-ballgown_diffex/gene_lists/{phenotype}/{comparison}_gene.txt',
                         zip,
@@ -19,12 +19,12 @@ rule ballgown_diffex:
     conda:
         'envs/diffex.yaml'
     params:
-        stringtie_dir = ALIGNMENT_DIR + '06-stringtie/',
+        rsem_dir = ALIGNMENT_DIR + '04-rsem_star_align/',
         configfile_path = CONFIGFILE_PATH
     shell:
         '''
         (Rscript {WATERMELON_SCRIPTS_DIR}/ballgown_diffex.R \
-            --stringtie_dir {params.stringtie_dir} \
+            --rsem_dir {params.rsem_dir} \
             --config_file {params.configfile_path}
         ) 2>&1 | tee {log}
         '''

@@ -1,20 +1,25 @@
 library(optparse)
 
 option_list = list(
-    make_option('--count_file', type='character', help='[Required] Path to stringtie counts matrix'),
+    make_option('--rsem_dir', type='character', help='[Required] Path to dir containing rsem results'),
     make_option('--config_file', type='character', help='[Required] Path to configfile'),
     make_option('--threads', type = 'integer', default = 4, help='Number of threads to use.')
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
-count_file = opt$count_file
+rsem_dir = opt$rsem_dir
 config_file = opt$config_file
 threads = opt$threads
+
+#rsem_dir = "/nfs/med-bfx-activeprojects/trsaari/example_output_Watermelon/alignment_results/04-rsem_star_align/" #TWS DEBUG
+#config_file = "/nfs/med-bfx-activeprojects/trsaari/Watermelon/config/config_190521_test.yaml" #TWS DEBUG
+#threads = 4 #TWS DEBUG
 
 #######################################
 
 library(BiocParallel)
 library(data.table)
+library(tximport)
 library(DESeq2)
 library(readr)
 library(stringr)
@@ -48,11 +53,22 @@ handle_comparisons = function(yaml) {
     return(comps)
 }
 
+#Function to generate a named list of filepaths
+#For loading these data via tximport
+named.filepaths.from.dir <- function(rsem.dir) {
+  fnames <- list.files(rsem.dir)
+  genes.fnames <- fnames[grepl(".genes.results", fnames)]
+  sample.names <- sub(".genes.results", "", genes.fnames, fixed=T)
+  fpathlist <- file.path(rsem.dir, genes.fnames)
+  names(fpathlist) <- sample.names
+  return(fpathlist)
+}
+
 #######################################
 # yaml parsing
 
 yaml = read_yaml(config_file)
-diffex_yaml = read_yaml(yaml$diffex$comparison_file)
+diffex_yaml = read_yaml("/nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_comparisons.yaml") #TWS DEBUG
 
 # Establish directories
 diffex_dir = yaml$dirs$diffex_output
@@ -61,7 +77,7 @@ counts_dir = sprintf('%s/counts', results_dir)
 gene_lists_dir = sprintf('%s/gene_lists', results_dir)
 
 # Get phenotyp matrix
-pdata = read_csv(yaml$diffex$sample_description_file)
+pdata = read_csv("/nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_sample_description_subset.csv") #TWS DEBUG
 
 # Establish comparisons
 comparisons = handle_comparisons(diffex_yaml)
@@ -73,15 +89,18 @@ fc_cutoff = log2(diffex_yaml$fold_change)
 
 #######################################
 
-# Read count data
-count_data = read.table(file = count_file, header = TRUE, sep = ',', row.names = 1, strip.white = TRUE, quote = '', stringsAsFactors = FALSE)
-count_data = round(count_data)
+# Import count data
+files.list <- named.filepaths.from.dir(rsem_dir)
+txi.rsem.gene.results <- tximport(files.list, type = "rsem", txIn = F, txOut = F)
+#Some genes have length zero (what does this even mean?), causing issues with creating DESeqDataSet
+#Mike Love recommends changing these from 0 to 1; https://support.bioconductor.org/p/84304/#84368
+txi.rsem.gene.results$length[txi.rsem.gene.results$length == 0] <- 1
 
 #######################################
 # Create DESeqDataSet from matrix and filter lowly expressed genes
 
 message('Initializing DESeq2 result')
-dds = DESeqDataSetFromMatrix(count_data = count_data, colData = pdata, design = ~ combinatoric_group)
+dds = DESeqDataSetFromTximport(txi = txi.rsem.gene.results, colData = pdata, design = ~0 + pheno) #TWS DEBUG - combinatoric_group doesn't exist - using this as an example, but creates issues in the for loop below
 # QUESTION: Should this be more stringent?
 dds = dds[ rowSums(counts(dds)) > 1, ]
 
@@ -120,6 +139,9 @@ write.table(x = rld_df, file=paste(countsDir,'rlog_normalized_counts.txt', sep =
 
 #######################################
 # Diffex analysis in loop
+
+contrastData = read.table(file = "example_output_Watermelon/contrasts.txt", header=TRUE, sep = '\t', stringsAsFactors = FALSE, strip.white = TRUE) #TWS DEBUG
+colData <- read.table(file = "example_output_Watermelon/sample_metadata.txt" , header = TRUE, sep = '\t', stringsAsFactors = FALSE, na.strings = '', check.names = FALSE) #TWS DEBUG
 
 # Container for the results
 de_results = split(contrastData, contrastData$factor)

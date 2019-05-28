@@ -1,6 +1,9 @@
 .Rhistory
 ._.DS_Store
 .DS_Store
+.nfs*
+rules/.nfs*
+scripts/.nfs*
 
 scripts/.Rhistory
 

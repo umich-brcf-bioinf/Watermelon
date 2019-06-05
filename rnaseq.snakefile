@@ -5,6 +5,7 @@ from itertools import combinations, repeat
 from shutil import copyfile
 import csv
 import os
+import pandas as pd
 import subprocess
 import yaml
 
@@ -26,23 +27,51 @@ BALLGOWN_DIR = os.path.join(DIFFEX_DIR, "ballgown", "")
 
 CONFIGFILE_PATH = workflow.overwrite_configfile
 
-COMPARISON_INFIX = '_v_'
-DELIMITER = '^'
 SAMPLES_KEY = 'samples'
-PHENOTYPES_KEY = 'phenotypes'
-COMPARISONS_KEY ='comparisons'
 
-phenotypeManager = rnaseq_snakefile_helper.PhenotypeManager(config,
-                                                            DELIMITER,
-                                                            COMPARISON_INFIX)
+#Extend config to include diffex info
+with open(config['comparison_config'], 'r') as comparison_file:
+    config['diffex'] = yaml.load(comparison_file, Loader=yaml.BaseLoader)
 
-ALL_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_all_tuple.phenotypes
-ALL_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_all_tuple.comparisons
+#Load in samplesheet
+samplesheet = pd.read_csv(config["sample_description_file"]).set_index("sample", drop=True)
+#Add sample info to config
+#sample_phenotype_value_dict = samplesheet.to_dict(orient='index')
+#TWS - for some reason, adding the above dict to the config breaks the Rscript functionality
+#TWS - instead, adding only the sample names
+config[SAMPLES_KEY] = list(samplesheet.index)
 
-REPLICATE_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_replicates_tuple.phenotypes
-REPLICATE_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_replicates_tuple.comparisons
+# phenotypeManager = rnaseq_snakefile_helper.PhenotypeManager(config,
+#                                                            DELIMITER,
+#                                                            COMPARISON_INFIX)
 
-PHENOTYPES = list(set(ALL_PHENOTYPE_NAMES))
+# ALL_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_all_tuple.phenotypes
+# ALL_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_all_tuple.comparisons
+#
+# print(ALL_PHENOTYPE_NAMES)
+# print(ALL_COMPARISON_GROUPS)
+#
+# print(phenotypeManager.phenotypes_with_replicates)
+#
+# print(rnaseq_snakefile_helper.diffex_models(config['diffex']))
+#
+# sample_desc = pd.read_csv(config["sample_description_file"]).set_index("sample", drop=True)
+# print(sample_desc.columns)
+# print(CONFIGFILE_PATH)
+#
+# REPLICATE_PHENOTYPE_NAMES = False #TWS DEBUG
+#
+# print(list(samplesheet.index))
+# print(list(rnaseq_snakefile_helper.expand_model_contrasts(\
+#     DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_isoform.results',
+#     config['diffex'])))
+#
+# quit()
+
+# REPLICATE_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_replicates_tuple.phenotypes
+# REPLICATE_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_replicates_tuple.comparisons
+#
+# PHENOTYPES = list(set(ALL_PHENOTYPE_NAMES))
 
 rnaseq_snakefile_helper.init_references(config["references"])
 
@@ -71,70 +100,93 @@ else:
     FASTQ_SCREEN_ALIGNMENT = []
     FASTQ_SCREEN_DELIVERABLES = []
 
-DESEQ2_ALL = []
-BALLGOWN_ALL = []
-if REPLICATE_PHENOTYPE_NAMES:
-    DESEQ2_ALL = [
-        expand(DESEQ2_DIR + "02-deseq2_diffex/gene_lists/{phenotype_name}/{comparison}.txt",
-               zip,
-               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
-               comparison=REPLICATE_COMPARISON_GROUPS),
-        expand(DESEQ2_DIR + "03-annotation/{phenotype_name}/{comparison}.annot.txt",
-               zip,
-               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
-               comparison=REPLICATE_COMPARISON_GROUPS),
-        expand(DESEQ2_DIR + "05-excel/{phenotype_name}/{comparison}.xlsx",
-                zip,
-                phenotype_name=REPLICATE_PHENOTYPE_NAMES,
-                comparison=REPLICATE_COMPARISON_GROUPS),
-        DESEQ2_DIR + "06-summary/deseq2_summary.txt",
-        DESEQ2_DIR + "06-summary/deseq2_summary.xlsx",
-        DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt",
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf', phenotype = PHENOTYPES, dim = ['12','23'], ngenes = ['100','500']),
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/MDSplot_{dim}_top{ngenes}.pdf', phenotype = PHENOTYPES, dim = ['12','23'], ngenes = ['100','500']),
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf', phenotype = PHENOTYPES, ngenes = ['100','500']),
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
-        expand(DESEQ2_DIR + '02-deseq2_diffex/plots/comparison_plots/{phenotype}/VolcanoPlot_{comparison}.pdf',
-               zip,
-               phenotype=REPLICATE_PHENOTYPE_NAMES,
-               comparison=REPLICATE_COMPARISON_GROUPS),
-        ]
-    BALLGOWN_ALL = [
-        expand(BALLGOWN_DIR + '01-ballgown_diffex/gene_lists/{phenotype}/{comparison}_isoform.txt',
-                zip,
-                phenotype=ALL_PHENOTYPE_NAMES,
-                comparison=ALL_COMPARISON_GROUPS),
-        BALLGOWN_DIR + '01-ballgown_diffex/counts/gene_fpkms.txt',
-        BALLGOWN_DIR + '01-ballgown_diffex/counts/iso_fpkms.txt',
-        BALLGOWN_DIR + '01-ballgown_diffex/ballgown_data.rda',
-        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf', phenotype = PHENOTYPES, dim = ['12','23'], ngenes = ['100','500']),
-        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/MDSplot_{dim}_top{ngenes}.pdf', phenotype = PHENOTYPES, dim = ['12','23'], ngenes = ['100','500']),
-        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf', phenotype = PHENOTYPES, ngenes = ['100','500']),
-        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
-        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
-        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
-        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
-        expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/comparison_plots/{phenotype}/VolcanoPlot_{comparison}.pdf',
-               zip,
-               phenotype=REPLICATE_PHENOTYPE_NAMES,
-               comparison=REPLICATE_COMPARISON_GROUPS),
-    ]
+# DESEQ2_ALL = []
+# BALLGOWN_ALL = []
+# if REPLICATE_PHENOTYPE_NAMES:
+#     DESEQ2_ALL = [
+#         expand(DESEQ2_DIR + "02-deseq2_diffex/gene_lists/{phenotype_name}/{comparison}.txt",
+#                zip,
+#                phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+#                comparison=REPLICATE_COMPARISON_GROUPS),
+#         expand(DESEQ2_DIR + "03-annotation/{phenotype_name}/{comparison}.annot.txt",
+#                zip,
+#                phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+#                comparison=REPLICATE_COMPARISON_GROUPS),
+#         expand(DESEQ2_DIR + "05-excel/{phenotype_name}/{comparison}.xlsx",
+#                 zip,
+#                 phenotype_name=REPLICATE_PHENOTYPE_NAMES,
+#                 comparison=REPLICATE_COMPARISON_GROUPS),
+#         DESEQ2_DIR + "06-summary/deseq2_summary.txt",
+#         DESEQ2_DIR + "06-summary/deseq2_summary.xlsx",
+#         DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt",
+#         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf', phenotype = PHENOTYPES, dim = ['12','23'], ngenes = ['100','500']),
+#         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/MDSplot_{dim}_top{ngenes}.pdf', phenotype = PHENOTYPES, dim = ['12','23'], ngenes = ['100','500']),
+#         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf', phenotype = PHENOTYPES, ngenes = ['100','500']),
+#         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
+#         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
+#         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
+#         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
+#         expand(DESEQ2_DIR + '02-deseq2_diffex/plots/comparison_plots/{phenotype}/VolcanoPlot_{comparison}.pdf',
+#                zip,
+#                phenotype=REPLICATE_PHENOTYPE_NAMES,
+#                comparison=REPLICATE_COMPARISON_GROUPS),
+#         ]
+#     BALLGOWN_ALL = [
+#         expand(BALLGOWN_DIR + '01-ballgown_diffex/gene_lists/{phenotype}/{comparison}_isoform.txt',
+#                 zip,
+#                 phenotype=ALL_PHENOTYPE_NAMES,
+#                 comparison=ALL_COMPARISON_GROUPS),
+#         BALLGOWN_DIR + '01-ballgown_diffex/counts/gene_fpkms.txt',
+#         BALLGOWN_DIR + '01-ballgown_diffex/counts/iso_fpkms.txt',
+#         BALLGOWN_DIR + '01-ballgown_diffex/ballgown_data.rda',
+#         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf', phenotype = PHENOTYPES, dim = ['12','23'], ngenes = ['100','500']),
+#         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/MDSplot_{dim}_top{ngenes}.pdf', phenotype = PHENOTYPES, dim = ['12','23'], ngenes = ['100','500']),
+#         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf', phenotype = PHENOTYPES, ngenes = ['100','500']),
+#         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
+#         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
+#         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
+#         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
+#         expand(BALLGOWN_DIR + '01-ballgown_diffex/plots/comparison_plots/{phenotype}/VolcanoPlot_{comparison}.pdf',
+#                zip,
+#                phenotype=REPLICATE_PHENOTYPE_NAMES,
+#                comparison=REPLICATE_COMPARISON_GROUPS),
+#     ]
+#
+#
+#
+#
+#
+# BALLGOWN_TEST = [
+#     expand(DIFFEX_DIR + '{model_name}/ballgown/ballgown_isoform_results.txt', model_name=rnaseq_snakefile_helper.diffex_models(config['diffex'])),
+#     expand(DIFFEX_DIR + '{model_name}/ballgown/ballgown_data.rda', model_name=rnaseq_snakefile_helper.diffex_models(config['diffex']))
+# ]
 
-    RSEM_ALL = [
-        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results', sample=config[SAMPLES_KEY].keys()),
-        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results', sample=config[SAMPLES_KEY].keys()),
-        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam', sample=config[SAMPLES_KEY].keys()),
-        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY].keys())
-    ]
+DESeq2_TEST = [
+    rnaseq_snakefile_helper.expand_model_contrasts(\
+        DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_isoform.results',
+        config['diffex']),
+    rnaseq_snakefile_helper.expand_model_contrasts(\
+        DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_gene.results',
+        config['diffex'])
+]
+
+RSEM_ALL = [
+    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results', sample=config[SAMPLES_KEY]),
+    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results', sample=config[SAMPLES_KEY]),
+    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam', sample=config[SAMPLES_KEY]),
+    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY])
+]
 
 
-OPTIONAL_ALL = BALLGOWN_ALL + DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
+# OPTIONAL_ALL = BALLGOWN_ALL + DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
 
 #ALL = [OPTIONAL_ALL]
-ALL = RSEM_ALL + BALLGOWN_ALL #+ DESEQ2_ALL
+# print(rnaseq_snakefile_helper.expand_model_contrasts(\
+#     DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_isoform.results',
+#     config['diffex']))
+#
+# quit()
+ALL = RSEM_ALL + DESeq2_TEST #+ DESEQ2_ALL
 
 include: 'rules/align_concat_reads.smk'
 include: 'rules/align_cutadapt_SE.smk'
@@ -150,13 +202,13 @@ include: 'rules/align_fastqc_trimmed_reads.smk'
 #include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
 
-include: 'rules/ballgown_diffex.smk'
-include: 'rules/ballgown_plots.smk'
-include: 'rules/ballgown_annotation.smk'
-include: 'rules/ballgown_excel.smk'
-include: 'rules/ballgown_summary.smk'
+#include: 'rules/ballgown_diffex.smk'
+#include: 'rules/ballgown_plots.smk'
+#include: 'rules/ballgown_annotation.smk'
+#include: 'rules/ballgown_excel.smk'
+#include: 'rules/ballgown_summary.smk'
 
-#include: 'rules/deseq2_diffex.smk'
+include: 'rules/deseq2_diffex.smk'
 #include: 'rules/deseq2_plots.smk'
 #include: 'rules/deseq2_annotation.smk'
 #include: 'rules/deseq2_excel.smk'

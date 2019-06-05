@@ -12,7 +12,9 @@ import hashlib
 import os
 from os.path import join
 from os.path import isfile
+import pandas as pd
 import sys
+import yaml
 
 from snakemake import workflow
 
@@ -81,8 +83,10 @@ class PhenotypeManager(object):
                  config={},
                  delimiter=DEFAULT_PHENOTYPE_DELIM,
                  comparison_infix=DEFAULT_COMPARISON_INFIX):
-        self.phenotype_labels_string = config.get(CONFIG_KEYS.phenotypes, None)
-        self.sample_phenotype_value_dict = config.get(CONFIG_KEYS.samples, None)
+        #self.phenotype_labels_string = config.get(CONFIG_KEYS.phenotypes, None)
+        self.samplesheet = pd.read_csv(config["sample_description_file"]).set_index("sample", drop=True)
+        #self.phenotype_labels_string = self.samplesheet.columns
+        self.sample_phenotype_value_dict = self.samplesheet.to_dict(orient='index')
         self.comparisons = config.get(CONFIG_KEYS.comparisons, None)
         self.delimiter = delimiter
         self.comparison_infix = comparison_infix
@@ -115,15 +119,16 @@ class PhenotypeManager(object):
                     raise ValueError(msg)
 
         phenotype_dict = defaultdict(partial(defaultdict, list))
-        phenotype_labels = list(map(str.strip, self.phenotype_labels_string.split(self.delimiter)))
+        #phenotype_labels = list(map(str.strip, self.phenotype_labels_string.split(self.delimiter)))
+        phenotype_labels = list(self.samplesheet.columns)
         check_phenotype_labels(phenotype_labels)
         sorted_sample_phenotypes_items = sorted([(k, v) for k,v in self.sample_phenotype_value_dict.items()])
         for sample, phenotype_values in sorted_sample_phenotypes_items:
-            sample_phenotype_values = list(map(str.strip, phenotype_values.split(self.delimiter)))
-            sample_phenotypes = dict(zip(phenotype_labels, sample_phenotype_values))
+            #sample_phenotype_values = list(map(str.strip, phenotype_values.split(self.delimiter)))
+            sample_phenotypes = dict(zip(phenotype_labels, phenotype_values))
             check_labels_match_values(phenotype_labels,
                                       sample,
-                                      sample_phenotype_values)
+                                      phenotype_values)
             for label, value in sample_phenotypes.items():
                 if value != '':
                     phenotype_dict[label][value].append(sample)
@@ -282,3 +287,18 @@ def expand_read_stats_if_paired(read_stats_filename_format,
 
 def transform_config(config):
     watermelon_config.transform_config(config)
+
+def diffex_models(diffex_config):
+    not_models = ['adjustedPValue', 'fold_change']
+    model_names = [k for k in diffex_config.keys() if k not in not_models]
+    return(model_names)
+
+def expand_model_contrasts(model_contrasts_format, diffex_config):
+    paths = []
+    for model in diffex_models(diffex_config):
+        if 'DESeq2' in diffex_config[model]:
+            contrasts = diffex_config[model]['DESeq2']['results']['contrasts']
+            #Cfreate suitable contrast strings for the filenames
+            contrast_repr = map(lambda x: "_".join(x), contrasts)
+            paths.extend(workflow.expand(model_contrasts_format, model_name=model, contrast=contrast_repr))
+    return(paths)

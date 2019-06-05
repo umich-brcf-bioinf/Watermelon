@@ -9,14 +9,16 @@ references:
     hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/HISAT2_index/hg19_noRibo
     bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/Bowtie2Index
     entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+    fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/genome.fa
     gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/hg19_noRibo.gtf
 
-sample_description_file: example_sample_description.csv
+sample_description_file: /nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_sample_description_subset.csv
 
 alignment_options:
     read_length: 50
     library_type: fr-unstranded
     transcriptome_only: true
+    rsem_ref_prefix: hg19_noRibo
 
 trimming_options:
     base_quality_3prime: 13
@@ -24,4 +26,4 @@ trimming_options:
     trim_length_3prime: 0
     trim_length_5prime: 3
 
-comparison_config: example_comparisons.yaml
+comparison_config: /nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_comparisons.yaml

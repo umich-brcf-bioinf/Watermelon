@@ -24,7 +24,7 @@ rule rsem_star_genome_generate:
         rsem_ref_base = join(\
             ALIGNMENT_DIR,
             '03-rsem_star_genome_generate',
-            config['rsem_ref_prefix']
+            config['alignment_options']['rsem_ref_prefix']
             ),
 #        sjdbOverhang = _star_config.get('sjdbOverhang', _defaultSjdbOverhang),
     shell: '''

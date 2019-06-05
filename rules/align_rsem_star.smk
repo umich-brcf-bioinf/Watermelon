@@ -17,12 +17,12 @@ rule rsem_star_align:
     conda:
         '../envs/rsem_star.yaml'
     benchmark:
-        ALIGNMENT_DIR + '/benchmarks/rsem_star_align.{sample}.benchmark.txt'
+        ALIGNMENT_DIR + 'benchmarks/rsem_star_align.{sample}.benchmark.txt'
     threads: 12
     resources:
         mem_gb=30
     params:
-        rsem_ref_base = ALIGNMENT_DIR + '03-rsem_star_genome_generate' + config['rsem_ref_prefix'],
+        rsem_ref_base = ALIGNMENT_DIR + '03-rsem_star_genome_generate' + config['alignment_options']['rsem_ref_prefix'],
         outFileNamePrefix = ALIGNMENT_DIR + '04-rsem_star_align/{sample}',
         paired_end = lambda wildcards, input: '--paired-end' if rnaseq_snakefile_helper.detect_paired_end_bool(input.fastq_files) else '',
         strand_flag = rnaseq_snakefile_helper.strand_option_rsem(config)

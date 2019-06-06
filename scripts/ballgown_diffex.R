@@ -1,10 +1,10 @@
-library(optparse)
+log = file(snakemake@log[[1]], open='wt')
+sink(log)
+sink(log, type='message')
+save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
-option_list = list(
-    make_option('--rsem_dir', type='character', help='[Required] Path to working directory'),
-    make_option('--config_file', type='character', help='[Required] Path to configfile')
-)
-opt = parse_args(OptionParser(option_list=option_list))
+quit()
+
 
 rsem_dir = opt$rsem_dir
 #config_file = opt$config_file

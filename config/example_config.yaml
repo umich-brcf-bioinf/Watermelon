@@ -12,6 +12,7 @@ references:
     fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/genome.fa
     gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/hg19_noRibo.gtf
 
+#TWS TODO: Make these relative
 sample_description_file: /nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_sample_description_subset.csv
 
 alignment_options:
@@ -25,5 +26,5 @@ trimming_options:
     base_quality_5prime: 0
     trim_length_3prime: 0
     trim_length_5prime: 3
-
+#TWS TODO: Make these relative
 comparison_config: /nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_comparisons.yaml

@@ -1,19 +1,22 @@
-library(optparse)
+log = file(snakemake@log[[1]], open='wt')
+sink(log)
+sink(log, type='message')
+save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
-option_list = list(
-    make_option('--rsem_dir', type='character', help='[Required] Path to dir containing rsem results'),
-    make_option('--config_file', type='character', help='[Required] Path to configfile'),
-    make_option('--threads', type = 'integer', default = 4, help='Number of threads to use.')
-)
-opt = parse_args(OptionParser(option_list=option_list))
+#load("/nfs/med-bfx-activeprojects/trsaari/example_output_Watermelon/diffex_results/pheno_gender/DESeq2/pheno.Gend_DM.male_NDM.male_snakemake.rda") #TWS DEBUG
 
-rsem_dir = opt$rsem_dir
-config_file = opt$config_file
-threads = opt$threads
+# library(optparse)
+#
+# option_list = list(
+#     make_option('--rsem_dir', type='character', help='[Required] Path to dir containing rsem results'),
+#     make_option('--config_file', type='character', help='[Required] Path to configfile'),
+#     make_option('--threads', type = 'integer', default = 4, help='Number of threads to use.')
+# )
+# opt = parse_args(OptionParser(option_list=option_list))
 
-#rsem_dir = "/nfs/med-bfx-activeprojects/trsaari/example_output_Watermelon/alignment_results/04-rsem_star_align/" #TWS DEBUG
-#config_file = "/nfs/med-bfx-activeprojects/trsaari/Watermelon/config/config_190521_test.yaml" #TWS DEBUG
-#threads = 4 #TWS DEBUG
+rsem_dir = snakemake@params[['rsem_dir']]
+#config_file = opt$config_file
+threads = snakemake@threads
 
 #######################################
 
@@ -21,9 +24,9 @@ library(BiocParallel)
 library(data.table)
 library(tximport)
 library(DESeq2)
-library(readr)
-library(stringr)
-library(yaml)
+#library(readr)
+#library(stringr)
+#library(yaml)
 
 #######################################
 
@@ -32,66 +35,49 @@ register(multicore_param, default=TRUE)
 
 #######################################
 
-versus_split = function(str) {
-    tmp = unlist(strsplit(str, '_v_', fixed = TRUE))
-    tmp = str_trim(tmp)
-    return(tmp)
-}
-
-handle_comparisons = function(yaml) {
-    comps = lapply(names(yaml$comparisons),
-        function(name){
-            comparison = yaml$comparisons[[name]]
-            tmp = data.frame(t(sapply(comparison, versus_split, USE.NAMES = FALSE)))
-            colnames(tmp) = c('exp', 'con')
-            tmp$out_name = apply(tmp, 1, paste, collapse = '_v_')
-            tmp$factor = name
-            return(tmp)
-        }
-    )
-    comps = Reduce(rbind, comps)
-    return(comps)
-}
-
 #Function to generate a named list of filepaths
 #For loading these data via tximport
-named.filepaths.from.dir <- function(rsem.dir) {
+named.filepaths.from.dir <- function(rsem.dir, file.extension) {
   fnames <- list.files(rsem.dir)
-  genes.fnames <- fnames[grepl(".genes.results", fnames)]
-  sample.names <- sub(".genes.results", "", genes.fnames, fixed=T)
+  genes.fnames <- fnames[grepl(file.extension, fnames)]
+  sample.names <- sub(file.extension, "", genes.fnames, fixed=T)
   fpathlist <- file.path(rsem.dir, genes.fnames)
   names(fpathlist) <- sample.names
   return(fpathlist)
 }
 
-#######################################
-# yaml parsing
+# #######################################
+# # yaml parsing
+#
+# yaml = read_yaml(config_file)
+# diffex_yaml = read_yaml("/nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_comparisons.yaml") #TWS DEBUG
+#
+# # Establish directories
+# diffex_dir = yaml$dirs$diffex_output
+# results_dir = sprintf('%s/deseq2/01-deseq2_diffex', diffex_dir)
+# counts_dir = sprintf('%s/counts', results_dir)
+# gene_lists_dir = sprintf('%s/gene_lists', results_dir)
 
-yaml = read_yaml(config_file)
-diffex_yaml = read_yaml("/nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_comparisons.yaml") #TWS DEBUG
+# Get phenotype matrix
+sample.info.file = snakemake@config[['sample_description_file']]
+pdata = read.csv(sample.info.file)
 
-# Establish directories
-diffex_dir = yaml$dirs$diffex_output
-results_dir = sprintf('%s/deseq2/01-deseq2_diffex', diffex_dir)
-counts_dir = sprintf('%s/counts', results_dir)
-gene_lists_dir = sprintf('%s/gene_lists', results_dir)
-
-# Get phenotyp matrix
-pdata = read_csv("/nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_sample_description_subset.csv") #TWS DEBUG
-
-# Establish comparisons
-comparisons = handle_comparisons(diffex_yaml)
-comparison_types = names(comparisons)
+# # Establish comparisons
+# comparisons = handle_comparisons(diffex_yaml)
+# comparison_types = names(comparisons)
 
 # Establish cutoffs
-fdr_cutoff = diffex_yaml$deseq2_adjustedPValue
-fc_cutoff = log2(diffex_yaml$fold_change)
+fdr_cutoff = as.numeric(snakemake@config[['diffex']][['adjustedPValue']])
+fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['fold_change']]))
 
 #######################################
 
 # Import count data
-files.list <- named.filepaths.from.dir(rsem_dir)
-txi.rsem.gene.results <- tximport(files.list, type = "rsem", txIn = F, txOut = F)
+gene.files.list <- named.filepaths.from.dir(rsem_dir, ".genes.results")
+cat("gene.files.list length:")
+cat(length(gene.files.list))
+quit()
+txi.rsem.gene.results <- tximport(gene.files.list, type = "rsem", txIn = F, txOut = F)
 #Some genes have length zero (what does this even mean?), causing issues with creating DESeqDataSet
 #Mike Love recommends changing these from 0 to 1; https://support.bioconductor.org/p/84304/#84368
 txi.rsem.gene.results$length[txi.rsem.gene.results$length == 0] <- 1

@@ -5,6 +5,7 @@ channels:
 dependencies:
 - bioconductor-ballgown=2.10.0
 - bioconductor-deseq2
+- bioconductor-tximport
 - libiconv=1.15
 - r-tidyverse
 - r-ggally

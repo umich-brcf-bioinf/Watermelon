@@ -14,5 +14,5 @@ rule deseq2_diffex:
     params:
         rsem_dir = ALIGNMENT_DIR + '04-rsem_star_align',
         snakemake_rdata = DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_snakemake.rda' #TWS DEBUG
-    shell:
+    script:
         '../scripts/deseq2_diffex.R'

@@ -293,12 +293,10 @@ def diffex_models(diffex_config):
     model_names = [k for k in diffex_config.keys() if k not in not_models]
     return(model_names)
 
-def expand_model_contrasts(model_contrasts_format, diffex_config):
+def expand_DESeq2_model_contrasts(model_contrasts_format, diffex_config):
     paths = []
     for model in diffex_models(diffex_config):
         if 'DESeq2' in diffex_config[model]:
             contrasts = diffex_config[model]['DESeq2']['results']['contrasts']
-            #Cfreate suitable contrast strings for the filenames
-            contrast_repr = map(lambda x: "_".join(x), contrasts)
-            paths.extend(workflow.expand(model_contrasts_format, model_name=model, contrast=contrast_repr))
+            paths.extend(workflow.expand(model_contrasts_format, model_name=model, contrast=contrasts))
     return(paths)

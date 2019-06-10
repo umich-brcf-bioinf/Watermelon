@@ -169,14 +169,14 @@ DESeq2_TEST = [
     DIFFEX_DIR + 'counts/depth_normalized_counts.txt',
     DIFFEX_DIR + 'counts/rlog_normalized_counts.txt',
     #deseq2_init
-    expand(DIFFEX_DIR + '{model_name}/DESeq2/deseq2_init.rda',
-        model_name = rnaseq_snakefile_helper.diffex_models(config['diffex']))
+    # expand(DIFFEX_DIR + '{model_name}/DESeq2/deseq2_init.rda',
+    #     model_name = rnaseq_snakefile_helper.diffex_models(config['diffex']))
     # rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
     #     DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_isoform.results',
     #     config['diffex']),
-    # rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
-    #     DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_gene.results',
-    #     config['diffex'])
+    rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
+        DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_gene.results',
+        config['diffex'])
 ]
 
 RSEM_ALL = [
@@ -219,7 +219,8 @@ include: 'rules/align_deliverables_fastq_screen.smk'
 
 include: 'rules/deseq2_counts.smk'
 include: 'rules/deseq2_init.smk'
-include: 'rules/deseq2_diffex.smk'
+include: 'rules/deseq2_contrasts.smk'
+#include: 'rules/deseq2_diffex.smk'
 #include: 'rules/deseq2_plots.smk'
 #include: 'rules/deseq2_annotation.smk'
 #include: 'rules/deseq2_excel.smk'

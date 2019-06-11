@@ -8,9 +8,9 @@ save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
 ##########
 # Load libraries
-library(BiocParallel)
-library(data.table)
-library(DESeq2)
+suppressMessages(library(BiocParallel, warn.conflicts=F, quietly=T))
+suppressMessages(library(data.table, warn.conflicts=F, quietly=T))
+suppressMessages(library(DESeq2, warn.conflicts=F, quietly=T))
 
 ##########
 # Main
@@ -35,6 +35,7 @@ pdata = read.csv(sample.info.file)
 conparts = unlist(strsplit(contrast, "_", fixed=T))
 factorName = conparts[1] ; testName = conparts[2] ; referenceName = conparts[3]
 # Give _v_ style basename
+base.file.name = paste(testName, referenceName, sep="_v_")
 
 message(sprintf('Testing %s: %s vs %s', factorName, testName, referenceName))
 
@@ -47,7 +48,7 @@ referenceSamples = subset(x=pdata, subset=pdata[, factorName] == referenceName)
 # resultsNames of dds are "pheno.GendDM.fem"   "pheno.GendDM.male"  "pheno.GendNDM.fem"  "pheno.GendNDM.male"
 # So I'll set the contrast up as below, i.e. using paste0
 
-# Load DESeq dataset (dds)
+# Load DESeq dataset, generated via deseq2_init into variable dds
 load(snakemake@input[['rda']])
 
 # Grab the results
@@ -55,15 +56,13 @@ res = results(
   dds,
   contrast = list(paste0(factorName, testName), paste0(factorName, referenceName)),
   parallel = T,
-  listValues = c(1/nrow(testSamples), -1/nrow(referenceSamples))
+  listValues = c(1/nrow(testSamples), -1/nrow(referenceSamples)) #TWS - should we make this adjustable?
 )
 res = res[order(res$padj),]
 
 diffexData = as.data.frame(res)
 #set rownames to valid column
 data.table::setDT(diffexData, keep.rownames = TRUE)[] #TWS - Is data.table really useful here at all?
-
-# TWS LEFT OFF HERE
 
 #rename first column
 colnames(diffexData) = c('id','baseMean','log2FoldChange','lfcSE','stat','pvalue','padj')
@@ -72,16 +71,19 @@ diffexData$Control = referenceName
 
 #make DEG calls and select DEGs
 diffexData$Call = rep('NO', nrow(diffexData))
-diffexData$Call[which(diffexData$padj <= pval & abs(diffexData$log2FoldChange) >= log2(fc))] = 'YES'
+diffexData$Call[which(diffexData$padj <= fdr_cutoff & abs(diffexData$log2FoldChange) >= fc_cutoff)] = 'YES'
 diffexData = diffexData[order(-rank(diffexData$Call), diffexData$pvalue), ]
 
 # Add the individual diffexData to the collection
-de_results[[factorName]][[baseName]] = list(gene_list = diffexData)
+# de_results[[factorName]][[baseName]] = list(gene_list = diffexData)
+
+# TWS - Will need to see if/how subsequent steps depend on de_results structure
+# Will have to decide if it makes sense to just read in the table files or to load in the different rdata files
+# They're going to be separate with the new paradigm anyways.
 
 #write to individual tab-delimited txt files
 message('Writing diffex genes')
 write.table(
   x = diffexData,
-  file=paste0(dir_diffex,'/',baseName, '.txt'),
+  file=snakemake@output[['gene_list']],
   append = FALSE, sep = '\t', na = 'NA', row.names = FALSE, quote = FALSE)
-}

@@ -6,8 +6,8 @@ save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
 ##########
 # Load libraries
-library(BiocParallel)
-library(DESeq2)
+suppressMessages(library(BiocParallel, warn.conflicts=F, quietly=T))
+suppressMessages(library(DESeq2, warn.conflicts=F, quietly=T))
 
 ##########
 # Main

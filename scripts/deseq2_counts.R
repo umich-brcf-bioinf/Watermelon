@@ -6,9 +6,9 @@ save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
 ##########
 # Load libraries
-library(data.table)
-library(tximport)
-library(DESeq2)
+suppressMessages(library(data.table, warn.conflicts=F, quietly=T))
+suppressMessages(library(tximport, warn.conflicts=F, quietly=T))
+suppressMessages(library(DESeq2, warn.conflicts=F, quietly=T))
 
 ##########
 # Define functions

@@ -55,7 +55,7 @@ rld = rlog(dds, blind = FALSE)
 #Save the dataset and extracted counts to rdata files
 save(txi.rsem.gene.results, file=snakemake@output[['txi']])
 counts.tables.list = c('raw_counts', 'norm_counts', 'rld')
-save(counts.tables.list, file=snakemake@output[['count_tables_rda']])
+save(list = counts.tables.list, file=snakemake@output[['count_tables_rda']])
 
 
 # Write counts tables

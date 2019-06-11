@@ -35,6 +35,9 @@ with open(config['comparison_config'], 'r') as comparison_file:
 
 #Load in samplesheet
 samplesheet = pd.read_csv(config["sample_description_file"]).set_index("sample", drop=True)
+
+PHENOTYPES = (list(samplesheet.columns))
+
 #Add sample info to config
 #sample_phenotype_value_dict = samplesheet.to_dict(orient='index')
 #TWS - for some reason, adding the above dict to the config breaks the Rscript functionality
@@ -174,9 +177,27 @@ DESeq2_TEST = [
     # rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
     #     DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_isoform.results',
     #     config['diffex']),
+
+    #deseq2_contrasts
     rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
         DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_gene.results',
-        config['diffex'])
+        config['diffex']),
+    #deseq2_plots_by_phenotype
+    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
+        phenotype = PHENOTYPES,
+        dim = ['12','23'],
+        ngenes = ['100','500']),
+    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/MDSplot_{dim}_top{ngenes}.pdf',
+        phenotype = PHENOTYPES,
+        dim = ['12','23'],
+        ngenes = ['100','500']),
+    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf',
+        phenotype = PHENOTYPES,
+        ngenes = ['100','500']),
+    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
+    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
+    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
+    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
 ]
 
 RSEM_ALL = [
@@ -220,6 +241,7 @@ include: 'rules/align_deliverables_fastq_screen.smk'
 include: 'rules/deseq2_counts.smk'
 include: 'rules/deseq2_init.smk'
 include: 'rules/deseq2_contrasts.smk'
+include: 'rules/deseq2_plots_by_phenotype.smk'
 #include: 'rules/deseq2_diffex.smk'
 #include: 'rules/deseq2_plots.smk'
 #include: 'rules/deseq2_annotation.smk'

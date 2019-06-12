@@ -395,9 +395,7 @@ load(snakemake@input[['rda']])
 if('bg_data' %in% ls()) {
     method = 'ballgown'
 
-    #results_dir = sprintf('%s/ballgown/01-ballgown_diffex', diffex_dir)
-    #TWS For now only using DESeq2 - will need to remedy this if we do bring back ballgown
-    plots_dir = sprintf('%s/plots', diffex_dir)
+    plots_dir = sprintf('%s/ballgown/plots', diffex_dir)
 
     pdata = pData(bg_data)
 
@@ -409,9 +407,7 @@ if('bg_data' %in% ls()) {
 } else {
     method = 'deseq2'
 
-    #results_dir = sprintf('%s/deseq2/02-deseq2_diffex', diffex_dir)
-    #TWS For now only using DESeq2 - will need to remedy this if we do bring back ballgown
-    plots_dir = sprintf('%s/plots', diffex_dir)
+    plots_dir = sprintf('%s/deseq2/plots', diffex_dir)
 
     pdata = data.frame(colData(rld))
     colnames(pdata)[1] = 'sample'

@@ -166,11 +166,11 @@ else:
 
 DESeq2_TEST = [
     #deseq2_counts
-    DIFFEX_DIR + 'counts/txi_rsem_genes.rda',
-    DIFFEX_DIR + 'counts/count_data.rda',
-    DIFFEX_DIR + 'counts/raw_counts.txt',
-    DIFFEX_DIR + 'counts/depth_normalized_counts.txt',
-    DIFFEX_DIR + 'counts/rlog_normalized_counts.txt',
+    DIFFEX_DIR + 'deseq2/counts/txi_rsem_genes.rda',
+    DIFFEX_DIR + 'deseq2/counts/count_data.rda',
+    DIFFEX_DIR + 'deseq2/counts/raw_counts.txt',
+    DIFFEX_DIR + 'deseq2/counts/depth_normalized_counts.txt',
+    DIFFEX_DIR + 'deseq2/counts/rlog_normalized_counts.txt',
     #deseq2_init
     # expand(DIFFEX_DIR + '{model_name}/DESeq2/deseq2_init.rda',
     #     model_name = rnaseq_snakefile_helper.diffex_models(config['diffex']))
@@ -180,24 +180,24 @@ DESeq2_TEST = [
 
     #deseq2_contrasts
     rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
-        DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_gene.results',
+        DIFFEX_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.txt',
         config['diffex']),
     #deseq2_plots_by_phenotype
-    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
         phenotype = PHENOTYPES,
         dim = ['12','23'],
         ngenes = ['100','500']),
-    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/MDSplot_{dim}_top{ngenes}.pdf',
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/MDSplot_{dim}_top{ngenes}.pdf',
         phenotype = PHENOTYPES,
         dim = ['12','23'],
         ngenes = ['100','500']),
-    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf',
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf',
         phenotype = PHENOTYPES,
         ngenes = ['100','500']),
-    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
-    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
-    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
-    expand(DIFFEX_DIR + 'plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
 ]
 
 RSEM_ALL = [

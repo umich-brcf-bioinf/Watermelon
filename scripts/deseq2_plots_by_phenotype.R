@@ -10,19 +10,11 @@ save(snakemake, file = snakemake@params[['snakemake_rdata']])
 #config_file = opt$config_file
 
 ########################################################
+# Load libraries
+lib.vector = c("DESeq2", "dplyr", "GGally", "ggfortify", "ggplot2",
+    "ggrepel", "pheatmap", "RColorBrewer", "stringr", "tidyr", "yaml")
 
-#library(ballgown)
-suppressMessages(library(DESeq2, warn.conflicts=F, quietly=T))
-suppressMessages(library(dplyr, warn.conflicts=F, quietly=T))
-suppressMessages(library(GGally, warn.conflicts=F, quietly=T))
-suppressMessages(library(ggfortify, warn.conflicts=F, quietly=T))
-suppressMessages(library(ggplot2, warn.conflicts=F, quietly=T))
-suppressMessages(library(ggrepel, warn.conflicts=F, quietly=T))
-suppressMessages(library(pheatmap, warn.conflicts=F, quietly=T))
-suppressMessages(library(RColorBrewer, warn.conflicts=F, quietly=T))
-suppressMessages(library(stringr, warn.conflicts=F, quietly=T))
-suppressMessages(library(tidyr, warn.conflicts=F, quietly=T))
-suppressMessages(library(yaml, warn.conflicts=F, quietly=T))
+foo = suppressMessages(lapply(lib.vector, library, character.only=T, warn.conflicts=F, quietly=T))
 
 ########################################################
 # Define plotting functions

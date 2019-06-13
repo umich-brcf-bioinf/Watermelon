@@ -298,5 +298,8 @@ def expand_DESeq2_model_contrasts(model_contrasts_format, diffex_config):
     for model in diffex_models(diffex_config):
         if 'DESeq2' in diffex_config[model]:
             contrasts = diffex_config[model]['DESeq2']['results']['contrasts']
-            paths.extend(workflow.expand(model_contrasts_format, model_name=model, contrast=contrasts))
+            #Create contrast info for filenames
+            #Split on ^, throw away first item, then join remaining two with _v_
+            cont_fn = map(lambda x: "_v_".join(x.split("^")[1:]), contrasts)
+            paths.extend(workflow.expand(model_contrasts_format, model_name=model, contrast=cont_fn))
     return(paths)

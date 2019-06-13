@@ -85,8 +85,8 @@ pheno_gender:
             betaPrior: FALSE
         results:
             contrasts:
-                #These must be parsed by the Rscript, a list of lists is just flattened when passed-in via snakemake
-                - pheno.Gend_DM.male_NDM.male # Do we have to subset the data ourselves or will DESeq2 do it?
-                - pheno.Gend_DM.fem_NDM.fem
-                - pheno.Gend_DM.fem_DM.male
-                - pheno.Gend_NDM.fem_NDM.male
+                #TWS - These must be parsed by the Rscript, a list of lists is just flattened when passed-in via snakemake
+                - pheno.Gend^DM.male^NDM.male
+                - pheno.Gend^DM.fem^NDM.fem
+                - pheno.Gend^DM.fem^DM.male
+                - pheno.Gend^NDM.fem^NDM.male

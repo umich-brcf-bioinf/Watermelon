@@ -4,19 +4,32 @@ log = file(snakemake@log[[1]], open='wt')
 sink(log, split=TRUE)
 save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
-#load("/nfs/med-bfx-activeprojects/trsaari/example_output_Watermelon/diffex_results/pheno_gender/DESeq2/pheno.Gend_DM.fem_DM.male_snakemake.rda") #TWS DEBUG
+#load("/nfs/med-bfx-activeprojects/trsaari/example_output_Watermelon/diffex_results/deseq2/gene_lists/pheno_gender/DM.fem_v_NDM.fem_snakemake.rda") #TWS DEBUG
 
 ##########
 # Load libraries
-suppressMessages(library(BiocParallel, warn.conflicts=F, quietly=T))
-suppressMessages(library(data.table, warn.conflicts=F, quietly=T))
-suppressMessages(library(DESeq2, warn.conflicts=F, quietly=T))
+
+lib.vector = c("BiocParallel", "data.table", "DESeq2")
+foo = suppressMessages(lapply(lib.vector, library, character.only=T, warn.conflicts=F, quietly=T))
 
 ##########
 # Main
 
 model_name = snakemake@wildcards[['model_name']]
-contrast = snakemake@wildcards[['contrast']]
+
+#Match contrasts wildcard with contrast from comparison config
+#all of this is just to ensure that the correct factorName is used, which can only be pulled from the config
+#Wildcard portion
+contrast.wc = snakemake@wildcards[['contrast']]
+base.file.name = contrast.wc #Assign base filename using contrast wildcard
+cont.wc.split = unlist(strsplit(contrast.wc, "_v_"))
+cont.wc.rejoined = paste(cont.wc.split[[1]], cont.wc.split[[2]], sep="^")
+#Config portion
+contrast.conf = snakemake@config[['diffex']][[model_name]][['DESeq2']][['results']][['contrasts']]
+cont.match = contrast.conf[which(grepl(cont.wc.rejoined, contrast.conf, fixed=T))] #Find the match
+#Define the variables from this
+conparts = unlist(strsplit(cont.match, "^", fixed=T))
+factorName = conparts[1] ; testName = conparts[2] ; referenceName = conparts[3]
 
 # Establish cutoffs
 fdr_cutoff = as.numeric(snakemake@config[['diffex']][['adjustedPValue']])
@@ -26,16 +39,9 @@ fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['fold_change']]))
 multicore_param = MulticoreParam(workers = snakemake@threads)
 register(multicore_param, default=TRUE)
 
-
 # Get phenotype matrix
 sample.info.file = snakemake@config[['sample_description_file']]
 pdata = read.csv(sample.info.file)
-
-# Parse contrast string
-conparts = unlist(strsplit(contrast, "_", fixed=T))
-factorName = conparts[1] ; testName = conparts[2] ; referenceName = conparts[3]
-# Give _v_ style basename
-base.file.name = paste(testName, referenceName, sep="_v_")
 
 message(sprintf('Testing %s: %s vs %s', factorName, testName, referenceName))
 

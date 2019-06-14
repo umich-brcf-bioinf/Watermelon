@@ -198,6 +198,10 @@ DESeq2_TEST = [
     expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
     expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
     expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
+    #deseq2_comparison_plots
+    rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
+        DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf',
+        config['diffex'])
 ]
 
 RSEM_ALL = [
@@ -242,6 +246,7 @@ include: 'rules/deseq2_counts.smk'
 include: 'rules/deseq2_init.smk'
 include: 'rules/deseq2_contrasts.smk'
 include: 'rules/deseq2_plots_by_phenotype.smk'
+include: 'rules/deseq2_comparison_plots.smk'
 #include: 'rules/deseq2_diffex.smk'
 #include: 'rules/deseq2_plots.smk'
 #include: 'rules/deseq2_annotation.smk'

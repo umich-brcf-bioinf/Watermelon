@@ -7,9 +7,10 @@ rule ballgown_excel:
         BALLGOWN_DIR + '04-excel/{phenotype}/{comparison}.xlsx'
     log:
         BALLGOWN_DIR + '04-excel/.log/{phenotype}_{comparison}.ballgown_excel.log'
+    conda:
+        '../envs/python_3.6.1.yaml'
     shell:
         '''
-        module purge && module load python/3.6.1
         python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py \
          -g {input.gene_annot} \
          -i {input.isoform_annot} \

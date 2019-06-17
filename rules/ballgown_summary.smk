@@ -13,11 +13,12 @@ rule ballgown_summary:
         summary_xlsx = BALLGOWN_DIR + '05-summary/ballgown_summary.xlsx',
     log:
         BALLGOWN_DIR + '05-summary/.log/ballgown_summary.log'
+    conda:
+        '../envs/python_3.6.1.yaml'
     params:
         output_dir = BALLGOWN_DIR + '05-summary/',
     shell:
-        '''(module purge && module load python/3.6.1 &&
-        set -v &&
+        '''(
         python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py \
             --annotation_column gene_id \
             --annotation_null . \
@@ -26,6 +27,6 @@ rule ballgown_summary:
             --trim_suffix .txt \
             --output_file {output.summary_txt} \
             --output_xlsx {output.summary_xlsx} \
-            {input.input_files} &&
+            {input.input_files}
         touch {params.output_dir}
         ) 2>&1 | tee {log} '''

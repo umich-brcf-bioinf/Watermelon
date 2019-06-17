@@ -13,23 +13,16 @@ rule align_cutadapt_PE:
         trimming_options = rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"])
     log:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_cutadapt.log"
-    run:
-        if rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"]):
-            shell('''(module purge
-                module load watermelon_dependencies/{WAT_VER}
-                set -x
-                cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} \
-                    -u {params.trim_length_5prime} \
-                    -u -{params.trim_length_3prime} \
-                    --trim-n -m 20 \
-                    -o {output.R1}.tmp.gz \
-                    -p {output.R2}.tmp.gz \
-                    {input.raw_fastq_R1} {input.raw_fastq_R2}
-                mv {output.R1}.tmp.gz {output.R1} &&
-                mv {output.R2}.tmp.gz {output.R2}
-                ) 2>&1 | tee {log} ''')
-        else:
-            shell('''(ln -sf ../../{input.raw_fastq_R1} {output.R1}
-                ln -sf ../../{input.raw_fastq_R2} {output.R2}
-                echo No trimming done
-                ) 2>&1 |tee {log} ''')
+    conda:
+        '../envs/cutadapt.yaml'
+    shell:
+        '''(cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} \
+                -u {params.trim_length_5prime} \
+                -u -{params.trim_length_3prime} \
+                --trim-n -m 20 \
+                -o {output.R1}.tmp.gz \
+                -p {output.R2}.tmp.gz \
+                {input.raw_fastq_R1} {input.raw_fastq_R2}
+            mv {output.R1}.tmp.gz {output.R1}
+            mv {output.R2}.tmp.gz {output.R2}
+            ) 2>&1 | tee {log} '''

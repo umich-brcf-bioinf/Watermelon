@@ -9,17 +9,17 @@ rule deseq2_summary:
         summary_xlsx = DESEQ2_DIR + "06-summary/deseq2_summary.xlsx",
     log:
         DESEQ2_DIR + "06-summary/.log/deseq2_summary.log"
+    conda:
+        '../envs/python_3.6.1.yaml'
     params:
         output_dir = DESEQ2_DIR + "06-summary/",
     shell:
-        "module purge && module load python/3.6.1 && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py "
-        " --annotation_column gene_id"
-        " --annotation_null . "
-        " --diffex_call_column Call "
-        " --diffex_call_pass YES "
-        " --output_file {output.summary_txt} "
-        " --output_xlsx {output.summary_xlsx} "
-        " {input.input_files} "
-        " 2>&1 | tee {log} && "
-        "touch {params.output_dir}"
+        '''(python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py \
+            --annotation_column gene_id \
+            --annotation_null . \
+            --diffex_call_column Call \
+            --diffex_call_pass YES \
+            --output_file {output.summary_txt} \
+            --output_xlsx {output.summary_xlsx} \
+            {input.input_files}
+        touch {params.output_dir}) 2>&1 | tee {log} '''

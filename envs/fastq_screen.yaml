@@ -1,0 +1,5 @@
+name: fastq_screen
+channels:
+  - bioconda
+dependencies:
+  - fastq-screen

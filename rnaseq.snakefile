@@ -164,20 +164,13 @@ else:
 #     expand(DIFFEX_DIR + '{model_name}/ballgown/ballgown_data.rda', model_name=rnaseq_snakefile_helper.diffex_models(config['diffex']))
 # ]
 
-DESeq2_TEST = [
+DESeq2_ALL = [
     #deseq2_counts
     DIFFEX_DIR + 'deseq2/counts/txi_rsem_genes.rda',
     DIFFEX_DIR + 'deseq2/counts/count_data.rda',
     DIFFEX_DIR + 'deseq2/counts/raw_counts.txt',
     DIFFEX_DIR + 'deseq2/counts/depth_normalized_counts.txt',
     DIFFEX_DIR + 'deseq2/counts/rlog_normalized_counts.txt',
-    #deseq2_init
-    # expand(DIFFEX_DIR + '{model_name}/DESeq2/deseq2_init.rda',
-    #     model_name = rnaseq_snakefile_helper.diffex_models(config['diffex']))
-    # rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
-    #     DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_isoform.results',
-    #     config['diffex']),
-
     #deseq2_contrasts
     rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
         DIFFEX_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.txt',
@@ -220,11 +213,17 @@ RSEM_ALL = [
 #     config['diffex']))
 #
 # quit()
-ALL = RSEM_ALL + DESeq2_TEST #+ DESEQ2_ALL
+ALL = RSEM_ALL + DESeq2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
 
 include: 'rules/align_concat_reads.smk'
-include: 'rules/align_cutadapt_SE.smk'
-include: 'rules/align_cutadapt_PE.smk'
+
+if rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"]):
+    include: 'rules/align_cutadapt_SE.smk'
+    include: 'rules/align_cutadapt_PE.smk'
+else:
+    include: 'rules/align_pseudotrim_SE.smk'
+    include: 'rules/align_pseudotrim_PE.smk'
+
 include: 'rules/align_fastq_screen_biotype.smk'
 include: 'rules/align_fastq_screen_multi_species.smk'
 include: 'rules/align_fastqc_trimmed_reads.smk'
@@ -232,7 +231,7 @@ include: 'rules/align_fastqc_trimmed_reads.smk'
 #include: 'rules/align_fastqc_align.smk'
 #include: 'rules/align_stringtie.smk'
 #include: 'rules/align_stringtie_prepDE.smk'
-#include: 'rules/align_qc.smk'
+include: 'rules/align_qc.smk'
 #include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
 

@@ -15,12 +15,11 @@ rule align_qc:
         output_filename = "alignment_qc.html",
         multiqc_config_filename = WATERMELON_CONFIG_DIR + "multiqc_config.yaml",
     conda:
-        'envs/align_qc.yaml'
+        '../envs/multiqc.yaml'
     log:
         ALIGNMENT_DIR + "07-qc/.log/align_qc.log"
     shell:
-        '''(
-        echo 'watermelon|version|multiqc|'`multiqc --version | cut -d' ' -f2-`
+        '''(multiqc --version
         multiqc --force \
             --exclude cutadapt \
             --exclude bowtie2 \

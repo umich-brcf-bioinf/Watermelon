@@ -11,20 +11,14 @@ rule align_cutadapt_SE:
         trimming_options = rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"])
     log:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_{read}.align_cutadapt_SE.log"
-    run:
-        if rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"]):
-            shell('''(module purge
-                module load watermelon_dependencies/{WAT_VER}
-                set -x
-                cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} \
-                    -u {params.trim_length_5prime} \
-                    -u -{params.trim_length_3prime} \
-                    --trim-n -m 20 \
-                    -o {output}.tmp.gz \
-                    {input.raw_fastq}
-                mv {output}.tmp.gz {output}
-                ) 2>&1 | tee {log} ''')
-        else:
-            shell('''(ln -sf ../../{input.raw_fastq} {output}
-                echo No trimming done
-                ) 2>&1 |tee {log} ''')
+    conda:
+        '../envs/cutadapt.yaml'
+    shell:
+        '''(cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} \
+                -u {params.trim_length_5prime} \
+                -u -{params.trim_length_3prime} \
+                --trim-n -m 20 \
+                -o {output}.tmp.gz \
+                {input.raw_fastq}
+            mv {output}.tmp.gz {output}
+            ) 2>&1 | tee {log} '''

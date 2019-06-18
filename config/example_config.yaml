@@ -13,7 +13,7 @@ references:
     gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/hg19_noRibo.gtf
 
 #TWS TODO: Make these relative
-sample_description_file: /nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_sample_description_subset.csv
+sample_description_file: /nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_sample_description.csv
 
 alignment_options:
     read_length: 50
@@ -26,5 +26,12 @@ trimming_options:
     base_quality_5prime: 0
     trim_length_3prime: 0
     trim_length_5prime: 3
+
+fastq_screen:
+    aligner: bowtie2
+    reference_basedir: /nfs/med-bfx-common/pipelines/Watermelon/references/fastq_screen
+    species: human
+    subset: 100000
+
 #TWS TODO: Make these relative
 comparison_config: /nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_comparisons.yaml

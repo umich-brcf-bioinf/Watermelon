@@ -29,10 +29,6 @@ CONFIGFILE_PATH = workflow.overwrite_configfile
 
 SAMPLES_KEY = 'samples'
 
-#Extend config to include diffex info
-with open(config['comparison_config'], 'r') as comparison_file:
-    config['diffex'] = yaml.load(comparison_file, Loader=yaml.BaseLoader)
-
 #Load in samplesheet
 samplesheet = pd.read_csv(config["sample_description_file"]).set_index("sample", drop=True)
 

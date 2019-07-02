@@ -113,8 +113,6 @@ class _CommandValidator(object):
     @staticmethod
     def _validate_overwrite_check(args):
         existing_files = {}
-        if os.path.exists(args.analysis_dir):
-            existing_files['dirs: analysis'] = args.analysis_dir
         if os.path.exists(args.input_dir):
             existing_files['dirs: input'] = args.input_dir
         if existing_files:
@@ -378,11 +376,10 @@ watermelon_init.README
 Created files and dirs
 ----------------------
 {working_dir}/
+    {config_basename}
     {input_dir_relative}/
         {input_runs_dir}/
         {input_samples_dir}/
-    {analysis_relative}/
-        {config_basename}
 
 You need to review config file: {config_relative}:
 -------------------------------
@@ -401,7 +398,6 @@ You need to review config file: {config_relative}:
 
 When the config file looks good:
 --------------------------------
-$ cd {analysis_dir}
 # start a screen session:
 $ screen -S watermelon{job_suffix}
 # to validate the config and check the execution plan:
@@ -414,8 +410,6 @@ $ watermelon -c {config_basename}
            input_dir_relative=input_dir_relative,
            input_runs_dir=args.input_runs_dir,
            input_samples_dir=args.input_samples_dir,
-           analysis_dir=args.analysis_dir,
-           analysis_relative=os.path.relpath(args.analysis_dir, args.x_working_dir),
            config_file=args.config_file,
            config_relative=os.path.relpath(args.config_file, args.x_working_dir),
            config_basename=os.path.basename(args.config_file),
@@ -497,9 +491,7 @@ def _parse_command_line_args(sys_argv):
     args = parser.parse_args(sys_argv)
 
     realpath = functools.partial(os.path.join, args.x_working_dir)
-    args.analysis_dir = realpath('analysis{}'.format(args.job_suffix))
-    args.config_file = os.path.join(args.analysis_dir,
-                                    'config{}.yaml'.format(args.job_suffix))
+    args.config_file = 'config{}.yaml'.format(args.job_suffix)
     args.tmp_input_dir = realpath('.inputs')
     args.input_runs_dir = '00-source_runs'
     args.input_samples_dir = '01-source_samples'
@@ -514,6 +506,7 @@ def main(sys_argv):
 
         print("Copying Watermelon source to " + os.getcwd())
         shutil.copytree(_WATERMELON_ROOT, os.path.join(os.getcwd(), "Watermelon"))
+        os.symlink("Watermelon/bin/watermelon", "watermelon")
 
         if os.path.isdir(args.tmp_input_dir):
             shutil.rmtree(args.tmp_input_dir)
@@ -522,12 +515,8 @@ def main(sys_argv):
         _merge_sample_dirs(args)
         input_summary = _build_input_summary(args)
 
-
-
         _CommandValidator().validate_inputs(input_summary)
         os.rename(args.tmp_input_dir, args.input_dir)
-
-        _mkdir(args.analysis_dir)
 
         with open(args.x_template_config, 'r') as template_config_file:
             template_config = yaml.load(template_config_file, yaml.FullLoader)
@@ -540,7 +529,6 @@ def main(sys_argv):
 
         _validate_sample_sheet(input_summary.samples, args.sample_sheet)
         config_dict['sample_description_file'] = os.path.abspath(args.sample_sheet)
-
         _write_config_file(args.config_file, config_dict)
 
         postlude = _build_postlude(args,

@@ -178,13 +178,12 @@ _DEFAULT_JOB_SUFFIX = '_{:02d}_{:02d}'.format(_TODAY.month, _TODAY.day)
 _CONFIG_PRELUDE = '''# config created {timestamp}
 # To do:
 # ------
-# 1) Review/adjust samples names
-#     Note: names in config, must match the sample dir names in the input dir
-# 2) Add a sample group for each sample
-# 3) Add comparisons
-# 4) Review genome and references
-# 5) Review alignment options (e.g. read_length and strandedness)
-# 6) Review trimming options
+# 1) Review genome and references
+# 2) Review alignment, trimming, and fastq_screen options
+# 3) Modify the diffex options - use the pheno_gender stanza as an example, and
+#    set up the DESeq2 calls and comparisons that match the analysis. For example,
+#    the contrasts should contain phenotype labels and values which correspond
+#    to the column names and values in the sample sheet.
 '''.format(timestamp=_timestamp())
 
 def _setup_yaml():
@@ -377,24 +376,30 @@ Created files and dirs
 ----------------------
 {working_dir}/
     {config_basename}
+    watermelon
     {input_dir_relative}/
         {input_runs_dir}/
         {input_samples_dir}/
 
-You need to review config file: {config_relative}:
+You need to review the sample sheet and config file:
+samplesheet:
+{samplesheet_relative}
 -------------------------------
-1) Review/adjust samples names
-    Note: if you change names in config, also change the sample dir names in the input dir
-2) Review sample phenotype labels and values for each sample.
+1) Review sample phenotype labels and values for each sample.
    Phenotype labels must be distinct.
    Phenotype labels and values must be valid R column names, so each label/value must
    be a letter followed alphanumerics or [-_.]. (So "A24-5" is ok, but "1hr+" is not.
    Also the literals "T", "F", and "NAN" cannot be used as phenotype labels/values.
-3) Adjust the main_factors line to indicate whether a phenotype is main (yes) or derived (no).
-4) Add comparisons
-5) Review genome and references
-6) Review alignment options
-7) Review trimming options
+
+config:
+{config_relative}
+-------------------------------
+1) Review genome and references
+2) Review alignment, trimming, and fastq_screen options
+3) Modify the diffex options - use the pheno_gender stanza as an example, and
+   set up the DESeq2 calls and comparisons that match the analysis. For example,
+   the contrasts should contain phenotype labels and values which correspond
+   to the column names and values in the sample sheet.
 
 When the config file looks good:
 --------------------------------
@@ -412,6 +417,7 @@ $ watermelon -c {config_basename}
            input_samples_dir=args.input_samples_dir,
            config_file=args.config_file,
            config_relative=os.path.relpath(args.config_file, args.x_working_dir),
+           samplesheet_relative=os.path.relpath(args.sample_sheet, args.x_working_dir),
            config_basename=os.path.basename(args.config_file),
            job_suffix=args.job_suffix,)
     return postlude

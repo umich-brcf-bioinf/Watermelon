@@ -12,9 +12,12 @@ Specifically this does three things:
    * Absence of fastq files for a run or an individaul sample raises an error.
 
 2) watermelon-init creates an analysis directory which contains a template
-   watermelon config file. The template config file is created by combining the
-   specified genome with the sample names in (from the inputs dir). The
-   template config must be reviewed and edited to:
+   watermelon config file and a template sample description file.
+   The template config file contains directory information, reference lists, run parameters, etc.,
+   while the sample description file is a csv file containing phenotype
+   information in relation to the samples.
+
+   These must be reviewed and edited to:
    a) adjust run params
    b) add sample phenotypes/aliases
    c) specify sample comparisons
@@ -38,6 +41,7 @@ import traceback
 
 import pandas as pd
 import yaml
+import pdb
 
 import scripts.watermelon_config as watermelon_config
 from scripts.watermelon_config import CONFIG_KEYS
@@ -170,16 +174,6 @@ _DEFAULT_TEMPLATE_CONFIG = os.path.join(_CONFIG_DIR, 'template_config.yaml')
 _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, 'genome_references.yaml')
 
 _FASTQ_GLOBS = ['*.fastq', '*.fastq.gz']
-
-_DEFAULT_MAIN_FACTORS = 'yes    | yes      | no'.\
-    replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
-_DEFAULT_PHENOTYPE_LABELS = 'gender | genotype | gender.genotype'.\
-    replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
-_DEFAULT_GENDER_VALUES = ['female', 'male']
-_DEFAULT_GENOTYPE_VALUES = ['MutA', 'MutB', 'WT']
-_DEFAULT_COMPARISONS = {'gender'   : ['male_v_female'],
-                        'genotype' : ['MutA_v_WT', 'MutB_v_WT']
-                       }
 
 _TODAY = datetime.date.today()
 _DEFAULT_JOB_SUFFIX = '_{:02d}_{:02d}'.format(_TODAY.month, _TODAY.day)
@@ -315,27 +309,25 @@ def _build_input_summary(args):
                                        runs_missing_fastq_files=runs_missing_fastq_files)
     return input_summary
 
-def _build_phenotypes_samples_comparisons(samples):
+'''
+Verify that the samplesheet exists, and that the sample names
+in the samplesheet correspond to those in the input directories
+'''
+def _validate_sample_sheet(samples, sheet_file):
     #pylint: disable=locally-disabled,invalid-name
-    config = {}
-    config[CONFIG_KEYS.main_factors] = _DEFAULT_MAIN_FACTORS
-    config[CONFIG_KEYS.phenotypes] = _DEFAULT_PHENOTYPE_LABELS
 
-    gender_values = itertools.cycle(_DEFAULT_GENDER_VALUES)
-    genotype_values = itertools.cycle(_DEFAULT_GENOTYPE_VALUES)
-    pheno_value_items = []
-    for _ in samples:
-        gender_value = next(gender_values)
-        genotype_value = next(genotype_values)
-        gender_genotype_value = '.'.join([gender_value, genotype_value])
-        pheno_value_items.append((gender_value, genotype_value, gender_genotype_value))
-    pheno_fmt = "{0:7}| {1:8} | {2}".replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
-    pheno_value_strings = [pheno_fmt.format(*values) for values in sorted(pheno_value_items)]
-    samples_dict = dict([(s, v) for s, v in zip(sorted(samples), pheno_value_strings)])
-    config[CONFIG_KEYS.samples] = samples_dict
+    if not os.path.isfile(sheet_file):
+        msg = ("The specified sample sheet file {} cannot be found.".format(sheet_file))
+        raise _InputValidationError(msg)
 
-    config[CONFIG_KEYS.comparisons] = _DEFAULT_COMPARISONS
-    return config
+    samplesheet = pd.read_csv(sheet_file).set_index("sample", drop=True)
+    sheet_samples = set(samplesheet.index)
+    input_samples = set(samples)
+
+    if not sheet_samples.issubset(input_samples):
+        msg = ("The following sample names cannot be found in the input directories: "
+        + str(sheet_samples.difference(input_samples)))
+        raise _InputValidationError(msg)
 
 def _make_config_dict(template_config, genome_references, args, samples):
     config = dict(template_config)
@@ -345,8 +337,11 @@ def _make_config_dict(template_config, genome_references, args, samples):
                                                 args.input_samples_dir)
     config[CONFIG_KEYS.dirs] = dirs
 
-    config.update(_build_phenotypes_samples_comparisons(samples))
+    if 'alignment_options' in config:
+        config['alignment_options']['rsem_ref_prefix'] = args.genome_build
+
     _dict_merge(config, genome_references)
+
     return config
 
 def _build_input_summary_text(input_summary):
@@ -465,6 +460,14 @@ def _parse_command_line_args(sys_argv):
               'top/ps.)').format(_DEFAULT_JOB_SUFFIX),
         required=False)
     parser.add_argument(
+        '--sample_sheet',
+        type=str,
+        required=True,
+        help=('A CSV file containing sample names and phenotype/characteristic '
+        'information which correspond to these samples. Watermelon-init will verify that '
+        'sample names in this file match with those found in the input directories. '),
+        )
+    parser.add_argument(
         'source_fastq_dirs',
         type=str,
         nargs='+',
@@ -509,25 +512,35 @@ def main(sys_argv):
         args = _parse_command_line_args(sys_argv)
         _CommandValidator().validate_args(args)
 
+        print("Copying Watermelon source to " + os.getcwd())
+        shutil.copytree(_WATERMELON_ROOT, os.path.join(os.getcwd(), "Watermelon"))
+
         if os.path.isdir(args.tmp_input_dir):
             shutil.rmtree(args.tmp_input_dir)
         linker = _Linker()
         _link_run_dirs(args, linker)
         _merge_sample_dirs(args)
         input_summary = _build_input_summary(args)
+
+
+
         _CommandValidator().validate_inputs(input_summary)
         os.rename(args.tmp_input_dir, args.input_dir)
 
         _mkdir(args.analysis_dir)
 
         with open(args.x_template_config, 'r') as template_config_file:
-            template_config = yaml.load(template_config_file)
+            template_config = yaml.load(template_config_file, yaml.FullLoader)
         with open(args.x_genome_references, 'r') as genome_references_file:
-            genome_references = yaml.load(genome_references_file)[args.genome_build]
+            genome_references = yaml.load(genome_references_file, yaml.FullLoader)[args.genome_build]
         config_dict = _make_config_dict(template_config,
                                         genome_references,
                                         args,
                                         input_summary.samples)
+
+        _validate_sample_sheet(input_summary.samples, args.sample_sheet)
+        config_dict['sample_description_file'] = os.path.abspath(args.sample_sheet)
+
         _write_config_file(args.config_file, config_dict)
 
         postlude = _build_postlude(args,

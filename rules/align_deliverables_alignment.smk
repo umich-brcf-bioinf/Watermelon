@@ -1,10 +1,3 @@
-ALL.append([rnaseq_snakefile_helper.expand_sample_read_endedness(
-        DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
-        SAMPLE_READS),
-    expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}_fastqc.html",
-        sample=config["samples"]),
-    DELIVERABLES_DIR + "alignment/alignment_qc.html"])
-
 rule align_deliverables_alignment:
     input:
         rnaseq_snakefile_helper.expand_sample_read_endedness(

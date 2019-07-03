@@ -200,6 +200,16 @@ RSEM_ALL = [
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY])
 ]
 
+ALIGN_DELIVERABLES = [
+    rnaseq_snakefile_helper.expand_sample_read_endedness(
+        DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
+        SAMPLE_READS),
+    expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}_fastqc.html",
+        sample=config["samples"]),
+    DELIVERABLES_DIR + "alignment/alignment_qc.html"
+]
+
+
 
 # OPTIONAL_ALL = BALLGOWN_ALL + DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
 
@@ -209,7 +219,7 @@ RSEM_ALL = [
 #     config['diffex']))
 #
 # quit()
-ALL = RSEM_ALL + DESeq2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
+ALL = RSEM_ALL + DESeq2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES + ALIGN_DELIVERABLES
 
 include: 'rules/align_concat_reads.smk'
 
@@ -224,11 +234,11 @@ include: 'rules/align_fastq_screen_biotype.smk'
 include: 'rules/align_fastq_screen_multi_species.smk'
 include: 'rules/align_fastqc_trimmed_reads.smk'
 #include: 'rules/align_hisat2.smk'
-#include: 'rules/align_fastqc_align.smk'
+include: 'rules/align_fastqc_align.smk'
 #include: 'rules/align_stringtie.smk'
 #include: 'rules/align_stringtie_prepDE.smk'
 include: 'rules/align_qc.smk'
-#include: 'rules/align_deliverables_alignment.smk'
+include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
 
 #include: 'rules/ballgown_diffex.smk'

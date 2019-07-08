@@ -3,7 +3,7 @@ rule align_fastqc_align:
     input:
         ALIGNMENT_DIR + "04-rsem_star_align/{sample}.genome.bam"
     output:
-        ALIGNMENT_DIR + "05-fastqc_align/{sample}_fastqc.html"
+        ALIGNMENT_DIR + "05-fastqc_align/{sample}.genome_fastqc.html"
     params:
         fastqc_dir =  ALIGNMENT_DIR + "05-fastqc_align"
     log:

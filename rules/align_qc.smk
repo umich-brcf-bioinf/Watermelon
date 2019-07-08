@@ -5,7 +5,7 @@ rule align_qc:
             SAMPLE_READS),
         align_summary_files = expand(ALIGNMENT_DIR + "04-rsem_star_align/{sample}.stat/{sample}.cnt",
                                      sample=config["samples"]),
-        align_fastq_files = expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}_fastqc.html",
+        align_fastq_files = expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}.genome_fastqc.html",
                                    sample=config["samples"]),
         fastq_screen_alignment = FASTQ_SCREEN_ALIGNMENT,
     output:

@@ -1,6 +1,9 @@
 name: python-3.6.1
 channels:
+  - anaconda
   - conda-forge
   - defaults
 dependencies:
   - python=3.6.1
+  - pandas
+  - openpyxl

@@ -10,7 +10,7 @@ rule deseq2_summary:
     log:
         DESEQ2_DIR + "06-summary/.log/deseq2_summary.log"
     conda:
-        '../envs/python_3.6.1.yaml'
+        'envs/python_3.6.1.yaml'
     params:
         output_dir = DESEQ2_DIR + "06-summary/",
     shell:

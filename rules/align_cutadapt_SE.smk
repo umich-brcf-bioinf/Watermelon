@@ -12,7 +12,7 @@ rule align_cutadapt_SE:
     log:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_{read}.align_cutadapt_SE.log"
     conda:
-        '../envs/cutadapt.yaml'
+        'envs/cutadapt.yaml'
     shell:
         '''(cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} \
                 -u {params.trim_length_5prime} \

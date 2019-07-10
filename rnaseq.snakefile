@@ -180,7 +180,19 @@ DESeq2_ALL = [
     #deseq2_comparison_plots
     rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
         DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf',
-        config['diffex'])
+        config['diffex']),
+    #deseq2_annotation
+    rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
+        DIFFEX_DIR + 'deseq2/annotated/{model_name}/{contrast}.annot.txt',
+        config['diffex']),
+    #deseq2_excel
+    rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
+        DIFFEX_DIR + 'deseq2/excel/{model_name}/{contrast}.xlsx',
+        config['diffex']),
+    #deseq2_summary
+    DIFFEX_DIR + "deseq2/summary/deseq2_summary.txt",
+    DIFFEX_DIR + "deseq2/summary/deseq2_summary.xlsx"
+    #
 ]
 
 RSEM_ALL = [
@@ -190,16 +202,26 @@ RSEM_ALL = [
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY])
 ]
 
+DELIVERABLES = [
+    #align_deliverables
+    rnaseq_snakefile_helper.expand_sample_read_endedness(
+        DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
+        SAMPLE_READS),
+    expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
+        sample=config["samples"]),
+    DELIVERABLES_DIR + "alignment/alignment_qc.html",
+    #deseq2_deliverables
+    DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt" #TWS - why does this rule only have one provided output?
+]
+
+
 
 # OPTIONAL_ALL = BALLGOWN_ALL + DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
 
 #ALL = [OPTIONAL_ALL]
-# print(rnaseq_snakefile_helper.expand_model_contrasts(\
-#     DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_isoform.results',
-#     config['diffex']))
 #
 # quit()
-ALL = RSEM_ALL + DESeq2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
+ALL = RSEM_ALL + DESeq2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES + DELIVERABLES
 
 include: 'rules/align_concat_reads.smk'
 
@@ -214,11 +236,11 @@ include: 'rules/align_fastq_screen_biotype.smk'
 include: 'rules/align_fastq_screen_multi_species.smk'
 include: 'rules/align_fastqc_trimmed_reads.smk'
 #include: 'rules/align_hisat2.smk'
-#include: 'rules/align_fastqc_align.smk'
+include: 'rules/align_fastqc_align.smk'
 #include: 'rules/align_stringtie.smk'
 #include: 'rules/align_stringtie_prepDE.smk'
 include: 'rules/align_qc.smk'
-#include: 'rules/align_deliverables_alignment.smk'
+include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
 
 #include: 'rules/ballgown_diffex.smk'
@@ -234,15 +256,15 @@ include: 'rules/deseq2_plots_by_phenotype.smk'
 include: 'rules/deseq2_comparison_plots.smk'
 #include: 'rules/deseq2_diffex.smk'
 #include: 'rules/deseq2_plots.smk'
-#include: 'rules/deseq2_annotation.smk'
-#include: 'rules/deseq2_excel.smk'
-#include: 'rules/deseq2_summary.smk'
+include: 'rules/deseq2_annotation.smk'
+include: 'rules/deseq2_excel.smk'
+include: 'rules/deseq2_summary.smk'
 
 include: 'rules/align_rsem_star.smk'
 include: 'rules/rsem_star_genome_generate.smk'
 
 #include: 'rules/deliverables_ballgown.smk'
-#include: 'rules/deliverables_deseq2.smk'
+include: 'rules/deliverables_deseq2.smk'
 #include: 'rules/deliverables_combined_summary.smk'
 #include: 'rules/deliverables_run_info.smk'
 

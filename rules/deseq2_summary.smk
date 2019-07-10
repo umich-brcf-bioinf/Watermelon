@@ -1,18 +1,17 @@
 rule deseq2_summary:
     input:
-        input_files = expand(DESEQ2_DIR + "03-annotation/{phenotype}/{comparison}.annot.txt",
-                             zip,
-                             phenotype=REPLICATE_PHENOTYPE_NAMES,
-                             comparison=REPLICATE_COMPARISON_GROUPS),
+        input_files = rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
+            DIFFEX_DIR + "deseq2/annotated/{model_name}/{contrast}.annot.txt",
+            config['diffex'])
     output:
-        summary_txt = DESEQ2_DIR + "06-summary/deseq2_summary.txt",
-        summary_xlsx = DESEQ2_DIR + "06-summary/deseq2_summary.xlsx",
+        summary_txt = DIFFEX_DIR + "deseq2/summary/deseq2_summary.txt",
+        summary_xlsx = DIFFEX_DIR + "deseq2/summary/deseq2_summary.xlsx",
     log:
-        DESEQ2_DIR + "06-summary/.log/deseq2_summary.log"
+        DIFFEX_DIR + "deseq2/summary/.log/deseq2_summary.log"
     conda:
-        '../envs/python_3.6.1.yaml'
+        'envs/python_3.6.1.yaml'
     params:
-        output_dir = DESEQ2_DIR + "06-summary/",
+        output_dir = DIFFEX_DIR + "deseq2/summary/",
     shell:
         '''(python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py \
             --annotation_column gene_id \

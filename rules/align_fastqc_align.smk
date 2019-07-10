@@ -9,7 +9,7 @@ rule align_fastqc_align:
     log:
         ALIGNMENT_DIR + "05-fastqc_align/.log/{sample}_fastqc_align.log"
     conda:
-        '../envs/fastqc.yaml'
+        'envs/fastqc.yaml'
     threads:
         # fastqc is not multithreaded, but Java spawns way too many processes,
         # so this keeps Snakemake from overruning the process limit.

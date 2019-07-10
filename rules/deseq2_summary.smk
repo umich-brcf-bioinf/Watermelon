@@ -9,7 +9,7 @@ rule deseq2_summary:
     log:
         DIFFEX_DIR + "deseq2/summary/.log/deseq2_summary.log"
     conda:
-        '../envs/python_3.6.1.yaml'
+        'envs/python_3.6.1.yaml'
     params:
         output_dir = DIFFEX_DIR + "deseq2/summary/",
     shell:

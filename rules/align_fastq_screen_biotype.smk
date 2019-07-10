@@ -7,7 +7,7 @@ rule align_fastq_screen_biotype:
     log:
         ALIGNMENT_DIR + "03-fastq_screen/biotype/.log/{sample}_trimmed_{read_endedness}_screen.log"
     conda:
-        '../envs/fastq_screen.yaml'
+        'envs/fastq_screen.yaml'
     threads:
         8
     params:

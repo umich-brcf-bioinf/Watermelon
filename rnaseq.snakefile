@@ -40,41 +40,31 @@ PHENOTYPES = (list(samplesheet.columns))
 #TWS - instead, adding only the sample names
 config[SAMPLES_KEY] = list(samplesheet.index)
 
-# phenotypeManager = rnaseq_snakefile_helper.PhenotypeManager(config,
-#                                                            DELIMITER,
-#                                                            COMPARISON_INFIX)
-
-# ALL_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_all_tuple.phenotypes
-# ALL_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_all_tuple.comparisons
-#
-# print(ALL_PHENOTYPE_NAMES)
-# print(ALL_COMPARISON_GROUPS)
-#
-# print(phenotypeManager.phenotypes_with_replicates)
-#
-# print(rnaseq_snakefile_helper.diffex_models(config['diffex']))
-#
-# sample_desc = pd.read_csv(config["sample_description_file"]).set_index("sample", drop=True)
-# print(sample_desc.columns)
-# print(CONFIGFILE_PATH)
-#
-# REPLICATE_PHENOTYPE_NAMES = False #TWS DEBUG
-#
-# print(list(samplesheet.index))
-# print(list(rnaseq_snakefile_helper.expand_model_contrasts(\
-#     DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_isoform.results',
-#     config['diffex'])))
-#
-# quit()
-
-# REPLICATE_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_replicates_tuple.phenotypes
-# REPLICATE_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_replicates_tuple.comparisons
-#
-# PHENOTYPES = list(set(ALL_PHENOTYPE_NAMES))
-
 rnaseq_snakefile_helper.init_references(config["references"])
 
 SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(INPUT_DIR, config[SAMPLES_KEY])
+
+#Set up emailing functionality
+def email(subject_prefix):
+    msg = 'config file:\n{}\nlog file:\n{}'.format(workflow.overwrite_configfile, logger.get_logfile())
+    email_config = config.get('email')
+    if not email_config:
+        print(subject_prefix, msg)
+    else:
+        command = "echo '{msg}' | mutt -s '{subject_prefix}{subject}' {to}".format(
+                to=email_config['to'],
+                subject_prefix=subject_prefix,
+                subject=email_config['subject'],
+                msg=msg,
+                )
+        shell(command)
+
+onstart:
+    email('Watermelon started: ')
+onsuccess:
+    email('Watermelon completed ok: ')
+onerror:
+    email('Watermelon ERROR: ')
 
 if 'fastq_screen' in config:
     FASTQ_SCREEN_CONFIG = config['fastq_screen']

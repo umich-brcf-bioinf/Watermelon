@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function, absolute_import, division
 
 from collections import Counter,defaultdict
 from functools import partial
@@ -8,6 +7,8 @@ import re
 import sys
 
 import yaml
+import pandas as pd
+import pdb # TWS DEBUG
 
 from scripts.rnaseq_snakefile_helper import PhenotypeManager
 from scripts import watermelon_config
@@ -109,15 +110,12 @@ class _ValidationCollector(object):
 class _ConfigValidator(object):
     def __init__(self, config, log=sys.stderr):
         self.config = config
+        self.samplesheet = pd.read_csv(config['sample_description_file'])
         self._log = log
-        self._PARSING_VALIDATIONS = [self._check_missing_required_field,
-                                     self._check_phenotype_labels_blank,
+        self._PARSING_VALIDATIONS = [self._check_phenotype_labels_blank,
                                      self._check_phenotype_labels_not_unique,
-                                     self._check_samples_malformed,
-                                     self._check_samples_not_stringlike,
                                      self._check_comparisons_malformed,
                                      self._check_comparisons_not_a_pair,
-                                     self._check_phenotypes_samples_not_rectangular,
                                      ]
         self._CONTENT_VALIDATIONS = [self._check_phenotype_labels_illegal_values,
                                      self._check_phenotype_labels_reserved_name,
@@ -165,34 +163,6 @@ class _ConfigValidator(object):
             raise _WatermelonConfigWarning(msg_fmt,
                                            ', '.join(sorted(without_replicates)))
 
-    def _check_missing_required_field(self):
-        missing_fields = watermelon_config.REQUIRED_FIELDS - self.config.keys()
-        if missing_fields:
-            msg_fmt = ('Some required fields were missing from config: ({}); '
-                       'review config and try again.')
-            raise _WatermelonConfigFailure(msg_fmt, ', '.join(sorted(missing_fields)))
-
-    def _check_samples_malformed(self):
-        msg = ('Config entry [samples] must be formatted as a dict of "{}" separated '
-               'strings; review config and try again.'
-              ).format(watermelon_config.DEFAULT_PHENOTYPE_DELIM)
-        failure = _WatermelonConfigFailure(msg)
-        samples = self.config[watermelon_config.CONFIG_KEYS.samples]
-        if not isinstance(samples, dict):
-            raise failure
-
-    def _check_samples_not_stringlike(self):
-        samples = self.config[watermelon_config.CONFIG_KEYS.samples]
-        odd_samples = []
-        for sample, pheno_value in samples.items():
-            if not isinstance(pheno_value, (str, int, float)):
-                odd_samples.append(sample)
-        if odd_samples:
-            msg = ('Some [samples] phenotype values could not be parsed: ({}); '
-                   'review config and try again.')
-            odd_samples_str = ', '.join(sorted(odd_samples))
-            raise _WatermelonConfigFailure(msg, odd_samples_str)
-
     def _check_comparisons_malformed(self):
         msg = ('Config entry [comparisons] must be formatted as a dict of lists; '
                'review config an try again.')
@@ -219,25 +189,6 @@ class _ConfigValidator(object):
                    'review config and try again')
             problem_str = ', '.join(sorted(nondistinct_comparisons))
             raise _WatermelonConfigFailure(msg, problem_str)
-
-
-    def _check_comparisons_not_a_pair(self):
-        comparisons = self.config[watermelon_config.CONFIG_KEYS.comparisons]
-        malformed_comparisons = []
-        for phenotype_label, comparison_list in comparisons.items():
-            for comparison in comparison_list:
-                if not comparison:
-                    malformed_comparisons.append("[empty comparison]")
-                else:
-                    values = comparison.strip().split(watermelon_config.DEFAULT_COMPARISON_INFIX)
-                    values = [i for i in values if i]
-                    if len(values) != 2:
-                        malformed_comparisons.append(comparison)
-        if malformed_comparisons:
-            msg = ('Some [comparisons] are not paired: ({}); '
-                   'review config and try again')
-            malformed_str = ', '.join(sorted(malformed_comparisons))
-            raise _WatermelonConfigFailure(msg, malformed_str)
 
     def _check_comparisons_not_a_pair(self):
         comparisons = self.config[watermelon_config.CONFIG_KEYS.comparisons]
@@ -269,23 +220,6 @@ class _ConfigValidator(object):
         if duplicate_labels:
             msg = ('[phenotypes] labels must be unique; review/revise [{}]')
             raise _WatermelonConfigFailure(msg, ', '.join(duplicate_labels))
-
-    def _check_phenotypes_samples_not_rectangular(self):
-        pheno_labels = self.config[watermelon_config.CONFIG_KEYS.phenotypes]
-        pheno_labels_count = len(pheno_labels.split(watermelon_config.DEFAULT_PHENOTYPE_DELIM))
-        sample_pheno_values = self.config[watermelon_config.CONFIG_KEYS.samples]
-        problem_samples = defaultdict(int)
-        for sample, pheno_values in sample_pheno_values.items():
-            pheno_values_count = len(str(pheno_values).split(watermelon_config.DEFAULT_PHENOTYPE_DELIM))
-            if pheno_labels_count != pheno_values_count:
-                problem_samples[sample] = pheno_values_count
-        if problem_samples:
-            problems = ['{} [{} values]'.format(s, v) for s,v in sorted(problem_samples.items())]
-            problems_str = ', '.join(problems)
-            msg = ('Some [samples] had unexpected number of phenotype values '
-                   '[expected {} values]: ({}); '
-                    'review config and try again.')
-            raise _WatermelonConfigFailure(msg, pheno_labels_count, problems_str)
 
     def _check_comparison_references_unknown_phenotype_label(self):
         phenotype_manager = PhenotypeManager(self.config)
@@ -456,8 +390,9 @@ def main(config_filename,
     exit_code = 1
     try:
         with open(config_filename, 'r') as config_file:
-            config = yaml.load(config_file)
+            config = yaml.load(config_file, Loader=yaml.SafeLoader)
         validator = _ConfigValidator(config, log=log)
+        pdb.set_breakpoint()
         validation_collector = validator.validate()
         validation_collector.log_results()
         if validation_collector.ok_to_proceed(prompt_to_override):

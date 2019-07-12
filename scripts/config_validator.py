@@ -11,7 +11,6 @@ import pandas as pd
 import pdb # TWS DEBUG
 
 from scripts.rnaseq_snakefile_helper import PhenotypeManager
-from scripts import watermelon_config
 
 _HEADER_RULE = '=' * 70 + '\n'
 _SECTION_RULE = '-' * 70 + '\n'
@@ -126,8 +125,7 @@ class _ConfigValidator(object):
                                      self._check_comparison_references_unknown_phenotype_label,
                                      self._check_comparison_references_unknown_phenotype_value,
                                      self._check_samples_excluded_from_comparison,
-                                     self._check_phenotype_has_replicates,
-                                     self._check_config_can_be_transformed]
+                                     self._check_phenotype_has_replicates]
 
     def validate(self):
         collector = _ValidationCollector(self._log)
@@ -140,13 +138,6 @@ class _ConfigValidator(object):
         for validation in self._CONTENT_VALIDATIONS:
             collector.check(validation)
         return collector
-
-    def _check_config_can_be_transformed(self):
-        config = dict(self.config)
-        try:
-            watermelon_config.transform_config(config)
-        except ValueError as e:
-            raise _WatermelonConfigFailure('{}'.format(e))
 
     def _check_phenotype_has_replicates(self):
         phenotype_manager = PhenotypeManager(self.config)
@@ -167,7 +158,7 @@ class _ConfigValidator(object):
         msg = ('Config entry [comparisons] must be formatted as a dict of lists; '
                'review config an try again.')
         failure = _WatermelonConfigFailure(msg)
-        comparisons = self.config[watermelon_config.CONFIG_KEYS.comparisons]
+        comparisons = self.config['comparisons']
         if not isinstance(comparisons, dict):
             raise failure
         for value in comparisons.values():
@@ -175,12 +166,12 @@ class _ConfigValidator(object):
                 raise failure
 
     def _check_comparison_values_distinct(self):
-        comparisons = self.config[watermelon_config.CONFIG_KEYS.comparisons]
+        comparisons = self.config['comparisons']
         nondistinct_comparisons = []
         for phenotype_label, comparison_list in comparisons.items():
             for comparison in comparison_list:
                 if comparison:
-                    values = comparison.strip().split(watermelon_config.DEFAULT_COMPARISON_INFIX)
+                    values = comparison.strip().split("foo") #TWS FIXME
                     values = [i for i in values if i]
                     if len(values) == 2 and values[0]==values[1]:
                         nondistinct_comparisons.append(comparison)
@@ -191,14 +182,14 @@ class _ConfigValidator(object):
             raise _WatermelonConfigFailure(msg, problem_str)
 
     def _check_comparisons_not_a_pair(self):
-        comparisons = self.config[watermelon_config.CONFIG_KEYS.comparisons]
+        comparisons = self.config['comparisons']
         malformed_comparisons = []
         for phenotype_label, comparison_list in comparisons.items():
             for comparison in comparison_list:
                 if not comparison:
                     malformed_comparisons.append("[empty comparison]")
                 else:
-                    values = comparison.strip().split(watermelon_config.DEFAULT_COMPARISON_INFIX)
+                    values = comparison.strip().split("foo") #TWS FIXME
                     values = [i for i in values if i]
                     if len(values) != 2:
                         malformed_comparisons.append(comparison)
@@ -209,13 +200,13 @@ class _ConfigValidator(object):
             raise _WatermelonConfigFailure(msg, malformed_str)
 
     def _check_phenotype_labels_blank(self):
-        pheno_labels = watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes])
+        #pheno_labels = watermelon_config.split_config_list(self.config['phenotypes']) #TWS FIXME
         for label in pheno_labels:
             if not label:
                 raise _WatermelonConfigFailure('[phenotypes] labels cannot be blank')
 
     def _check_phenotype_labels_not_unique(self):
-        pheno_labels = watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes])
+        #pheno_labels = watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes]) #TWS FIXME
         duplicate_labels = sorted([label for label, freq in Counter(pheno_labels).items() if freq > 1])
         if duplicate_labels:
             msg = ('[phenotypes] labels must be unique; review/revise [{}]')
@@ -301,16 +292,9 @@ class _ConfigValidator(object):
             raise _WatermelonConfigWarning(msg_fmt,
                                            ','.join(missing_samples))
 
-    def _check_main_factors_malformed(self):
-        main_factors = len(watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.main_factors]))
-        phenotype_labels = len(watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes]))
-        if main_factors != phenotype_labels:
-            msg_fmt = 'Number of values in [main_factors] and [phenotypes] must match ({}!={})';
-            raise _WatermelonConfigFailure(msg_fmt, main_factors, phenotype_labels)
-
     def _check_main_factors_illegal_values(self):
-        actual_values = set(watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.main_factors]))
-        legal_values = watermelon_config.MAIN_FACTOR_VALID_VALUES
+        #actual_values = set(watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.main_factors])) #TWS FIXME
+        #legal_values = watermelon_config.MAIN_FACTOR_VALID_VALUES #TWS FIXME
         illegal_values = sorted(actual_values - legal_values)
         illegal_values = ['<blank>' if v=='' else v for v in illegal_values]
         if illegal_values:
@@ -321,7 +305,7 @@ class _ConfigValidator(object):
 
     def _check_phenotype_labels_illegal_values(self):
         bad_labels = []
-        actual_labels = watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes])
+        #actual_labels = watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes]) #TWS FIXME
         for label in actual_labels:
             if not _is_name_well_formed(label):
                 bad_labels.append(label)
@@ -333,7 +317,7 @@ class _ConfigValidator(object):
 
     def _check_phenotype_labels_reserved_name(self):
         bad_labels = []
-        actual_labels = watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes])
+        #actual_labels = watermelon_config.split_config_list(self.config[watermelon_config.CONFIG_KEYS.phenotypes]) #TWS FIXME
         for label in actual_labels:
             if _is_name_reserved(label):
                 bad_labels.append(label)

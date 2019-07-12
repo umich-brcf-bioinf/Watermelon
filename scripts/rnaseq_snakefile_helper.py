@@ -18,11 +18,6 @@ import yaml
 
 from snakemake import workflow
 
-from scripts import watermelon_config
-from scripts.watermelon_config import CONFIG_KEYS
-from scripts.watermelon_config import DEFAULT_COMPARISON_INFIX
-from scripts.watermelon_config import DEFAULT_PHENOTYPE_DELIM
-
 HISAT2_NAME = 'HISAT2'
 STRINGTIE_NAME = 'stringtie'
 RSEM_NAME = 'rsem'

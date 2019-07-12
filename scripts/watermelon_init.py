@@ -43,9 +43,6 @@ import pandas as pd
 import yaml
 import pdb
 
-import scripts.watermelon_config as watermelon_config
-from scripts.watermelon_config import CONFIG_KEYS
-
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
 
@@ -329,10 +326,10 @@ def _validate_sample_sheet(samples, sheet_file):
 def _make_config_dict(template_config, genome_references, args, samples):
     config = dict(template_config)
 
-    dirs = config.get(CONFIG_KEYS.dirs, {})
-    dirs[CONFIG_KEYS.dirs_input] = os.path.join(args.input_dir,
+    dirs = config['dirs']
+    dirs['dirs_input'] = os.path.join(args.input_dir,
                                                 args.input_samples_dir)
-    config[CONFIG_KEYS.dirs] = dirs
+    config['dirs'] = dirs
 
     if 'alignment_options' in config:
         config['alignment_options']['rsem_ref_prefix'] = args.genome_build
@@ -425,13 +422,13 @@ $ watermelon -c {config_basename}
 def _write_config_file(config_filename, config_dict):
     tmp_config_dict = dict(config_dict)
     ordered_config_dict = OrderedDict()
-    named_keys = [CONFIG_KEYS.dirs,
-                  CONFIG_KEYS.main_factors,
-                  CONFIG_KEYS.phenotypes,
-                  CONFIG_KEYS.samples,
-                  CONFIG_KEYS.comparisons,
-                  CONFIG_KEYS.genome,
-                  CONFIG_KEYS.references]
+    named_keys = ['dirs',
+                  'main_factors',
+                  'phenotypes',
+                  'samples',
+                  'comparisons',
+                  'genome',
+                  'references']
     for key in named_keys:
         if key in tmp_config_dict:
             ordered_config_dict[key] = tmp_config_dict.pop(key)

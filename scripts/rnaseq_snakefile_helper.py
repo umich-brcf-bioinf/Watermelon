@@ -75,16 +75,10 @@ class PhenotypeManager(object):
     '''Interprets a subset of the config to help answer questions around how
     samples map to phenotype labels and values and vice versa.'''
     def __init__(self,
-                 config={},
-                 delimiter=DEFAULT_PHENOTYPE_DELIM,
-                 comparison_infix=DEFAULT_COMPARISON_INFIX):
-        #self.phenotype_labels_string = config.get(CONFIG_KEYS.phenotypes, None)
+                 config={}):
         self.samplesheet = pd.read_csv(config["sample_description_file"]).set_index("sample", drop=True)
         #self.phenotype_labels_string = self.samplesheet.columns
         self.sample_phenotype_value_dict = self.samplesheet.to_dict(orient='index')
-        self.comparisons = config.get(CONFIG_KEYS.comparisons, None)
-        self.delimiter = delimiter
-        self.comparison_infix = comparison_infix
 
     @property
     def phenotype_sample_list(self):
@@ -279,9 +273,6 @@ def expand_read_stats_if_paired(read_stats_filename_format,
     if len([s for s,r in flattened_sample_reads if s == sample]) > 1:
         result.append(read_stats_filename_format.format(sample=sample))
     return result
-
-def transform_config(config):
-    watermelon_config.transform_config(config)
 
 def diffex_models(diffex_config):
     not_models = ['adjustedPValue', 'fold_change']

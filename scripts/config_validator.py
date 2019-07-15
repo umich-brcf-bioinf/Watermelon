@@ -11,6 +11,7 @@ import pandas as pd
 import pdb # TWS DEBUG
 
 from scripts.rnaseq_snakefile_helper import PhenotypeManager
+from scripts.rnaseq_snakefile_helper import DESeq2_model_contrasts
 
 _HEADER_RULE = '=' * 70 + '\n'
 _SECTION_RULE = '-' * 70 + '\n'
@@ -110,10 +111,10 @@ class _ConfigValidator(object):
     def __init__(self, config, log=sys.stderr):
         self.config = config
         self.samplesheet = pd.read_csv(config['sample_description_file'])
+        self.comparisons = DESeq2_model_contrasts(config['diffex'])
         self._log = log
         self._PARSING_VALIDATIONS = [self._check_phenotype_labels_blank,
                                      self._check_phenotype_labels_not_unique,
-                                     self._check_comparisons_malformed,
                                      self._check_comparisons_not_a_pair,
                                      ]
         self._CONTENT_VALIDATIONS = [self._check_phenotype_labels_illegal_values,
@@ -154,19 +155,8 @@ class _ConfigValidator(object):
             raise _WatermelonConfigWarning(msg_fmt,
                                            ', '.join(sorted(without_replicates)))
 
-    def _check_comparisons_malformed(self): #TWS FIXME
-        msg = ('Config entry [comparisons] must be formatted as a dict of lists; '
-               'review config an try again.')
-        failure = _WatermelonConfigFailure(msg)
-        comparisons = self.config['comparisons']
-        if not isinstance(comparisons, dict):
-            raise failure
-        for value in comparisons.values():
-            if not isinstance(value, list):
-                raise failure
-
-    def _check_comparison_values_distinct(self): #TWS FIXME
-        comparisons = self.config['comparisons']
+    def _check_comparison_values_distinct(self):
+        comparisons = self.comparisons
         nondistinct_comparisons = []
         for phenotype_label, comparison_list in comparisons.items():
             for comparison in comparison_list:
@@ -181,8 +171,8 @@ class _ConfigValidator(object):
             problem_str = ', '.join(sorted(nondistinct_comparisons))
             raise _WatermelonConfigFailure(msg, problem_str)
 
-    def _check_comparisons_not_a_pair(self): #TWS FIXME
-        comparisons = self.config['comparisons']
+    def _check_comparisons_not_a_pair(self):
+        comparisons = self.comparisons
         malformed_comparisons = []
         for phenotype_label, comparison_list in comparisons.items():
             for comparison in comparison_list:

@@ -1,8 +1,8 @@
 rule deseq2_summary:
     input:
-        input_files = rnaseq_snakefile_helper.expand_DESeq2_model_contrasts(\
+        input_files = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
             DIFFEX_DIR + "deseq2/annotated/{model_name}/{contrast}.annot.txt",
-            config['diffex'])
+            DESEQ2_CONTRAST_DICT)
     output:
         summary_txt = DIFFEX_DIR + "deseq2/summary/deseq2_summary.txt",
         summary_xlsx = DIFFEX_DIR + "deseq2/summary/deseq2_summary.xlsx",

@@ -237,17 +237,15 @@ class _ConfigValidator(object):
     def _check_contrast_references_unknown_phenotype_value(self):
         pheno_label_values = []
         phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
+        #print(phenotype_manager.phenotype_sample_list['Gend']['fem'])
         for label, values in phenotype_manager.phenotype_sample_list.items():
-            for value in values:
-                pheno_label_values.append((label, values[value])) #TWS - is phenotype_sample_list working incorrectly?
-                #Why is there an extra layer of nesting i.e. values[value]?
-        #print(pheno_label_values[0])
+            for value in values.keys():
+                pheno_label_values.append((label, value))
         contrast_label_values = []
 
         for label, values in self.contrast_values.items():
             for value in values:
                 contrast_label_values.append((label, value))
-        #print(contrast_label_values[0])
         unknown_pheno_values = sorted(set(contrast_label_values) - set(pheno_label_values))
         if unknown_pheno_values:
             msg = ('Some [contrasts] referenced phenotype values not found in '

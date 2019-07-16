@@ -76,7 +76,7 @@ class PhenotypeManager(object):
     samples map to phenotype labels and values and vice versa.'''
     def __init__(self,
                  config={}):
-        self.samplesheet = pd.read_csv(config["sample_description_file"]).set_index("sample", drop=True)
+        self.samplesheet = pd.read_csv(config["sample_description_file"], keep_default_na=False).set_index("sample", drop=True)
         #self.phenotype_labels_string = self.samplesheet.columns
         self.sample_phenotype_value_dict = self.samplesheet.to_dict(orient='index')
 
@@ -90,38 +90,16 @@ class PhenotypeManager(object):
         phenotypes_string : delimited phenotype labels (columns)
         sample_phenotype_value_dict : {sample_id : delimited phenotype_value_string} (rows)
         '''
-        def check_labels_match_values(phenotype_labels,
-                                      sample,
-                                      phenotype_values):
-            if len(phenotype_labels) != len(phenotype_values):
-                msg_fmt = 'expected {} phenotype values but sample {} had {}'
-                msg = msg_fmt.format(len(phenotype_labels),
-                                     sample,
-                                     len(phenotype_values))
-                raise ValueError(msg)
-
-        def check_phenotype_labels(labels):
-            for i,label in enumerate(labels):
-                if label == '':
-                    msg_fmt = 'label of phenotype {} is empty'
-                    msg = msg_fmt.format(i + 1)
-                    raise ValueError(msg)
 
         phenotype_dict = defaultdict(partial(defaultdict, list))
-        phenotype_labels = sorted(list(self.samplesheet.columns))
-        check_phenotype_labels(phenotype_labels)
-        sorted_sample_phenotypes_items = sorted([(k, v) for k,v in self.sample_phenotype_value_dict.items()])
-        for sample, phenotype_values in sorted_sample_phenotypes_items:
-            phenotype_values = phenotype_values.values() #TWS Why is phenotype_values even a dict??
-            sample_phenotypes = dict(zip(phenotype_labels, phenotype_values))
-            if sample == "Sample_61222": print(phenotype_values)
-            if sample == "Sample_61222": print(phenotype_labels)
-            check_labels_match_values(phenotype_labels,
-                                      sample,
-                                      phenotype_values)
-            for label, value in sample_phenotypes.items():
-                if value != '':
-                    phenotype_dict[label][value].append(sample)
+
+        # {phenotype_label : {sample: phenotype_value } }
+        samplesheet_dict = self.samplesheet.to_dict(orient='dict')
+        for label in samplesheet_dict:
+            for samp in samplesheet_dict[label]:
+                value = samplesheet_dict[label][samp]
+                phenotype_dict[label][value].append(samp)
+        # {phenotype_label : {phenotype_value : [list of samples] } }
         return phenotype_dict
 
     @property

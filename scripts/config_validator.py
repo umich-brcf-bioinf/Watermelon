@@ -2,6 +2,7 @@
 
 from collections import Counter,defaultdict
 from functools import partial
+from itertools import chain
 import os
 import re
 import sys
@@ -10,8 +11,7 @@ import yaml
 import pandas as pd
 import pdb # TWS DEBUG
 
-from scripts.rnaseq_snakefile_helper import PhenotypeManager
-from scripts.rnaseq_snakefile_helper import DESeq2_model_contrasts
+from scripts import rnaseq_snakefile_helper
 
 _HEADER_RULE = '=' * 70 + '\n'
 _SECTION_RULE = '-' * 70 + '\n'
@@ -28,6 +28,34 @@ def _is_name_well_formed(name):
 def _is_name_reserved(name):
     return name in _RESERVED_NAMES
 
+'''Returns contrasts dict in the form of
+{model_name: ['val1_v_val2', 'val3_v_val4']}
+Note keys in this dict are from the contrast strings, not the model name
+'''
+def _DESeq2_contrasts(diffex_config):
+    cont_dict = defaultdict(list)
+    for model in rnaseq_snakefile_helper.diffex_models(diffex_config):
+        if 'DESeq2' in diffex_config[model]:
+            contrasts = diffex_config[model]['DESeq2']['results']['contrasts']
+            #Create contrast info strings
+            #Split on ^, throw away first item, then join remaining two with _v_
+            cont_strs = map(lambda x: "_v_".join(x.split("^")[1:]), contrasts)
+            phenos = map(lambda x: x.split("^")[0], contrasts)
+            for pheno, str in zip(phenos, cont_strs):
+                cont_dict[pheno].append(str)
+    return(cont_dict)
+
+'''Returns contrast values dict in the form of
+{pheno_label: ['val1', 'val2', 'val3', 'val4']}
+Note keys in this dict are from the contrast strings, not the model name
+'''
+def _DESeq2_contrast_vals(contrast_dict):
+    contrast_vals_dict = defaultdict(set)
+    for pheno in contrast_dict:
+        cont_strs = contrast_dict[pheno]
+        cont_vals = chain.from_iterable(map(lambda x: x.split("_v_"), cont_strs))
+        contrast_vals_dict[pheno].update(cont_vals)
+    return(contrast_vals_dict)
 
 class _WatermelonConfigFailure(Exception):
     def __init__(self, msg, *args):
@@ -111,21 +139,20 @@ class _ConfigValidator(object):
     def __init__(self, config, log=sys.stderr):
         self.config = config
         self.samplesheet = pd.read_csv(config['sample_description_file'])
-        self.comparisons = DESeq2_model_contrasts(config['diffex'])
+        self.contrasts = _DESeq2_contrasts(config['diffex'])
+        self.contrast_values = _DESeq2_contrast_vals(self.contrasts)
         self._log = log
-        self._PARSING_VALIDATIONS = [self._check_phenotype_labels_blank,
-                                     self._check_phenotype_labels_not_unique,
-                                     self._check_comparisons_not_a_pair,
-                                     ]
+        self._PARSING_VALIDATIONS = [self._check_phenotype_labels_not_unique,
+                                     self._check_contrasts_not_a_pair]
         self._CONTENT_VALIDATIONS = [self._check_phenotype_labels_illegal_values,
                                      self._check_phenotype_labels_reserved_name,
                                      self._check_phenotype_values_illegal_values,
                                      self._check_phenotype_values_reserved_name,
-                                     self._check_comparison_missing_phenotype_value,
-                                     self._check_comparison_missing_phenotype_label,
-                                     self._check_comparison_references_unknown_phenotype_label,
-                                     self._check_comparison_references_unknown_phenotype_value,
-                                     self._check_samples_excluded_from_comparison,
+                                     self._check_contrast_missing_phenotype_value,
+                                     self._check_contrast_missing_phenotype_label,
+                                     self._check_contrast_references_unknown_phenotype_label,
+                                     self._check_contrast_references_unknown_phenotype_value,
+                                     self._check_samples_excluded_from_contrast,
                                      self._check_phenotype_has_replicates]
 
     def validate(self):
@@ -141,7 +168,7 @@ class _ConfigValidator(object):
         return collector
 
     def _check_phenotype_has_replicates(self):
-        phenotype_manager = PhenotypeManager(self.config)
+        phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
         all_phenotypes = set(phenotype_manager.phenotype_sample_list.keys())
         with_replicates = set(phenotype_manager.phenotypes_with_replicates)
         if not with_replicates:
@@ -155,45 +182,39 @@ class _ConfigValidator(object):
             raise _WatermelonConfigWarning(msg_fmt,
                                            ', '.join(sorted(without_replicates)))
 
-    def _check_comparison_values_distinct(self):
-        comparisons = self.comparisons
-        nondistinct_comparisons = []
-        for phenotype_label, comparison_list in comparisons.items():
-            for comparison in comparison_list:
-                if comparison:
-                    values = comparison.strip().split("foo") #TWS FIXME
+    def _check_contrast_values_distinct(self):
+        contrasts = self.contrasts
+        nondistinct_contrasts = []
+        for phenotype_label, contrast_list in contrasts.items():
+            for contrast in contrast_list:
+                if contrast:
+                    values = contrast.strip().split("_v_")
                     values = [i for i in values if i]
                     if len(values) == 2 and values[0]==values[1]:
-                        nondistinct_comparisons.append(comparison)
-        if nondistinct_comparisons:
-            msg = ('Some [comparison] test-control values are not distinct: ({}); '
+                        nondistinct_contrasts.append(contrast)
+        if nondistinct_contrasts:
+            msg = ('Some [contrast] test-control values are not distinct: ({}); '
                    'review config and try again')
-            problem_str = ', '.join(sorted(nondistinct_comparisons))
+            problem_str = ', '.join(sorted(nondistinct_contrasts))
             raise _WatermelonConfigFailure(msg, problem_str)
 
-    def _check_comparisons_not_a_pair(self):
-        comparisons = self.comparisons
-        malformed_comparisons = []
-        for phenotype_label, comparison_list in comparisons.items():
-            for comparison in comparison_list:
-                if not comparison:
-                    malformed_comparisons.append("[empty comparison]")
+    def _check_contrasts_not_a_pair(self):
+        contrasts = self.contrasts
+        malformed_contrasts = []
+        for phenotype_label, contrast_list in contrasts.items():
+            for contrast in contrast_list:
+                if not contrast:
+                    malformed_contrasts.append("[empty contrast]")
                 else:
-                    values = comparison.strip().split("foo") #TWS FIXME
+                    values = contrast.strip().split("_v_")
                     values = [i for i in values if i]
                     if len(values) != 2:
-                        malformed_comparisons.append(comparison)
-        if malformed_comparisons:
-            msg = ('Some [comparisons] are not paired: ({}); '
+                        malformed_contrasts.append(contrast)
+        if malformed_contrasts:
+            msg = ('Some [contrasts] are not paired: ({}); '
                    'review config and try again')
-            malformed_str = ', '.join(sorted(malformed_comparisons))
+            malformed_str = ', '.join(sorted(malformed_contrasts))
             raise _WatermelonConfigFailure(msg, malformed_str)
-
-    def _check_phenotype_labels_blank(self): #TWS delete this probably
-        #pheno_labels = watermelon_config.split_config_list(self.config['phenotypes']) #TWS FIXME
-        for label in pheno_labels:
-            if not label:
-                raise _WatermelonConfigFailure('[phenotypes] labels cannot be blank')
 
     def _check_phenotype_labels_not_unique(self):
         pheno_labels = list(self.samplesheet.columns)
@@ -202,77 +223,81 @@ class _ConfigValidator(object):
             msg = ('[phenotypes] labels must be unique; review/revise [{}]')
             raise _WatermelonConfigFailure(msg, ', '.join(duplicate_labels))
 
-    def _check_comparison_references_unknown_phenotype_label(self): #TWS FIXME
-        phenotype_manager = PhenotypeManager(self.config)
-        comparison_pheno_labels = set(phenotype_manager.comparison_values.keys())
+    def _check_contrast_references_unknown_phenotype_label(self):
+        phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
+        contrast_pheno_labels = set(self.contrast_values.keys())
         phenotype_labels = set(phenotype_manager.phenotype_sample_list.keys())
-        unknown_pheno_labels = sorted(comparison_pheno_labels - phenotype_labels)
+        unknown_pheno_labels = sorted(contrast_pheno_labels - phenotype_labels)
         if unknown_pheno_labels:
-            msg = ('Some [comparisons] referenced phenotype labels not found in '
+            msg = ('Some [contrasts] referenced phenotype labels not found in '
                    '[phenotypes]: ({}); review config and try again.'
                   )
             raise _WatermelonConfigFailure(msg, ', '.join(unknown_pheno_labels))
 
-    def _check_comparison_references_unknown_phenotype_value(self): #TWS FIXME
+    def _check_contrast_references_unknown_phenotype_value(self):
         pheno_label_values = []
-        phenotype_manager = PhenotypeManager(self.config)
+        phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
         for label, values in phenotype_manager.phenotype_sample_list.items():
             for value in values:
-                pheno_label_values.append((label, value))
-        comparison_label_values = []
-        for label, values in phenotype_manager.comparison_values.items():
+                pheno_label_values.append((label, values[value])) #TWS - is phenotype_sample_list working incorrectly?
+                #Why is there an extra layer of nesting i.e. values[value]?
+        #print(pheno_label_values[0])
+        contrast_label_values = []
+
+        for label, values in self.contrast_values.items():
             for value in values:
-                comparison_label_values.append((label, value))
-        unknown_pheno_values = sorted(set(comparison_label_values) - set(pheno_label_values))
+                contrast_label_values.append((label, value))
+        #print(contrast_label_values[0])
+        unknown_pheno_values = sorted(set(contrast_label_values) - set(pheno_label_values))
         if unknown_pheno_values:
-            msg = ('Some [comparisons] referenced phenotype values not found in '
+            msg = ('Some [contrasts] referenced phenotype values not found in '
                    '[samples]: ({}); review config and try again.'
                   )
             pheno_value_strings = ['{}:{}'.format(l,v)for (l,v) in unknown_pheno_values]
             raise _WatermelonConfigFailure(msg, ', '.join(pheno_value_strings))
 
 
-    def _check_comparison_missing_phenotype_value(self): #TWS FIXME
-        phenotype_manager = PhenotypeManager(self.config)
-        comparison_pheno_values = set()
-        for pheno_label, pheno_values in phenotype_manager.comparison_values.items():
+    def _check_contrast_missing_phenotype_value(self):
+        phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
+        contrast_pheno_values = set()
+        for pheno_label, pheno_values in self.contrasts.items():
             for pheno_value in pheno_values:
-                comparison_pheno_values.add((pheno_label, pheno_value))
+                contrast_pheno_values.add((pheno_label, pheno_value))
 
         pheno_values = defaultdict(list)
         pheno_samples = defaultdict(list)
         for phenoLabel, phenoValueSamples in phenotype_manager.phenotype_sample_list.items():
             for phenoValue, samples in phenoValueSamples.items():
-                if (phenoLabel, phenoValue) not in comparison_pheno_values:
+                if (phenoLabel, phenoValue) not in contrast_pheno_values:
                     pheno_values[phenoLabel].append(phenoValue)
                     pheno_samples[phenoLabel].extend(samples)
         if pheno_values:
             label_values = [label +':' + ','.join(sorted(values)) for label, values in sorted(pheno_values.items())]
             samples = [label + ':' + ','.join(sorted(samples)) for label, samples in sorted(pheno_samples.items())]
-            msg_fmt = ('Some phenotype values ({}) are not present in [comparisons]; '
-                       'some samples ({}) will be excluded from comparisons for those '
+            msg_fmt = ('Some phenotype values ({}) are not present in [contrasts]; '
+                       'some samples ({}) will be excluded from contrasts for those '
                        'phenotypes.')
             raise _WatermelonConfigWarning(msg_fmt,
                                            ';'.join(label_values),
                                            ';'.join(samples))
 
-    def _check_comparison_missing_phenotype_label(self): #TWS FIXME
-        phenotype_manager = PhenotypeManager(self.config)
-        comparison_pheno_labels = phenotype_manager.comparison_values.keys()
+    def _check_contrast_missing_phenotype_label(self):
+        phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
+        contrast_pheno_labels = self.contrasts.keys()
         sample_pheno_labels = phenotype_manager.phenotype_sample_list.keys()
-        missing_labels = sorted(set(sample_pheno_labels) - set(comparison_pheno_labels))
+        missing_labels = sorted(set(sample_pheno_labels) - set(contrast_pheno_labels))
 
         if missing_labels:
-            msg_fmt = ('Some phenotype labels ({}) are not present in [comparisons].')
+            msg_fmt = ('Some phenotype labels ({}) are not present in [contrasts].')
             raise _WatermelonConfigWarning(msg_fmt, ','.join(missing_labels))
 
-    def _check_samples_excluded_from_comparison(self): #TWS FIXME
-        phenotype_manager = PhenotypeManager(self.config)
+    def _check_samples_excluded_from_contrast(self):
+        phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
         all_samples = set(phenotype_manager.sample_phenotype_value_dict.keys())
-        comparison_pheno_labels = phenotype_manager.comparison_values.keys()
+        contrast_pheno_labels = self.contrasts.keys()
         phenotype_sample_list = phenotype_manager.phenotype_sample_list
         all_compared_samples = set()
-        for (pheno_label, pheno_values) in phenotype_manager.comparison_values.items():
+        for (pheno_label, pheno_values) in self.contrasts.items():
             for pheno_value in pheno_values:
                 samples = phenotype_sample_list[pheno_label][pheno_value]
                 all_compared_samples.update(samples)
@@ -310,7 +335,7 @@ class _ConfigValidator(object):
 
     def _check_phenotype_values_illegal_values(self):
         label_values = []
-        phenotype_manager = PhenotypeManager(self.config)
+        phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
         for label, values in phenotype_manager.phenotype_sample_list.items():
             for value in values:
                 label_values.append((label, value))
@@ -327,7 +352,7 @@ class _ConfigValidator(object):
 
     def _check_phenotype_values_reserved_name(self):
         label_values = []
-        phenotype_manager = PhenotypeManager(self.config)
+        phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
         for label, values in phenotype_manager.phenotype_sample_list.items():
             for value in values:
                 label_values.append((label, value))
@@ -357,6 +382,7 @@ def main(config_filename,
         validator = _ConfigValidator(config, log=log)
         pdb.set_trace()
         validation_collector = validator.validate()
+        pdb.set_trace()
         validation_collector.log_results()
         if validation_collector.ok_to_proceed(prompt_to_override):
             exit_code = 0

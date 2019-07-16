@@ -149,7 +149,7 @@ else:
 #     expand(DIFFEX_DIR + '{model_name}/ballgown/ballgown_data.rda', model_name=rnaseq_snakefile_helper.diffex_models(config['diffex']))
 # ]
 
-DESEQ2_CONTRAST_DICT = rnaseq_snakefile_helper.DESeq2_model_contrasts(config['diffex'])
+DESEQ2_CONTRAST_DICT = rnaseq_snakefile_helper.DESeq2_contrasts(config['diffex'])
 
 DESeq2_ALL = [
     #deseq2_counts

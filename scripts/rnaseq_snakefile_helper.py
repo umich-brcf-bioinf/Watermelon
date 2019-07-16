@@ -108,13 +108,14 @@ class PhenotypeManager(object):
                     raise ValueError(msg)
 
         phenotype_dict = defaultdict(partial(defaultdict, list))
-        #phenotype_labels = list(map(str.strip, self.phenotype_labels_string.split(self.delimiter)))
-        phenotype_labels = list(self.samplesheet.columns)
+        phenotype_labels = sorted(list(self.samplesheet.columns))
         check_phenotype_labels(phenotype_labels)
         sorted_sample_phenotypes_items = sorted([(k, v) for k,v in self.sample_phenotype_value_dict.items()])
         for sample, phenotype_values in sorted_sample_phenotypes_items:
-            #sample_phenotype_values = list(map(str.strip, phenotype_values.split(self.delimiter)))
+            phenotype_values = phenotype_values.values() #TWS Why is phenotype_values even a dict??
             sample_phenotypes = dict(zip(phenotype_labels, phenotype_values))
+            if sample == "Sample_61222": print(phenotype_values)
+            if sample == "Sample_61222": print(phenotype_labels)
             check_labels_match_values(phenotype_labels,
                                       sample,
                                       phenotype_values)
@@ -279,9 +280,10 @@ def diffex_models(diffex_config):
     model_names = [k for k in diffex_config.keys() if k not in not_models]
     return(model_names)
 
-def DESeq2_model_contrasts(diffex_config):
-    #Creates contrast strings in a dict to be used for filenames
-    #Also these strings are listed as test_v_control to provide other backwards compatibility
+'''Returns contrasts dict in the form of
+{model_name: ['val1_v_val2', 'val3_v_val4']}
+'''
+def DESeq2_contrasts(diffex_config):
     cont_dict = {}
     for model in diffex_models(diffex_config):
         if 'DESeq2' in diffex_config[model]:

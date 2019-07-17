@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-'''Creates template config file and directories for a watermelon rnaseq job.
+'''Creates config file, input directories, and validates a sample description file for a watermelon rnaseq job.
 
-Specifically this does three things:
-1) watermelon_init accepts a set of source fastq dirs.
-   * Each source fastq dir (a "run") contains a set of sample_dirs;
-     these dir names become the sample names in the config file.
+Specifically:
+1) watermelon_init accepts a set of source fastq dirs and a sample description file.
+   * Each source fastq dir (a "run") contains a set of sample_dirs
+   * watermelon_init verifies that the sample names provided in the sample
+     description file match with those gathered from the source fastq dirs.
    * Each sample_dir contains one or more fastq (.fastq[.gz]) files.
    * watermelon_init creates local input dirs for the runs and also merges
      fastqs from all runs to create a dir of samples. Each sample dir
@@ -12,15 +13,14 @@ Specifically this does three things:
    * Absence of fastq files for a run or an individaul sample raises an error.
 
 2) watermelon-init creates an analysis directory which contains a template
-   watermelon config file and a template sample description file.
-   The template config file contains directory information, reference lists, run parameters, etc.,
-   while the sample description file is a csv file containing phenotype
-   information in relation to the samples.
-
+   watermelon config file. The template config file contains directory
+   information, reference lists, run parameters, etc.,
    These must be reviewed and edited to:
-   a) adjust run params
-   b) add sample phenotypes/aliases
-   c) specify sample comparisons
+   a) adjust genome and references to match the experiment
+   b) adjust trimming, alignment, and fastq_screen options
+   c) specify diffex parameters, and add  DESeq2 calls and contrasts
+      based on the example pheno_gender stanza (can add as many similar stanzas
+      as required by the experiment)
 
 3) watermelon-init creates a readme file that lists basic info about when/how it was run,
    what it did, and what the user has to do to prepare the template config
@@ -154,6 +154,9 @@ class _Linker(object):
 def _timestamp():
     return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
+def _umich_email():
+    return os.getlogin() + '@umich.edu'
+
 README_FILENAME = 'watermelon.README'
 
 GENOME_BUILD_OPTIONS = ('GRCh37', 'GRCh38', 'hg19', 'hg38',
@@ -183,7 +186,7 @@ _CONFIG_PRELUDE = '''# config created {timestamp}
 # 3) Modify the diffex options - use the pheno_gender stanza as an example, and
 #    set up the DESeq2 calls and comparisons that match the analysis. For example,
 #    the contrasts should contain phenotype labels and values which correspond
-#    to the column names and values in the sample sheet.
+#    to the column names and values in the sample sheet, respectively.
 '''.format(timestamp=_timestamp())
 
 def _setup_yaml():
@@ -406,9 +409,10 @@ When the config file looks good:
 # start a screen session:
 $ screen -S watermelon{job_suffix}
 # to validate the config and check the execution plan:
-$ watermelon --dry-run -c {config_basename}
+$ snakemake --dry-run --printshellcmds --configfile {config_basename} --snakefile {snakefile_basename}
 # to run:
-$ watermelon -c {config_basename}
+$ snakemake --use-conda --printshellcmds --configfile {config_basename} --snakefile {snakefile_basename} \
+  --profile Watermelon/config/profile-comp5-6
 '''.format(linker_results=linker_results,
            input_summary_text=input_summary_text,
            working_dir=args.x_working_dir,
@@ -419,7 +423,8 @@ $ watermelon -c {config_basename}
            config_relative=os.path.relpath(args.config_file, args.x_working_dir),
            samplesheet_relative=os.path.relpath(args.sample_sheet, args.x_working_dir),
            config_basename=os.path.basename(args.config_file),
-           job_suffix=args.job_suffix,)
+           job_suffix=args.job_suffix,
+           snakefile_basename='rnaseq.snakefile')
     return postlude
 
 def _write_config_file(config_filename, config_dict):
@@ -512,7 +517,7 @@ def main(sys_argv):
 
         print("Copying Watermelon source to " + os.getcwd())
         shutil.copytree(_WATERMELON_ROOT, os.path.join(os.getcwd(), "Watermelon"))
-        os.symlink("Watermelon/bin/watermelon", "watermelon")
+        os.symlink("Watermelon/rnaseq.snakefile", "rnaseq.snakefile")
 
         if os.path.isdir(args.tmp_input_dir):
             shutil.rmtree(args.tmp_input_dir)

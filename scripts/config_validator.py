@@ -8,6 +8,7 @@ import re
 import sys
 
 import yaml
+import yamale
 import pandas as pd
 
 from scripts import rnaseq_snakefile_helper
@@ -135,13 +136,15 @@ class _ValidationCollector(object):
 
 
 class _ConfigValidator(object):
-    def __init__(self, config, log=sys.stderr):
+    def __init__(self, config, schema_filename, log=sys.stderr):
         self.config = config
+        self.schema_filename = schema_filename
         self.samplesheet = pd.read_csv(config['sample_description_file'])
         self.contrasts = _DESeq2_contrasts(config['diffex'])
         self.contrast_values = _DESeq2_contrast_vals(self.contrasts)
         self._log = log
-        self._PARSING_VALIDATIONS = [self._check_phenotype_labels_not_unique,
+        self._PARSING_VALIDATIONS = [self._check_config_against_schema,
+                                     self._check_phenotype_labels_not_unique,
                                      self._check_contrasts_not_a_pair]
         self._CONTENT_VALIDATIONS = [self._check_phenotype_labels_illegal_values,
                                      self._check_phenotype_labels_reserved_name,
@@ -166,6 +169,14 @@ class _ConfigValidator(object):
         for validation in self._CONTENT_VALIDATIONS:
             collector.check(validation)
         return collector
+
+    def _check_config_against_schema(self):
+        schema = yamale.make_schema(self.schema_filename)
+        data = [yamale.schema.Data(self.config)]
+        try:
+            yamale.validate(schema, data)
+        except ValueError as msg:
+            raise(_WatermelonConfigFailure(str(msg)))
 
     def _check_phenotype_has_replicates(self):
         phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
@@ -371,13 +382,14 @@ def prompt_to_override():
     return value.lower().strip() == 'yes'
 
 def main(config_filename,
+         schema_filename,
          log=sys.stderr,
          prompt_to_override=prompt_to_override):
     exit_code = 1
     try:
         with open(config_filename, 'r') as config_file:
             config = yaml.load(config_file, Loader=yaml.SafeLoader)
-        validator = _ConfigValidator(config, log=log)
+        validator = _ConfigValidator(config, schema_filename, log=log)
         validation_collector = validator.validate()
         validation_collector.log_results()
         if validation_collector.ok_to_proceed(prompt_to_override):
@@ -391,5 +403,6 @@ def main(config_filename,
 
 if __name__ == '__main__':
     config_filepath = os.path.realpath(sys.argv[1])
-    exit_code = main(config_filepath)
+    schema_filepath = os.path.realpath(sys.argv[2])
+    exit_code = main(config_filepath, schema_filepath)
     exit(exit_code)

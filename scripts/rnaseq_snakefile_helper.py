@@ -77,17 +77,13 @@ class PhenotypeManager(object):
     def __init__(self,
                  config={}):
         self.samplesheet = pd.read_csv(config["sample_description_file"], keep_default_na=False).set_index("sample", drop=True)
-        #self.phenotype_labels_string = self.samplesheet.columns
+        #sample_phenotype_value_dict : {sample : { pheno_label: pheno_value } }
         self.sample_phenotype_value_dict = self.samplesheet.to_dict(orient='index')
 
     @property
     def phenotype_sample_list(self):
         '''Translates config phenotypes/samples into nested dict of phenotypes.
         Specifically {phenotype_label : {phenotype_value : [list of samples] } }
-
-        Strips all surrounding white space.
-
-        sample_phenotype_value_dict : {sample_id : delimited phenotype_value_string} (rows)
         '''
 
         phenotype_dict = defaultdict(partial(defaultdict, list))

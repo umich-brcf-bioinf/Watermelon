@@ -18,11 +18,6 @@ import yaml
 
 from snakemake import workflow
 
-from scripts import watermelon_config
-from scripts.watermelon_config import CONFIG_KEYS
-from scripts.watermelon_config import DEFAULT_COMPARISON_INFIX
-from scripts.watermelon_config import DEFAULT_PHENOTYPE_DELIM
-
 HISAT2_NAME = 'HISAT2'
 STRINGTIE_NAME = 'stringtie'
 RSEM_NAME = 'rsem'
@@ -80,58 +75,26 @@ class PhenotypeManager(object):
     '''Interprets a subset of the config to help answer questions around how
     samples map to phenotype labels and values and vice versa.'''
     def __init__(self,
-                 config={},
-                 delimiter=DEFAULT_PHENOTYPE_DELIM,
-                 comparison_infix=DEFAULT_COMPARISON_INFIX):
-        #self.phenotype_labels_string = config.get(CONFIG_KEYS.phenotypes, None)
-        self.samplesheet = pd.read_csv(config["sample_description_file"]).set_index("sample", drop=True)
-        #self.phenotype_labels_string = self.samplesheet.columns
+                 config={}):
+        self.samplesheet = pd.read_csv(config["sample_description_file"], keep_default_na=False).set_index("sample", drop=True)
+        #sample_phenotype_value_dict : {sample : { pheno_label: pheno_value } }
         self.sample_phenotype_value_dict = self.samplesheet.to_dict(orient='index')
-        self.comparisons = config.get(CONFIG_KEYS.comparisons, None)
-        self.delimiter = delimiter
-        self.comparison_infix = comparison_infix
 
     @property
     def phenotype_sample_list(self):
         '''Translates config phenotypes/samples into nested dict of phenotypes.
         Specifically {phenotype_label : {phenotype_value : [list of samples] } }
-
-        Strips all surrounding white space.
-
-        phenotypes_string : delimited phenotype labels (columns)
-        sample_phenotype_value_dict : {sample_id : delimited phenotype_value_string} (rows)
         '''
-        def check_labels_match_values(phenotype_labels,
-                                      sample,
-                                      phenotype_values):
-            if len(phenotype_labels) != len(phenotype_values):
-                msg_fmt = 'expected {} phenotype values but sample {} had {}'
-                msg = msg_fmt.format(len(phenotype_labels),
-                                     sample,
-                                     len(phenotype_values))
-                raise ValueError(msg)
-
-        def check_phenotype_labels(labels):
-            for i,label in enumerate(labels):
-                if label == '':
-                    msg_fmt = 'label of phenotype {} is empty'
-                    msg = msg_fmt.format(i + 1)
-                    raise ValueError(msg)
 
         phenotype_dict = defaultdict(partial(defaultdict, list))
-        #phenotype_labels = list(map(str.strip, self.phenotype_labels_string.split(self.delimiter)))
-        phenotype_labels = list(self.samplesheet.columns)
-        check_phenotype_labels(phenotype_labels)
-        sorted_sample_phenotypes_items = sorted([(k, v) for k,v in self.sample_phenotype_value_dict.items()])
-        for sample, phenotype_values in sorted_sample_phenotypes_items:
-            #sample_phenotype_values = list(map(str.strip, phenotype_values.split(self.delimiter)))
-            sample_phenotypes = dict(zip(phenotype_labels, phenotype_values))
-            check_labels_match_values(phenotype_labels,
-                                      sample,
-                                      phenotype_values)
-            for label, value in sample_phenotypes.items():
-                if value != '':
-                    phenotype_dict[label][value].append(sample)
+
+        # {phenotype_label : {sample: phenotype_value } }
+        samplesheet_dict = self.samplesheet.to_dict(orient='dict')
+        for label in samplesheet_dict:
+            for samp in samplesheet_dict[label]:
+                value = samplesheet_dict[label][samp]
+                phenotype_dict[label][value].append(samp)
+        # {phenotype_label : {phenotype_value : [list of samples] } }
         return phenotype_dict
 
     @property
@@ -285,21 +248,28 @@ def expand_read_stats_if_paired(read_stats_filename_format,
         result.append(read_stats_filename_format.format(sample=sample))
     return result
 
-def transform_config(config):
-    watermelon_config.transform_config(config)
-
 def diffex_models(diffex_config):
     not_models = ['adjustedPValue', 'fold_change']
     model_names = [k for k in diffex_config.keys() if k not in not_models]
     return(model_names)
 
-def expand_DESeq2_model_contrasts(model_contrasts_format, diffex_config):
-    paths = []
+'''Returns contrasts dict in the form of
+{model_name: ['val1_v_val2', 'val3_v_val4']}
+'''
+def DESeq2_contrasts(diffex_config):
+    cont_dict = {}
     for model in diffex_models(diffex_config):
         if 'DESeq2' in diffex_config[model]:
             contrasts = diffex_config[model]['DESeq2']['results']['contrasts']
-            #Create contrast info for filenames
+            #Create contrast info strings
             #Split on ^, throw away first item, then join remaining two with _v_
-            cont_fn = map(lambda x: "_v_".join(x.split("^")[1:]), contrasts)
-            paths.extend(workflow.expand(model_contrasts_format, model_name=model, contrast=cont_fn))
+            cont_str = map(lambda x: "_v_".join(x.split("^")[1:]), contrasts)
+        cont_dict[model] = list(cont_str)
+    return(cont_dict)
+
+def expand_model_contrast_filenames(model_contrasts_format, contrast_dict):
+    paths = []
+    for model in contrast_dict:
+        conts = contrast_dict[model]
+        paths.extend(workflow.expand(model_contrasts_format, model_name=model, contrast=conts))
     return(paths)

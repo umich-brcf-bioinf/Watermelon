@@ -1,0 +1,36 @@
+dirs:
+    alignment_output: str()
+    deliverables_output: str()
+    diffex_output: str()
+    input: str()
+genome: enum('hg38', 'GRCh38', 'hg19', 'GRCh37', 'mm10', 'rn5', 'rn6', 'dm6', 'ce10', 'ce11', 'WBS235', 'GRCz10', 'ecoMG1655', 'ecoUTI89')
+references:
+    entrez_gene_info: str()
+    fasta: str()
+    gtf: str()
+alignment_options:
+    library_type: enum('fr-unstranded', 'fr-firststrand', 'fr-secondstrand', 'unstranded', 'reverse_forward', 'forward_reverse')
+    read_length: int()
+    rsem_ref_prefix: str()
+    transcriptome_only: bool()
+diffex:
+    adjustedPValue: num()
+    fold_change: num()
+    pheno_gender:
+        DESeq2:
+            DESeq2:
+                betaPrior: enum('TRUE', 'FALSE', 'T', 'F', required=False)
+                full: str(required=False)
+            results:
+                contrasts: list(regex('\S+\^\S+\^\S+'), required=False)
+fastq_screen:
+    aligner: str(required=False)
+    reference_basedir: str(required=False)
+    species: str(required=False)
+    subset: int(required=False)
+sample_description_file: str()
+trimming_options:
+    base_quality_3prime: int(required=False)
+    base_quality_5prime: int(required=False)
+    trim_length_3prime: int(required=False)
+    trim_length_5prime: int(required=False)

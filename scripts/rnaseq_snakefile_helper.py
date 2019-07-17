@@ -87,7 +87,6 @@ class PhenotypeManager(object):
 
         Strips all surrounding white space.
 
-        phenotypes_string : delimited phenotype labels (columns)
         sample_phenotype_value_dict : {sample_id : delimited phenotype_value_string} (rows)
         '''
 

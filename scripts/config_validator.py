@@ -9,7 +9,6 @@ import sys
 
 import yaml
 import pandas as pd
-import pdb # TWS DEBUG
 
 from scripts import rnaseq_snakefile_helper
 
@@ -29,7 +28,7 @@ def _is_name_reserved(name):
     return name in _RESERVED_NAMES
 
 '''Returns contrasts dict in the form of
-{model_name: ['val1_v_val2', 'val3_v_val4']}
+{pheno_label: ['val1_v_val2', 'val3_v_val4']}
 Note keys in this dict are from the contrast strings, not the model name
 '''
 def _DESeq2_contrasts(diffex_config):
@@ -148,6 +147,7 @@ class _ConfigValidator(object):
                                      self._check_phenotype_labels_reserved_name,
                                      self._check_phenotype_values_illegal_values,
                                      self._check_phenotype_values_reserved_name,
+                                     self._check_contrast_values_distinct,
                                      self._check_contrast_missing_phenotype_value,
                                      self._check_contrast_missing_phenotype_label,
                                      self._check_contrast_references_unknown_phenotype_label,
@@ -237,7 +237,6 @@ class _ConfigValidator(object):
     def _check_contrast_references_unknown_phenotype_value(self):
         pheno_label_values = []
         phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
-        #print(phenotype_manager.phenotype_sample_list['Gend']['fem'])
         for label, values in phenotype_manager.phenotype_sample_list.items():
             for value in values.keys():
                 pheno_label_values.append((label, value))
@@ -258,7 +257,7 @@ class _ConfigValidator(object):
     def _check_contrast_missing_phenotype_value(self):
         phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
         contrast_pheno_values = set()
-        for pheno_label, pheno_values in self.contrasts.items():
+        for pheno_label, pheno_values in self.contrast_values.items():
             for pheno_value in pheno_values:
                 contrast_pheno_values.add((pheno_label, pheno_value))
 
@@ -272,9 +271,10 @@ class _ConfigValidator(object):
         if pheno_values:
             label_values = [label +':' + ','.join(sorted(values)) for label, values in sorted(pheno_values.items())]
             samples = [label + ':' + ','.join(sorted(samples)) for label, samples in sorted(pheno_samples.items())]
-            msg_fmt = ('Some phenotype values ({}) are not present in [contrasts]; '
-                       'some samples ({}) will be excluded from contrasts for those '
-                       'phenotypes.')
+            msg_fmt = ('Some phenotype values are not present in [contrasts].'
+                       'some samples will be excluded from contrasts for those phenotypes.\n'
+                       'Missing phenotype values: \n({})\n'
+                       'Resulting Excluded samples: \n({})\n')
             raise _WatermelonConfigWarning(msg_fmt,
                                            ';'.join(label_values),
                                            ';'.join(samples))
@@ -292,10 +292,10 @@ class _ConfigValidator(object):
     def _check_samples_excluded_from_contrast(self):
         phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
         all_samples = set(phenotype_manager.sample_phenotype_value_dict.keys())
-        contrast_pheno_labels = self.contrasts.keys()
+        contrast_pheno_labels = self.contrast_values.keys()
         phenotype_sample_list = phenotype_manager.phenotype_sample_list
         all_compared_samples = set()
-        for (pheno_label, pheno_values) in self.contrasts.items():
+        for (pheno_label, pheno_values) in self.contrast_values.items():
             for pheno_value in pheno_values:
                 samples = phenotype_sample_list[pheno_label][pheno_value]
                 all_compared_samples.update(samples)
@@ -378,9 +378,7 @@ def main(config_filename,
         with open(config_filename, 'r') as config_file:
             config = yaml.load(config_file, Loader=yaml.SafeLoader)
         validator = _ConfigValidator(config, log=log)
-        pdb.set_trace()
         validation_collector = validator.validate()
-        pdb.set_trace()
         validation_collector.log_results()
         if validation_collector.ok_to_proceed(prompt_to_override):
             exit_code = 0

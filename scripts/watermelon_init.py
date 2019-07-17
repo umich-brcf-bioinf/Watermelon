@@ -409,9 +409,10 @@ When the config file looks good:
 # start a screen session:
 $ screen -S watermelon{job_suffix}
 # to validate the config and check the execution plan:
-$ watermelon --dry-run -c {config_basename}
+$ snakemake --dry-run --printshellcmds --configfile {config_basename} --snakefile {snakefile_basename}
 # to run:
-$ watermelon -c {config_basename}
+$ snakemake --use-conda --printshellcmds --configfile {config_basename} --snakefile {snakefile_basename} \
+  --profile Watermelon/config/profile-comp5-6
 '''.format(linker_results=linker_results,
            input_summary_text=input_summary_text,
            working_dir=args.x_working_dir,
@@ -422,7 +423,8 @@ $ watermelon -c {config_basename}
            config_relative=os.path.relpath(args.config_file, args.x_working_dir),
            samplesheet_relative=os.path.relpath(args.sample_sheet, args.x_working_dir),
            config_basename=os.path.basename(args.config_file),
-           job_suffix=args.job_suffix,)
+           job_suffix=args.job_suffix,
+           snakefile_basename='rnaseq.snakefile')
     return postlude
 
 def _write_config_file(config_filename, config_dict):
@@ -515,7 +517,7 @@ def main(sys_argv):
 
         print("Copying Watermelon source to " + os.getcwd())
         shutil.copytree(_WATERMELON_ROOT, os.path.join(os.getcwd(), "Watermelon"))
-        os.symlink("Watermelon/bin/watermelon", "watermelon")
+        os.symlink("Watermelon/rnaseq.snakefile", "rnaseq.snakefile")
 
         if os.path.isdir(args.tmp_input_dir):
             shutil.rmtree(args.tmp_input_dir)

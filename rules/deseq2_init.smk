@@ -3,7 +3,6 @@ rule deseq2_init:
     input:
         data_import = DIFFEX_DIR + 'deseq2/counts/txi_rsem_genes.rda',
     output:
-        #expand(DIFFEX_DIR + '{{model_name}}/DESeq2/{contrast}_gene.results', contrast=rnaseq_snakefile_helper.get_DESeq2_model_contrasts(config['diffex'], wildcards.model_name))
         rda = DIFFEX_DIR + 'deseq2/deseq2_init_{model_name}.rda'
     threads: 8
     log:

@@ -4,5 +4,5 @@ channels:
 - defaults
 dependencies:
 - python=3
-- xlsxwriter
-- xlrd
+- xlsxwriter=1.1.8
+- xlrd=1.2.0

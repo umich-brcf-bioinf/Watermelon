@@ -24,6 +24,7 @@ DESEQ2_DIR = os.path.join(DIFFEX_DIR, "deseq2", "")
 BALLGOWN_DIR = os.path.join(DIFFEX_DIR, "ballgown", "")
 
 CONFIGFILE_PATH = workflow.overwrite_configfile
+WORKFLOW_BASEDIR = workflow.basedir
 
 SAMPLES_KEY = 'samples'
 
@@ -42,11 +43,6 @@ rnaseq_snakefile_helper.init_references(config["references"])
 
 SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(INPUT_DIR, config[SAMPLES_KEY])
 
-#Perform config validation
-schema_filepath = os.path.join(workflow.basedir, 'config', 'config_schema.yaml')
-config_validation_exit_code = config_validator.main(CONFIGFILE_PATH, schema_filepath)
-if config_validation_exit_code == 1:
-    exit(1)
 
 #Set up emailing functionality
 def email(subject_prefix):
@@ -63,7 +59,20 @@ def email(subject_prefix):
                 )
         shell(command)
 
+#Perform config validation if dryrun
+if set(['-n', '--dry-run']).intersection(set(sys.argv)):
+    schema_filepath = os.path.join(workflow.basedir, 'config', 'config_schema.yaml')
+    config_validation_exit_code = config_validator.main(CONFIGFILE_PATH, schema_filepath)
+    if config_validation_exit_code:
+        exit(config_validation_exit_code)
+
+
 onstart:
+    #Perform config validation before starting
+    schema_filepath = os.path.join(workflow.basedir, 'config', 'config_schema.yaml')
+    config_validation_exit_code = config_validator.main(CONFIGFILE_PATH, schema_filepath)
+    if config_validation_exit_code:
+        exit(config_validation_exit_code)
     email('Watermelon started: ')
 onsuccess:
     email('Watermelon completed ok: ')
@@ -147,15 +156,19 @@ RSEM_ALL = [
 ]
 
 DELIVERABLES = [
-    #align_deliverables
+    #align deliverables
     rnaseq_snakefile_helper.expand_sample_read_endedness(
         DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
         SAMPLE_READS),
     expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
         sample=config["samples"]),
     DELIVERABLES_DIR + "alignment/alignment_qc.html",
-    #deseq2_deliverables
-    DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt" #TWS - why does this rule only have one provided output?
+    #deseq2 deliverables
+    DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt", #TWS - why does this rule only have one provided output?
+    #run info deliverables
+    DELIVERABLES_DIR + "run_info/env_software_versions.yaml",
+    DELIVERABLES_DIR + "run_info/" + os.path.basename(CONFIGFILE_PATH),
+    DELIVERABLES_DIR + "run_info/" + os.path.basename(config['sample_description_file'])
 ]
 
 
@@ -193,7 +206,7 @@ include: 'rules/align_rsem_star.smk'
 include: 'rules/rsem_star_genome_generate.smk'
 
 include: 'rules/deliverables_deseq2.smk'
-#include: 'rules/deliverables_run_info.smk'
+include: 'rules/deliverables_run_info.smk'
 
 
 rule all:

@@ -16,7 +16,7 @@ rule rsem_star_genome_generate:
     log:
         join(ALIGNMENT_DIR, '03-rsem_star_genome_generate', '.log', 'rsem_star_genome_generate.log')
     conda:
-        '../envs/rsem_star.yaml'
+        'envs/rsem_star.yaml'
     benchmark:
         join(ALIGNMENT_DIR, 'benchmarks', 'rsem_star_genome_generate.benchmark.txt')
     threads: 12

@@ -3,6 +3,8 @@ channels:
   - bioconda
   - conda-forge
   - defaults
+  - twsaari
 dependencies:
   - snakemake=5
   - conda
+  - yamale=1.10.0

@@ -12,6 +12,8 @@ rule rsem_star_align:
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam',
+        ALIGNMENT_DIR + "04-rsem_star_align/{sample}.stat/{sample}.cnt",
+
     log:
         ALIGNMENT_DIR + '04-rsem_star_align/.log/{sample}.rsem_star_align.log'
     conda:

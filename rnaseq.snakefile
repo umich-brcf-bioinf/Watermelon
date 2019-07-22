@@ -25,6 +25,7 @@ BALLGOWN_DIR = os.path.join(DIFFEX_DIR, "ballgown", "")
 
 CONFIGFILE_PATH = workflow.overwrite_configfile
 WORKFLOW_BASEDIR = workflow.basedir
+CONFIG_SCHEMA_PATH = os.path.join(workflow.basedir, 'config', 'config_schema.yaml')
 
 SAMPLES_KEY = 'samples'
 
@@ -59,20 +60,22 @@ def email(subject_prefix):
                 )
         shell(command)
 
-#Perform config validation if dryrun
-if set(['-n', '--dry-run']).intersection(set(sys.argv)):
-    schema_filepath = os.path.join(workflow.basedir, 'config', 'config_schema.yaml')
-    config_validation_exit_code = config_validator.main(CONFIGFILE_PATH, schema_filepath)
+#function to call config_validator
+def validate_config(config_fp, schema_fp):
+    config_validation_exit_code = config_validator.main(config_fp, schema_fp)
     if config_validation_exit_code:
         exit(config_validation_exit_code)
 
+
+
+#Perform config validation if dryrun
+if set(['-n', '--dryrun']).intersection(set(sys.argv)):
+    validate_config(CONFIGFILE_PATH, CONFIG_SCHEMA_PATH)
 
 onstart:
     #Perform config validation before starting
-    schema_filepath = os.path.join(workflow.basedir, 'config', 'config_schema.yaml')
-    config_validation_exit_code = config_validator.main(CONFIGFILE_PATH, schema_filepath)
-    if config_validation_exit_code:
-        exit(config_validation_exit_code)
+    validate_config(CONFIGFILE_PATH, CONFIG_SCHEMA_PATH)
+
     email('Watermelon started: ')
 onsuccess:
     email('Watermelon completed ok: ')
@@ -152,7 +155,8 @@ RSEM_ALL = [
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results', sample=config[SAMPLES_KEY]),
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results', sample=config[SAMPLES_KEY]),
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam', sample=config[SAMPLES_KEY]),
-    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY])
+    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY]),
+    ALIGNMENT_DIR + "07-qc/alignment_qc.html"
 ]
 
 DELIVERABLES = [

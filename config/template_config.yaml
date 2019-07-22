@@ -1,7 +1,3 @@
-email:
-  subject: watermelon_mm-dd-yyyy
-  to: cgates@umich.edu
-
 dirs:
   alignment_output: alignment_results
   diffex_output: diffex_results

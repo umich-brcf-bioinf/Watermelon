@@ -19,7 +19,7 @@ diffex:
     pheno_gender:
         DESeq2:
             DESeq2:
-                betaPrior: enum('TRUE', 'FALSE', 'T', 'F', required=False)
+                betaPrior: bool(required=False)
                 full: str(required=False)
             results:
                 contrasts: list(regex('\S+\^\S+\^\S+'), required=False)

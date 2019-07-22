@@ -139,7 +139,10 @@ class _ConfigValidator(object):
     def __init__(self, config, schema_filename, log=sys.stderr):
         self.config = config
         self.schema_filename = schema_filename
-        self.samplesheet = pd.read_csv(config['sample_description_file'])
+        try:
+            self.samplesheet = pd.read_csv(config['sample_description_file'])
+        except:
+            print('problem reading samplesheet')
         self.contrasts = _DESeq2_contrasts(config['diffex'])
         self.contrast_values = _DESeq2_contrast_vals(self.contrasts)
         self._log = log

@@ -32,6 +32,7 @@ from collections import defaultdict, OrderedDict
 import datetime
 import errno
 import functools
+import getpass
 import itertools
 import os
 import shutil
@@ -328,12 +329,12 @@ def _validate_sample_sheet(samples, sheet_file):
 
 def _make_config_dict(template_config, genome_references, args, samples):
     config = dict(template_config)
-
-    dirs = config['dirs']
-    dirs['dirs_input'] = os.path.join(args.input_dir,
+    #add input dir
+    config['dirs']['input'] = os.path.join(args.input_dir,
                                                 args.input_samples_dir)
-    config['dirs'] = dirs
-
+    #add email params
+    config['email'] = {'subject' : 'watermelon_' + _timestamp(), 'to' : getpass.getuser() + '@umich.edu'}
+    #add rsem reference prefix
     if 'alignment_options' in config:
         config['alignment_options']['rsem_ref_prefix'] = args.genome_build
 
@@ -406,10 +407,10 @@ When the config file looks good:
 # start a screen session:
 $ screen -S watermelon{job_suffix}
 # to validate the config and check the execution plan:
-$ snakemake --dry-run --printshellcmds --configfile {config_basename} --snakefile {snakefile_basename}
+$ snakemake --dryrun --printshellcmds --configfile {config_basename} --snakefile {snakefile_path}
 # to run:
-$ snakemake --use-conda --printshellcmds --configfile {config_basename} --snakefile {snakefile_basename} \
-  --profile Watermelon/config/profile-comp5-6
+$ snakemake --use-conda --printshellcmds --configfile {config_basename} --snakefile {snakefile_path} \
+--profile Watermelon/config/profile-comp5-6
 '''.format(linker_results=linker_results,
            input_summary_text=input_summary_text,
            working_dir=args.x_working_dir,
@@ -421,7 +422,7 @@ $ snakemake --use-conda --printshellcmds --configfile {config_basename} --snakef
            samplesheet_relative=os.path.relpath(args.sample_sheet, args.x_working_dir),
            config_basename=os.path.basename(args.config_file),
            job_suffix=args.job_suffix,
-           snakefile_basename='rnaseq.snakefile')
+           snakefile_path='Watermelon/rnaseq.snakefile')
     return postlude
 
 def _write_config_file(config_filename, config_dict):
@@ -514,7 +515,6 @@ def main(sys_argv):
 
         print("Copying Watermelon source to " + os.getcwd())
         shutil.copytree(_WATERMELON_ROOT, os.path.join(os.getcwd(), "Watermelon"))
-        os.symlink("Watermelon/rnaseq.snakefile", "rnaseq.snakefile")
 
         if os.path.isdir(args.tmp_input_dir):
             shutil.rmtree(args.tmp_input_dir)

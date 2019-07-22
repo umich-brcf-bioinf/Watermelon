@@ -113,6 +113,7 @@ class WatermelonInitTest(unittest.TestCase):
                          input_samples_dir='INPUT_SAMPLES_DIR',
                          analysis_dir='ANALYSIS_DIR',
                          config_file='path/to/CONFIG_FILE',
+                         sample_sheet='path/to/SAMPLE_SHEET',
                          job_suffix='_JOB_SUFFIX',
                          x_working_dir='WORKING_DIR')
         linker_results = 'LINKER_RESULTS\n'

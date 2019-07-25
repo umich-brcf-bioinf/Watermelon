@@ -42,7 +42,6 @@ import traceback
 
 import pandas as pd
 import yaml
-import pdb
 
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
@@ -211,6 +210,12 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
+#https://stackoverflow.com/a/12687372
+def _copy_and_overwrite(source, dest):
+    if os.path.exists(dest):
+        shutil.rmtree(dest)
+    shutil.copytree(source, dest)
+
 import collections
 
 def _dict_merge(dct, merge_dct):
@@ -242,14 +247,15 @@ def _link_run_dirs(args, linker):
         linker.copytree(run_dir, watermelon_run_dir)
 
 def _merge_sample_dirs(args):
+    #TWS - FIXME: This is inflexible, prone to breakage, ugly, etc.
     j = os.path.join
     watermelon_runs_dir = os.path.abspath(j(args.tmp_input_dir,
                                             args.input_runs_dir))
     watermelon_samples_dir = os.path.abspath(j(args.tmp_input_dir,
                                                args.input_samples_dir))
     _mkdir(watermelon_samples_dir)
-    for run_dir in os.listdir(watermelon_runs_dir):
-        for sample_dir in os.listdir(j(watermelon_runs_dir, run_dir)):
+    for run_dir in [d for d in os.listdir(watermelon_runs_dir) if os.path.isdir(j(watermelon_runs_dir, d))]:
+        for sample_dir in [d for d in os.listdir(j(watermelon_runs_dir, run_dir)) if os.path.isdir(j(watermelon_runs_dir, run_dir, d))]:
             new_sample_dir = j(watermelon_samples_dir, sample_dir)
             _mkdir(new_sample_dir)
             files = os.listdir(j(watermelon_runs_dir, run_dir, sample_dir))
@@ -329,11 +335,13 @@ def _validate_sample_sheet(samples, sheet_file):
 
 def _make_config_dict(template_config, genome_references, args, samples):
     config = dict(template_config)
+    #Fill in job suffix for output dirs
+    for out_dir in config['dirs']:
+        config['dirs'][out_dir] = out_dir.format(job_suffix = args.job_suffix)
     #add input dir
-    config['dirs']['input'] = os.path.join(args.input_dir,
-                                                args.input_samples_dir)
+    config['dirs']['input'] = os.path.join(args.input_dir, args.input_samples_dir)
     #add email params
-    config['email'] = {'subject' : 'watermelon_' + _timestamp(), 'to' : getpass.getuser() + '@umich.edu'}
+    config['email'] = {'subject' : 'watermelon' + args.job_suffix, 'to' : getpass.getuser() + '@umich.edu'}
     #add rsem reference prefix
     if 'alignment_options' in config:
         config['alignment_options']['rsem_ref_prefix'] = args.genome_build
@@ -514,7 +522,7 @@ def main(sys_argv):
         _CommandValidator().validate_args(args)
 
         print("Copying Watermelon source to " + os.getcwd())
-        shutil.copytree(_WATERMELON_ROOT, os.path.join(os.getcwd(), "Watermelon"))
+        _copy_and_overwrite(source=_WATERMELON_ROOT, dest=os.path.join(os.getcwd(), "Watermelon"))
 
         if os.path.isdir(args.tmp_input_dir):
             shutil.rmtree(args.tmp_input_dir)

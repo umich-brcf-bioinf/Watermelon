@@ -1,7 +1,7 @@
 dirs:
-  alignment_output: alignment_results
-  diffex_output: diffex_results
-  deliverables_output: deliverables
+  alignment_output: analysis{job_suffix}/alignment_results
+  diffex_output: analysis{job_suffix}/diffex_results
+  deliverables_output: analysis{job_suffix}/deliverables
 
 trimming_options:
     base_quality_5prime: 0

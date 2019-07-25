@@ -4,6 +4,7 @@
 .nfs*
 rules/.nfs*
 scripts/.nfs*
+envs/built/
 
 scripts/.Rhistory
 

@@ -381,7 +381,15 @@ class _ConfigValidator(object):
                                            ', '.join(bad_label_value_strings))
 
 def prompt_to_override():
-    value = input('Should Watermelon ignore these problems and proceed? (yes/no): ')
+    while True:
+        value = input('Should Watermelon ignore these problems and proceed? (yes/no): ')
+
+        if value not in ['yes', 'no']:
+            print("Response must be either 'yes' or 'no'")
+            continue
+        else:
+            break
+
     return value.lower().strip() == 'yes'
 
 def main(config_filename,

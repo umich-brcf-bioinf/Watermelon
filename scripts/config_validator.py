@@ -28,23 +28,6 @@ def _is_name_well_formed(name):
 def _is_name_reserved(name):
     return name in _RESERVED_NAMES
 
-'''Returns contrasts dict in the form of
-{pheno_label: ['val1_v_val2', 'val3_v_val4']}
-Note keys in this dict are from the contrast strings, not the model name
-'''
-def _DESeq2_contrasts(diffex_config):
-    cont_dict = defaultdict(list)
-    for model in rnaseq_snakefile_helper.diffex_models(diffex_config):
-        if 'DESeq2' in diffex_config[model]:
-            contrasts = diffex_config[model]['DESeq2']['results']['contrasts']
-            #Create contrast info strings
-            #Split on ^, throw away first item, then join remaining two with _v_
-            cont_strs = map(lambda x: "_v_".join(x.split("^")[1:]), contrasts)
-            phenos = map(lambda x: x.split("^")[0], contrasts)
-            for pheno, str in zip(phenos, cont_strs):
-                cont_dict[pheno].append(str)
-    return(cont_dict)
-
 '''Returns contrast values dict in the form of
 {pheno_label: ['val1', 'val2', 'val3', 'val4']}
 Note keys in this dict are from the contrast strings, not the model name
@@ -143,7 +126,7 @@ class _ConfigValidator(object):
             self.samplesheet = pd.read_csv(config['sample_description_file'])
         except:
             print('problem reading samplesheet')
-        self.contrasts = _DESeq2_contrasts(config['diffex'])
+        self.contrasts = rnaseq_snakefile_helper.diffex_contrasts(config['diffex'])
         self.contrast_values = _DESeq2_contrast_vals(self.contrasts)
         self._log = log
         self._PARSING_VALIDATIONS = [self._check_config_against_schema,

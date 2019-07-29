@@ -106,7 +106,7 @@ else:
     FASTQ_SCREEN_ALIGNMENT = []
     FASTQ_SCREEN_DELIVERABLES = []
 
-DESEQ2_CONTRAST_DICT = rnaseq_snakefile_helper.DESeq2_contrasts(config['diffex'])
+DESEQ2_CONTRAST_DICT = rnaseq_snakefile_helper.diffex_contrasts(config['diffex'])
 DESeq2_ALL = [
     #deseq2_counts
     DIFFEX_DIR + 'deseq2/counts/txi_rsem_genes.rda',

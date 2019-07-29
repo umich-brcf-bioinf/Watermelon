@@ -248,28 +248,23 @@ def expand_read_stats_if_paired(read_stats_filename_format,
         result.append(read_stats_filename_format.format(sample=sample))
     return result
 
-def diffex_models(diffex_config):
-    not_models = ['adjustedPValue', 'fold_change']
-    model_names = [k for k in diffex_config.keys() if k not in not_models]
-    return(model_names)
+def diffex_factors(diffex_config):
+    not_factors = ['adjustedPValue', 'fold_change']
+    factor_names = [k for k in diffex_config.keys() if k not in not_factors]
+    return(factor_names)
 
 '''Returns contrasts dict in the form of
-{model_name: ['val1_v_val2', 'val3_v_val4']}
+{factor_name: ['val1_v_val2', 'val3_v_val4']}
 '''
-def DESeq2_contrasts(diffex_config):
+def diffex_contrasts(diffex_config):
     cont_dict = {}
-    for model in diffex_models(diffex_config):
-        if 'DESeq2' in diffex_config[model]:
-            contrasts = diffex_config[model]['DESeq2']['results']['contrasts']
-            #Create contrast info strings
-            #Split on ^, throw away first item, then join remaining two with _v_
-            cont_str = map(lambda x: "_v_".join(x.split("^")[1:]), contrasts)
-        cont_dict[model] = list(cont_str)
+    for factor in diffex_factors(diffex_config):
+        cont_dict[factor] = diffex_config[factor]['contrasts']
     return(cont_dict)
 
 def expand_model_contrast_filenames(model_contrasts_format, contrast_dict):
     paths = []
     for model in contrast_dict:
         conts = contrast_dict[model]
-        paths.extend(workflow.expand(model_contrasts_format, model_name=model, contrast=conts))
+        paths.extend(workflow.expand(model_contrasts_format, factor_name=model, contrast=conts))
     return(paths)

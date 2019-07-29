@@ -4,7 +4,7 @@ log = file(snakemake@log[[1]], open='wt')
 sink(log, split=TRUE)
 save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
-#load("/nfs/med-bfx-activeprojects/trsaari/example_output_Watermelon/diffex_results/deseq2/gene_lists/pheno_gender/DM.fem_v_NDM.fem_snakemake.rda") #TWS DEBUG
+#load("/nfs/med-bfx-activeprojects/trsaari/sandbox/20190725_test_Delono_RS1/analysis_test_Delano_RS1/diffex_results/deseq2/gene_lists/phenotype.CellState.treatment/DIO.WCLP.none_v_DIO.DCLP.none_snakemake.rda") #TWS DEBUG
 
 ##########
 # Load libraries
@@ -15,21 +15,13 @@ foo = suppressMessages(lapply(lib.vector, library, character.only=T, warn.confli
 ##########
 # Main
 
-factor_name = snakemake@wildcards[['factor_name']]
+factorName = snakemake@wildcards[['factor_name']]
 
-#Match contrasts wildcard with contrast from comparison config
-#all of this is just to ensure that the correct factorName is used, which can only be pulled from the config
-#Wildcard portion
-contrast.wc = snakemake@wildcards[['contrast']]
-base.file.name = contrast.wc #Assign base filename using contrast wildcard
-cont.wc.split = unlist(strsplit(contrast.wc, "_v_"))
-cont.wc.rejoined = paste(cont.wc.split[[1]], cont.wc.split[[2]], sep="^")
-#Config portion
-contrast.conf = snakemake@config[['diffex']][[factor_name]][['DESeq2']][['results']][['contrasts']]
-cont.match = contrast.conf[which(grepl(cont.wc.rejoined, contrast.conf, fixed=T))] #Find the match
-#Define the variables from this
-conparts = unlist(strsplit(cont.match, "^", fixed=T))
-factorName = conparts[1] ; testName = conparts[2] ; referenceName = conparts[3]
+contrast = snakemake@wildcards[['contrast']]
+base.file.name = contrast #Assign base filename using contrast wildcard
+cont.split = unlist(strsplit(contrast, "_v_"))
+#Define the test and reference name from this
+testName = cont.split[1] ; referenceName = cont.split[2]
 
 # Establish cutoffs
 fdr_cutoff = as.numeric(snakemake@config[['diffex']][['adjustedPValue']])
@@ -48,12 +40,26 @@ message(sprintf('Testing %s: %s vs %s', factorName, testName, referenceName))
 # Load DESeq dataset, generated via deseq2_init into variable dds
 load(snakemake@input[['rda']])
 
+
+results.params = snakemake@config[['diffex']][[factorName]][['DESeq2']][['results']]
+# Parse the params for results {DESeq2} call, if it can't be converted return it as string
+results.params.parsed = lapply(results.params, function(x) {
+  tryCatch(eval(parse(text=x)),
+  error=function(e){
+    message(paste0("DESeq2 config parameter '", x, "' not parsable to known R type. Leaving as string"))
+    x=as.character(x)
+  })
+})
+
+# Add dds object to params list
+results.params.parsed[['object']] = dds
+# Set parallel to TRUE
+results.params.parsed[['parallel']] = TRUE
+
 # Grab the results
-res = results(
-  dds,
-  contrast = list(paste0(factorName, testName), paste0(factorName, referenceName)),
-  parallel = T
-)
+res = do.call(results, results.params.parsed)
+
+# Order by adjusted p value
 res = res[order(res$padj),]
 
 diffexData = as.data.frame(res)
@@ -70,12 +76,6 @@ diffexData$Call = rep('NO', nrow(diffexData))
 diffexData$Call[which(diffexData$padj <= fdr_cutoff & abs(diffexData$log2FoldChange) >= fc_cutoff)] = 'YES'
 diffexData = diffexData[order(-rank(diffexData$Call), diffexData$pvalue), ]
 
-# Add the individual diffexData to the collection
-# de_results[[factorName]][[baseName]] = list(gene_list = diffexData)
-
-# TWS - Will need to see if/how subsequent steps depend on de_results structure
-# Will have to decide if it makes sense to just read in the table files or to load in the different rdata files
-# They're going to be separate with the new paradigm anyways.
 
 #write to individual tab-delimited txt files
 message('Writing diffex genes')

@@ -1,7 +1,7 @@
 rule deliverables_deseq2:
     input:
         gene_lists = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-            DIFFEX_DIR + "deseq2/excel/{model_name}/{contrast}.xlsx",
+            DIFFEX_DIR + "deseq2/excel/{factor_name}/{contrast}.xlsx",
             DESEQ2_CONTRAST_DICT),
         summary_txt = DIFFEX_DIR + "deseq2/summary/deseq2_summary.txt",
         summary_xlsx = DIFFEX_DIR + "deseq2/summary/deseq2_summary.xlsx",

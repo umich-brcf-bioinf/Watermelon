@@ -15,7 +15,7 @@ foo = suppressMessages(lapply(lib.vector, library, character.only=T, warn.confli
 ##########
 # Main
 
-model_name = snakemake@wildcards[['model_name']]
+factor_name = snakemake@wildcards[['factor_name']]
 
 #Match contrasts wildcard with contrast from comparison config
 #all of this is just to ensure that the correct factorName is used, which can only be pulled from the config
@@ -25,7 +25,7 @@ base.file.name = contrast.wc #Assign base filename using contrast wildcard
 cont.wc.split = unlist(strsplit(contrast.wc, "_v_"))
 cont.wc.rejoined = paste(cont.wc.split[[1]], cont.wc.split[[2]], sep="^")
 #Config portion
-contrast.conf = snakemake@config[['diffex']][[model_name]][['DESeq2']][['results']][['contrasts']]
+contrast.conf = snakemake@config[['diffex']][[factor_name]][['DESeq2']][['results']][['contrasts']]
 cont.match = contrast.conf[which(grepl(cont.wc.rejoined, contrast.conf, fixed=T))] #Find the match
 #Define the variables from this
 conparts = unlist(strsplit(cont.match, "^", fixed=T))
@@ -45,15 +45,6 @@ pdata = read.csv(sample.info.file)
 
 message(sprintf('Testing %s: %s vs %s', factorName, testName, referenceName))
 
-# Collect test samples in a list
-testSamples = subset(x=pdata, subset=pdata[, factorName] == testName)
-# Collect reference samples in a list
-referenceSamples = subset(x=pdata, subset=pdata[, factorName] == referenceName)
-
-# TWS - The above is imitating the previous approach, but are we really only interested in the # samples in each (for listValues?)
-# resultsNames of dds are "pheno.GendDM.fem"   "pheno.GendDM.male"  "pheno.GendNDM.fem"  "pheno.GendNDM.male"
-# So I'll set the contrast up as below, i.e. using paste0
-
 # Load DESeq dataset, generated via deseq2_init into variable dds
 load(snakemake@input[['rda']])
 
@@ -61,8 +52,7 @@ load(snakemake@input[['rda']])
 res = results(
   dds,
   contrast = list(paste0(factorName, testName), paste0(factorName, referenceName)),
-  parallel = T,
-  listValues = c(1/nrow(testSamples), -1/nrow(referenceSamples)) #TWS - should we make this adjustable?
+  parallel = T
 )
 res = res[order(res$padj),]
 

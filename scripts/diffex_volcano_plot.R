@@ -112,12 +112,12 @@ gene_list = read.table(snakemake@input[['gene_list']], sep="\t", header = T)
 
 # Volcano plot
 out_file = snakemake@output[['volcano_plot']]
-model_name = snakemake@wildcards[['model_name']]
+factor_name = snakemake@wildcards[['factor_name']]
 contrast_name = snakemake@wildcards[['contrast']]
 exp = unlist(str_split(contrast_name, '_v_'))[1]
 con = unlist(str_split(contrast_name, '_v_'))[2]
 
-message(sprintf('Plotting volcano plot for %s %s', model_name, contrast_name))
+message(sprintf('Plotting volcano plot for %s %s', factor_name, contrast_name))
 
 #gene_list = data.frame(de_results[[comparison_type]][[comparison]][['gene_list']])
 

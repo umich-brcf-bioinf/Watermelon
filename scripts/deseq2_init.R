@@ -13,8 +13,8 @@ suppressMessages(library(DESeq2, warn.conflicts=F, quietly=T))
 # Main
 
 # Get deseq params from config
-model_name = snakemake@wildcards[['model_name']]
-deseq2.params = snakemake@config[['diffex']][[model_name]][['DESeq2']][['DESeq2']]
+factor_name = snakemake@wildcards[['factor_name']]
+deseq2.params = snakemake@config[['diffex']][[factor_name]][['DESeq2']][['DESeq2']]
 # Get phenotype matrix
 sample.info.file = snakemake@config[['sample_description_file']]
 pdata = read.csv(sample.info.file)

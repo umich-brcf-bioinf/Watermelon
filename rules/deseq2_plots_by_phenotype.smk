@@ -17,8 +17,6 @@ rule deseq2_plots_by_phenotype:
         expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
         expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
         expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES)
-        #expand(DIFFEX_DIR + '{{model_name}}/DESeq2/plots/MDSplot_{dim}_top{ngenes}.pdf', dim = ['12','23'], ngenes = ['100','500']),
-        #rda = DIFFEX_DIR + '{model_name}/DESeq2/deseq2_init.rda'
     log:
         DIFFEX_DIR + 'deseq2/plots/by_phenotype/.log/deseq2_plots_by_phenotype.log'
     conda:

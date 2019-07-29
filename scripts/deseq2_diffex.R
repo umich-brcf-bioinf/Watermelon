@@ -69,8 +69,8 @@ named.filepaths.from.dir <- function(rsem.dir, file.extension) {
 # gene_lists_dir = sprintf('%s/gene_lists', results_dir)
 
 # Get comparison info
-model_name = snakemake@wildcards[['model_name']]
-deseq2.params = snakemake@config[['diffex']][[model_name]][['DESeq2']][['DESeq2']]
+factor_name = snakemake@wildcards[['factor_name']]
+deseq2.params = snakemake@config[['diffex']][[factor_name]][['DESeq2']][['DESeq2']]
 
 # Get phenotype matrix
 sample.info.file = snakemake@config[['sample_description_file']]

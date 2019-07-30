@@ -129,7 +129,7 @@ class _ConfigValidator(object):
         self.contrasts = rnaseq_snakefile_helper.diffex_contrasts(config['diffex'])
         self.contrast_values = _DESeq2_contrast_vals(self.contrasts)
         self._log = log
-        self._PARSING_VALIDATIONS = [self._check_config_against_schema,
+        self._PARSING_VALIDATIONS = [#self._check_config_against_schema,
                                      self._check_phenotype_labels_not_unique,
                                      self._check_contrasts_not_a_pair]
         self._CONTENT_VALIDATIONS = [self._check_phenotype_labels_illegal_values,

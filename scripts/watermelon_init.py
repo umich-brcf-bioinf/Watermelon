@@ -212,10 +212,11 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
-#Exclude .git/ and /envs/built (speed)
 def _copy_and_overwrite(source, dest):
     if os.path.exists(dest):
         shutil.rmtree(dest)
+    source = os.path.join(source, "") #Add trailing slash for rsync's sake
+    #Exclude .git/ and /envs/built (speed)
     subprocess.call(["rsync", "-a", "--exclude", "\".*\"", "--exclude", "envs/built", source, dest])
 
 def _dict_merge(dct, merge_dct):

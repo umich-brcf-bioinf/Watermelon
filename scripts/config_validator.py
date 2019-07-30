@@ -6,9 +6,9 @@ from itertools import chain
 import os
 import re
 import sys
+from snakemake import utils # Using utils.validate, keeping the utils name to prevent confusion
 
 import yaml
-import yamale
 import pandas as pd
 
 from scripts import rnaseq_snakefile_helper
@@ -157,11 +157,9 @@ class _ConfigValidator(object):
         return collector
 
     def _check_config_against_schema(self):
-        schema = yamale.make_schema(self.schema_filename)
-        data = [yamale.schema.Data(self.config)]
         try:
-            yamale.validate(schema, data)
-        except ValueError as msg:
+            utils.validate(self.config, self.schema_filename) #snakemake utils schema validator
+        except Exception as msg:
             raise(_WatermelonConfigFailure(str(msg)))
 
     def _check_phenotype_has_replicates(self):

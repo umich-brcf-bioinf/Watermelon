@@ -1,2 +1,4 @@
+printshellcmds: True
+conda-prefix: /ccmb/BioinfCore/ActiveProjects/trsaari/Watermelon/envs/built/
 cores: 40
 resources: memoryInGb=128

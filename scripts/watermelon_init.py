@@ -19,7 +19,7 @@ Specifically:
    a) adjust genome and references to match the experiment
    b) adjust trimming, alignment, and fastq_screen options
    c) specify diffex parameters, and add  DESeq2 calls and contrasts
-      based on the example pheno_gender stanza (can add as many similar stanzas
+      based on the example pheno.Gend stanza (can add as many similar stanzas
       as required by the experiment)
 
 3) watermelon-init creates a readme file that lists basic info about when/how it was run,
@@ -28,7 +28,7 @@ Specifically:
 #pylint: disable=locally-disabled,no-member
 from __future__ import print_function, absolute_import, division
 import argparse
-from collections import defaultdict, OrderedDict
+from collections import defaultdict, OrderedDict, Mapping
 import datetime
 import errno
 import functools
@@ -36,6 +36,7 @@ import getpass
 import itertools
 import os
 import shutil
+import subprocess
 import sys
 import time
 import traceback
@@ -180,10 +181,11 @@ _CONFIG_PRELUDE = '''# config created {timestamp}
 # ------
 # 1) Review genome and references
 # 2) Review alignment, trimming, and fastq_screen options
-# 3) Modify the diffex options - use the pheno_gender stanza as an example, and
-#    set up the DESeq2 calls and comparisons that match the analysis. For example,
-#    the contrasts should contain phenotype labels and values which correspond
-#    to the column names and values in the sample sheet, respectively.
+# 3) Modify the diffex options - use the pheno.Gend stanza as an example, and
+#    set up the DESeq2 calls and results calls for the comparisons that match the analysis.
+#    For example, pheno.Gend should be changed to a factor which corresponds to a column name
+#    in the samplesheet, and the values in the contrasts should corresond to values within
+#    that column of the samplesheet.
 '''.format(timestamp=_timestamp())
 
 def _setup_yaml():
@@ -210,13 +212,11 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
-#https://stackoverflow.com/a/12687372
+#Exclude .git/ and /envs/built (speed)
 def _copy_and_overwrite(source, dest):
     if os.path.exists(dest):
         shutil.rmtree(dest)
-    shutil.copytree(source, dest)
-
-import collections
+    subprocess.call(["rsync", "-a", "--exclude", "\".*\"", "--exclude", "envs/built", source, dest])
 
 def _dict_merge(dct, merge_dct):
     """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
@@ -230,7 +230,7 @@ def _dict_merge(dct, merge_dct):
     # https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
     for k, v in merge_dct.items():
         if (k in dct and isinstance(dct[k], dict)
-                and isinstance(merge_dct[k], collections.Mapping)):
+                and isinstance(merge_dct[k], Mapping)):
             _dict_merge(dct[k], merge_dct[k])
         else:
             dct[k] = merge_dct[k]
@@ -405,12 +405,13 @@ config:
 -------------------------------
 1) Review genome and references
 2) Review alignment, trimming, and fastq_screen options
-3) Modify the diffex options - use the pheno_gender stanza as an example, and
-   set up the DESeq2 calls and comparisons that match the analysis. For example,
-   the contrasts should contain phenotype labels and values which correspond
-   to the column names and values in the sample sheet.
+3) Modify the diffex options - use the pheno.Gend stanza as an example, and
+   set up the DESeq2 calls and results calls for the comparisons that match the analysis.
+   For example, pheno.Gend should be changed to a factor which corresponds to a column name
+   in the samplesheet, and the values in the contrasts should corresond to values within
+   that column of the samplesheet.
 
-When the config file looks good:
+When the config & samplesheet look good:
 --------------------------------
 # start a screen session:
 $ screen -S watermelon{job_suffix}

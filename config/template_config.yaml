@@ -11,7 +11,7 @@ trimming_options:
 
 alignment_options:
     transcriptome_only: True
-    library_type: fr-unstranded #forward_reverse #reverse_forward
+    library_type: unstranded #other options: forward_reverse #reverse_forward
     read_length: 50
 
 fastq_screen:
@@ -22,15 +22,29 @@ fastq_screen:
 diffex:
     fold_change: 1.5
     adjustedPValue: 0.05
-    #The following is an example DESeq2 stanza
-    pheno_gender:
+    #The following is an example Diffex stanza.
+    #The factor of interest (e.g. pheno.Gend) forms the parent node.
+    pheno.Gend:
+        #Several contrasts of the form testVal_v_referenceVal are listed.
+        contrasts:
+            - DM.male_v_NDM.male
+            - DM.fem_v_NDM.fem
+            - DM.fem_v_DM.male
+            - NDM.fem_v_NDM.male
         DESeq2:
+            #The following parameters are directly parsed by R
+            #and used within the call to DESeq2().
+            #The imported DESeq2Dataset is passed by default and isn't listed here.
             DESeq2:
                 full: ~ pheno.Gend
                 betaPrior: TRUE
+            #The below parameters are also parsed by R and used to call results() {DESeq2}.
+            #The initialized DESeq2Dataset is passed by default and isn't listed here.
+            #There are several ways to list the contrast parameter. This way produces results equivalent to
+            #previous Watermelon pipelines. The variables factorName, testName, & referenceName are defined
+            #within the Rscript. Using the first contrast as an example this would parse to
+            #list('pheno.GendDM.male', 'pheno.GendNDM.male'), which are the two elements
+            #of resultsNames() which are relevant for that comparison.
             results:
-                contrasts:
-                    - pheno.Gend^DM.male^NDM.male
-                    - pheno.Gend^DM.fem^NDM.fem
-                    - pheno.Gend^DM.fem^DM.male
-                    - pheno.Gend^NDM.fem^NDM.male
+                contrast:
+                    list(paste0(factorName, testName), paste0(factorName, referenceName))

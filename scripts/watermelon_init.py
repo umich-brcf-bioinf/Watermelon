@@ -325,7 +325,7 @@ def _validate_sample_sheet(samples, sheet_file):
         msg = ("The specified sample sheet file {} cannot be found.".format(sheet_file))
         raise _InputValidationError(msg)
 
-    samplesheet = pd.read_csv(sheet_file).set_index("sample", drop=True)
+    samplesheet = pd.read_csv(sheet_file, comment='#').set_index("sample", drop=True)
     sheet_samples = set(samplesheet.index)
     input_samples = set(samples)
 

@@ -123,7 +123,7 @@ class _ConfigValidator(object):
         self.config = config
         self.schema_filename = schema_filename
         try:
-            self.samplesheet = pd.read_csv(config['sample_description_file'])
+            self.samplesheet = pd.read_csv(config['sample_description_file'], comment='#')
         except:
             print('problem reading samplesheet')
         self.contrasts = rnaseq_snakefile_helper.diffex_contrasts(config['diffex'])

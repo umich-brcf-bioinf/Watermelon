@@ -182,7 +182,7 @@ ALL = RSEM_ALL + DESeq2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
 
 include: 'rules/align_concat_reads.smk'
 
-if rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"]):
+if "trimming_options" in config:
     include: 'rules/align_cutadapt_SE.smk'
     include: 'rules/align_cutadapt_PE.smk'
 else:

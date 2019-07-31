@@ -199,17 +199,6 @@ def detect_paired_end_bool(fastqs):
         msg_format = 'Found {} fastqs ({}); expected either 1 or 2 fastq files/sample'
         raise ValueError(msg_format.format(len(fastqs), ','.join(fastqs)))
 
-def cutadapt_options(trim_params):
-    run_trimming_options = 0
-    for option, value in trim_params.items():
-        if not isinstance(value, int):
-            msg_format = "ERROR: config:trimming_options '{}={}' must be integer"
-            msg = msg_format.format(option, value)
-            raise ValueError(msg)
-        if value != 0:
-            run_trimming_options = 1
-    return run_trimming_options
-
 def _get_sample_reads(fastq_base_dir, samples):
     sample_reads = {}
     read_suffix = {0: "", 1:"_SE", 2:"_PE"}

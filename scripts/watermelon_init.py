@@ -35,6 +35,7 @@ import functools
 import getpass
 import itertools
 import os
+import ruamel_yaml
 import shutil
 import subprocess
 import sys
@@ -217,7 +218,7 @@ def _copy_and_overwrite(source, dest):
         shutil.rmtree(dest)
     source = os.path.join(source, "") #Add trailing slash for rsync's sake
     #Exclude .git/ and /envs/built (speed)
-    subprocess.call(["rsync", "-a", "--exclude", "\".*\"", "--exclude", "envs/built", source, dest])
+    subprocess.run(["rsync", "-a", "--exclude", "\".*\"", "--exclude", "envs/built", source, dest])
 
 def _dict_merge(dct, merge_dct):
     """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
@@ -338,7 +339,7 @@ def _make_config_dict(template_config, genome_references, args, samples):
     config = dict(template_config)
     #Fill in job suffix for output dirs
     for out_dir in config['dirs']:
-        config['dirs'][out_dir] = out_dir.format(job_suffix = args.job_suffix)
+        config['dirs'][out_dir] = config['dirs'][out_dir].format(job_suffix = args.job_suffix)
     #add input dir
     config['dirs']['input'] = os.path.join(args.input_dir, args.input_samples_dir)
     #add email params

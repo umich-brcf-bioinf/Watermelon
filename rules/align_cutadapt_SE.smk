@@ -1,14 +1,13 @@
 rule align_cutadapt_SE:
     input:
-        raw_fastq = ALIGNMENT_DIR + "01-raw_reads/{sample}_{read}_SE.fastq.gz",
+        raw_fastq = ALIGNMENT_DIR + "02-gz_reads/{sample}_{read}_SE.fastq.gz",
     output:
         ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read}_SE.fastq.gz",
     params:
         base_quality_5prime = config["trimming_options"]["base_quality_5prime"],
         base_quality_3prime = config["trimming_options"]["base_quality_3prime"],
         trim_length_5prime = config["trimming_options"]["trim_length_5prime"],
-        trim_length_3prime = config["trimming_options"]["trim_length_3prime"],
-        trimming_options = rnaseq_snakefile_helper.cutadapt_options(config["trimming_options"])
+        trim_length_3prime = config["trimming_options"]["trim_length_3prime"]
     log:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_{read}.align_cutadapt_SE.log"
     conda:

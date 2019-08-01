@@ -181,6 +181,7 @@ ALL = RSEM_ALL + DESeq2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
 
 
 include: 'rules/align_concat_reads.smk'
+include: 'rules/align_standardize_gz.smk'
 
 if "trimming_options" in config:
     include: 'rules/align_cutadapt_SE.smk'

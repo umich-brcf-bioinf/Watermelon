@@ -2,22 +2,18 @@ dirs:
   alignment_output: analysis{job_suffix}/alignment_results
   diffex_output: analysis{job_suffix}/diffex_results
   deliverables_output: analysis{job_suffix}/deliverables
-
 trimming_options:
     base_quality_5prime: 0
     base_quality_3prime: 13
     trim_length_5prime: 3
     trim_length_3prime: 0
-
 alignment_options:
     library_type: unstranded #other options: forward_reverse #reverse_forward
     read_length: 50
-
 fastq_screen:
     reference_basedir: /nfs/med-bfx-common/pipelines/Watermelon/references/fastq_screen
     aligner: bowtie2
     subset: 100000
-
 diffex:
     linear_fold_change: 1.5
     adjustedPValue: 0.05

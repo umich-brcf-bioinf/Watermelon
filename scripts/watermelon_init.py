@@ -41,9 +41,10 @@ import subprocess
 import sys
 import time
 import traceback
+import yaml
 
 import pandas as pd
-import yaml
+
 
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
@@ -335,20 +336,32 @@ def _validate_sample_sheet(samples, sheet_file):
         + str(sheet_samples.difference(input_samples)))
         raise _InputValidationError(msg)
 
-def _make_config_dict(template_config, genome_references, args, samples):
-    config = dict(template_config)
+def _make_config_dict(template_config, genome_references, args):
+    #Due to ruamel_yaml, template_config is an OrderedDict, and has preserved comments
+    config = template_config
+    #Make changes to existing data
     #Fill in job suffix for output dirs
     for out_dir in config['dirs']:
         config['dirs'][out_dir] = config['dirs'][out_dir].format(job_suffix = args.job_suffix)
     #add input dir
     config['dirs']['input'] = os.path.join(args.input_dir, args.input_samples_dir)
-    #add email params
-    config['email'] = {'subject' : 'watermelon' + args.job_suffix, 'to' : getpass.getuser() + '@umich.edu'}
     #add rsem reference prefix
     if 'alignment_options' in config:
         config['alignment_options']['rsem_ref_prefix'] = args.genome_build
-
+    #Add in more needed keys
+    #Samplesheet
+    config['sample_description_file'] = os.path.abspath(args.sample_sheet)
+    #Genome / references
     _dict_merge(config, genome_references)
+    #Email params
+    config['email'] = {'subject' : 'watermelon' + args.job_suffix, 'to' : getpass.getuser() + '@umich.edu'}
+    #Reorder these added keys (move to top)
+    #resulting order: email, sample_description_file, genome, references, template_config stuff
+    config.move_to_end('references', last=False)
+    config.move_to_end('genome', last=False)
+    config.move_to_end('sample_description_file', last=False)
+    config.move_to_end('email', last=False)
+
 
     return config
 
@@ -540,17 +553,18 @@ def main(sys_argv):
         os.rename(args.tmp_input_dir, args.input_dir)
 
         with open(args.x_template_config, 'r') as template_config_file:
-            template_config = yaml.load(template_config_file, yaml.FullLoader)
+            template_config = ruamel_yaml.round_trip_load(template_config_file) #Use ruamel_yaml to preserve comments
         with open(args.x_genome_references, 'r') as genome_references_file:
             genome_references = yaml.load(genome_references_file, yaml.FullLoader)[args.genome_build]
+        _validate_sample_sheet(input_summary.samples, args.sample_sheet)
         config_dict = _make_config_dict(template_config,
                                         genome_references,
-                                        args,
-                                        input_summary.samples)
+                                        args)
 
-        _validate_sample_sheet(input_summary.samples, args.sample_sheet)
-        config_dict['sample_description_file'] = os.path.abspath(args.sample_sheet)
-        _write_config_file(args.config_file, config_dict)
+        #_write_config_file(args.config_file, config_dict)
+        with open(args.config_file, 'w') as config_file:
+            print(_CONFIG_PRELUDE, file=config_file)
+            ruamel_yaml.round_trip_dump(config_dict, config_file, default_flow_style=False, indent=4)
 
         postlude = _build_postlude(args,
                                    linker.results,

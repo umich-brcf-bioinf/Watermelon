@@ -9,8 +9,8 @@ rule align_pseudotrim_PE:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_pseudotrim.log"
     shell:
         '''(
-        ln -sf ../../{input.raw_fastq_R1} {output.R1}
-        ln -sf ../../{input.raw_fastq_R2} {output.R2}
+        ln -sTr {input.raw_fastq_R1} {output.R1}
+        ln -sTr {input.raw_fastq_R2} {output.R2}
         echo No trimming done
         ) 2>&1 | tee {log}
         '''

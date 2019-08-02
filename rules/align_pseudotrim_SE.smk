@@ -6,6 +6,6 @@ rule align_pseudotrim_SE:
     log:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_{read}_pseudotrim_SE.log"
     shell:
-        '''(ln -sf ../../{input.raw_fastq} {output}
+        '''(ln -sTr {input.raw_fastq} {output}
             echo No trimming done
             ) 2>&1 |tee {log} '''

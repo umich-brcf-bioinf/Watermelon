@@ -415,13 +415,14 @@ config:
 
 When the config & samplesheet look good:
 --------------------------------
-# start a screen session:
+# Start a screen session:
 $ screen -S watermelon{job_suffix}
-# to validate the config and check the execution plan:
+# Activate the conda environment:
+$ conda activate watermelon
+# To validate the config and check the execution plan:
 $ snakemake --dryrun --printshellcmds --configfile {config_basename} --snakefile {snakefile_path}
-# to run:
-$ snakemake --use-conda --printshellcmds --configfile {config_basename} --snakefile {snakefile_path} \
---profile Watermelon/config/profile-comp5-6
+# To run:
+$ snakemake --use-conda --configfile {config_basename} --snakefile {snakefile_path} --profile {profile_path}
 '''.format(linker_results=linker_results,
            input_summary_text=input_summary_text,
            working_dir=args.x_working_dir,
@@ -433,7 +434,8 @@ $ snakemake --use-conda --printshellcmds --configfile {config_basename} --snakef
            samplesheet_relative=os.path.relpath(args.sample_sheet, args.x_working_dir),
            config_basename=os.path.basename(args.config_file),
            job_suffix=args.job_suffix,
-           snakefile_path='Watermelon/rnaseq.snakefile')
+           snakefile_path='Watermelon/rnaseq.snakefile',
+           profile_path='Watermelon/config/profile-comp5-6')
     return postlude
 
 def _write_config_file(config_filename, config_dict):

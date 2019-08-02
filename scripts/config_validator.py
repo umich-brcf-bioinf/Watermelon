@@ -266,13 +266,10 @@ class _ConfigValidator(object):
         if pheno_values:
             label_values = [label +':' + ','.join(sorted(values)) for label, values in sorted(pheno_values.items())]
             samples = [label + ':' + ','.join(sorted(samples)) for label, samples in sorted(pheno_samples.items())]
-            msg_fmt = ('Some phenotype values are not present in [contrasts].'
-                       'some samples will be excluded from contrasts for those phenotypes.\n'
-                       'Missing phenotype values: \n({})\n'
-                       'Resulting Excluded samples: \n({})\n')
+            msg_fmt = ('Some phenotype values are not present in [contrasts].\n'
+                       'Missing phenotype values: \n({})\n')
             raise _WatermelonConfigWarning(msg_fmt,
-                                           ';'.join(label_values),
-                                           ';'.join(samples))
+                                           ';'.join(label_values))
 
     def _check_contrast_missing_phenotype_label(self):
         phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)

@@ -24,6 +24,6 @@ rule deseq2_plots_by_phenotype:
     params:
         phenotypes = PHENOTYPES,
         diffex_dir = DIFFEX_DIR,
-        snakemake_rdata = DIFFEX_DIR + 'deseq2/plots/by_phenotype/deseq2_plots_by_phenotype_snakemake.rda' #TWS DEBUG
+        snakemake_rdata = DIFFEX_DIR + 'deseq2/plots/by_phenotype/.deseq2_plots_by_phenotype_snakemake.rda' #TWS DEBUG
     script:
         '../scripts/deseq2_plots_by_phenotype.R'

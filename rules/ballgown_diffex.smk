@@ -11,6 +11,6 @@ rule ballgown_diffex:
         'envs/diffex.yaml'
     params:
         rsem_dir = ALIGNMENT_DIR + '04-rsem_star_align/',
-        snakemake_rdata = DIFFEX_DIR + '{factor_name}/ballgown/snakemake.rda' #TWS DEBUG
+        snakemake_rdata = DIFFEX_DIR + '{factor_name}/ballgown/.snakemake.rda' #TWS DEBUG
     script:
         '../scripts/ballgown_diffex.R'

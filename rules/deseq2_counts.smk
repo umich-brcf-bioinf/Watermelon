@@ -17,6 +17,6 @@ rule deseq2_counts:
         'envs/diffex.yaml'
     params:
         rsem_dir = ALIGNMENT_DIR + '04-rsem_star_align',
-        snakemake_rdata = DIFFEX_DIR + 'deseq2/counts/deseq2_counts_snakemake.rda' #TWS DEBUG
+        snakemake_rdata = DIFFEX_DIR + 'deseq2/counts/.deseq2_counts_snakemake.rda' #TWS DEBUG
     script:
         '../scripts/deseq2_counts.R'

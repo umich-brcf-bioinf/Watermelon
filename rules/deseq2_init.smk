@@ -10,6 +10,6 @@ rule deseq2_init:
     conda:
         'envs/diffex.yaml'
     params:
-        snakemake_rdata = DIFFEX_DIR + 'deseq2/deseq2_init_{factor_name}_snakemake.rda' #TWS DEBUG
+        snakemake_rdata = DIFFEX_DIR + 'deseq2/.deseq2_init_{factor_name}_snakemake.rda' #TWS DEBUG
     script:
         '../scripts/deseq2_init.R'

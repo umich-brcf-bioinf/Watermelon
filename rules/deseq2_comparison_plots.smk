@@ -10,6 +10,6 @@ rule deseq2_comparison_plots:
         'envs/diffex.yaml'
     params:
         method = "deseq2",
-        snakemake_rdata = DIFFEX_DIR + 'deseq2/plots/comparison_plots/{factor_name}/comparison_plot_{contrast}_snakemake.rda' #TWS DEBUG
+        snakemake_rdata = DIFFEX_DIR + 'deseq2/plots/comparison_plots/{factor_name}/.comparison_plot_{contrast}_snakemake.rda' #TWS DEBUG
     script:
         '../scripts/diffex_volcano_plot.R'

@@ -10,6 +10,6 @@ rule deseq2_contrasts:
     conda:
         'envs/diffex.yaml'
     params:
-        snakemake_rdata = DIFFEX_DIR + 'deseq2/gene_lists/{factor_name}/{contrast}_snakemake.rda' #TWS DEBUG
+        snakemake_rdata = DIFFEX_DIR + 'deseq2/gene_lists/{factor_name}/.{contrast}_snakemake.rda' #TWS DEBUG
     script:
         '../scripts/deseq2_contrasts.R'

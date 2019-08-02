@@ -20,7 +20,7 @@ rule deliverables_run_info:
                 new_dict[sw] = ver
             return(new_dict)
 
-        dep_dict = {}
+        dep_dict = {'watermelon': WAT_VER}
         for env_yaml in input.envs:
             env_name = os.path.splitext(os.path.basename(env_yaml))[0]
             with open(env_yaml) as yfile:

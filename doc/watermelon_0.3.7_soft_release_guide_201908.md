@@ -37,3 +37,6 @@ Run watermelon_init - this will gather the input fastqs, validate the sampleshee
       /nfs/med-bfx-dnaseqcore/Run_1562/lumeng/Run_1562/lumeng/ \
       /nfs/med-bfx-dnaseqcore/Run_1564/lumeng/Run_1564/lumeng/ \
       /nfs/med-bfx-dnaseqcore/Run_1567/lumeng/Run_1567/lumeng/
+
+After this, the instructions output from watermelon_init (also found in the newly-created watermelon.README file) can be followed for running the pipeline. The resulting configuration file is purposefully fully compatible with this example. Reviewing the details as suggested is recommended, but the config file in this example should be ready to use with the example datasets.
+In a real use-case scenario, the config file should be treated as a template, and edited so that it matches the project plan and dataset that it applies to.

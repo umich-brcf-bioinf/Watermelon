@@ -43,7 +43,7 @@ diffex:
             #previous Watermelon pipelines. The variables factorName, testName, & referenceName are defined
             #within the Rscript. Using the first contrast as an example this would parse to
             #list('pheno.GendDM.male', 'pheno.GendNDM.male'), which are the two elements
-            #of resultsNames() which are relevant for that comparison.
+            #of resultsNames() relevant for that comparison.
             results:
                 contrast:
                     list(paste0(factorName, testName), paste0(factorName, referenceName))

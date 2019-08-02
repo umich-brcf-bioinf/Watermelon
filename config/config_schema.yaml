@@ -62,7 +62,7 @@ properties:
         properties:
             adjustedPValue:
                 type: number
-            fold_change:
+            linear_fold_change:
                 type: number
     fastq_screen:
         properties:

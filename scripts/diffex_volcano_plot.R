@@ -103,7 +103,7 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
 ########################################################
 # Set up
 fdr_cutoff = as.numeric(snakemake@config[['diffex']][['adjustedPValue']])
-fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['fold_change']]))
+fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['linear_fold_change']]))
 
 method = snakemake@params[['method']]
 

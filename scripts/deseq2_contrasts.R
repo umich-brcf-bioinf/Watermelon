@@ -25,7 +25,7 @@ testName = cont.split[1] ; referenceName = cont.split[2]
 
 # Establish cutoffs
 fdr_cutoff = as.numeric(snakemake@config[['diffex']][['adjustedPValue']])
-fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['fold_change']]))
+fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['linear_fold_change']]))
 
 # Set up multithreading
 multicore_param = MulticoreParam(workers = snakemake@threads)

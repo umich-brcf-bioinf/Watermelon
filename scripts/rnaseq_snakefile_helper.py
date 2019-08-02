@@ -238,7 +238,7 @@ def expand_read_stats_if_paired(read_stats_filename_format,
     return result
 
 def diffex_factors(diffex_config):
-    not_factors = ['adjustedPValue', 'fold_change']
+    not_factors = ['adjustedPValue', 'linear_fold_change']
     factor_names = [k for k in diffex_config.keys() if k not in not_factors]
     return(factor_names)
 

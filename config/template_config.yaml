@@ -10,7 +10,6 @@ trimming_options:
     trim_length_3prime: 0
 
 alignment_options:
-    transcriptome_only: True
     library_type: unstranded #other options: forward_reverse #reverse_forward
     read_length: 50
 
@@ -20,7 +19,7 @@ fastq_screen:
     subset: 100000
 
 diffex:
-    fold_change: 1.5
+    linear_fold_change: 1.5
     adjustedPValue: 0.05
     #The following is an example Diffex stanza.
     #The factor of interest (e.g. pheno.Gend) forms the parent node.

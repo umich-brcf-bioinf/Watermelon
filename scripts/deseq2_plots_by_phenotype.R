@@ -371,7 +371,7 @@ plot_MDS = function(mat, pdata, factor_name, top_n = 500, dims = c(1,2), out_nam
 ########################################################
 
 fdr_cutoff = as.numeric(snakemake@config[['diffex']][['adjustedPValue']])
-fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['fold_change']]))
+fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['linear_fold_change']]))
 
 phenotypes = snakemake@params[['phenotypes']]
 

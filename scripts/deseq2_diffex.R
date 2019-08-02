@@ -82,7 +82,7 @@ pdata = read.csv(sample.info.file)
 
 # Establish cutoffs
 fdr_cutoff = as.numeric(snakemake@config[['diffex']][['adjustedPValue']])
-fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['fold_change']]))
+fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['linear_fold_change']]))
 
 #######################################
 

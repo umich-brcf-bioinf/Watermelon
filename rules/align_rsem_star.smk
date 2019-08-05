@@ -1,5 +1,5 @@
 
-rule rsem_star_align:
+rule align_rsem_star:
     input:
         fastq_files = lambda wildcards: rnaseq_snakefile_helper.expand_sample_read_endedness(\
                 ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read_endedness}.fastq.gz",

@@ -6,7 +6,7 @@ rule align_rsem_star:
                 SAMPLE_READS,
                 wildcards.sample),
         #This portion determines if a new reference must be created
-        genomeParameters = ALIGNMENT_DIR + '03-rsem_star_genome_generate/genomeParameters.txt'
+        genomeParameters = ALIGNMENT_DIR + '04-rsem_star_genome_generate/genomeParameters.txt'
     output:
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results',
@@ -24,7 +24,7 @@ rule align_rsem_star:
     resources:
         mem_gb=30
     params:
-        rsem_ref_base = ALIGNMENT_DIR + '03-rsem_star_genome_generate/' + config['alignment_options']['rsem_ref_prefix'],
+        rsem_ref_base = ALIGNMENT_DIR + '04-rsem_star_genome_generate/' + config['alignment_options']['rsem_ref_prefix'],
         outFileNamePrefix = ALIGNMENT_DIR + '04-rsem_star_align/{sample}',
         paired_end = lambda wildcards, input: '--paired-end' if rnaseq_snakefile_helper.detect_paired_end_bool(input.fastq_files) else '',
         strand_flag = rnaseq_snakefile_helper.strand_option_rsem(config)

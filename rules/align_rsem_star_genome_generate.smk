@@ -7,11 +7,11 @@ rule align_rsem_star_genome_generate:
     output:
         parametersFiles = join(\
                 ALIGNMENT_DIR,
-                '03-rsem_star_genome_generate',
+                '04-rsem_star_genome_generate',
                 'genomeParameters.txt'
                 ),
     log:
-        join(ALIGNMENT_DIR, '03-rsem_star_genome_generate', '.log', 'rsem_star_genome_generate.log')
+        join(ALIGNMENT_DIR, '04-rsem_star_genome_generate', '.log', 'rsem_star_genome_generate.log')
     conda:
         'envs/rsem_star.yaml'
     benchmark:
@@ -20,7 +20,7 @@ rule align_rsem_star_genome_generate:
     params:
         rsem_ref_base = join(\
             ALIGNMENT_DIR,
-            '03-rsem_star_genome_generate',
+            '04-rsem_star_genome_generate',
             config['alignment_options']['rsem_ref_prefix']
             ),
     shell: '''

@@ -26,7 +26,7 @@ named.filepaths.from.dir <- function(rsem.dir, file.extension) {
 
 # Get phenotype matrix
 sample.info.file = snakemake@config[['sample_description_file']]
-pdata = read.csv(sample.info.file)
+pdata = read.csv(sample.info.file, comment.char = "#")
 
 # Import data
 message('Importing rsem data')

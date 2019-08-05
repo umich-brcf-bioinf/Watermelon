@@ -1,37 +1,55 @@
-dirs:
-  input: /ccmb/BioinfCore/ActiveProjects/rcavalca/test_lumeng/inputs/01-source_samples
-  alignment_output: alignment_results
-  diffex_output: diffex_results
-  deliverables_output_dir: deliverables
+# config created 2019-07-19 16:17:32
+# To do:
+# ------
+# 1) Review genome and references
+# 2) Review alignment, trimming, and fastq_screen options
+# 3) Modify the diffex options - use the pheno_gender stanza as an example, and
+#    set up the DESeq2 calls and comparisons that match the analysis. For example,
+#    the contrasts should contain phenotype labels and values which correspond
+#    to the column names and values in the sample sheet, respectively.
 
+dirs:
+    alignment_output: alignment_results
+    deliverables_output: deliverables
+    diffex_output: diffex_results
+    input: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20190718_test_lumeng/inputs/01-source_samples
 genome: hg19
 references:
-    hisat2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/HISAT2_index/hg19_noRibo
-    bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/Bowtie2Index
-    entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-    fasta: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/genome.fa
-    gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/hg19_noRibo.gtf
-
-#TWS TODO: Make these relative
-sample_description_file: /nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_sample_description.csv
-
+    entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+    fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/hg19/Sequence/genome.fa
+    gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/hg19/hg19_noRibo.gtf
 alignment_options:
-    read_length: 50
     library_type: fr-unstranded
+    read_length: 50
+    rsem_ref_prefix: hg19
     transcriptome_only: true
-    rsem_ref_prefix: hg19_noRibo
-
-trimming_options:
-    base_quality_3prime: 13
-    base_quality_5prime: 0
-    trim_length_3prime: 0
-    trim_length_5prime: 3
-
+diffex:
+    adjustedPValue: 0.05
+    fold_change: 1.5
+    pheno.Gend:
+        contrasts:
+            - DM.male_v_NDM.male
+            - DM.fem_v_NDM.fem
+            - DM.fem_v_DM.male
+            - NDM.fem_v_NDM.male
+        DESeq2:
+            DESeq2:
+                betaPrior: true
+                full: ~ pheno.Gend
+            results:
+                contrast:
+                    list(paste0(factorName, testName), paste0(factorName, referenceName))
+email:
+    subject: watermelon_2019-07-19 16:19:06
+    to: trsaari@umich.edu
 fastq_screen:
     aligner: bowtie2
     reference_basedir: /nfs/med-bfx-common/pipelines/Watermelon/references/fastq_screen
     species: human
     subset: 100000
-
-#TWS TODO: Make these relative
-comparison_config: /nfs/med-bfx-activeprojects/trsaari/Watermelon/config/example_comparisons.yaml
+sample_description_file: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20190718_test_lumeng/example_sample_description.csv
+trimming_options:
+    base_quality_3prime: 13
+    base_quality_5prime: 0
+    trim_length_3prime: 0
+    trim_length_5prime: 3

@@ -20,8 +20,6 @@ INPUT_DIR = os.path.join(_DIRS.get("input", "inputs"), "")
 ALIGNMENT_DIR = os.path.join(_DIRS.get("alignment_output", "alignment_results"), "")
 DIFFEX_DIR = os.path.join(_DIRS.get("diffex_output", "diffex_results"), "")
 DELIVERABLES_DIR = os.path.join(_DIRS.get("deliverables_output", "deliverables"), "")
-DESEQ2_DIR = os.path.join(DIFFEX_DIR, "deseq2", "")
-BALLGOWN_DIR = os.path.join(DIFFEX_DIR, "ballgown", "")
 
 CONFIGFILE_PATH = workflow.overwrite_configfile
 WORKFLOW_BASEDIR = workflow.basedir
@@ -197,6 +195,8 @@ include: 'rules/align_fastqc_align.smk'
 include: 'rules/align_qc.smk'
 include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
+include: 'rules/align_rsem_star.smk'
+include: 'rules/align_rsem_star_genome_generate.smk'
 
 include: 'rules/deseq2_counts.smk'
 include: 'rules/deseq2_init.smk'
@@ -206,9 +206,6 @@ include: 'rules/deseq2_comparison_plots.smk'
 include: 'rules/deseq2_annotation.smk'
 include: 'rules/deseq2_excel.smk'
 include: 'rules/deseq2_summary.smk'
-
-include: 'rules/align_rsem_star.smk'
-include: 'rules/rsem_star_genome_generate.smk'
 
 include: 'rules/deliverables_deseq2.smk'
 include: 'rules/deliverables_run_info.smk'

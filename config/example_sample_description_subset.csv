@@ -1,9 +1,0 @@
-sample,pheno,Gend,tiss,pheno.Gend,pheno.tiss,Gend.tiss,pheno.Gend.tiss,pheno.fem,pheno.male,NDM.tiss
-Sample_59223,NDM,fem,VAT,NDM.fem,NDM.VAT,fem.VAT,NDM.fem.VAT,NDM.fem,NA,NDM.VAT
-Sample_59224,NDM,fem,SAT,NDM.fem,NDM.SAT,fem.SAT,NDM.fem.SAT,NDM.fem,NA,NDM.SAT
-Sample_59235,NDM,male,VAT,NDM.male,NDM.VAT,male.VAT,NDM.male.VAT,NA,NDM.male,NDM.VAT
-Sample_59236,NDM,male,SAT,NDM.male,NDM.SAT,male.SAT,NDM.male.SAT,NA,NDM.male,NDM.SAT
-Sample_59245,DM,fem,VAT,DM.fem,DM.VAT,fem.VAT,DM.fem.VAT,DM.fem,NA,NA
-Sample_59246,DM,fem,SAT,DM.fem,DM.SAT,fem.SAT,DM.fem.SAT,DM.fem,NA,NA
-Sample_59253,DM,male,VAT,DM.male,DM.VAT,male.VAT,DM.male.VAT,NA,DM.male,NA
-Sample_59254,DM,male,SAT,DM.male,DM.SAT,male.SAT,DM.male.SAT,NA,DM.male,NA

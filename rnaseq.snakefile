@@ -154,7 +154,10 @@ RSEM_ALL = [
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results', sample=config[SAMPLES_KEY]),
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam', sample=config[SAMPLES_KEY]),
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY]),
-    ALIGNMENT_DIR + "07-qc/alignment_qc.html"
+    ALIGNMENT_DIR + "07-qc/alignment_qc.html",
+    expand(ALIGNMENT_DIR + '05-combine_counts/{feature}_{metric}.txt',
+        feature=['gene','isoform'],
+        metric=['expected_count', 'FPKM', 'TPM'])
 ]
 
 DELIVERABLES = [
@@ -197,6 +200,7 @@ include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
 include: 'rules/align_rsem_star.smk'
 include: 'rules/align_rsem_star_genome_generate.smk'
+include: 'rules/align_rsem_star_combined_count_matrices.smk'
 
 include: 'rules/deseq2_counts.smk'
 include: 'rules/deseq2_init.smk'

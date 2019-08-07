@@ -46,14 +46,21 @@ SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(INPUT_DIR, config[
 #Set up emailing functionality
 def email(subject_prefix):
     msg = 'config file:\n{}\nlog file:\n{}'.format(workflow.overwrite_configfile, logger.get_logfile())
+    #Attach log if error
+    if subject_prefix == "Watermelon ERROR: ":
+        attachment = "-a " + logger.get_logfile() + " --"
+    else:
+        attachment = ""
+
     email_config = config.get('email')
     if not email_config:
         print(subject_prefix, msg)
     else:
-        command = "echo '{msg}' | mutt -s '{subject_prefix}{subject}' {to}".format(
+        command = "echo '{msg}' | mutt -s '{subject_prefix}{subject}' {attachment} {to}".format(
                 to=email_config['to'],
                 subject_prefix=subject_prefix,
                 subject=email_config['subject'],
+                attachment=attachment,
                 msg=msg,
                 )
         shell(command)

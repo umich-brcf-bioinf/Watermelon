@@ -4,6 +4,10 @@ log = file(snakemake@log[[1]], open='wt')
 sink(log, split=TRUE)
 save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
+#Isolate conda environment: https://github.com/conda-forge/r-base-feedstock/issues/37
+#If we move away from conda in the future, we may want to remove this
+.libPaths(R.home("library"))
+
 ##########
 # Load libraries
 suppressMessages(library(BiocParallel, warn.conflicts=F, quietly=T))

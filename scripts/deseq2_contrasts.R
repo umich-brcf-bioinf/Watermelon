@@ -6,6 +6,10 @@ save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
 #load("/nfs/med-bfx-activeprojects/trsaari/sandbox/20190725_test_Delono_RS1/analysis_test_Delano_RS1/diffex_results/deseq2/gene_lists/phenotype.CellState.treatment/DIO.WCLP.none_v_DIO.DCLP.none_snakemake.rda") #TWS DEBUG
 
+#Isolate conda environment: https://github.com/conda-forge/r-base-feedstock/issues/37
+#If we move away from conda in the future, we may want to remove this
+.libPaths(R.home("library"))
+
 ##########
 # Load libraries
 

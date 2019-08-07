@@ -6,6 +6,10 @@ save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
 #load("/nfs/med-bfx-activeprojects/trsaari/example_output_Watermelon/diffex_results/deseq2/plots/comparison_plots/pheno_gender/comparison_plot_DM.fem_v_NDM.fem_snakemake.rda")
 
+#Isolate conda environment: https://github.com/conda-forge/r-base-feedstock/issues/37
+#If we move away from conda in the future, we may want to remove this
+.libPaths(R.home("library"))
+
 ########################################################
 # Load libraries
 lib.vector = c("data.table", "DESeq2", "dplyr", "GGally", "ggfortify", "ggplot2",

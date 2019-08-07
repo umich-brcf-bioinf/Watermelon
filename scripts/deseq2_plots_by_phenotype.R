@@ -6,8 +6,9 @@ save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
 #load("/nfs/med-bfx-activeprojects/trsaari/example_output_Watermelon/diffex_results/plots/by_phenotype/deseq2_plots_by_phenotype_snakemake.rda")
 
-#diffex_rda = opt$diffex_rda
-#config_file = opt$config_file
+#Isolate conda environment: https://github.com/conda-forge/r-base-feedstock/issues/37
+#If we move away from conda in the future, we may want to remove this
+.libPaths(R.home("library"))
 
 ########################################################
 # Load libraries

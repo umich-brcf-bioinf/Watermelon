@@ -1,7 +1,29 @@
 Changelog
 =========
 
-x.y.z (MM/DD/YYYY)
+0.3.7 (08/DD/2019)
+------------------
+- Replaced HISAT2/Stringtie with RSEM/STAR
+- Removed ballgown
+- Converted rules to use conda instead of modules
+- Moved functionality from watermelon bash script directly into snakefile (eliminated watermelon.sh)
+- Added the use of a snakemake profile for running on comp5/6
+- Implemented samplesheet CSV to be used alongside config file
+- Config validation includes samplesheet validation (modified to work with CSV input) and schema-based validation of config file
+- DESeq2 parameters are directly listed in the diffex portion of the config file, offering more control over how these are run
+- DESeq2 monolithic script separated into counts, init, contrasts
+
+    - counts is run once per pipeline invocation (for a given set of alignment outputs)
+    - init is run once per feature e.g. (gender, phenotype, pheno.Gend), contrasts depend on this
+    - contrasts is run for each contrast for a given feature, i.e. they all use the same DESeq2Dataset
+
+- Utilized snakemake's script directive, enabling snakemake S4 object to be passed directly to RScripts
+- Pinned specific versions in the rule-specific conda envs, added this output to run_info deliverable
+- Added output of count matrices (all samples - counts, TPM, FPKM)
+- Enabled/repaired skipping of read trimming if trimming_options not set in config
+
+
+0.3.6x (MM/DD/YYYY)
 ------------------
 - Replaced Tophat2 with HISAT2; removed bbmap.
 - Replaced HTSeq with stringtie; consequent renumbering of outputs

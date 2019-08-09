@@ -241,132 +241,6 @@ plot_PCA = function(compute_PCA_result, out_name = 'PCAplot.pdf') {
 }
 
 
-plot_MDS = function(mat, pdata, factor_name, top_n = 500, dims = c(1,2), out_name = 'MDSplot.pdf') {
-
-    if(!is(dims, 'numeric')) {
-        stop('dims must be numeric, e.g. c(1,2).')
-    }
-    if(!all(dims < 10)) {
-        stop('dims should not exceed the 9th dimension.')
-    }
-
-    # Add replicate column
-    pdata = add_replicate_col(pdata, factor_name)
-
-    # Calculate MDS and pull relevant parts for the plot
-    mds = limma::plotMDS(x = mat, top = top_n, dim.plot = dims, plot = FALSE, gene.selection = 'common')
-    mds_df = data.frame(
-        sample = rownames(mds$cmdscale.out),
-        x = mds$x,
-        y = mds$y,
-        stringsAsFactors = F
-    )
-
-    # Join the mds_df with pdata to get the replicates and factor_name columns
-    mds_df = merge(mds_df, pdata, by = 'sample', all.x = T)
-
-    # Plot MDS
-    mds_plot = ggplot(mds_df, aes(x = x, y = y, color = replicate)) +
-        geom_point(aes_string(shape = factor_name)) +
-        labs(
-            title = sprintf('%s MDS plot', factor_name),
-            subtitle = sprintf('Using top %s variable genes', top_n),
-            x = sprintf('Dim %s', dims[1]),
-            y = sprintf('Dim %s', dims[2])) +
-        theme_bw()
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = mds_plot, height = 6, width = 6, dpi = 300)
-
-    return(mds_plot)
-}
-
-
-# plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), comparison_type, exp_name, con_name, fdr_cutoff, logfc_cutoff, out_name) {
-#
-#     method = match.arg(method)
-#
-#     # Determine the correct column names on the basis of deseq2 or ballgown
-#     if(method == 'ballgown') {
-#         log2fc = 'log2fc'
-#         pval = 'pval'
-#         padj = 'qval'
-#         gene_id = 'id'
-#         de_call = 'diff_exp'
-#     } else {
-#         log2fc = 'log2FoldChange'
-#         pval = 'pvalue'
-#         padj = 'padj'
-#         gene_id = 'id'
-#         de_call = 'Call'
-#     }
-#
-#     # Add direction column
-#     de_list$direction = 'NS'
-#     de_list$direction[de_list[, de_call] == 'YES' & de_list[, log2fc] <= 0] = 'Down'
-#     de_list$direction[de_list[, de_call] == 'YES' & de_list[, log2fc] > 0] = 'Up'
-#
-#     # Determine direction labels (with number per)
-#     direction_table = table(de_list$direction)
-#
-#     if('Up' %in% names(direction_table)) {
-#         up_label = sprintf('Up: %s', direction_table['Up'])
-#     } else {
-#         up_label = 'Up: 0'
-#     }
-#
-#     if('Down' %in% names(direction_table)) {
-#         down_label = sprintf('Down: %s', direction_table['Down'])
-#     } else {
-#         down_label = 'Down: 0'
-#     }
-#
-#     if('NS' %in% names(direction_table)) {
-#         ns_label = sprintf('NS: %s', direction_table['NS'])
-#     } else {
-#         ns_label = 'NS: 0'
-#     }
-#
-#     de_list$direction_count = factor(
-#         de_list$direction,
-#         levels = c('Up', 'Down', 'NS'),
-#         labels = c(up_label, down_label, ns_label))
-#
-#     if(all( !( c('Up', 'Downl') %in% names(direction_table) ) )) {
-#         warning(sprintf('No genes were DE at fdr < %s and |log2fc| > %s. Consider a different threshold.', fdr_cutoff, logfc_cutoff))
-#     }
-#
-#     # Transform qval to -log10 scale
-#     de_list$log10qval = -log10(de_list[, padj])
-#
-#     # Add top 10 Up and 10 Down gene labels
-#     # de_list is assumed to be ordered by Call/diff_exp and then qvalue from deseq2_diffex.R and ballgown_diffex.R
-#     top = rbind(
-#         head(subset(de_list, direction == 'Up'), 10),
-#         head(subset(de_list, direction == 'Down'), 10))
-#     top$label = top$id
-#     de_list = merge(x = de_list, y = top[, c('id','label')], by = 'id', all.x = TRUE, sort = FALSE)
-#
-#     # Volcano Plot
-#     volcano_plot = ggplot(de_list, aes_string(x = log2fc, y = 'log10qval', color = 'direction_count')) +
-#         geom_point(size = 1) +
-#         scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray')) +
-#         geom_vline(xintercept = c(0, -1*logfc_cutoff, logfc_cutoff), linetype = c(1, 2, 2), color = c('black', 'black', 'black')) +
-#         geom_hline(yintercept = -log10(fdr_cutoff), linetype = 2, color = 'black') +
-#         labs(
-#             title = sprintf('%s_v_%s', exp_name, con_name),
-#             x = 'Log2 fold-change',
-#             y = '-Log10 adjusted q-value') +
-#         theme_classic()
-#     # Add gene symbol labels
-#     if(!all(is.na(de_list$label))) {
-#         volcano_plot = volcano_plot + ggrepel::geom_label_repel(label = de_list$label, force = 3, segment.alpha = 0.4)
-#     }
-#     ggsave(filename = file.path(plots_dir, 'comparison_plots', comparison_type, out_name), plot = volcano_plot, height = 8, width = 8, dpi = 300)
-#
-#     return(volcano_plot)
-# }
-
-
-
 ########################################################
 ########################################################
 ########################################################
@@ -415,7 +289,7 @@ if('bg_data' %in% ls()) {
 # Plots
 
 ########################################################
-# PCA and MDS plots for each of the phenotypes
+# PCA plots for each of the phenotypes
 
 for(phenotype in phenotypes) {
 
@@ -454,19 +328,5 @@ for(phenotype in phenotypes) {
 
     message('Plotting scree, top 100')
     scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_name = 'ScreePlot_top100.pdf')
-
-    # MDS top 500
-    message(sprintf('Plotting MDS for %s in dim 1 and 2, top 500', phenotype))
-    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c(1,2), out_name = 'MDSplot_12_top500.pdf')
-
-    message(sprintf('Plotting MDS for %s in dim 1 and 2, top 500', phenotype))
-    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c(2,3), out_name = 'MDSplot_23_top500.pdf')
-
-    # MDS top 100
-    message(sprintf('Plotting MDS for %s in dim 1 and 2, top 500', phenotype))
-    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c(1,2), out_name = 'MDSplot_12_top100.pdf')
-
-    message(sprintf('Plotting MDS for %s in dim 1 and 2, top 500', phenotype))
-    log2_mds = plot_MDS(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c(2,3), out_name = 'MDSplot_23_top100.pdf')
 
 }

@@ -1,23 +1,60 @@
 rule deliverables_deseq2:
     input:
+        #counts
+        counts = expand(DIFFEX_DIR + 'deseq2/counts/{name}.txt',
+            name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
+        #Gene lists
         gene_lists = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+            DIFFEX_DIR + 'deseq2/gene_lists/{factor_name}/{contrast}.txt',
+            DESEQ2_CONTRAST_DICT),
+        excel = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
             DIFFEX_DIR + "deseq2/excel/{factor_name}/{contrast}.xlsx",
             DESEQ2_CONTRAST_DICT),
+        #plots
+        pca = expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
+                phenotype = PHENOTYPES,
+                dim = ['12','23'],
+                ngenes = ['100','500']),
+        scree = expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf',
+                phenotype = PHENOTYPES,
+                ngenes = ['100','500']),
+        summaryplots = expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/{plotType}.pdf',
+            phenotype = PHENOTYPES, plotType = ['BoxPlot', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
+        volcanoplots = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+                DIFFEX_DIR + 'deseq2/plots/comparison_plots/{factor_name}/VolcanoPlot_{contrast}.pdf',
+                DESEQ2_CONTRAST_DICT),
         summary_txt = DIFFEX_DIR + "deseq2/summary/deseq2_summary.txt",
         summary_xlsx = DIFFEX_DIR + "deseq2/summary/deseq2_summary.xlsx",
     output:
-        summary_gene_lists = DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt",
+        #counts
+        counts = expand(DELIVERABLES_DIR + 'deseq2/counts/{name}.txt',
+            name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
+        #Gene lists
+        gene_lists = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+            DELIVERABLES_DIR + 'deseq2/gene_lists/{factor_name}/{contrast}.txt',
+            DESEQ2_CONTRAST_DICT),
+        excel = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+            DELIVERABLES_DIR + "deseq2/excel/{factor_name}/{contrast}.xlsx",
+            DESEQ2_CONTRAST_DICT),
+        #plots
+        pca = expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
+                phenotype = PHENOTYPES,
+                dim = ['12','23'],
+                ngenes = ['100','500']),
+        scree = expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf',
+                phenotype = PHENOTYPES,
+                ngenes = ['100','500']),
+        summaryplots = expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/{plotType}.pdf',
+            phenotype = PHENOTYPES, plotType = ['BoxPlot', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
+        volcanoplots = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+                DELIVERABLES_DIR + 'deseq2/plots/comparison_plots/{factor_name}/VolcanoPlot_{contrast}.pdf',
+                DESEQ2_CONTRAST_DICT),
+        summary_txt = DELIVERABLES_DIR + "deseq2/summary/deseq2_summary.txt",
+        summary_xlsx = DELIVERABLES_DIR + "deseq2/summary/deseq2_summary.xlsx",
+#    log:
+#        DELIVERABLES_DIR + ".deliverables_deseq2.log"
     params:
-        diffex_dir = DIFFEX_DIR + "deseq2",
-        final_dir = DELIVERABLES_DIR + "deseq2",
-        tmp_dir = DELIVERABLES_DIR + "deseq2.tmp",
-        source_gene_list_dir = DIFFEX_DIR + "deseq2/excel"
+        source_dir = DIFFEX_DIR + "deseq2/",
+        dest_dir = DELIVERABLES_DIR + "deseq2"
     shell:
-        """rm -rf {params.final_dir} {params.tmp_dir}
-        mkdir -p {params.tmp_dir}
-        cp -r {params.diffex_dir}/counts/*counts.txt {params.tmp_dir}
-        cp -r {params.diffex_dir}/plots {params.tmp_dir}
-        cp -r {params.source_gene_list_dir} {params.tmp_dir}/gene_lists
-        cp {input.summary_txt} {params.tmp_dir}/gene_lists
-        cp {input.summary_xlsx} {params.tmp_dir}/gene_lists
-        mv {params.tmp_dir} {params.final_dir} """
+        """rsync -rlpgoD --exclude ".*" --exclude "*.rda" --exclude "*.annot.txt" {params.source_dir} {params.dest_dir}"""

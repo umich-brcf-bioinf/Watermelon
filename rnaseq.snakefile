@@ -172,7 +172,28 @@ DELIVERABLES = [
         sample=config["samples"]),
     DELIVERABLES_DIR + "alignment/alignment_qc.html",
     #deseq2 deliverables
-    DELIVERABLES_DIR + "deseq2/gene_lists/deseq2_summary.txt", #TWS - why does this rule only have one provided output?
+    expand(DELIVERABLES_DIR + 'deseq2/counts/{name}.txt',
+        name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
+    rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+        DELIVERABLES_DIR + 'deseq2/gene_lists/{factor_name}/{contrast}.txt',
+        DESEQ2_CONTRAST_DICT),
+    rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+        DELIVERABLES_DIR + "deseq2/excel/{factor_name}/{contrast}.xlsx",
+        DESEQ2_CONTRAST_DICT),
+    expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
+            phenotype = PHENOTYPES,
+            dim = ['12','23'],
+            ngenes = ['100','500']),
+    expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf',
+            phenotype = PHENOTYPES,
+            ngenes = ['100','500']),
+    expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/{plotType}.pdf',
+        phenotype = PHENOTYPES, plotType = ['BoxPlot', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
+    rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+            DELIVERABLES_DIR + 'deseq2/plots/comparison_plots/{factor_name}/VolcanoPlot_{contrast}.pdf',
+            DESEQ2_CONTRAST_DICT),
+    DELIVERABLES_DIR + "deseq2/summary/deseq2_summary.txt",
+    DELIVERABLES_DIR + "deseq2/summary/deseq2_summary.xlsx",
     #run info deliverables
     DELIVERABLES_DIR + "run_info/env_software_versions.yaml",
     DELIVERABLES_DIR + "run_info/" + os.path.basename(CONFIGFILE_PATH),

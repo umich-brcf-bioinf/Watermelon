@@ -1,8 +1,9 @@
 Changelog
 =========
 
-0.3.7 (08/DD/2019)
+1.0 (08/DD/2019)
 ------------------
+- Watermelon (seedless)
 - Replaced HISAT2/Stringtie with RSEM/STAR
 - Removed ballgown
 - Converted rules to use conda instead of modules

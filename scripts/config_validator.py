@@ -11,7 +11,8 @@ from snakemake import utils # Using utils.validate, keeping the utils name to pr
 import yaml
 import pandas as pd
 
-from scripts import rnaseq_snakefile_helper
+from . import rnaseq_snakefile_helper
+from . import __version__ as WAT_VER
 
 _HEADER_RULE = '=' * 70 + '\n'
 _SECTION_RULE = '-' * 70 + '\n'
@@ -130,6 +131,7 @@ class _ConfigValidator(object):
         self.contrast_values = _DESeq2_contrast_vals(self.contrasts)
         self._log = log
         self._PARSING_VALIDATIONS = [self._check_config_against_schema,
+                                     self._check_config_matches_watermelon_version,
                                      self._check_phenotype_labels_not_unique,
                                      self._check_contrasts_not_a_pair]
         self._CONTENT_VALIDATIONS = [self._check_phenotype_labels_illegal_values,
@@ -149,8 +151,10 @@ class _ConfigValidator(object):
 
         for validation in self._PARSING_VALIDATIONS:
             collector.check(validation)
-            if not collector.passed:
-                return collector
+            #TWS - Why is this here (below)? The result is that only
+            #parsing errors/warnings are reported if any of these fail
+            #if not collector.passed:
+            #    return collector
 
         for validation in self._CONTENT_VALIDATIONS:
             collector.check(validation)
@@ -161,6 +165,18 @@ class _ConfigValidator(object):
             utils.validate(self.config, self.schema_filename) #snakemake utils schema validator
         except Exception as msg:
             raise(_WatermelonConfigFailure(str(msg)))
+
+    def _check_config_matches_watermelon_version(self):
+        #TWS - Request code review here
+        try:
+            config_ver = self.config['watermelon_version']
+        except KeyError as e:
+            msg = 'Key {} not found in config. Cannot check version match'.format(e)
+            raise _WatermelonConfigFailure(msg)
+        if config_ver != WAT_VER:
+            msg = 'Current watermelon version: {} does not match config: {}'.format(WAT_VER, config_ver)
+            raise _WatermelonConfigWarning(msg)
+
 
     def _check_phenotype_has_replicates(self):
         phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)

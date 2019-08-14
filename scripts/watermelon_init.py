@@ -45,6 +45,8 @@ import yaml
 
 import pandas as pd
 
+from . import __version__ as WAT_VER
+
 
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
@@ -349,6 +351,8 @@ def _make_config_dict(template_config, genome_references, args):
     if 'alignment_options' in config:
         config['alignment_options']['rsem_ref_prefix'] = args.genome_build
     #Add in more needed keys
+    #Watermelon version
+    config['watermelon_version'] = WAT_VER
     #Samplesheet
     config['sample_description_file'] = os.path.abspath(args.sample_sheet)
     #Genome / references
@@ -356,10 +360,11 @@ def _make_config_dict(template_config, genome_references, args):
     #Email params
     config['email'] = {'subject' : 'watermelon' + args.job_suffix, 'to' : getpass.getuser() + '@umich.edu'}
     #Reorder these added keys (move to top)
-    #resulting order: email, sample_description_file, genome, references, template_config stuff
+    #resulting order: email, watermelon_version, sample_description_file, genome, references, template_config stuff
     config.move_to_end('references', last=False)
     config.move_to_end('genome', last=False)
     config.move_to_end('sample_description_file', last=False)
+    config.move_to_end('watermelon_version', last=False)
     config.move_to_end('email', last=False)
 
 

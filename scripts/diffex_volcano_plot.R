@@ -116,7 +116,8 @@ gene_list = read.table(snakemake@input[['gene_list']], sep="\t", header = T)
 
 # Volcano plot
 out_file = snakemake@output[['volcano_plot']]
-factor_name = snakemake@wildcards[['factor_name']]
+model_name = snakemake@wildcards[['model_name']]
+factor_name = snakemake@config[['diffex']][[model_name]][['factor_name']]
 contrast_name = snakemake@wildcards[['contrast']]
 exp = unlist(str_split(contrast_name, '_v_'))[1]
 con = unlist(str_split(contrast_name, '_v_'))[2]

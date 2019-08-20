@@ -21,11 +21,6 @@ diffex:
     #which will produce results in parallel directories
     #The parent node (model name) forms the names of directories.
     model_one:
-        #The design is used when initializing the dataset. Note that this is design is
-        #currently not used when generating the normalized count tables
-        design: ~ pheno.Gend
-        #The factor name is used within the diffex Rscripts. See results notes below
-        factor_name: pheno.Gend
         #Several contrasts of the form testVal_v_referenceVal are listed.
         contrasts:
             - DM.male_v_NDM.male
@@ -33,6 +28,11 @@ diffex:
             - DM.fem_v_DM.male
             - NDM.fem_v_NDM.male
         DESeq2:
+            #The design is used when initializing the dataset. Note that this is design is
+            #currently not used when generating the normalized count tables
+            design: ~ pheno.Gend
+            #The factor name is used within the diffex Rscripts. See results notes below
+            factor_name: pheno.Gend
             #The following parameters are directly parsed by R
             #and used within the call to DESeq2().
             #The imported DESeq2Dataset is passed by default and isn't listed here.

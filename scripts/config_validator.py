@@ -34,7 +34,7 @@ def _is_name_reserved(name):
 def _DESeq2_factor_contrasts(diffex_config):
     cont_dict = {}
     for model in rnaseq_snakefile_helper.diffex_models(diffex_config):
-        factor = diffex_config[model]['factor_name']
+        factor = diffex_config[model]['DESeq2']['factor_name']
         cont_dict[factor] = diffex_config[model]['contrasts']
     return(cont_dict)
 

@@ -20,7 +20,7 @@ foo = suppressMessages(lapply(lib.vector, library, character.only=T, warn.confli
 # Main
 
 model_name = snakemake@wildcards[['model_name']]
-factorName = snakemake@config[['diffex']][[model_name]][['factor_name']]
+factorName = snakemake@config[['diffex']][[model_name]][['DESeq2']][['factor_name']]
 
 contrast = snakemake@wildcards[['contrast']]
 base.file.name = contrast #Assign base filename using contrast wildcard

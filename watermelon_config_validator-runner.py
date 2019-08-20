@@ -8,4 +8,5 @@ from scripts.config_validator import main
 
 if __name__ == '__main__':
     config_filepath = os.path.realpath(sys.argv[1])
-    exit(main(config_filepath))
+    schema_filepath = os.path.realpath(sys.argv[2])
+    exit(main(config_filepath, schema_filepath))

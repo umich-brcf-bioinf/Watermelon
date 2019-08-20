@@ -11,13 +11,15 @@ import argparse
 from collections import defaultdict
 
 WARNING_PERCENTAGE_ANNOTATED_CUTOFF = 50
-TAXONOMY = {'hg19': '9606', 'GRCh37': '9606',   # human
+TAXONOMY = {'hg19': '9606', 'GRCh37': '9606', 'hg38': '9606', 'GRCh38': '9606',   # human
             'mm10': '10090', 'mm9': '10090',    # mouse
             'rn5': '10116', 'rn6': '10116',     # rat
             'ce10': '6239', 'ce11': '6239', 'WS220': '6239', 'WBS235': '6239',   # c. elegans
             'GRCz10' : '7955', 'Zv9': '7955',   # zebra fish
-            'TAIR9': '3702', 'TAIR10': '3702',   # arabidopis
-            'MSU6': '4530'                      # rice
+            'TAIR9': '3702', 'TAIR10': '3702',  # arabidopis
+            'MSU6': '4530',                     # rice
+            'ecoMG1655': '511145', 'ecoUTI89': '364106', # ecoli
+            'dm6': '7227', #drosophila
             }
 
 
@@ -107,7 +109,6 @@ def main():
                 gene_name = row[0]
                 if gene_name in gene_details:
                     gene_id_symbol = gene_details[gene_name]
-
                     matching_gene_symbol_count += 1
                 else:
                     gene_id_symbol = ['.','.']

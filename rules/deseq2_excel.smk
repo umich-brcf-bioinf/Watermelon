@@ -1,19 +1,16 @@
 rule deseq2_excel:
     input:
-        gene = DESEQ2_DIR + "04-annotation/{phenotype}/{comparison}.annot.txt",
-        glossary = DESEQ2_DIR + "05-run_info/glossary.txt",
-        run_info = DESEQ2_DIR + "05-run_info/run_info.txt"
+        gene = DIFFEX_DIR + "deseq2/annotated/{model_name}/{contrast}.annot.txt",
+        glossary = WATERMELON_SCRIPTS_DIR + 'deseq2_glossary.txt',
     output:
-        annotated_file = DESEQ2_DIR + "06-excel/{phenotype}/{comparison}.xlsx",
+        annotated_file = DIFFEX_DIR + "deseq2/excel/{model_name}/{contrast}.xlsx",
     log:
-        DESEQ2_DIR + "06-excel/.log/{phenotype}_diffex_excel.log"
-    params:
-        output_dir = DESEQ2_DIR + "06-excel/",
-    shell:
-        "module purge && module load python/3.6.1 && "
-        "python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py "
-        " -g {input.gene}"
-        " --glossary {input.glossary} "
-        " --info_filepath {input.run_info} "
-        " {output.annotated_file} "
-        " 2>&1 | tee {log} "
+        DIFFEX_DIR + "deseq2/excel/.log/{model_name}_{contrast}.diffex_excel.log",
+    conda:
+        'envs/deseq2_excel.yaml'
+    shell:'''(
+        python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py \
+            -g {input.gene} \
+            --glossary {input.glossary} \
+            {output.annotated_file}
+        ) 2>&1 | tee {log} '''

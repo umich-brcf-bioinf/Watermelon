@@ -12,25 +12,23 @@ import hashlib
 import os
 from os.path import join
 from os.path import isfile
+import pandas as pd
 import sys
+import yaml
 
 from snakemake import workflow
 
-from scripts import watermelon_config
-from scripts.watermelon_config import CONFIG_KEYS
-from scripts.watermelon_config import DEFAULT_COMPARISON_INFIX
-from scripts.watermelon_config import DEFAULT_PHENOTYPE_DELIM
+HISAT2_NAME = 'HISAT2'
+STRINGTIE_NAME = 'stringtie'
+RSEM_NAME = 'rsem'
 
-FILE_EXTENSION = '.watermelon.md5'
-'''Appended to all checksum filenames; must be very distinctive to ensure the module can
-unambiguously identify and safely remove extraneous checksums.'''
-
-TOPHAT_NAME = 'tophat'
-HTSEQ_NAME = 'htseq'
-
-STRAND_CONFIG_PARAM = { 'fr-unstranded' : {TOPHAT_NAME: 'fr-unstranded', HTSEQ_NAME: 'no'},
-                        'fr-firststrand' : {TOPHAT_NAME : 'fr-firststrand', HTSEQ_NAME: 'reverse'},
-                        'fr-secondstrand' : {TOPHAT_NAME : 'fr-secondstrand', HTSEQ_NAME: 'yes'} }
+STRAND_CONFIG_PARAM = { 'fr-unstranded' : {HISAT2_NAME: '', STRINGTIE_NAME: '', RSEM_NAME: ''},
+                        'fr-firststrand' : {HISAT2_NAME : '--rna-strandness RF', STRINGTIE_NAME: '--rf', RSEM_NAME: '--strandedness reverse'},
+                        'fr-secondstrand' : {HISAT2_NAME : '--rna-strandness FR', STRINGTIE_NAME: '--fr', RSEM_NAME: '--strandedness forward'},
+                        'unstranded' : {HISAT2_NAME: '', STRINGTIE_NAME: '', RSEM_NAME: ''},
+                        'reverse_forward' : {HISAT2_NAME : '--rna-strandness RF', STRINGTIE_NAME: '--rf', RSEM_NAME: '--strandedness reverse'},
+                        'forward_reverse' : {HISAT2_NAME : '--rna-strandness FR', STRINGTIE_NAME: '--fr', RSEM_NAME: '--strandedness forward'},
+                        }
 
 def _mkdir(newdir):
     """works the way a good mkdir should :)
@@ -49,76 +47,6 @@ def _mkdir(newdir):
             _mkdir(head)
         if tail:
             os.mkdir(newdir)
-
-class ChecksumManager(object):
-    def __init__(self, checksum_dir, file_extension):
-        self.checksum_dir = checksum_dir
-        self.file_extension = file_extension
-
-    def _checksum_filepath(self, prefix, key):
-        checksum_filename = '{}-{}{}'.format(prefix, key, self.file_extension)
-        return join(self.checksum_dir, checksum_filename)
-
-    @staticmethod
-    def _checksum_matches(checksum_filepath, new_checksum):
-        checksums_match = False
-        if os.path.exists(checksum_filepath):
-            with open(checksum_filepath, 'r') as file:
-                old_checksum = file.readlines()
-            checksums_match = len(old_checksum) == 1 and old_checksum[0] == new_checksum
-        return checksums_match
-
-    @staticmethod
-    def _checksum_reset_file(checksum_filepath, new_checksum):
-        with open(checksum_filepath, 'w') as file:
-            file.write(new_checksum)
-
-    def _checksum_remove_extra_files(self, valid_checksum_files):
-        '''Removes extraneous checksum files (checking for proper name and checksum prefix).'''
-        wildcard = join(self.checksum_dir, '*{}'.format(self.file_extension))
-        all_checksum_files = set(glob.glob(wildcard))
-        extra_checksum_files = all_checksum_files - valid_checksum_files
-        for filename in extra_checksum_files:
-            with open(filename, 'r') as file:
-                lines = file.readlines()
-            if len(lines) == 1 and lines[0].startswith(self.file_extension):
-                os.remove(filename)
-
-    @staticmethod
-    def _build_checksum(value):
-        '''Creates a checksum based on the supplied value. Typically just the md5 of the
-        str representation, but if the value is itself a dict will create a str representation
-        of an ordered dict. (This extra step avoids non-deterministic behavior around how
-        dicts are ordered between/within python2/3, but the naive implementation assumes that
-        the config will only be two dicts deep at most.)
-        '''
-        if isinstance(value, dict):
-            value = collections.OrderedDict(sorted(value.items()))
-        return FILE_EXTENSION + ':' + hashlib.md5(str(value).encode('utf-8')).hexdigest()
-
-    def reset_checksum_for_dict(self, the_name, the_dict):
-        '''Checksum of each value is compared with the checksum stored in the file; if
-        the checksum doesn't match, create a new checksum file.'''
-        checksum_files = set()
-        for key, value in the_dict.items():
-            checksum_filepath = self._checksum_filepath(the_name, key)
-            new_checksum = self._build_checksum(value)
-            if not self._checksum_matches(checksum_filepath, new_checksum):
-                self._checksum_reset_file(checksum_filepath, new_checksum)
-            checksum_files.add(checksum_filepath)
-        return checksum_files
-
-    def reset_checksums(self, **kwargs):
-        '''Create, examine, or update a file for each top-level key in the dictionaries.
-        Stray checksum files are removed.'''
-        _mkdir(self.checksum_dir)
-        checksum_files = set()
-        for the_name, the_dict in kwargs.items():
-            checksum_files.update(tuple(self.reset_checksum_for_dict(the_name, the_dict)))
-        self._checksum_remove_extra_files(checksum_files)
-
-def checksum_reset_all(checksum_dir, **kwargs):
-    ChecksumManager(checksum_dir, FILE_EXTENSION).reset_checksums(**kwargs)
 
 def init_references(config_references):
     def existing_link_target_is_different(link_name, link_path):
@@ -147,55 +75,26 @@ class PhenotypeManager(object):
     '''Interprets a subset of the config to help answer questions around how
     samples map to phenotype labels and values and vice versa.'''
     def __init__(self,
-                 config={},
-                 delimiter=DEFAULT_PHENOTYPE_DELIM,
-                 comparison_infix=DEFAULT_COMPARISON_INFIX):
-        self.phenotype_labels_string = config.get(CONFIG_KEYS.phenotypes, None)
-        self.sample_phenotype_value_dict = config.get(CONFIG_KEYS.samples, None)
-        self.comparisons = config.get(CONFIG_KEYS.comparisons, None)
-        self.delimiter = delimiter
-        self.comparison_infix = comparison_infix
+                 config={}):
+        self.samplesheet = pd.read_csv(config["sample_description_file"], comment='#', keep_default_na=False).set_index("sample", drop=True)
+        #sample_phenotype_value_dict : {sample : { pheno_label: pheno_value } }
+        self.sample_phenotype_value_dict = self.samplesheet.to_dict(orient='index')
 
     @property
     def phenotype_sample_list(self):
         '''Translates config phenotypes/samples into nested dict of phenotypes.
         Specifically {phenotype_label : {phenotype_value : [list of samples] } }
-
-        Strips all surrounding white space.
-
-        phenotypes_string : delimited phenotype labels (columns)
-        sample_phenotype_value_dict : {sample_id : delimited phenotype_value_string} (rows)
         '''
-        def check_labels_match_values(phenotype_labels,
-                                      sample,
-                                      phenotype_values):
-            if len(phenotype_labels) != len(phenotype_values):
-                msg_fmt = 'expected {} phenotype values but sample {} had {}'
-                msg = msg_fmt.format(len(phenotype_labels),
-                                     sample,
-                                     len(phenotype_values))
-                raise ValueError(msg)
-
-        def check_phenotype_labels(labels):
-            for i,label in enumerate(labels):
-                if label == '':
-                    msg_fmt = 'label of phenotype {} is empty'
-                    msg = msg_fmt.format(i + 1)
-                    raise ValueError(msg)
 
         phenotype_dict = defaultdict(partial(defaultdict, list))
-        phenotype_labels = list(map(str.strip, self.phenotype_labels_string.split(self.delimiter)))
-        check_phenotype_labels(phenotype_labels)
-        sorted_sample_phenotypes_items = sorted([(k, v) for k,v in self.sample_phenotype_value_dict.items()])
-        for sample, phenotype_values in sorted_sample_phenotypes_items:
-            sample_phenotype_values = list(map(str.strip, phenotype_values.split(self.delimiter)))
-            sample_phenotypes = dict(zip(phenotype_labels, sample_phenotype_values))
-            check_labels_match_values(phenotype_labels,
-                                      sample,
-                                      sample_phenotype_values)
-            for label, value in sample_phenotypes.items():
-                if value != '':
-                    phenotype_dict[label][value].append(sample)
+
+        # {phenotype_label : {sample: phenotype_value } }
+        samplesheet_dict = self.samplesheet.to_dict(orient='dict')
+        for label in samplesheet_dict:
+            for samp in samplesheet_dict[label]:
+                value = samplesheet_dict[label][samp]
+                phenotype_dict[label][value].append(samp)
+        # {phenotype_label : {phenotype_value : [list of samples] } }
         return phenotype_dict
 
     @property
@@ -262,68 +161,43 @@ class PhenotypeManager(object):
                                                        'phenotypes comparisons')
         return PhenotypesComparisons(phenotypes=phenotypes, comparisons=comparisons)
 
-
-    def cuffdiff_samples(self,
-                         phenotype_label,
-                         sample_file_format):
-        '''Returns a list of sample files grouped by phenotype value.
-           Each sample group represents the comma separated samples for a phenotype value.
-           Sample groups are separated by a space.
-
-           sample_file_format is format string with placeholder {sample_placeholder}'''
-
-        group_separator = ' '
-        file_separator = ','
-
-        sample_name_group = self.phenotype_sample_list[phenotype_label]
-
-        group_sample_names = defaultdict(list)
-        for phenotype_value, sample_list in sample_name_group.items():
-            for sample_name in sample_list:
-                sample_file = sample_file_format.format(sample_placeholder=sample_name)
-                group_sample_names[phenotype_value].append(sample_file)
-        group_sample_names = dict(group_sample_names)
-
-        params = []
-        for group in self.comparison_values[phenotype_label]:
-            params.append(file_separator.join(sorted(group_sample_names[group])))
-
-        return group_separator.join(params)
-
-def _strand_option(tuxedo_or_htseq, strand_option):
+def _strand_option(program_name, strand_option):
     if not strand_option in STRAND_CONFIG_PARAM:
         msg_format = ('ERROR: config:alignment_options:library_type={} is '
                       'not valid. Valid library_type options are: {}')
         msg = msg_format.format(strand_option, ','.join(STRAND_CONFIG_PARAM.keys()))
         raise ValueError(msg)
-    return STRAND_CONFIG_PARAM[strand_option][tuxedo_or_htseq]
+    return STRAND_CONFIG_PARAM[strand_option][program_name]
 
-def strand_option_tophat(config_strand_option):
-    return _strand_option(TOPHAT_NAME, config_strand_option)
+def strand_option_hisat2(config):
+    config_strand_option = config["alignment_options"]["library_type"]
+    return _strand_option(HISAT2_NAME, config_strand_option)
 
-def strand_option_htseq(config_strand_option):
-    return _strand_option(HTSEQ_NAME, config_strand_option)
+def strand_option_stringtie(config):
+    config_strand_option = config["alignment_options"]["library_type"]
+    return _strand_option(STRINGTIE_NAME, config_strand_option)
 
-def cutadapt_options(trim_params):
-    run_trimming_options = 0
-    for option, value in trim_params.items():
-        if not isinstance(value, int):
-            msg_format = "ERROR: config:trimming_options '{}={}' must be integer"
-            msg = msg_format.format(option, value)
-            raise ValueError(msg)
-        if value != 0:
-            run_trimming_options = 1
-    return run_trimming_options
+def strand_option_rsem(config):
+    config_strand_option = config["alignment_options"]["library_type"]
+    return _strand_option(RSEM_NAME, config_strand_option)
 
-def tophat_options(alignment_options):
-    options = ""
-    if not isinstance(alignment_options["transcriptome_only"], bool):
-        raise ValueError("config:alignment_options:transcriptome_only must be True or False")
-    if alignment_options["transcriptome_only"]:
-        options += " --transcriptome-only "
+def hisat_detect_paired_end(fastqs):
+    if len(fastqs) == 2:
+        return('-1 ' + fastqs[0] + ' -2 ' + fastqs[1])
+    elif len(fastqs) == 1:
+        return('-U ' + fastqs[0])
     else:
-        options += " --no-novel-juncs "  # used in Legacy for transcriptome + genome alignment
-    return options
+        msg_format = 'Found {} fastqs ({}); expected either 1 or 2 fastq files/sample'
+        raise ValueError(msg_format.format(len(fastqs), ','.join(fastqs)))
+
+def detect_paired_end_bool(fastqs):
+    if len(fastqs) == 2:
+        return(True)
+    elif len(fastqs) == 1:
+        return(False)
+    else:
+        msg_format = 'Found {} fastqs ({}); expected either 1 or 2 fastq files/sample'
+        raise ValueError(msg_format.format(len(fastqs), ','.join(fastqs)))
 
 def _get_sample_reads(fastq_base_dir, samples):
     sample_reads = {}
@@ -355,48 +229,6 @@ def expand_sample_read_endedness(sample_read_endedness_format,
                            sample=samples,
                            read_endedness=reads)
 
-def tophat_paired_end_flags(read_stats_filename=None):
-    def read_values(filename, expected_headers):
-        with open(filename, mode='r') as infile:
-            try:
-                row = next(csv.DictReader(infile, delimiter='\t'))
-            except StopIteration:
-                raise ValueError('missing data row in [{}]'.format(filename))
-        missing_headers = sorted(expected_headers - row.keys())
-        if missing_headers:
-            msg = 'missing [{}] in header of [{}]'.format(','.join(missing_headers),
-                                                          read_stats_filename)
-            raise ValueError(msg)
-        return row
-
-    def parse_values(filename, row, headers):
-        parsed_row = {}
-        invalid_values = {}
-        for header in headers:
-            value = row[header]
-            try:
-                parsed_row[header] = str(int(round(float(value))))
-            except ValueError:
-                invalid_values[header]=value
-        if invalid_values:
-            header_values = ','.join(['{}:{}'.format(h,v) for h,v in sorted(invalid_values.items())])
-            msg = 'invalid number(s) [{}] in {}'.format(header_values, read_stats_filename)
-            raise ValueError(msg)
-        return parsed_row
-
-    header_flag = {'insert_std_dev': '--mate-std-dev',
-                   'inner_mate_dist': '--mate-inner-dist'}
-    result = []
-    if read_stats_filename and os.path.exists(read_stats_filename):
-        raw_values = read_values(read_stats_filename, header_flag.keys())
-        parsed_values = parse_values(read_stats_filename,
-                                     raw_values,
-                                     header_flag.keys())
-        for header, flag in sorted(header_flag.items()):
-            result.append(flag)
-            result.append(parsed_values[header])
-    return ' '.join(result)
-
 def expand_read_stats_if_paired(read_stats_filename_format,
                                 flattened_sample_reads,
                                 sample):
@@ -405,5 +237,23 @@ def expand_read_stats_if_paired(read_stats_filename_format,
         result.append(read_stats_filename_format.format(sample=sample))
     return result
 
-def transform_config(config):
-    watermelon_config.transform_config(config)
+def diffex_models(diffex_config):
+    not_factors = ['adjustedPValue', 'linear_fold_change']
+    model_names = [k for k in diffex_config.keys() if k not in not_factors]
+    return(model_names)
+
+'''Returns contrasts dict in the form of
+{model_name: ['val1_v_val2', 'val3_v_val4']}
+'''
+def diffex_contrasts(diffex_config):
+    cont_dict = {}
+    for model in diffex_models(diffex_config):
+        cont_dict[model] = diffex_config[model]['contrasts']
+    return(cont_dict)
+
+def expand_model_contrast_filenames(model_contrasts_format, contrast_dict):
+    paths = []
+    for model in contrast_dict:
+        conts = contrast_dict[model]
+        paths.extend(workflow.expand(model_contrasts_format, model_name=model, contrast=conts))
+    return(paths)

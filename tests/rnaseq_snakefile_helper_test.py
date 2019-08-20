@@ -17,238 +17,6 @@ import yaml
 import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
 from scripts.rnaseq_snakefile_helper import  PhenotypeManager
 
-
-class ChecksumManagerTest(unittest.TestCase):
-    def assertChecksumFile(self, config_dir, config_filename, expected_checksum=None):
-        config_path = os.path.join(config_dir, config_filename)
-        self.assertTrue(os.path.exists(config_path))
-        with open(config_path, 'r') as file:
-            lines = file.readlines()
-        self.assertEqual(1, len(lines))
-        if expected_checksum:
-            self.assertEqual(expected_checksum, lines[0])
-
-    def test_checksum_reset_all_initializesConfig(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            config_dir = temp_dir_path
-            config = {'A' : 'foo',
-                      'B' : 'bar',
-                      'C' : 'baz'}
-
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, configThing=config)
-
-            self.assertChecksumFile(config_dir, 'configThing-A.watermelon.md5', '.watermelon.md5:acbd18db4cc2f85cedef654fccc4a4d8')
-            self.assertChecksumFile(config_dir, 'configThing-B.watermelon.md5', '.watermelon.md5:37b51d194a7513e45b56f6524f2d51f2')
-            self.assertChecksumFile(config_dir, 'configThing-C.watermelon.md5', '.watermelon.md5:73feffa4b7f6bb68e44cf984c85f6e88')
-
-    def test_checksum_reset_all_doesNotOverwriteUnchangedKeysForSimpleValues(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            config_dir = temp_dir_path
-            config = {'A' : 'foo',
-                      'B' : 'bar',
-                      'C' : 'baz'}
-
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            def mod_time(filename):
-                return os.path.getmtime(os.path.join(config_dir, filename))
-
-            checksum_A1_timestamp = mod_time('config-A.watermelon.md5')
-            checksum_B1_timestamp = mod_time('config-B.watermelon.md5')
-            checksum_C1_timestamp = mod_time('config-C.watermelon.md5')
-
-            time.sleep(1)
-
-            config = {'A' : 'foo2',
-                      'B' : 'bar',
-                      'C' : 'baz2'}
-
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            checksum_A2_timestamp = mod_time('config-A.watermelon.md5')
-            checksum_B2_timestamp = mod_time('config-B.watermelon.md5')
-            checksum_C2_timestamp = mod_time('config-C.watermelon.md5')
-
-    def test_checksum_reset_all_doesNotOverwriteUnchangedKeysForComplexValues(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            config_dir = temp_dir_path
-            config = {'A' : {'1': 'foo', '2': 'bar'},
-                      'B' : {'1': 'foo', '2': 'bar'},
-                      'C' : {'1': 'foo', '2': 'bar'}}
-
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            def mod_time(filename):
-                return os.path.getmtime(os.path.join(config_dir, filename))
-
-            checksum_A1_timestamp = mod_time('config-A.watermelon.md5')
-            checksum_B1_timestamp = mod_time('config-B.watermelon.md5')
-            checksum_C1_timestamp = mod_time('config-C.watermelon.md5')
-
-            time.sleep(1)
-
-            config = {'A' : {'2': 'bar', '1': 'foo'},
-                      'B' : {'2': 'bar', '1': 'foo'},
-                      'C' : {'2': 'bar', '1': 'foo'}}
-
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            checksum_A2_timestamp = mod_time('config-A.watermelon.md5')
-            checksum_B2_timestamp = mod_time('config-B.watermelon.md5')
-            checksum_C2_timestamp = mod_time('config-C.watermelon.md5')
-
-
-    def test_checksum_reset_all_addsNewFilesForNewKeys(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            config_dir = temp_dir_path
-            config = {'A' : 'foo',
-                      'B' : 'bar'}
-
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            config = {'A' : 'foo',
-                      'B' : 'bar',
-                      'C' : 'baz'}
-
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            self.assertChecksumFile(config_dir, 'config-A.watermelon.md5', '.watermelon.md5:acbd18db4cc2f85cedef654fccc4a4d8')
-            self.assertChecksumFile(config_dir, 'config-B.watermelon.md5', '.watermelon.md5:37b51d194a7513e45b56f6524f2d51f2')
-            self.assertChecksumFile(config_dir, 'config-C.watermelon.md5', '.watermelon.md5:73feffa4b7f6bb68e44cf984c85f6e88')
-
-    def test_checksum_reset_all_removesChecksumFilesForMissingKeys(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            config_dir = temp_dir_path
-            config = {'A' : 'foo',
-                      'B' : 'bar',
-                      'C' : 'baz'}
-
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            config = {'A' : 'foo',
-                      'C' : 'baz'}
-
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            actual_files = sorted([f for f in os.listdir(config_dir) if os.path.isfile(os.path.join(config_dir, f))])
-            self.assertEqual(['config-A.watermelon.md5', 'config-C.watermelon.md5'],
-                             actual_files)
-
-    def test_checksum_reset_all_equivalentObjectsDoNotResetChecksum(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            config_dir = temp_dir_path
-            config = {'samples' : {'s1':'1',
-                                   's2':'2',
-                                   's3':'3'},
-                      'comparisons' : {'a_b':'a vs b',
-                                       'c_d':'c vs d'}
-                      }
-
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            self.assertChecksumFile(config_dir, 'config-samples.watermelon.md5', '.watermelon.md5:94a5e110e7244bc21d27fc4e563346f4')
-            self.assertChecksumFile(config_dir, 'config-comparisons.watermelon.md5', '.watermelon.md5:540157f53ef390438a880625b6d5beb4')
-
-            config = {'samples' : {'s1':'1',
-                                   's2':'2',
-                                   's3':'3'},
-                      'comparisons' : {'a_b':'a vs b',
-                                       'c_d':'c vs d'}
-                      }
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            self.assertChecksumFile(config_dir, 'config-samples.watermelon.md5', '.watermelon.md5:94a5e110e7244bc21d27fc4e563346f4')
-            self.assertChecksumFile(config_dir, 'config-comparisons.watermelon.md5', '.watermelon.md5:540157f53ef390438a880625b6d5beb4')
-
-    def test_checksum_reset_all_distinctObjectsResetsChecksum(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            config_dir = temp_dir_path
-            config = {'samples' : {'s1':'1',
-                                   's2':'2',
-                                   's3':'3'},
-                      'comparisons' : {'a_b':'a vs b',
-                                       'c_d':'c vs d'}
-                      }
-
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            self.assertChecksumFile(config_dir, 'config-samples.watermelon.md5', '.watermelon.md5:94a5e110e7244bc21d27fc4e563346f4')
-            self.assertChecksumFile(config_dir, 'config-comparisons.watermelon.md5', '.watermelon.md5:540157f53ef390438a880625b6d5beb4')
-
-            config = {'samples' : {'s1':'1',
-                                   's2':'2'},
-                      'comparisons' : {'a_b':'a vs b'}
-                      }
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            self.assertChecksumFile(config_dir, 'config-samples.watermelon.md5', '.watermelon.md5:1c9f24c825613d5fd1cdc2df726d5bb8')
-            self.assertChecksumFile(config_dir, 'config-comparisons.watermelon.md5', '.watermelon.md5:18a615d74c5db4f9edc688955a8c7516')
-
-    def test_checksum_reset_all_createsChecksumDir(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            config_dir = os.path.join(temp_dir_path, 'parent', 'child', 'config_checksums')
-            config = {'samples' : {'s1':'1',
-                                   's2':'2'},
-                      'comparisons' : {'a_b':'a vs b',
-                                       'c_d':'c vs d'}
-                      }
-
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            self.assertChecksumFile(config_dir, 'config-samples.watermelon.md5')
-            self.assertChecksumFile(config_dir, 'config-comparisons.watermelon.md5')
-
-            config = {'samples' : {'s1':'1',
-                                   's2':'2'},
-                      'comparisons' : {'a_b':'a vs b'},
-                      'references' : 'A'}
-            rnaseq_snakefile_helper.checksum_reset_all(config_dir, config=config)
-
-            self.assertChecksumFile(config_dir, 'config-samples.watermelon.md5')
-            self.assertChecksumFile(config_dir, 'config-comparisons.watermelon.md5')
-            self.assertChecksumFile(config_dir, 'config-references.watermelon.md5')
-
-    def test_checksum_reset_all_multiple_dicts(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            checksum_dir = temp_dir_path
-            config = {'samples' : {'s1':'1',
-                                   's2':'2',
-                                   's3':'3'}}
-            phenotype_samples = {'gender': {'M':['s1','s2'], 'F': ['s3']},
-                                 'diet' : {'H' :['s1','s2'], 'L': ['s3']}}
-            phenotype_comparisons = {'gender': 'M_v_F',
-                                     'diet' : 'L_v_H'}
-
-            rnaseq_snakefile_helper.checksum_reset_all(checksum_dir,
-                                                       config=config,
-                                                       phenotype_samples=phenotype_samples,
-                                                       phenotype_comparisons=phenotype_comparisons)
-
-            self.assertChecksumFile(checksum_dir,
-                                    'config-samples.watermelon.md5',
-                                    '.watermelon.md5:94a5e110e7244bc21d27fc4e563346f4')
-            self.assertChecksumFile(checksum_dir,
-                                    'phenotype_samples-gender.watermelon.md5',
-                                    '.watermelon.md5:2ceb07f4677c8a6255e4913ce26c0c95')
-            self.assertChecksumFile(checksum_dir,
-                                    'phenotype_samples-diet.watermelon.md5',
-                                    '.watermelon.md5:6e615144105118241c3bf19e47d36580')
-            self.assertChecksumFile(checksum_dir,
-                                    'phenotype_comparisons-gender.watermelon.md5',
-                                    '.watermelon.md5:8253a6220bedb78b4b4380b152d518e0')
-            self.assertChecksumFile(checksum_dir,
-                                    'phenotype_comparisons-diet.watermelon.md5',
-                                    '.watermelon.md5:0ef89ab1c75b2de0359c4dff6363105f')
-
 class PhenotypeManagerTest(unittest.TestCase):
     def test_phenotype_sample_list(self):
         phenotype_labels = 'A | B | C'
@@ -497,31 +265,6 @@ class PhenotypeManagerTest(unittest.TestCase):
         self.assertEqual(['1A_v_1B', '1C_v_1D', '2A_v_2B', '2C_v_2D'],
                          actual.comparisons)
 
-    def test_cuffdiff_samples(self):
-        phenotypes = ' pLabel1 ^ pLabel2 '
-        samples = {'s1' : ' 1A ^ 2A ',
-                   's2' : ' 1A ^ 2A ',
-                   's3' : ' 1B ^    ',
-                   's4' : '    ^ 2A ',
-                   's5' : ' 1C ^ 2B ',
-                   's6' : ' 1D ^ 2B '}
-        comparison_dict = {'pLabel1' : [' 1A_v_1B\t',' 1C_v_1D '],
-                           'pLabel2' : [' 2A_v_2B']}
-        manager = PhenotypeManager({'phenotypes' : phenotypes,
-                                    'samples' : samples,
-                                    'comparisons' : comparison_dict})
-
-        actual = manager.cuffdiff_samples('pLabel1', '/foo/{sample_placeholder}.bar')
-
-        expected = '/foo/s1.bar,/foo/s2.bar /foo/s3.bar /foo/s5.bar /foo/s6.bar'
-        self.assertEqual(expected, actual)
-
-        actual = manager.cuffdiff_samples('pLabel2', '/foo/{sample_placeholder}.bar')
-
-        expected = '/foo/s1.bar,/foo/s2.bar,/foo/s4.bar /foo/s5.bar,/foo/s6.bar'
-        self.assertEqual(expected, actual)
-
-
 
 class RnaseqSnakefileHelperTest(unittest.TestCase):
     def test_cutadapt_options_noOptionsReturns0(self):
@@ -542,46 +285,54 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
                                rnaseq_snakefile_helper.cutadapt_options,
                                params)
 
-    def test_tophat_options_whenTrue(self):
-        config_alignment_options = {'transcriptome_only' : True}
-        actual = rnaseq_snakefile_helper.tophat_options(config_alignment_options)
-        self.assertEqual(' --transcriptome-only ', actual)
+    def test_check_strand_option_stringtie_validOptions(self):
+        make_config = lambda x: {'alignment_options': {'library_type': x}}
+        check_assert = lambda expected, input: self.assertEqual(expected, rnaseq_snakefile_helper.strand_option_stringtie(make_config(input)))
+        check_assert('', 'fr-unstranded')
+        check_assert('--rf', 'fr-firststrand')
+        check_assert('--fr', 'fr-secondstrand')
+        check_assert('', 'unstranded')
+        check_assert('--rf', 'reverse_forward')
+        check_assert('--fr', 'forward_reverse')
 
-    def test_tophat_options_whenFalse(self):
-        config_alignment_options = {'transcriptome_only' : False}
-        actual = rnaseq_snakefile_helper.tophat_options(config_alignment_options)
-        self.assertEqual(' --no-novel-juncs ', actual)
-
-    def test_tophat_options_raisesWhenInvalid(self):
-        config_alignment_options = {'transcriptome_only' : 'foo'}
-        self.assertRaisesRegex(ValueError,
-                               r'config:alignment_options:transcriptome_only.*True.*False',
-                               rnaseq_snakefile_helper.tophat_options,
-                               config_alignment_options)
-
-    def test_check_strand_option_htseq_validOptions(self):
-        check = rnaseq_snakefile_helper.strand_option_htseq
-        self.assertEqual('no', check('fr-unstranded'))
-        self.assertEqual('reverse', check('fr-firststrand'))
-        self.assertEqual('yes', check('fr-secondstrand'))
-
-    def test_check_strand_option_htseq_invalidOption(self):
+    def test_check_strand_option_stringtie_invalidOption(self):
+        make_config = lambda x: {'alignment_options': {'library_type': x}}
         self.assertRaisesRegex(ValueError,
                                r'ERROR: .*=foo.*not valid',
-                               rnaseq_snakefile_helper.strand_option_htseq,
-                               'foo')
+                               rnaseq_snakefile_helper.strand_option_stringtie,
+                               make_config('foo'))
 
-    def test_check_strand_option_tophat_validOptions(self):
-        check = rnaseq_snakefile_helper.strand_option_tophat
-        self.assertEqual('fr-unstranded', check('fr-unstranded'))
-        self.assertEqual('fr-firststrand', check('fr-firststrand'))
-        self.assertEqual('fr-secondstrand', check('fr-secondstrand'))
+    def test_check_strand_option_hisat2_validOptions(self):
+        make_config = lambda x: {'alignment_options': {'library_type': x}}
+        check_assert = lambda expected, input: self.assertEqual(expected, rnaseq_snakefile_helper.strand_option_hisat2(make_config(input)))
+        check_assert('', 'fr-unstranded')
+        check_assert('--rna-strandness RF', 'fr-firststrand')
+        check_assert('--rna-strandness FR', 'fr-secondstrand')
+        check_assert('', 'unstranded')
+        check_assert('--rna-strandness RF', 'reverse_forward')
+        check_assert('--rna-strandness FR', 'forward_reverse')
 
-    def test_check_strand_option_tophat_invalidOption(self):
+    def test_check_strand_option_hisat2_invalidOption(self):
+        make_config = lambda x: {'alignment_options': {'library_type': x}}
         self.assertRaisesRegex(ValueError,
                                r'ERROR: .*=foo.*not valid',
-                               rnaseq_snakefile_helper.strand_option_tophat,
-                               'foo')
+                               rnaseq_snakefile_helper.strand_option_hisat2,
+                               make_config('foo'))
+
+    def test_hisat_detect_paired_end(self):
+        self.assertEqual('-U foo.R1.fastq',
+                         rnaseq_snakefile_helper.hisat_detect_paired_end(['foo.R1.fastq']))
+        self.assertEqual('-1 foo.R1.fastq -2 foo.R2.fastq',
+                         rnaseq_snakefile_helper.hisat_detect_paired_end(['foo.R1.fastq', 'foo.R2.fastq']))
+        self.assertRaisesRegex(ValueError,
+                               r'Found 0 fastqs',
+                               rnaseq_snakefile_helper.hisat_detect_paired_end,
+                               [])
+        self.assertRaisesRegex(ValueError,
+                               r'Found 3 fastqs',
+                               rnaseq_snakefile_helper.hisat_detect_paired_end,
+                               ['1', '2', '3'])
+
 
     def test_get_sample_reads(self):
         with TempDirectory() as temp_dir:
@@ -719,76 +470,6 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
         actual = rnaseq_snakefile_helper.expand_sample_read_endedness(sample_read_endedness_format,
                                                                       all_flattened_sample_reads)
         self.assertEqual([], actual)
-
-    def test_tophat_paired_end_flags(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\tinsert_std_dev\n42.3\t14.9', )
-            actual = rnaseq_snakefile_helper.tophat_paired_end_flags(read_stats_filename)
-        self.assertEqual('--mate-inner-dist 42 --mate-std-dev 15', actual)
-
-    def test_tophat_paired_end_flags_suppressedIfFileMissing(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            actual = rnaseq_snakefile_helper.tophat_paired_end_flags(read_stats_filename)
-        self.assertEqual('', actual)
-
-    def test_tophat_paired_end_flags_suppressedIfNoFileMissing(self):
-        actual = rnaseq_snakefile_helper.tophat_paired_end_flags()
-        self.assertEqual('', actual)
-
-    def test_tophat_paired_end_flags_raisesWhenMissingAllRequiredHeaders(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'foo\n42')
-            self.assertRaisesRegexp(ValueError,
-                                    r'missing.*inner_mate_dist,insert_std_dev.*s0_read_stats.txt',
-                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
-                                    read_stats_filename)
-
-    def test_tophat_paired_end_flags_raisesWhenMissingInsertStdDev(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\n42')
-            self.assertRaisesRegexp(ValueError,
-                                    r'missing.*insert_std_dev.*s0_read_stats.txt',
-                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
-                                    read_stats_filename)
-
-    def test_tophat_paired_end_flags_raisesWhenMissingInnerMateDist(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'insert_std_dev\n42')
-            self.assertRaisesRegexp(ValueError,
-                                    r'missing.*inner_mate_dist.*s0_read_stats.txt',
-                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
-                                    read_stats_filename)
-
-    def test_tophat_paired_end_flags_raisesOnMissingData(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\tinsert_std_dev\n')
-            self.assertRaisesRegexp(ValueError,
-                                    r'missing data row in.*s0_read_stats.txt',
-                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
-                                    read_stats_filename)
-
-    def test_tophat_paired_end_flags_raisesOnInvalidData(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\tinsert_std_dev\nHello\tWorld')
-            self.assertRaisesRegexp(ValueError,
-                                    r'invalid number.*inner_mate_dist:Hello,insert_std_dev:World.*in.*s0_read_stats.txt',
-                                    rnaseq_snakefile_helper.tophat_paired_end_flags,
-                                    read_stats_filename)
-
-    def test_tophat_paired_end_flags_ignoresExtraData(self):
-        with TempDirectory() as temp_dir:
-            read_stats_filename = os.path.join(temp_dir.path, 's0_read_stats.txt')
-            temp_dir.write('s0_read_stats.txt', b'inner_mate_dist\tinsert_std_dev\trelationship_status\n42.3\t14.9\tcomplicated', )
-            actual = rnaseq_snakefile_helper.tophat_paired_end_flags(read_stats_filename)
-        self.assertEqual('--mate-inner-dist 42 --mate-std-dev 15', actual)
-
 
     def test_expand_read_stats_if_paired(self):
         filename_format = 's={sample}'

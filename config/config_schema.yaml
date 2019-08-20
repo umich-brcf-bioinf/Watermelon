@@ -1,0 +1,94 @@
+$schema: 'http://json-schema.org/draft-04/schema#'
+title: Watermelon yaml schema
+type: object
+
+properties:
+    genome:
+        type: string
+        enum:
+            - hg38
+            - GRCh38
+            - hg19
+            - GRCh37
+            - mm10
+            - rn5
+            - rn6
+            - dm6
+            - ce10
+            - ce11
+            - WBS235
+            - GRCz10
+            - ecoMG1655
+            - ecoUTI89
+    sample_description_file:
+        type: string
+        pattern: 'csv$'
+    dirs:
+        properties:
+            alignment_output:
+                type: string
+            deliverables_output:
+                type: string
+            diffex_output:
+                type: string
+            input:
+                type: string
+    references:
+        properties:
+            entrez_gene_info:
+                type: string
+            fasta:
+                type: string
+            gtf:
+                type: string
+    alignment_options:
+        properties:
+            library_type:
+                type: string
+                enum:
+                    - fr-unstranded
+                    - fr-firststrand
+                    - fr-secondstrand
+                    - unstranded
+                    - reverse_forward
+                    - forward_reverse
+            read_length:
+                type: integer
+            rsem_ref_prefix:
+                type: string
+            transcriptome_only:
+                type: boolean
+    diffex:
+        properties:
+            adjustedPValue:
+                type: number
+            linear_fold_change:
+                type: number
+    fastq_screen:
+        properties:
+            aligner:
+                type: string
+            reference_basedir:
+                type: string
+            species:
+                type: string
+            subset:
+                type: integer
+    trimming_options:
+        properties:
+            base_quality_3prime:
+                type: integer
+            base_quality_5prime:
+                type: integer
+            trim_length_3prime:
+                type: integer
+            trim_length_5prime:
+                type: integer
+
+required:
+    - genome
+    - sample_description_file
+    - dirs
+    - references
+    - alignment_options
+    - diffex

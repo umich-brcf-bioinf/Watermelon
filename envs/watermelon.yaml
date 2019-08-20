@@ -1,0 +1,9 @@
+name: watermelon
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - snakemake=5
+  - conda
+  - ruamel_yaml=0.15

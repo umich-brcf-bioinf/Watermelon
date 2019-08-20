@@ -1,0 +1,8 @@
+channels:
+- conda-forge
+- bioconda
+- defaults
+dependencies:
+- python=3
+- xlsxwriter=1.1.8
+- xlrd=1.2.0

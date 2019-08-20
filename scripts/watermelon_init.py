@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-'''Creates template config file and directories for a watermelon rnaseq job.
+'''Creates config file, input directories, and validates a sample description file for a watermelon rnaseq job.
 
-Specifically this does three things:
-1) watermelon_init accepts a set of source fastq dirs.
-   * Each source fastq dir (a "run") contains a set of sample_dirs;
-     these dir names become the sample names in the config file.
+Specifically:
+1) watermelon_init accepts a set of source fastq dirs and a sample description file.
+   * Each source fastq dir (a "run") contains a set of sample_dirs
+   * watermelon_init verifies that the sample names provided in the sample
+     description file match with those gathered from the source fastq dirs.
    * Each sample_dir contains one or more fastq (.fastq[.gz]) files.
    * watermelon_init creates local input dirs for the runs and also merges
      fastqs from all runs to create a dir of samples. Each sample dir
@@ -12,12 +13,14 @@ Specifically this does three things:
    * Absence of fastq files for a run or an individaul sample raises an error.
 
 2) watermelon-init creates an analysis directory which contains a template
-   watermelon config file. The template config file is created by combining the
-   specified genome with the sample names in (from the inputs dir). The
-   template config must be reviewed and edited to:
-   a) adjust run params
-   b) add sample phenotypes/aliases
-   c) specify sample comparisons
+   watermelon config file. The template config file contains directory
+   information, reference lists, run parameters, etc.,
+   These must be reviewed and edited to:
+   a) adjust genome and references to match the experiment
+   b) adjust trimming, alignment, and fastq_screen options
+   c) specify diffex parameters, and add  DESeq2 calls and contrasts
+      based on the example pheno.Gend stanza (can add as many similar stanzas
+      as required by the experiment)
 
 3) watermelon-init creates a readme file that lists basic info about when/how it was run,
    what it did, and what the user has to do to prepare the template config
@@ -25,22 +28,23 @@ Specifically this does three things:
 #pylint: disable=locally-disabled,no-member
 from __future__ import print_function, absolute_import, division
 import argparse
-from collections import defaultdict, OrderedDict
+from collections import defaultdict, OrderedDict, Mapping
 import datetime
 import errno
 import functools
+import getpass
 import itertools
 import os
+import ruamel_yaml
 import shutil
+import subprocess
 import sys
 import time
 import traceback
-
-import pandas as pd
 import yaml
 
-import scripts.watermelon_config as watermelon_config
-from scripts.watermelon_config import CONFIG_KEYS
+import pandas as pd
+
 
 DESCRIPTION = \
 '''Creates template config file and directories for a watermelon rnaseq job.'''
@@ -109,8 +113,6 @@ class _CommandValidator(object):
     @staticmethod
     def _validate_overwrite_check(args):
         existing_files = {}
-        if os.path.exists(args.analysis_dir):
-            existing_files['dirs: analysis'] = args.analysis_dir
         if os.path.exists(args.input_dir):
             existing_files['dirs: input'] = args.input_dir
         if existing_files:
@@ -152,9 +154,19 @@ class _Linker(object):
 def _timestamp():
     return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
+def _umich_email():
+    return os.getlogin() + '@umich.edu'
+
 README_FILENAME = 'watermelon.README'
 
-GENOME_BUILD_OPTIONS = ('GRCh37', 'hg19', 'mm10', 'rn5', 'ce10', 'ce11', 'WBS235', 'GRCz10')
+GENOME_BUILD_OPTIONS = ('GRCh37', 'GRCh38', 'hg19', 'hg38',
+                        'mm10',
+                        'rn5', 'rn6',
+                        'ce10', 'ce11', 'WBS235',
+                        'GRCz10',
+                        'ecoMG1655', 'ecoUTI89',
+                        'dm6',
+                        )
 
 _SCRIPTS_DIR = os.path.realpath(os.path.dirname(__file__))
 _WATERMELON_ROOT = os.path.dirname(_SCRIPTS_DIR)
@@ -164,28 +176,18 @@ _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, 'genome_references.yaml')
 
 _FASTQ_GLOBS = ['*.fastq', '*.fastq.gz']
 
-_DEFAULT_MAIN_FACTORS = 'yes    | yes      | no'.\
-    replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
-_DEFAULT_PHENOTYPE_LABELS = 'gender | genotype | gender.genotype'.\
-    replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
-_DEFAULT_GENDER_VALUES = ['female', 'male']
-_DEFAULT_GENOTYPE_VALUES = ['MutA', 'MutB', 'WT']
-_DEFAULT_COMPARISONS = {'gender'   : ['male_v_female'],
-                        'genotype' : ['MutA_v_WT', 'MutB_v_WT']
-                       }
-
 _TODAY = datetime.date.today()
 _DEFAULT_JOB_SUFFIX = '_{:02d}_{:02d}'.format(_TODAY.month, _TODAY.day)
 _CONFIG_PRELUDE = '''# config created {timestamp}
 # To do:
 # ------
-# 1) Review/adjust samples names
-#     Note: names in config, must match the sample dir names in the input dir
-# 2) Add a sample group for each sample
-# 3) Add comparisons
-# 4) Review genome and references
-# 5) Review alignment options
-# 6) Review trimming options
+# 1) Review genome and references
+# 2) Review alignment, trimming, and fastq_screen options
+# 3) Modify the diffex options - use the pheno.Gend stanza as an example, and
+#    set up the DESeq2 calls and results calls for the comparisons that match the analysis.
+#    For example, pheno.Gend should be changed to a factor which corresponds to a column name
+#    in the samplesheet, and the values in the contrasts should corresond to values within
+#    that column of the samplesheet.
 '''.format(timestamp=_timestamp())
 
 def _setup_yaml():
@@ -212,7 +214,12 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
-import collections
+def _copy_and_overwrite(source, dest):
+    if os.path.exists(dest):
+        shutil.rmtree(dest)
+    source = os.path.join(source, "") #Add trailing slash for rsync's sake
+    #Exclude .git/ and /envs/built (speed)
+    subprocess.run(["rsync", "-a", "--exclude", "\".*\"", "--exclude", "envs/built", source, dest])
 
 def _dict_merge(dct, merge_dct):
     """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
@@ -226,7 +233,7 @@ def _dict_merge(dct, merge_dct):
     # https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
     for k, v in merge_dct.items():
         if (k in dct and isinstance(dct[k], dict)
-                and isinstance(merge_dct[k], collections.Mapping)):
+                and isinstance(merge_dct[k], Mapping)):
             _dict_merge(dct[k], merge_dct[k])
         else:
             dct[k] = merge_dct[k]
@@ -243,14 +250,15 @@ def _link_run_dirs(args, linker):
         linker.copytree(run_dir, watermelon_run_dir)
 
 def _merge_sample_dirs(args):
+    #TWS - FIXME: This is inflexible, prone to breakage, ugly, etc.
     j = os.path.join
     watermelon_runs_dir = os.path.abspath(j(args.tmp_input_dir,
                                             args.input_runs_dir))
     watermelon_samples_dir = os.path.abspath(j(args.tmp_input_dir,
                                                args.input_samples_dir))
     _mkdir(watermelon_samples_dir)
-    for run_dir in os.listdir(watermelon_runs_dir):
-        for sample_dir in os.listdir(j(watermelon_runs_dir, run_dir)):
+    for run_dir in [d for d in os.listdir(watermelon_runs_dir) if os.path.isdir(j(watermelon_runs_dir, d))]:
+        for sample_dir in [d for d in os.listdir(j(watermelon_runs_dir, run_dir)) if os.path.isdir(j(watermelon_runs_dir, run_dir, d))]:
             new_sample_dir = j(watermelon_samples_dir, sample_dir)
             _mkdir(new_sample_dir)
             files = os.listdir(j(watermelon_runs_dir, run_dir, sample_dir))
@@ -308,38 +316,53 @@ def _build_input_summary(args):
                                        runs_missing_fastq_files=runs_missing_fastq_files)
     return input_summary
 
-def _build_phenotypes_samples_comparisons(samples):
+'''
+Verify that the samplesheet exists, and that the sample names
+in the samplesheet correspond to those in the input directories
+'''
+def _validate_sample_sheet(samples, sheet_file):
     #pylint: disable=locally-disabled,invalid-name
-    config = {}
-    config[CONFIG_KEYS.main_factors] = _DEFAULT_MAIN_FACTORS
-    config[CONFIG_KEYS.phenotypes] = _DEFAULT_PHENOTYPE_LABELS
 
-    gender_values = itertools.cycle(_DEFAULT_GENDER_VALUES)
-    genotype_values = itertools.cycle(_DEFAULT_GENOTYPE_VALUES)
-    pheno_value_items = []
-    for _ in samples:
-        gender_value = next(gender_values)
-        genotype_value = next(genotype_values)
-        gender_genotype_value = '.'.join([gender_value, genotype_value])
-        pheno_value_items.append((gender_value, genotype_value, gender_genotype_value))
-    pheno_fmt = "{0:7}| {1:8} | {2}".replace('|', watermelon_config.DEFAULT_PHENOTYPE_DELIM)
-    pheno_value_strings = [pheno_fmt.format(*values) for values in sorted(pheno_value_items)]
-    samples_dict = dict([(s, v) for s, v in zip(sorted(samples), pheno_value_strings)])
-    config[CONFIG_KEYS.samples] = samples_dict
+    if not os.path.isfile(sheet_file):
+        msg = ("The specified sample sheet file {} cannot be found.".format(sheet_file))
+        raise _InputValidationError(msg)
 
-    config[CONFIG_KEYS.comparisons] = _DEFAULT_COMPARISONS
-    return config
+    samplesheet = pd.read_csv(sheet_file, comment='#').set_index("sample", drop=True)
+    sheet_samples = set(samplesheet.index)
+    input_samples = set(samples)
 
-def _make_config_dict(template_config, genome_references, args, samples):
-    config = dict(template_config)
+    if not sheet_samples.issubset(input_samples):
+        msg = ("The following sample names cannot be found in the input directories: "
+        + str(sheet_samples.difference(input_samples)))
+        raise _InputValidationError(msg)
 
-    dirs = config.get(CONFIG_KEYS.dirs, {})
-    dirs[CONFIG_KEYS.dirs_input] = os.path.join(args.input_dir,
-                                                args.input_samples_dir)
-    config[CONFIG_KEYS.dirs] = dirs
-
-    config.update(_build_phenotypes_samples_comparisons(samples))
+def _make_config_dict(template_config, genome_references, args):
+    #Due to ruamel_yaml, template_config is an OrderedDict, and has preserved comments
+    config = template_config
+    #Make changes to existing data
+    #Fill in job suffix for output dirs
+    for out_dir in config['dirs']:
+        config['dirs'][out_dir] = config['dirs'][out_dir].format(job_suffix = args.job_suffix)
+    #add input dir
+    config['dirs']['input'] = os.path.join(args.input_dir, args.input_samples_dir)
+    #add rsem reference prefix
+    if 'alignment_options' in config:
+        config['alignment_options']['rsem_ref_prefix'] = args.genome_build
+    #Add in more needed keys
+    #Samplesheet
+    config['sample_description_file'] = os.path.abspath(args.sample_sheet)
+    #Genome / references
     _dict_merge(config, genome_references)
+    #Email params
+    config['email'] = {'subject' : 'watermelon' + args.job_suffix, 'to' : getpass.getuser() + '@umich.edu'}
+    #Reorder these added keys (move to top)
+    #resulting order: email, sample_description_file, genome, references, template_config stuff
+    config.move_to_end('references', last=False)
+    config.move_to_end('genome', last=False)
+    config.move_to_end('sample_description_file', last=False)
+    config.move_to_end('email', last=False)
+
+
     return config
 
 def _build_input_summary_text(input_summary):
@@ -376,60 +399,68 @@ watermelon_init.README
 Created files and dirs
 ----------------------
 {working_dir}/
+    {config_basename}
+    watermelon
     {input_dir_relative}/
         {input_runs_dir}/
         {input_samples_dir}/
-    {analysis_relative}/
-        {config_basename}
 
-You need to review config file: {config_relative}:
+You need to review the sample sheet and config file:
+samplesheet:
+{samplesheet_relative}
 -------------------------------
-1) Review/adjust samples names
-    Note: if you change names in config, also change the sample dir names in the input dir
-2) Review sample phenotype labels and values for each sample.
+1) Review sample phenotype labels and values for each sample.
    Phenotype labels must be distinct.
    Phenotype labels and values must be valid R column names, so each label/value must
    be a letter followed alphanumerics or [-_.]. (So "A24-5" is ok, but "1hr+" is not.
    Also the literals "T", "F", and "NAN" cannot be used as phenotype labels/values.
-3) Adjust the main_factors line to indicate whether a phenotype is main (yes) or derived (no).
-4) Add comparisons
-5) Review genome and references
-6) Review alignment options
-7) Review trimming options
 
-When the config file looks good:
+config:
+{config_relative}
+-------------------------------
+1) Review genome and references
+2) Review alignment, trimming, and fastq_screen options
+3) Modify the diffex options - use the pheno.Gend stanza as an example, and
+   set up the DESeq2 calls and results calls for the comparisons that match the analysis.
+   For example, pheno.Gend should be changed to a factor which corresponds to a column name
+   in the samplesheet, and the values in the contrasts should corresond to values within
+   that column of the samplesheet.
+
+When the config & samplesheet look good:
 --------------------------------
-$ cd {analysis_dir}
-# start a screen session:
+# Start a screen session:
 $ screen -S watermelon{job_suffix}
-# to validate the config and check the execution plan:
-$ watermelon --dry-run -c {config_basename}
-# to run:
-$ watermelon -c {config_basename}
+# Activate the conda environment:
+$ conda activate watermelon
+# To validate the config and check the execution plan:
+$ snakemake --dryrun --printshellcmds --configfile {config_basename} --snakefile {snakefile_path}
+# To run:
+$ snakemake --use-conda --configfile {config_basename} --snakefile {snakefile_path} --profile {profile_path}
 '''.format(linker_results=linker_results,
            input_summary_text=input_summary_text,
            working_dir=args.x_working_dir,
            input_dir_relative=input_dir_relative,
            input_runs_dir=args.input_runs_dir,
            input_samples_dir=args.input_samples_dir,
-           analysis_dir=args.analysis_dir,
-           analysis_relative=os.path.relpath(args.analysis_dir, args.x_working_dir),
            config_file=args.config_file,
            config_relative=os.path.relpath(args.config_file, args.x_working_dir),
+           samplesheet_relative=os.path.relpath(args.sample_sheet, args.x_working_dir),
            config_basename=os.path.basename(args.config_file),
-           job_suffix=args.job_suffix,)
+           job_suffix=args.job_suffix,
+           snakefile_path='Watermelon/rnaseq.snakefile',
+           profile_path='Watermelon/config/profile-comp5-6')
     return postlude
 
 def _write_config_file(config_filename, config_dict):
     tmp_config_dict = dict(config_dict)
     ordered_config_dict = OrderedDict()
-    named_keys = [CONFIG_KEYS.dirs,
-                  CONFIG_KEYS.main_factors,
-                  CONFIG_KEYS.phenotypes,
-                  CONFIG_KEYS.samples,
-                  CONFIG_KEYS.comparisons,
-                  CONFIG_KEYS.genome,
-                  CONFIG_KEYS.references]
+    named_keys = ['dirs',
+                  'main_factors',
+                  'phenotypes',
+                  'samples',
+                  'comparisons',
+                  'genome',
+                  'references']
     for key in named_keys:
         if key in tmp_config_dict:
             ordered_config_dict[key] = tmp_config_dict.pop(key)
@@ -457,6 +488,14 @@ def _parse_command_line_args(sys_argv):
               'can help differentiate simultaneous watermelon jobs in '
               'top/ps.)').format(_DEFAULT_JOB_SUFFIX),
         required=False)
+    parser.add_argument(
+        '--sample_sheet',
+        type=str,
+        required=True,
+        help=('A CSV file containing sample names and phenotype/characteristic '
+        'information which correspond to these samples. Watermelon-init will verify that '
+        'sample names in this file match with those found in the input directories. '),
+        )
     parser.add_argument(
         'source_fastq_dirs',
         type=str,
@@ -487,9 +526,7 @@ def _parse_command_line_args(sys_argv):
     args = parser.parse_args(sys_argv)
 
     realpath = functools.partial(os.path.join, args.x_working_dir)
-    args.analysis_dir = realpath('analysis{}'.format(args.job_suffix))
-    args.config_file = os.path.join(args.analysis_dir,
-                                    'config{}.yaml'.format(args.job_suffix))
+    args.config_file = 'config{}.yaml'.format(args.job_suffix)
     args.tmp_input_dir = realpath('.inputs')
     args.input_runs_dir = '00-source_runs'
     args.input_samples_dir = '01-source_samples'
@@ -502,26 +539,32 @@ def main(sys_argv):
         args = _parse_command_line_args(sys_argv)
         _CommandValidator().validate_args(args)
 
+        print("Copying Watermelon source to " + os.getcwd())
+        _copy_and_overwrite(source=_WATERMELON_ROOT, dest=os.path.join(os.getcwd(), "Watermelon"))
+
         if os.path.isdir(args.tmp_input_dir):
             shutil.rmtree(args.tmp_input_dir)
         linker = _Linker()
         _link_run_dirs(args, linker)
         _merge_sample_dirs(args)
         input_summary = _build_input_summary(args)
+
         _CommandValidator().validate_inputs(input_summary)
         os.rename(args.tmp_input_dir, args.input_dir)
 
-        _mkdir(args.analysis_dir)
-
         with open(args.x_template_config, 'r') as template_config_file:
-            template_config = yaml.load(template_config_file)
+            template_config = ruamel_yaml.round_trip_load(template_config_file) #Use ruamel_yaml to preserve comments
         with open(args.x_genome_references, 'r') as genome_references_file:
-            genome_references = yaml.load(genome_references_file)[args.genome_build]
+            genome_references = yaml.load(genome_references_file, yaml.FullLoader)[args.genome_build]
+        _validate_sample_sheet(input_summary.samples, args.sample_sheet)
         config_dict = _make_config_dict(template_config,
                                         genome_references,
-                                        args,
-                                        input_summary.samples)
-        _write_config_file(args.config_file, config_dict)
+                                        args)
+
+        #_write_config_file(args.config_file, config_dict)
+        with open(args.config_file, 'w') as config_file:
+            print(_CONFIG_PRELUDE, file=config_file)
+            ruamel_yaml.round_trip_dump(config_dict, config_file, default_flow_style=False, indent=4)
 
         postlude = _build_postlude(args,
                                    linker.results,

@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 from __future__ import print_function, absolute_import, division
 
+import argparse
 from os import listdir, getcwd
 from os.path import isdir, isfile, join
 import shutil
 import sys
 
+_DESCRIPTION = \
+'''Checks for abandonded snakemake locks and prompts user to remove if necessary.
+
+Returns an exitcode of 0 if either locks are absent or user agreed to remove
+locks; otherwise exitcode 1.'''
 
 _LOCK_WARNING = \
 '''WARNING: It looks like the directory is locked.
@@ -40,16 +46,32 @@ def _clear_locks(working_dir, log, prompt_to_unlock):
         exit_code = 1
     return exit_code
 
-def main(working_dir=getcwd(),
+def _parse_command_line_args(sys_argv):
+    parser = argparse.ArgumentParser(description=_DESCRIPTION)
+    parser.add_argument(
+        '--dryrun', dest='dryrun', action='store_true')
+    parser.add_argument(
+        '--dag', dest='dag', action='store_true')
+    return parser.parse_args(sys_argv)
+
+def main(sys_argv=None,
+         working_dir=getcwd(),
          log=sys.stderr,
          prompt_to_unlock=_prompt_to_unlock):
-    log.write('checking for locks: ')
+    if sys_argv is None:
+        sys_argv = sys.argv[1:]
+    args = _parse_command_line_args(sys_argv)
+
     exit_code = 0
-    if _is_dir_locked(working_dir):
-        log.write(_LOCK_WARNING)
-        exit_code = _clear_locks(working_dir, log, prompt_to_unlock)
+    if args.dryrun or args.dag:
+        log.write('skipping lock check (dryrun/dag)\n')
     else:
-        log.write('OK\n')
+        log.write('checking for locks: ')
+        if _is_dir_locked(working_dir):
+            log.write(_LOCK_WARNING)
+            exit_code = _clear_locks(working_dir, log, prompt_to_unlock)
+        else:
+            log.write('OK\n')
     log.write(_HEADER_RULE)
     return exit_code
 

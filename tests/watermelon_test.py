@@ -115,6 +115,7 @@ class WatermelonTest(unittest.TestCase):
                        '--dryrun').format(WATERMELON_EXECUTABLE,
                                           TEST_SNAKEFILE,
                                           CONFIG_FILE)
+            print('\n\n\n'+command+'\n\n')
             exit_code, actual_output = self.execute(command)
 
             self.assertEqual(0,
@@ -300,7 +301,6 @@ class WatermelonTest(unittest.TestCase):
                                      r'--snakefile {} '
                                       r'--cores 40 '
                                       r'--resources memoryInGb=128 '
-                                      r'-T '
                                       r'1 2 3 baz froody'). format(CONFIG_FILE,
                                                                    TEST_SNAKEFILE))
 
@@ -328,7 +328,6 @@ class WatermelonTest(unittest.TestCase):
                                       r'--snakefile {} '
                                       r'--cores 40 '
                                       r'--resources memoryInGb=128 '
-                                      r'-T '
                                       r'--dryrun -a -b -d'). format(CONFIG_FILE,
                                                            TEST_SNAKEFILE))
 
@@ -354,10 +353,10 @@ class WatermelonTest(unittest.TestCase):
                                      (r'--configfile config.yaml '
                                       r'--snakefile {} '
                                       r'--cores {} '
-                                      r'--resources memoryInGb={} '
-                                      r'-T'). format(DEFAULT_SNAKEFILE,
-                                                     DEFAULT_CORES,
-                                                     DEFAULT_MEMORY))
+                                      r'--resources memoryInGb={}'
+                                      ). format(DEFAULT_SNAKEFILE,
+                                                DEFAULT_CORES,
+                                                DEFAULT_MEMORY))
 
     def test_watermelon_canOverrideCores(self):
         with TempDirectory() as temp_dir:

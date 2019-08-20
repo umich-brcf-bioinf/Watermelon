@@ -1,6 +1,70 @@
 Changelog
 =========
 
+1.0 (08/DD/2019)
+------------------
+- Watermelon (seedless)
+- Replaced HISAT2/Stringtie with RSEM/STAR
+- Removed ballgown
+- Converted rules to use conda instead of modules
+- Moved functionality from watermelon bash script directly into snakefile (eliminated watermelon.sh)
+- Added the use of a snakemake profile for running on comp5/6
+- Implemented samplesheet CSV to be used alongside config file
+- Config validation includes samplesheet validation (modified to work with CSV input) and schema-based validation of config file
+- DESeq2 parameters are directly listed in the diffex portion of the config file, offering more control over how these are run
+- DESeq2 monolithic script separated into counts, init, contrasts
+
+    - counts is run once per pipeline invocation (for a given set of alignment outputs)
+    - init is run once per feature e.g. (gender, phenotype, pheno.Gend), contrasts depend on this
+    - contrasts is run for each contrast for a given feature, i.e. they all use the same DESeq2Dataset
+
+- Utilized snakemake's script directive, enabling snakemake S4 object to be passed directly to RScripts
+- Pinned specific versions in the rule-specific conda envs, added this output to run_info deliverable
+- Added output of count matrices (all samples - counts, TPM, FPKM)
+- Enabled/repaired skipping of read trimming if trimming_options not set in config
+
+
+0.3.6x (MM/DD/YYYY)
+------------------
+- Replaced Tophat2 with HISAT2; removed bbmap.
+- Replaced HTSeq with stringtie; consequent renumbering of outputs
+
+  - Added new required config value alignment_option: read_length (and set
+    default to 50)
+
+- Replaced Tuxedo/CuffDiff with Ballgown.
+- Added a stand-alone Snakefile, hisat2_index.smk, to generate HISAT2 indices as necessary
+- Added a top-level conda environment for watermelon
+
+  - Upgraded Python 3.6.6, Snakemake 5.3.0, pandas (0.23.4)
+
+- Upgraded MultiQC to 1.6 (and adjusted to use conda environment)
+- Adjusted config:library_type to accept
+
+  - fr-unstranded
+  - unstranded
+  - forward_reverse
+  - fr-firststrand
+  - reverse_forward
+  - fr-secondstrand
+
+- Throttled fastqc to avoid Java memory overallocation
+- Adjusted watermelon to enable "in-flight" dry-run/dag (executed in the
+  directory of a job currently in-progress).
+- Added dm6 support
+- Removed checksum logic in anticipation of improved sample description/
+  comparison model
+- Refactor diffex plots
+
+  - DESeq2 and ballgown use the same plotting script, which requires an RData
+    object from the respective diffex scripts.
+  - Move plotting out of deseq2_diffex.R script
+
+- A diffex.yaml conda environment contains all libraries needed for DESeq2, ballgown,
+  and plotting. It is thus used by both diffex scripts as well as for plotting.
+
+
+
 0.3.6 (8/12/2018)
 -----------------
 - Adjusted how environment modules are versioned and loaded

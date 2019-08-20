@@ -1,29 +1,50 @@
 dirs:
-  alignment_output: alignment_results
-  diffex_output: diffex_results
-  deliverables_output: deliverables
-
-fold_change:
-    1.5
-
-deseq2_adjustedPValue:
-    0.05
-
-insert_size:
-    downsample_readcount: 30000
-    pair_length: 500
-
-trimming_options:
+  alignment_output: analysis{job_suffix}/alignment_results
+  diffex_output: analysis{job_suffix}/diffex_results
+  deliverables_output: analysis{job_suffix}/deliverables
+trimming_options: #Delete the entire trimming_options stanza if no trimming is desired
     base_quality_5prime: 0
     base_quality_3prime: 13
     trim_length_5prime: 3
     trim_length_3prime: 0
-
 alignment_options:
-    transcriptome_only: True
-    library_type: fr-unstranded   #fr-firststrand   #fr-secondstrand
-
+    library_type: unstranded #other options: forward_reverse #reverse_forward
+    read_length: 50
 fastq_screen:
     reference_basedir: /nfs/med-bfx-common/pipelines/Watermelon/references/fastq_screen
     aligner: bowtie2
     subset: 100000
+diffex:
+    linear_fold_change: 1.5
+    adjustedPValue: 0.05
+    #The following is an example Diffex stanza. Additional stanzas can be added
+    #which will produce results in parallel directories
+    #The parent node (model name) forms the names of directories.
+    model_one:
+        #Several contrasts of the form testVal_v_referenceVal are listed.
+        contrasts:
+            - DM.male_v_NDM.male
+            - DM.fem_v_NDM.fem
+            - DM.fem_v_DM.male
+            - NDM.fem_v_NDM.male
+        DESeq2:
+            #The design is used when initializing the dataset. Note that this is design is
+            #currently not used when generating the normalized count tables
+            design: ~ pheno.Gend
+            #The factor name is used within the diffex Rscripts. See results notes below
+            factor_name: pheno.Gend
+            #The following parameters are directly parsed by R
+            #and used within the call to DESeq2().
+            #The imported DESeq2Dataset is passed by default and isn't listed here.
+            DESeq2:
+                betaPrior: TRUE
+            #The below parameters are also parsed by R and used to call results() {DESeq2}.
+            #The initialized DESeq2Dataset is passed by default and isn't listed here.
+            #There are several ways to list the contrast parameter. This way produces results equivalent to
+            #previous Watermelon pipelines. The variables factorName, testName, & referenceName are defined
+            #within the Rscript. Using the first contrast as an example this would parse to
+            #list('pheno.GendDM.male', 'pheno.GendNDM.male'), which are the two elements
+            #of resultsNames() relevant for that comparison.
+            results:
+                contrast:
+                    list(paste0(factorName, testName), paste0(factorName, referenceName))

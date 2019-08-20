@@ -6,6 +6,8 @@ rule align_fastq_screen_biotype:
         ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.txt",
     log:
         ALIGNMENT_DIR + "03-fastq_screen/biotype/.log/{sample}_trimmed_{read_endedness}_screen.log"
+    conda:
+        'envs/fastq_screen.yaml'
     threads:
         8
     params:
@@ -14,9 +16,7 @@ rule align_fastq_screen_biotype:
         biotype_output_dir = ALIGNMENT_DIR + "03-fastq_screen/biotype",
         biotype_config_file = FASTQ_SCREEN_CONFIG['reference_basedir'] +'/' + FASTQ_SCREEN_CONFIG['species'] + '.conf'
     shell:
-        '''(module purge
-        module load watermelon_dependencies/{WAT_VER}
-        echo 'watermelon|version|fastq_screen|'`fastq_screen --version`
+        '''(fastq_screen --version
         fastq_screen \
             --threads {threads} \
             --subset {params.subset} \

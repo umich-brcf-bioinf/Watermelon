@@ -5,52 +5,89 @@ from itertools import combinations, repeat
 from shutil import copyfile
 import csv
 import os
+import pandas as pd
 import subprocess
 import yaml
 
-import scripts
-import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
-import scripts.deseq2_helper as deseq2_helper
+from scripts import rnaseq_snakefile_helper, config_validator, __version__
 
-WAT_VER = scripts.__version__
+WAT_VER = __version__
 WATERMELON_CONFIG_DIR = os.path.join(os.environ.get('WATERMELON_CONFIG_DIR', srcdir('config')), '')
 WATERMELON_SCRIPTS_DIR = os.path.join(os.environ.get('WATERMELON_SCRIPTS_DIR', srcdir('scripts')), '')
 
-rnaseq_snakefile_helper.transform_config(config)
 _DIRS = config.get("dirs", {})
 INPUT_DIR = os.path.join(_DIRS.get("input", "inputs"), "")
 ALIGNMENT_DIR = os.path.join(_DIRS.get("alignment_output", "alignment_results"), "")
 DIFFEX_DIR = os.path.join(_DIRS.get("diffex_output", "diffex_results"), "")
 DELIVERABLES_DIR = os.path.join(_DIRS.get("deliverables_output", "deliverables"), "")
-DESEQ2_DIR = os.path.join(DIFFEX_DIR, "deseq2", "")
-TUXEDO_DIR = os.path.join(DIFFEX_DIR, "tuxedo", "")
-CONFIG_CHECKSUMS_DIR = os.path.join(".config_checksums", "")
 
-COMPARISON_INFIX = '_v_'
-DELIMITER = '^'
+CONFIGFILE_PATH = workflow.overwrite_configfile
+WORKFLOW_BASEDIR = workflow.basedir
+CONFIG_SCHEMA_PATH = os.path.join(workflow.basedir, 'config', 'config_schema.yaml')
+
 SAMPLES_KEY = 'samples'
-PHENOTYPES_KEY = 'phenotypes'
-COMPARISONS_KEY ='comparisons'
 
-phenotypeManager = rnaseq_snakefile_helper.PhenotypeManager(config,
-                                                            DELIMITER,
-                                                            COMPARISON_INFIX)
+#Load in samplesheet
+samplesheet = pd.read_csv(config["sample_description_file"], comment='#').set_index("sample", drop=True)
 
-ALL_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_all_tuple.phenotypes
-ALL_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_all_tuple.comparisons
+PHENOTYPES = (list(samplesheet.columns))
 
-REPLICATE_PHENOTYPE_NAMES = phenotypeManager.phenotypes_comparisons_replicates_tuple.phenotypes
-REPLICATE_COMPARISON_GROUPS = phenotypeManager.phenotypes_comparisons_replicates_tuple.comparisons
-
+#Add sample info to config
+#sample_phenotype_value_dict = samplesheet.to_dict(orient='index')
+#TWS - for some reason, adding the above dict to the config breaks the Rscript functionality
+#TWS - instead, adding only the sample names
+config[SAMPLES_KEY] = list(samplesheet.index)
 
 rnaseq_snakefile_helper.init_references(config["references"])
-rnaseq_snakefile_helper.checksum_reset_all(CONFIG_CHECKSUMS_DIR,
-                                           config=config,
-                                           phenotype_comparisons=config['comparisons'],
-                                           phenotype_samples=phenotypeManager.phenotype_sample_list)
 
 SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(INPUT_DIR, config[SAMPLES_KEY])
 
+
+#Set up emailing functionality
+def email(subject_prefix):
+    msg = 'config file:\n{}\nlog file:\n{}'.format(workflow.overwrite_configfile, logger.get_logfile())
+    #Attach log if error
+    if subject_prefix == "Watermelon ERROR: ":
+        attachment = "-a " + logger.get_logfile() + " --"
+    else:
+        attachment = ""
+
+    email_config = config.get('email')
+    if not email_config:
+        print(subject_prefix, msg)
+    else:
+        command = "echo '{msg}' | mutt -s '{subject_prefix}{subject}' {attachment} {to}".format(
+                to=email_config['to'],
+                subject_prefix=subject_prefix,
+                subject=email_config['subject'],
+                attachment=attachment,
+                msg=msg,
+                )
+        shell(command)
+
+#function to call config_validator
+def validate_config(config_fp, schema_fp):
+    config_validation_exit_code = config_validator.main(config_fp, schema_fp)
+    if config_validation_exit_code:
+        exit(config_validation_exit_code)
+
+
+
+#Perform config validation if dryrun
+if set(['-n', '--dryrun']).intersection(set(sys.argv)):
+    validate_config(CONFIGFILE_PATH, CONFIG_SCHEMA_PATH)
+
+onstart:
+    #Perform config validation before starting
+    validate_config(CONFIGFILE_PATH, CONFIG_SCHEMA_PATH)
+
+    email('Watermelon started: ')
+onsuccess:
+    email('Watermelon completed ok: ')
+onerror:
+    email('Watermelon ERROR: ')
+
+#Set-up output targets
 if 'fastq_screen' in config:
     FASTQ_SCREEN_CONFIG = config['fastq_screen']
     FASTQ_SCREEN_ALIGNMENT = [
@@ -74,74 +111,133 @@ else:
     FASTQ_SCREEN_ALIGNMENT = []
     FASTQ_SCREEN_DELIVERABLES = []
 
-DESEQ2_ALL = []
-if REPLICATE_PHENOTYPE_NAMES:
-    DESEQ2_ALL = [
-        expand(DESEQ2_DIR + "01-htseq/{sample}_counts.txt",
-               sample=config[SAMPLES_KEY]),
-        DESEQ2_DIR + "01-htseq/htseq_merged.txt",
-        DESEQ2_DIR + "02-metadata_contrasts/sample_metadata.txt",
-        DESEQ2_DIR + "02-metadata_contrasts/contrasts.txt",
-        expand(DESEQ2_DIR + "03-deseq2_diffex/gene_lists/{phenotype_name}/{comparison}.txt",
-               zip,
-               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
-               comparison=REPLICATE_COMPARISON_GROUPS),
-        expand(DESEQ2_DIR + "04-annotation/{phenotype_name}/{comparison}.annot.txt",
-               zip,
-               phenotype_name=REPLICATE_PHENOTYPE_NAMES,
-               comparison=REPLICATE_COMPARISON_GROUPS),
-        expand(DESEQ2_DIR + "06-excel/{phenotype_name}/{comparison}.xlsx",
-                zip,
-                phenotype_name=REPLICATE_PHENOTYPE_NAMES,
-                comparison=REPLICATE_COMPARISON_GROUPS),
-        DESEQ2_DIR + "07-summary/deseq2_summary.txt",
-        DESEQ2_DIR + "07-summary/deseq2_summary.xlsx",
-        DELIVERABLES_DIR + "deseq2",
-        ]
+DESEQ2_CONTRAST_DICT = rnaseq_snakefile_helper.diffex_contrasts(config['diffex'])
+DESeq2_ALL = [
+    #deseq2_counts
+    DIFFEX_DIR + 'deseq2/counts/txi_rsem_genes.rda',
+    DIFFEX_DIR + 'deseq2/counts/count_data.rda',
+    DIFFEX_DIR + 'deseq2/counts/raw_counts.txt',
+    DIFFEX_DIR + 'deseq2/counts/depth_normalized_counts.txt',
+    DIFFEX_DIR + 'deseq2/counts/rlog_normalized_counts.txt',
+    #deseq2_contrasts
+    rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+        DIFFEX_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.txt',
+        DESEQ2_CONTRAST_DICT),
+    #deseq2_plots_by_phenotype
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
+        phenotype = PHENOTYPES,
+        dim = ['12','23'],
+        ngenes = ['100','500']),
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf',
+        phenotype = PHENOTYPES,
+        ngenes = ['100','500']),
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/BoxPlot.pdf', phenotype = PHENOTYPES),
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
+    expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
+    #deseq2_comparison_plots
+    rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+        DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf',
+        DESEQ2_CONTRAST_DICT),
+    #deseq2_annotation
+    rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+        DIFFEX_DIR + 'deseq2/annotated/{model_name}/{contrast}.annot.txt',
+        DESEQ2_CONTRAST_DICT),
+    #deseq2_excel
+    rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+        DIFFEX_DIR + 'deseq2/excel/{model_name}/{contrast}.xlsx',
+        DESEQ2_CONTRAST_DICT),
+    #deseq2_summary
+    DIFFEX_DIR + "deseq2/summary/deseq2_summary.txt",
+    DIFFEX_DIR + "deseq2/summary/deseq2_summary.xlsx"
+]
 
-OPTIONAL_ALL = DESEQ2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES
+RSEM_ALL = [
+    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results', sample=config[SAMPLES_KEY]),
+    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results', sample=config[SAMPLES_KEY]),
+    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam', sample=config[SAMPLES_KEY]),
+    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY]),
+    ALIGNMENT_DIR + "07-qc/alignment_qc.html",
+    expand(ALIGNMENT_DIR + '05-combine_counts/{feature}_{metric}.txt',
+        feature=['gene','isoform'],
+        metric=['expected_count', 'FPKM', 'TPM'])
+]
 
-ALL = [OPTIONAL_ALL]
+DELIVERABLES = [
+    #align deliverables
+    rnaseq_snakefile_helper.expand_sample_read_endedness(
+        DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
+        SAMPLE_READS),
+    expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
+        sample=config["samples"]),
+    DELIVERABLES_DIR + "alignment/alignment_qc.html",
+    #deseq2 deliverables
+    expand(DELIVERABLES_DIR + 'deseq2/counts/{name}.txt',
+        name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
+    rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+        DELIVERABLES_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.txt',
+        DESEQ2_CONTRAST_DICT),
+    rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+        DELIVERABLES_DIR + "deseq2/excel/{model_name}/{contrast}.xlsx",
+        DESEQ2_CONTRAST_DICT),
+    expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
+            phenotype = PHENOTYPES,
+            dim = ['12','23'],
+            ngenes = ['100','500']),
+    expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf',
+            phenotype = PHENOTYPES,
+            ngenes = ['100','500']),
+    expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/{plotType}.pdf',
+        phenotype = PHENOTYPES, plotType = ['BoxPlot', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
+    rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+            DELIVERABLES_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf',
+            DESEQ2_CONTRAST_DICT),
+    DELIVERABLES_DIR + "deseq2/summary/deseq2_summary.txt",
+    DELIVERABLES_DIR + "deseq2/summary/deseq2_summary.xlsx",
+    #run info deliverables
+    DELIVERABLES_DIR + "run_info/env_software_versions.yaml",
+    DELIVERABLES_DIR + "run_info/" + os.path.basename(CONFIGFILE_PATH),
+    DELIVERABLES_DIR + "run_info/" + os.path.basename(config['sample_description_file'])
+]
+
+
+
+ALL = RSEM_ALL + DESeq2_ALL + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES + DELIVERABLES
+
 
 include: 'rules/align_concat_reads.smk'
-include: 'rules/align_cutadapt_SE.smk'
-include: 'rules/align_cutadapt_PE.smk'
+include: 'rules/align_standardize_gz.smk'
+
+if "trimming_options" in config:
+    include: 'rules/align_cutadapt_SE.smk'
+    include: 'rules/align_cutadapt_PE.smk'
+else:
+    include: 'rules/align_pseudotrim_SE.smk'
+    include: 'rules/align_pseudotrim_PE.smk'
+
 include: 'rules/align_fastq_screen_biotype.smk'
 include: 'rules/align_fastq_screen_multi_species.smk'
 include: 'rules/align_fastqc_trimmed_reads.smk'
-include: 'rules/align_insert_size_PE.smk'
-include: 'rules/align_create_transcriptome_index.smk'
-include: 'rules/align_build_tophat_sample_options.smk'
-include: 'rules/align_tophat.smk'
-include: 'rules/align_fastqc_tophat_align.smk'
+include: 'rules/align_fastqc_align.smk'
 include: 'rules/align_qc.smk'
 include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
+include: 'rules/align_rsem_star.smk'
+include: 'rules/align_rsem_star_genome_generate.smk'
+include: 'rules/align_rsem_star_combined_count_matrices.smk'
 
-include: 'rules/tuxedo_cuffdiff.smk'
-include: 'rules/tuxedo_flip.smk'
-include: 'rules/tuxedo_flag.smk'
-include: 'rules/tuxedo_annotate.smk'
-include: 'rules/tuxedo_group_replicates.smk'
-include: 'rules/tuxedo_cummerbund.smk'
-include: 'rules/tuxedo_split.smk'
-include: 'rules/tuxedo_last_split.smk'
-include: 'rules/tuxedo_run_info.smk'
-include: 'rules/tuxedo_excel.smk'
-include: 'rules/tuxedo_summary.smk'
-
-include: 'rules/deseq2_htseq.smk'
-include: 'rules/deseq2_htseq_merge.smk'
-include: 'rules/deseq2_metadata_contrasts.smk'
-include: 'rules/deseq2_diffex.smk'
+include: 'rules/deseq2_counts.smk'
+include: 'rules/deseq2_init.smk'
+include: 'rules/deseq2_contrasts.smk'
+include: 'rules/deseq2_plots_by_phenotype.smk'
+include: 'rules/deseq2_comparison_plots.smk'
 include: 'rules/deseq2_annotation.smk'
-include: 'rules/deseq2_run_info.smk'
 include: 'rules/deseq2_excel.smk'
 include: 'rules/deseq2_summary.smk'
 
-include: 'rules/deliverables_tuxedo.smk'
 include: 'rules/deliverables_deseq2.smk'
-include: 'rules/deliverables_combined_summary.smk'
+include: 'rules/deliverables_run_info.smk'
+
 
 rule all:
     input:

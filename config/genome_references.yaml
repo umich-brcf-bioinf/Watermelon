@@ -1,72 +1,115 @@
+# This yaml defines the genome specific elements injected into the config file
+
+hg38:
+    genome: hg38
+    fastq_screen:
+        species: human
+    references:
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/hg38/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/hg38/genes.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+GRCh38:
+    genome: GRCh38
+    fastq_screen:
+        species: human
+    references:
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCh38/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCh38/genes.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
 hg19:
     genome: hg19
     fastq_screen:
         species: human
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/noRibo_human.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/hg19/Sequence/BBMap/
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/hg19/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/hg19/hg19_noRibo.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
 GRCh37:
     genome: GRCh37
     fastq_screen:
         species: human
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCh37/Sequence/BBMap/
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCh37/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCh37/genes.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
 mm10:
     genome: mm10
     fastq_screen:
         species: mouse
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/noRibo_mouse.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/mm10/Sequence/BBMap/
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/mm10/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/mm10/mm10_noRibo.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
 rn5:
     genome: rn5
     fastq_screen:
         species: rat
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/rn5/Sequence/BBMap/
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/rn5/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/rn5/genes.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+rn6:
+    genome: rn6
+    fastq_screen:
+        species: rat
+    references:
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/rn6/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/rn6/genes.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+dm6:
+    genome: dm6
+    fastq_screen:
+        species: fly
+    references:
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/dm6/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/dm6/dm6_genes.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+
 ce10:
     genome: ce10
     fastq_screen:
         species: celegans
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce10/Sequence/BBMap/
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/ce10/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/ce10/genes.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
 ce11:
     genome: ce11
     fastq_screen:
         species: celegans
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/ce11/Sequence/BBMap/
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/ce11/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/ce11/genes.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
 WBS235:
     genome: WBS235
     fastq_screen:
         species: celegans
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/WBS235/Sequence/BBMap/
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/WBS235/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/WBS235/genes.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
 GRCz10:
     genome: GRCz10
     fastq_screen:
         species: zebrafish
     references:
-        gtf: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/genes.gtf
-        bowtie2_index: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/Sequence/Bowtie2Index
-        entrez_gene_info: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
-        bbmap_ref: /ccmb/BioinfCore/Common/pipelines/Watermelon/references/GRCz10/Sequence/BBMap/
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCz10/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/GRCz10/genes.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+ecoMG1655:
+    genome: ecoMG1655
+    fastq_screen:
+        species: ecoli
+    references:
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/ecoMG1655/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/ecoMG1655/genes.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+ecoUTI89:
+    genome: ecoUTI89
+    fastq_screen:
+        species: ecoli
+    references:
+        fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/ecoUTI89/Sequence/genome.fa
+        gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/ecoUTI89/genes.gtf
+        entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info

@@ -248,8 +248,7 @@ def diffex_models(diffex_config):
 def diffex_contrasts(diffex_config):
     cont_dict = {}
     for model in diffex_models(diffex_config):
-        factor = diffex_config[model]['factor_name']
-        cont_dict[factor] = diffex_config[model]['contrasts']
+        cont_dict[model] = diffex_config[model]['contrasts']
     return(cont_dict)
 
 def expand_model_contrast_filenames(model_contrasts_format, contrast_dict):

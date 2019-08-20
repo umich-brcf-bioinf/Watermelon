@@ -18,6 +18,7 @@ suppressMessages(library(DESeq2, warn.conflicts=F, quietly=T))
 
 # Get deseq params from config
 model_name = snakemake@wildcards[['model_name']]
+design = snakemake@config[['diffex']][[model_name]][['design']]
 deseq2.params = snakemake@config[['diffex']][[model_name]][['DESeq2']][['DESeq2']]
 # Get phenotype matrix
 sample.info.file = snakemake@config[['sample_description_file']]
@@ -28,7 +29,7 @@ load(snakemake@input[['data_import']])
 # Create DESeqDataSet and filter lowly expressed genes
 message('Initializing DESeq2 result')
 # Create dataset from tximport object
-dds = DESeqDataSetFromTximport(txi = txi.rsem.gene.results, colData = pdata, design = as.formula(deseq2.params$full))
+dds = DESeqDataSetFromTximport(txi = txi.rsem.gene.results, colData = pdata, design = as.formula(design))
 # Filter lowly expressed genes - QUESTION: Should this be more stringent?
 dds = dds[ rowSums(counts(dds)) > 1, ]
 

@@ -18,8 +18,10 @@ diffex:
     linear_fold_change: 1.5
     adjustedPValue: 0.05
     #The following is an example Diffex stanza.
-    #The factor of interest (e.g. pheno.Gend) forms the parent node.
-    pheno.Gend:
+    #The parent node (model name) forms the names of directories.
+    model_one:
+        #The factor name is used within the diffex Rscripts. See results notes below
+        factor_name: pheno.Gend
         #Several contrasts of the form testVal_v_referenceVal are listed.
         contrasts:
             - DM.male_v_NDM.male

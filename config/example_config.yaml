@@ -1,55 +1,69 @@
-# config created 2019-07-19 16:17:32
+# config created 2019-08-20 11:30:28
 # To do:
 # ------
 # 1) Review genome and references
 # 2) Review alignment, trimming, and fastq_screen options
-# 3) Modify the diffex options - use the pheno_gender stanza as an example, and
-#    set up the DESeq2 calls and comparisons that match the analysis. For example,
-#    the contrasts should contain phenotype labels and values which correspond
-#    to the column names and values in the sample sheet, respectively.
+# 3) Modify the diffex options - use the pheno.Gend stanza as an example, and
+#    set up the DESeq2 calls and results calls for the comparisons that match the analysis.
+#    For example, pheno.Gend should be changed to a factor which corresponds to a column name
+#    in the samplesheet, and the values in the contrasts should corresond to values within
+#    that column of the samplesheet.
 
-dirs:
-    alignment_output: alignment_results
-    deliverables_output: deliverables
-    diffex_output: diffex_results
-    input: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20190718_test_lumeng/inputs/01-source_samples
+email:
+    subject: watermelon_test
+    to: trsaari@umich.edu
+sample_description_file: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20190718_test_lumeng/example_sample_description.csv
 genome: hg19
 references:
-    entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
     fasta: /nfs/med-bfx-common/pipelines/Watermelon/references/hg19/Sequence/genome.fa
     gtf: /nfs/med-bfx-common/pipelines/Watermelon/references/hg19/hg19_noRibo.gtf
+    entrez_gene_info: /nfs/med-bfx-common/pipelines/Watermelon/references/entrez_gene_info/2016_09_02/gene_info
+dirs:
+    alignment_output: analysis_test/alignment_results
+    diffex_output: analysis_test/diffex_results
+    deliverables_output: analysis_test/deliverables
+    input: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20190718_test_lumeng/inputs/01-source_samples
+trimming_options: #Delete the entire trimming_options stanza if no trimming is desired
+    base_quality_5prime: 0
+    base_quality_3prime: 13
+    trim_length_5prime: 3
+    trim_length_3prime: 0
 alignment_options:
-    library_type: fr-unstranded
+    library_type: unstranded #other options: forward_reverse #reverse_forward
     read_length: 50
     rsem_ref_prefix: hg19
-    transcriptome_only: true
-diffex:
-    adjustedPValue: 0.05
-    fold_change: 1.5
-    pheno.Gend:
-        contrasts:
-            - DM.male_v_NDM.male
-            - DM.fem_v_NDM.fem
-            - DM.fem_v_DM.male
-            - NDM.fem_v_NDM.male
-        DESeq2:
-            DESeq2:
-                betaPrior: true
-                full: ~ pheno.Gend
-            results:
-                contrast:
-                    list(paste0(factorName, testName), paste0(factorName, referenceName))
-email:
-    subject: watermelon_2019-07-19 16:19:06
-    to: trsaari@umich.edu
 fastq_screen:
-    aligner: bowtie2
     reference_basedir: /nfs/med-bfx-common/pipelines/Watermelon/references/fastq_screen
-    species: human
+    aligner: bowtie2
     subset: 100000
-sample_description_file: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20190718_test_lumeng/example_sample_description.csv
-trimming_options:
-    base_quality_3prime: 13
-    base_quality_5prime: 0
-    trim_length_3prime: 0
-    trim_length_5prime: 3
+    species: human
+diffex:
+    linear_fold_change: 1.5
+    adjustedPValue: 0.05
+    #The following is an example Diffex stanza.
+    #The parent node (model name) forms the names of directories.
+    model_one:
+        #The factor name is used within the diffex Rscripts. See results notes below
+        factor_name: pheno.Gend
+        #Several contrasts of the form testVal_v_referenceVal are listed.
+        contrasts:
+        -   DM.male_v_NDM.male
+        -   DM.fem_v_NDM.fem
+        -   DM.fem_v_DM.male
+        -   NDM.fem_v_NDM.male
+        DESeq2:
+            #The following parameters are directly parsed by R
+            #and used within the call to DESeq2().
+            #The imported DESeq2Dataset is passed by default and isn't listed here.
+            DESeq2:
+                full: ~ pheno.Gend
+                betaPrior: true
+            #The below parameters are also parsed by R and used to call results() {DESeq2}.
+            #The initialized DESeq2Dataset is passed by default and isn't listed here.
+            #There are several ways to list the contrast parameter. This way produces results equivalent to
+            #previous Watermelon pipelines. The variables factorName, testName, & referenceName are defined
+            #within the Rscript. Using the first contrast as an example this would parse to
+            #list('pheno.GendDM.male', 'pheno.GendNDM.male'), which are the two elements
+            #of resultsNames() relevant for that comparison.
+            results:
+                contrast: list(paste0(factorName, testName), paste0(factorName, referenceName))

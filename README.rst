@@ -12,19 +12,13 @@ Overview
 --------
 
 Watermelon interprets fastqs and configuration to produce alignments and diffex results.
-Watermelon wraps Snakemake, which in turn wraps calls to the various bioinformatic tools
-in the pipeline (e.g. cutadapt, hisat2, etc.).
+Watermelon uses Snakemake, which in turn wraps calls to the various bioinformatic tools
+in the pipeline (e.g. cutadapt, fastqc, etc.).
 
-There are two executables:
+There are two main steps:
 
  * waterlemon-init: Creates template config.yaml file and initializes directory structure.
- * watermelon: Interprets the config file and executes the RNA-seq workflow.
-              Facilitates validation, logging, and sets basic default options.
-
-Watermelon workflow consists of two main steps:
-
-   * sequencing [fastqs] -> watermelon-init -> config.yaml
-   * [manual edits to config file] -> watermelon -> results
+ * running the pipeline: Using the snakemake utility, config file is validated RNA-seq workflow is evaluated accordingly.
 
 
 For more information see:
@@ -43,53 +37,38 @@ watermelon-init help
 ::
 
   $ watermelon-init --help
-   usage: watermelon-init [-h] --genome_build {hg19,mm10,rn5}
-                          [--job_suffix JOB_SUFFIX]
-                          source_fastq_dir
+  usage: watermelon_init [-h] --genome_build
+                         {GRCh37,GRCh38,hg19,hg38,mm10,rn5,rn6,ce10,ce11,WBS235,GRCz10,ecoMG1655,ecoUTI89,dm6}
+                         [--job_suffix JOB_SUFFIX] --sample_sheet SAMPLE_SHEET
+                         source_fastq_dirs [source_fastq_dirs ...]
 
-   Creates template config file and directories for a watermelon rnaseq job.
+  Creates template config file and directories for a watermelon rnaseq job.
 
-   positional arguments:
-     source_fastq_dir      Path to dir which contains samples dirs (each sample
-                           dir contains one or more fastq.gz files). The sample
-                           dir names are used to initialize the config template.
-                           If the source_fastq_dir is outside the working dir,
-                           init will make local inputs dir containing symlinks to
-                           the original files.
+  positional arguments:
+    source_fastq_dirs     One or more paths to run dirs. Each run dir should
+                          contain samples dirs which should in turn contain one
+                          or more fastq.gz files. The watermelon sample names
+                          will be derived from the sample directories.
 
-   optional arguments:
-     -h, --help            show this help message and exit
-     --genome_build {hg19,mm10,rn5}
-                           Config template will based on this genome
-     --job_suffix JOB_SUFFIX
-                           =_02_10 This suffix will be appended to the names of
-                           analysis/deliverables dirs and configfile. (Useful if
-                           rerunning a job with revised input fastq or revised
-                           config; can help differentiate simultaneous watermelon
-                           jobs in top/ps.)
+  optional arguments:
+    -h, --help            show this help message and exit
+    --genome_build {GRCh37,GRCh38,hg19,hg38,mm10,rn5,rn6,ce10,ce11,WBS235,GRCz10,ecoMG1655,ecoUTI89,dm6}
+                          Config template will based on this genome
+    --job_suffix JOB_SUFFIX
+                          =_08_21 This suffix will be appended to the names of
+                          analysis/deliverables dirs and configfile. (Useful if
+                          rerunning a job with revised input fastq or revised
+                          config; can help differentiate simultaneous watermelon
+                          jobs in top/ps.)
+    --sample_sheet SAMPLE_SHEET
+                          A CSV file containing sample names and
+                          phenotype/characteristic information which correspond
+                          to these samples. Watermelon-init will verify that
+                          sample names in this file match with those found in
+                          the input directories.
 
 
---------------------
-watermelon help
---------------------
-
-::
-
-  $ watermelon-init --help
-   Usage: watermelon [options] -c {config_file}
-   Example: watermelon -c ~/my_config.yaml
-
-   Executes the RNA-seq workflow by wrapping the Snakemake call, specifically setting common,
-   useful defaults and passing through any unrecognized command line options through to
-   snakemake. Captures all outputs in a log and times overall execution.
-
-   Options:
-       -c, --configfile : [config.yaml] snakemake config file
-       --cores [N]      : =40, use at most N cores in parallel
-       --dag            : create DAG files (in working dir) to visualize execution plan
-       -n, --dryrun     : show plan without executing anything
-       --help           : shows this message
-
+The output of watermelon init will include an example config file (to be edited according to research project) and a watermelon.README file containing information about how to run the snakemake pipeline.
 
 ====
 

@@ -183,11 +183,8 @@ _CONFIG_PRELUDE = '''# config created {timestamp}
 # ------
 # 1) Review genome and references
 # 2) Review alignment, trimming, and fastq_screen options
-# 3) Modify the diffex options - use the pheno.Gend stanza as an example, and
+# 3) Modify the diffex options - use the 'model_one' stanza as an example, and
 #    set up the DESeq2 calls and results calls for the comparisons that match the analysis.
-#    For example, pheno.Gend should be changed to a factor which corresponds to a column name
-#    in the samplesheet, and the values in the contrasts should corresond to values within
-#    that column of the samplesheet.
 '''.format(timestamp=_timestamp())
 
 def _setup_yaml():
@@ -392,6 +389,8 @@ def _build_postlude(args, linker_results, input_summary_text):
 '''
 watermelon_init.README
 ======================
+watermelon_init invocation:
+{watermelon_init_invocation}
 
 {linker_results}
 {input_summary_text}
@@ -420,11 +419,8 @@ config:
 -------------------------------
 1) Review genome and references
 2) Review alignment, trimming, and fastq_screen options
-3) Modify the diffex options - use the pheno.Gend stanza as an example, and
+3) Modify the diffex options - use the 'model_one' stanza as an example, and
    set up the DESeq2 calls and results calls for the comparisons that match the analysis.
-   For example, pheno.Gend should be changed to a factor which corresponds to a column name
-   in the samplesheet, and the values in the contrasts should corresond to values within
-   that column of the samplesheet.
 
 When the config & samplesheet look good:
 --------------------------------
@@ -436,7 +432,8 @@ $ conda activate watermelon
 $ snakemake --dryrun --printshellcmds --configfile {config_basename} --snakefile {snakefile_path}
 # To run:
 $ snakemake --use-conda --configfile {config_basename} --snakefile {snakefile_path} --profile {profile_path}
-'''.format(linker_results=linker_results,
+'''.format(watermelon_init_invocation=" ".join(sys.argv[:]),
+           linker_results=linker_results,
            input_summary_text=input_summary_text,
            working_dir=args.x_working_dir,
            input_dir_relative=input_dir_relative,

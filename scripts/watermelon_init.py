@@ -219,7 +219,7 @@ def _copy_and_overwrite(source, dest):
         shutil.rmtree(dest)
     source = os.path.join(source, "") #Add trailing slash for rsync's sake
     #Exclude .git/ and /envs/built (speed)
-    subprocess.run(["rsync", "-a", "--exclude", "\".*\"", "--exclude", "envs/built", source, dest])
+    subprocess.run(["rsync", "-a", "--exclude", ".*", "--exclude", "envs/built", source, dest])
 
 def _dict_merge(dct, merge_dct):
     """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
@@ -542,6 +542,7 @@ def main(sys_argv):
         print("Copying Watermelon source to " + os.getcwd())
         _copy_and_overwrite(source=_WATERMELON_ROOT, dest=os.path.join(os.getcwd(), "Watermelon"))
 
+        print("Linking inputs")
         if os.path.isdir(args.tmp_input_dir):
             shutil.rmtree(args.tmp_input_dir)
         linker = _Linker()
@@ -551,7 +552,7 @@ def main(sys_argv):
 
         _CommandValidator().validate_inputs(input_summary)
         os.rename(args.tmp_input_dir, args.input_dir)
-
+        print("Generating example config")
         with open(args.x_template_config, 'r') as template_config_file:
             template_config = ruamel_yaml.round_trip_load(template_config_file) #Use ruamel_yaml to preserve comments
         with open(args.x_genome_references, 'r') as genome_references_file:

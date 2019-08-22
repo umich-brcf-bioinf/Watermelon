@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.0 (08/DD/2019)
+1.0 (08/22/2019)
 ------------------
 - Watermelon (seedless)
 - Replaced HISAT2/Stringtie with RSEM/STAR
@@ -15,8 +15,8 @@ Changelog
 - DESeq2 monolithic script separated into counts, init, contrasts
 
     - counts is run once per pipeline invocation (for a given set of alignment outputs)
-    - init is run once per feature e.g. (gender, phenotype, pheno.Gend), contrasts depend on this
-    - contrasts is run for each contrast for a given feature, i.e. they all use the same DESeq2Dataset
+    - init is run once per model, contrasts depend on this
+    - contrasts is run for each contrast for a given model, i.e. they all use the same DESeq2Dataset
 
 - Utilized snakemake's script directive, enabling snakemake S4 object to be passed directly to RScripts
 - Pinned specific versions in the rule-specific conda envs, added this output to run_info deliverable

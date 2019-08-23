@@ -147,7 +147,7 @@ DESeq2_ALL = [
     DIFFEX_DIR + 'deseq2/counts/rlog_normalized_counts.txt',
     #deseq2_contrasts
     rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + 'deseq2/gene_lists/{factor_name}/{contrast}.txt',
+        DIFFEX_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.txt',
         DESEQ2_CONTRAST_DICT),
     #deseq2_plots_by_phenotype
     expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
@@ -163,15 +163,15 @@ DESeq2_ALL = [
     expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
     #deseq2_comparison_plots
     rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + 'deseq2/plots/comparison_plots/{factor_name}/VolcanoPlot_{contrast}.pdf',
+        DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf',
         DESEQ2_CONTRAST_DICT),
     #deseq2_annotation
     rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + 'deseq2/annotated/{factor_name}/{contrast}.annot.txt',
+        DIFFEX_DIR + 'deseq2/annotated/{model_name}/{contrast}.annot.txt',
         DESEQ2_CONTRAST_DICT),
     #deseq2_excel
     rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + 'deseq2/excel/{factor_name}/{contrast}.xlsx',
+        DIFFEX_DIR + 'deseq2/excel/{model_name}/{contrast}.xlsx',
         DESEQ2_CONTRAST_DICT),
     #deseq2_summary
     DIFFEX_DIR + "deseq2/summary/deseq2_summary.txt",
@@ -201,10 +201,10 @@ DELIVERABLES = [
     expand(DELIVERABLES_DIR + 'deseq2/counts/{name}.txt',
         name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
     rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-        DELIVERABLES_DIR + 'deseq2/gene_lists/{factor_name}/{contrast}.txt',
+        DELIVERABLES_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.txt',
         DESEQ2_CONTRAST_DICT),
     rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-        DELIVERABLES_DIR + "deseq2/excel/{factor_name}/{contrast}.xlsx",
+        DELIVERABLES_DIR + "deseq2/excel/{model_name}/{contrast}.xlsx",
         DESEQ2_CONTRAST_DICT),
     expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
             phenotype = PHENOTYPES,
@@ -216,7 +216,7 @@ DELIVERABLES = [
     expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/{plotType}.pdf',
         phenotype = PHENOTYPES, plotType = ['BoxPlot', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
     rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-            DELIVERABLES_DIR + 'deseq2/plots/comparison_plots/{factor_name}/VolcanoPlot_{contrast}.pdf',
+            DELIVERABLES_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf',
             DESEQ2_CONTRAST_DICT),
     DELIVERABLES_DIR + "deseq2/summary/deseq2_summary.txt",
     DELIVERABLES_DIR + "deseq2/summary/deseq2_summary.xlsx",

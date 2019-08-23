@@ -29,9 +29,18 @@ def _is_name_well_formed(name):
 def _is_name_reserved(name):
     return name in _RESERVED_NAMES
 
+
+'''Returns contrast string dict in the form of
+{factor_name: ['val1_v_val2', 'val3_v_val4']}'''
+def _DESeq2_factor_contrasts(diffex_config):
+    cont_dict = {}
+    for model in rnaseq_snakefile_helper.diffex_models(diffex_config):
+        factor = diffex_config[model]['DESeq2']['factor_name']
+        cont_dict[factor] = diffex_config[model]['contrasts']
+    return(cont_dict)
+
 '''Returns contrast values dict in the form of
-{pheno_label: ['val1', 'val2', 'val3', 'val4']}
-Note keys in this dict are from the contrast strings, not the model name
+{factor_name: ['val1', 'val2', 'val3', 'val4']}
 '''
 def _DESeq2_contrast_vals(contrast_dict):
     contrast_vals_dict = defaultdict(set)
@@ -127,7 +136,7 @@ class _ConfigValidator(object):
             self.samplesheet = pd.read_csv(config['sample_description_file'], comment='#')
         except:
             print('problem reading samplesheet')
-        self.contrasts = rnaseq_snakefile_helper.diffex_contrasts(config['diffex'])
+        self.contrasts = _DESeq2_factor_contrasts(config['diffex'])
         self.contrast_values = _DESeq2_contrast_vals(self.contrasts)
         self._log = log
         self._PARSING_VALIDATIONS = [self._check_config_against_schema,

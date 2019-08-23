@@ -185,11 +185,8 @@ _CONFIG_PRELUDE = '''# config created {timestamp}
 # ------
 # 1) Review genome and references
 # 2) Review alignment, trimming, and fastq_screen options
-# 3) Modify the diffex options - use the pheno.Gend stanza as an example, and
+# 3) Modify the diffex options - use the 'model_one' stanza as an example, and
 #    set up the DESeq2 calls and results calls for the comparisons that match the analysis.
-#    For example, pheno.Gend should be changed to a factor which corresponds to a column name
-#    in the samplesheet, and the values in the contrasts should corresond to values within
-#    that column of the samplesheet.
 '''.format(timestamp=_timestamp())
 
 def _setup_yaml():
@@ -221,7 +218,7 @@ def _copy_and_overwrite(source, dest):
         shutil.rmtree(dest)
     source = os.path.join(source, "") #Add trailing slash for rsync's sake
     #Exclude .git/ and /envs/built (speed)
-    subprocess.run(["rsync", "-a", "--exclude", "\".*\"", "--exclude", "envs/built", source, dest])
+    subprocess.run(["rsync", "-a", "--exclude", ".*", "--exclude", "envs/built", source, dest])
 
 def _dict_merge(dct, merge_dct):
     """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
@@ -397,6 +394,8 @@ def _build_postlude(args, linker_results, input_summary_text):
 '''
 watermelon_init.README
 ======================
+watermelon_init invocation:
+{watermelon_init_invocation}
 
 {linker_results}
 {input_summary_text}
@@ -425,11 +424,8 @@ config:
 -------------------------------
 1) Review genome and references
 2) Review alignment, trimming, and fastq_screen options
-3) Modify the diffex options - use the pheno.Gend stanza as an example, and
+3) Modify the diffex options - use the 'model_one' stanza as an example, and
    set up the DESeq2 calls and results calls for the comparisons that match the analysis.
-   For example, pheno.Gend should be changed to a factor which corresponds to a column name
-   in the samplesheet, and the values in the contrasts should corresond to values within
-   that column of the samplesheet.
 
 When the config & samplesheet look good:
 --------------------------------
@@ -441,7 +437,8 @@ $ conda activate watermelon
 $ snakemake --dryrun --printshellcmds --configfile {config_basename} --snakefile {snakefile_path}
 # To run:
 $ snakemake --use-conda --configfile {config_basename} --snakefile {snakefile_path} --profile {profile_path}
-'''.format(linker_results=linker_results,
+'''.format(watermelon_init_invocation=" ".join(sys.argv[:]),
+           linker_results=linker_results,
            input_summary_text=input_summary_text,
            working_dir=args.x_working_dir,
            input_dir_relative=input_dir_relative,
@@ -547,6 +544,7 @@ def main(sys_argv):
         print("Copying Watermelon source to " + os.getcwd())
         _copy_and_overwrite(source=_WATERMELON_ROOT, dest=os.path.join(os.getcwd(), "Watermelon"))
 
+        print("Linking inputs")
         if os.path.isdir(args.tmp_input_dir):
             shutil.rmtree(args.tmp_input_dir)
         linker = _Linker()
@@ -556,7 +554,7 @@ def main(sys_argv):
 
         _CommandValidator().validate_inputs(input_summary)
         os.rename(args.tmp_input_dir, args.input_dir)
-
+        print("Generating example config")
         with open(args.x_template_config, 'r') as template_config_file:
             template_config = ruamel_yaml.round_trip_load(template_config_file) #Use ruamel_yaml to preserve comments
         with open(args.x_genome_references, 'r') as genome_references_file:

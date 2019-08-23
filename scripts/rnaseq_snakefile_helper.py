@@ -237,23 +237,23 @@ def expand_read_stats_if_paired(read_stats_filename_format,
         result.append(read_stats_filename_format.format(sample=sample))
     return result
 
-def diffex_factors(diffex_config):
+def diffex_models(diffex_config):
     not_factors = ['adjustedPValue', 'linear_fold_change']
-    factor_names = [k for k in diffex_config.keys() if k not in not_factors]
-    return(factor_names)
+    model_names = [k for k in diffex_config.keys() if k not in not_factors]
+    return(model_names)
 
 '''Returns contrasts dict in the form of
-{factor_name: ['val1_v_val2', 'val3_v_val4']}
+{model_name: ['val1_v_val2', 'val3_v_val4']}
 '''
 def diffex_contrasts(diffex_config):
     cont_dict = {}
-    for factor in diffex_factors(diffex_config):
-        cont_dict[factor] = diffex_config[factor]['contrasts']
+    for model in diffex_models(diffex_config):
+        cont_dict[model] = diffex_config[model]['contrasts']
     return(cont_dict)
 
 def expand_model_contrast_filenames(model_contrasts_format, contrast_dict):
     paths = []
     for model in contrast_dict:
         conts = contrast_dict[model]
-        paths.extend(workflow.expand(model_contrasts_format, factor_name=model, contrast=conts))
+        paths.extend(workflow.expand(model_contrasts_format, model_name=model, contrast=conts))
     return(paths)

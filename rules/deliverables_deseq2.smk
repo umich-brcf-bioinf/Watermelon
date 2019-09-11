@@ -1,7 +1,7 @@
 rule deliverables_deseq2:
     input:
         #counts
-        counts = expand(DIFFEX_DIR + 'deseq2/counts/{name}.txt',
+        counts = expand(DIFFEX_DIR + 'deseq2/counts/deseq2_{name}.txt',
             name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
         #Gene lists
         gene_lists = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
@@ -27,7 +27,7 @@ rule deliverables_deseq2:
         summary_xlsx = DIFFEX_DIR + "deseq2/summary/deseq2_summary.xlsx",
     output:
         #counts
-        counts = expand(DELIVERABLES_DIR + 'deseq2/counts/{name}.txt',
+        counts = expand(DELIVERABLES_DIR + 'counts/deseq2_{name}.txt',
             name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
         #Gene lists
         gene_lists = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
@@ -54,7 +54,10 @@ rule deliverables_deseq2:
 #    log:
 #        DELIVERABLES_DIR + ".deliverables_deseq2.log"
     params:
-        source_dir = DIFFEX_DIR + "deseq2/",
-        dest_dir = DELIVERABLES_DIR + "deseq2"
+        #Counts are placed in a separate location from the other deseq2 results
+        deseq2_input_dir = DIFFEX_DIR + "deseq2/",
+        deseq2_output_dir = DELIVERABLES_DIR + "deseq2",
+        counts_output_dir = DELIVERABLES_DIR + "counts"
     shell:
-        """rsync -rlpgoD --exclude ".*" --exclude "*.rda" --exclude "*.annot.txt" {params.source_dir} {params.dest_dir}"""
+        """rsync -rlpgoD --exclude counts --exclude ".*" --exclude "*.rda" --exclude "*.annot.txt" {params.deseq2_input_dir} {params.deseq2_output_dir}
+        for i in {input.counts} ; do cp $i {params.counts_output_dir} ; done"""

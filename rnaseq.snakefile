@@ -140,9 +140,8 @@ DESeq2_ALL = [
     #deseq2_counts
     DIFFEX_DIR + 'deseq2/counts/txi_rsem_genes.rda',
     DIFFEX_DIR + 'deseq2/counts/count_data.rda',
-    DIFFEX_DIR + 'deseq2/counts/raw_counts.txt',
-    DIFFEX_DIR + 'deseq2/counts/depth_normalized_counts.txt',
-    DIFFEX_DIR + 'deseq2/counts/rlog_normalized_counts.txt',
+    expand(DIFFEX_DIR + 'deseq2/counts/deseq2_{name}.txt',
+        name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
     #deseq2_contrasts
     rnaseq_snakefile_helper.expand_model_contrast_filenames(\
         DIFFEX_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.txt',
@@ -198,7 +197,7 @@ DELIVERABLES = [
         type=['expected_count', 'FPKM', 'TPM']),
     DELIVERABLES_DIR + "alignment/alignment_qc.html",
     #deseq2 deliverables
-    expand(DELIVERABLES_DIR + 'deseq2/counts/{name}.txt',
+    expand(DELIVERABLES_DIR + 'counts/deseq2_{name}.txt',
         name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
     rnaseq_snakefile_helper.expand_model_contrast_filenames(\
         DELIVERABLES_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.txt',

@@ -8,9 +8,9 @@ rule deseq2_counts:
     output:
         txi = DIFFEX_DIR + 'deseq2/counts/txi_rsem_genes.rda',
         count_tables_rda = DIFFEX_DIR + 'deseq2/counts/count_data.rda',
-        raw = DIFFEX_DIR + 'deseq2/counts/raw_counts.txt',
-        norm = DIFFEX_DIR + 'deseq2/counts/depth_normalized_counts.txt',
-        rlog = DIFFEX_DIR + 'deseq2/counts/rlog_normalized_counts.txt'
+        raw = DIFFEX_DIR + 'deseq2/counts/deseq2_raw_counts.txt',
+        norm = DIFFEX_DIR + 'deseq2/counts/deseq2_depth_normalized_counts.txt',
+        rlog = DIFFEX_DIR + 'deseq2/counts/deseq2_rlog_normalized_counts.txt'
     log:
         DIFFEX_DIR + 'deseq2/counts/.log/DESeq2_counts.log'
     conda:

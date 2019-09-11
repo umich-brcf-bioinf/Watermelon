@@ -4,16 +4,20 @@ from collections import defaultdict, OrderedDict
 from itertools import combinations, repeat
 from shutil import copyfile
 import csv
+import logging
 import os
 import pandas as pd
 import subprocess
 import yaml
 
+from watchdog.observers import Observer
+from watchdog.events import PatternMatchingEventHandler
 from scripts import rnaseq_snakefile_helper, config_validator, __version__
 
 WAT_VER = __version__
 WATERMELON_CONFIG_DIR = os.path.join(os.environ.get('WATERMELON_CONFIG_DIR', srcdir('config')), '')
 WATERMELON_SCRIPTS_DIR = os.path.join(os.environ.get('WATERMELON_SCRIPTS_DIR', srcdir('scripts')), '')
+
 
 _DIRS = config.get("dirs", {})
 INPUT_DIR = os.path.join(_DIRS.get("input", "inputs"), "")
@@ -44,13 +48,7 @@ SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(INPUT_DIR, config[
 
 
 #Set up emailing functionality
-def email(subject_prefix):
-    msg = 'config file:\n{}\nlog file:\n{}'.format(workflow.overwrite_configfile, logger.get_logfile())
-    #Attach log if error
-    if subject_prefix == "Watermelon ERROR: ":
-        attachment = "-a " + logger.get_logfile() + " --"
-    else:
-        attachment = ""
+def email(subject_prefix, msg="", attachment=""):
 
     email_config = config.get('email')
     if not email_config:
@@ -81,11 +79,37 @@ onstart:
     #Perform config validation before starting
     validate_config(CONFIGFILE_PATH, CONFIG_SCHEMA_PATH)
 
+    #Set up error-only logfile with same basename as snakemake logfile
+    #Doing this within onstart because logger.get_logfile evaluates to None for some reason during workflow execution
+    ERR_ONLY_LOGFILE = os.path.splitext(logger.get_logfile())[0] + "-errors.log"
+    #Create filehandler to create error-only logfile for error-level logging events
+    fh = logging.FileHandler(ERR_ONLY_LOGFILE, delay=True, mode='w')
+    fh.setLevel(logging.ERROR)
+    #Add this filehandler to existing snakemake logger
+    logger.logger.addHandler(fh)
+
+    #Setup handler to trigger email upon creation of error-only logfile
+    class MyWatchdogHandler(PatternMatchingEventHandler):
+        def on_created(self, event):
+            super(MyWatchdogHandler, self).on_created(event)
+            message = "Watermelon has detected at least one error. Attaching nascent error-only log-file"
+            attach_str = "-a " + ERR_ONLY_LOGFILE + " --"
+            email('Watermelon error notification: ', msg=message, attachment=attach_str)
+    event_handler = MyWatchdogHandler(patterns=[ERR_ONLY_LOGFILE])
+    observer = Observer()
+    observer.schedule(event_handler, path=os.path.dirname(ERR_ONLY_LOGFILE), recursive=False)
+    observer.start()
+
     email('Watermelon started: ')
 onsuccess:
-    email('Watermelon completed ok: ')
+    message = 'config file:\n{}\nlog file:\n{}'.format(workflow.overwrite_configfile, logger.get_logfile())
+    email('Watermelon completed ok: ', msg=message)
 onerror:
-    email('Watermelon ERROR: ')
+    message = "Watermelon completed with errors. Full log file attached"
+    attach_str = "-a " + logger.get_logfile() + " --"
+    email('Watermelon completed with errors: ', msg=message, attachment = attach_str)
+
+
 
 #Set-up output targets
 if 'fastq_screen' in config:

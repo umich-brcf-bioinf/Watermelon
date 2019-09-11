@@ -1,24 +1,35 @@
 rule align_deliverables_alignment:
     input:
+        #fastqc reads
         rnaseq_snakefile_helper.expand_sample_read_endedness(
                 ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",
                 SAMPLE_READS),
+        #fastqc aligned
         expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}.genome_fastqc.html",
                 sample=config["samples"]),
-        alignment_stats = ALIGNMENT_DIR + "07-qc/alignment_qc.html",
+        #combined count matrices (gene-level only for now)
+        combined_counts = expand(ALIGNMENT_DIR + "05-combine_counts/gene_{type}.txt",
+            type=['expected_count', 'FPKM', 'TPM']),
+        #multiQC
+        alignment_stats = ALIGNMENT_DIR + "07-qc/alignment_qc.html"
     output:
         rnaseq_snakefile_helper.expand_sample_read_endedness(
                 DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
                 SAMPLE_READS),
         expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
                 sample=config["samples"]),
+        expand(DELIVERABLES_DIR + "counts/gene_{type}.txt",
+            type=['expected_count', 'FPKM', 'TPM']),
         alignment_stats = DELIVERABLES_DIR + "alignment/alignment_qc.html",
     params:
         raw_fastqc_input_dir    =  ALIGNMENT_DIR + "03-fastqc_reads",
         raw_fastqc_output_dir   =  DELIVERABLES_DIR + "alignment/sequence_reads_fastqc",
         align_fastqc_input_dir  =  ALIGNMENT_DIR + "05-fastqc_align",
         align_fastqc_output_dir =  DELIVERABLES_DIR + "alignment/aligned_reads_fastqc",
+        combined_counts_output_dir = DELIVERABLES_DIR + "counts"
     shell:
+        #For fastqc, need to copy dirs and html files
         "cp -r {params.raw_fastqc_input_dir}/* {params.raw_fastqc_output_dir} ; "
         "cp -r {params.align_fastqc_input_dir}/* {params.align_fastqc_output_dir} ; "
-        "cp -r {input.alignment_stats} {output.alignment_stats} "
+        "for i in {input.combined_counts} ; do cp $i {params.combined_counts_output_dir} ; done ; "
+        "cp {input.alignment_stats} {output.alignment_stats} "

@@ -194,6 +194,8 @@ DELIVERABLES = [
         SAMPLE_READS),
     expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
         sample=config["samples"]),
+    expand(DELIVERABLES_DIR + "counts/gene_{type}.txt",
+        type=['expected_count', 'FPKM', 'TPM']),
     DELIVERABLES_DIR + "alignment/alignment_qc.html",
     #deseq2 deliverables
     expand(DELIVERABLES_DIR + 'deseq2/counts/{name}.txt',

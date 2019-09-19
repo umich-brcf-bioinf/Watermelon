@@ -39,13 +39,15 @@ def main():
     log('Reading ID mapping info')
 
     # Read in mapping info
-    attr_table = pd.read_csv(args.mapping_file, sep="\t", dtype=object)
+    #The mapping table should not have duplicate values in the index
+    #The onus is on whoever creates the mapping table to do it correctly
+    #There are instances of biomaRt queries returning multiple results
+    #These are cases where a query ID matches equally well to multiple
+    #items from another database, so biomaRt returns them all. Current solution
+    #is to have the conflicting attributes separated by commas
     try:
-        #TWS FIXME? - There are instances of biomaRt queries returning multiple results
-        #These are cases where a query ID matches equally well to multiple items from another database, so biomaRt returns them all
-        #Right now, just keeping the first occurence - default of drop_duplicates
-        attr_table = attr_table.drop_duplicates(args.mapping_idx).set_index(args.mapping_idx)
-    except KeyError:
+        attr_table = pd.read_csv(args.mapping_file, sep="\t", dtype=object, index_col=args.mapping_idx)
+    except ValueError:
         print("{} is not a column in {}".format(args.mapping_idx, args.mapping_file))
         sys.exit(os.EX_CONFIG)
 

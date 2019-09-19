@@ -3,7 +3,7 @@ from __future__ import print_function, absolute_import, division
 
 from os.path import dirname, exists, join, realpath
 import scripts.watermelon_init as watermelon_init
-import scripts.deseq2_annotate as deseq2_annotate
+import scripts.annotate as annotate
 import scripts.ballgown_annotate as ballgown_annotate
 import unittest
 import yaml
@@ -24,7 +24,7 @@ class GenomeTest(unittest.TestCase):
     def test_all_genomes_annotated_deseq2(self):
         with open(_GENOME_CONFIG_PATH, 'r') as config_file:
             genome_config = yaml.load(config_file)
-        unannotated = set(genome_config.keys()) -  set(deseq2_annotate.TAXONOMY.keys())
+        unannotated = set(genome_config.keys()) -  set(annotate.TAXONOMY.keys())
         self.assertEqual(unannotated, set())
 
     def test_all_genomes_annotated_ballgown(self):

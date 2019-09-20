@@ -1,11 +1,11 @@
 rule deseq2_annotation:
    input:
        diffex_file= DIFFEX_DIR + "deseq2/gene_lists/{model_name}/{contrast}.txt",
-       mapping = config['references']['gtf_ID_mapping']
+       gene_info = config['references']['annotation_tsv']
    output:
        DIFFEX_DIR + "deseq2/annotated/{model_name}/{contrast}.annot.txt"
    params:
-       input_idx = 'id'
+       input_idx = 'id',
        mapping_idx = 'gene_id'
    shell:
        "python {WATERMELON_SCRIPTS_DIR}/annotate.py "

@@ -21,14 +21,14 @@ paths are specified, the contents of those files will  be copied to new workshee
 #validate right number of rows/columns
 #validate new field names
 #validate correct sheets
-#$ scripts/diffex_excel genes.txt isoforms.txt comparison.xlsx 
+#$ scripts/diffex_excel genes.txt isoforms.txt comparison.xlsx
 # files don't exist, output dir doesn't exist
 # better error processing for missing newlines
 # NaN values
 
 CELL_COMMENT_FORMAT = {'width': 400}
 DELIMITER = '\t'
-REQUIRED_FIELDS = argparse.Namespace(gene_symbol='gene_symbol', gene_id='gene_id')
+REQUIRED_FIELDS = argparse.Namespace(gene_symbol='external_gene_name', gene_id='entrezgene_id')
 NULL = '.'
 HEADER_PREFIX = '#'
 
@@ -50,7 +50,7 @@ class _Formatter(object):
             return False
         try:
             value = float(value)
-            return not (math.isinf(value) or math.isnan(value)) 
+            return not (math.isinf(value) or math.isnan(value))
         except ValueError:
             return False
 
@@ -72,27 +72,27 @@ class _Formatter(object):
 
 
 class _NcbiGeneHyperlink(object):
-    _NCBI_URL_FMT = 'https://www.ncbi.nlm.nih.gov/gene/?term={}' 
-    
+    _NCBI_URL_FMT = 'https://www.ncbi.nlm.nih.gov/gene/?term={}'
+
     def __init__(self, formatter, required_fields):
         self._formatter = formatter
         self._field_name = 'ncbi_gene_link'
         self._gene_id = required_fields.gene_id
         self._gene_symbol = required_fields.gene_symbol
-        
+
     def _get_gene_hyperlink(self, row):
         result = row.get(self._gene_id)
         if result == NULL:
             result = row.get(self._gene_symbol)
         if result == NULL:
-            return NULL 
+            return NULL
         return self._NCBI_URL_FMT.format(result)
 
     def _write_value(self, worksheet, formatter, row_index, col_index, row, field_name):
         value = row[self._gene_symbol]
         hyperlink = self._get_gene_hyperlink(row)
         format = formatter.get_format(field_name, value)
-        if hyperlink != NULL: 
+        if hyperlink != NULL:
             worksheet.write_url(row_index, col_index,
                                 hyperlink,
                                 format,
@@ -216,7 +216,7 @@ def _parse_command_line_args(sys_argv):
         help='path to Excel file')
 
     args = parser.parse_args(sys_argv)
-    return args 
+    return args
 
 def main(sys_argv):
     args = _parse_command_line_args(sys_argv)

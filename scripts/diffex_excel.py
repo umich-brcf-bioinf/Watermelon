@@ -84,9 +84,6 @@ class _NcbiGeneHyperlink(object):
         result = row.get(self._gene_id)
         if result == NULL:
             result = row.get(self._gene_symbol)
-        #If gene ids are comma-separated values, return the first one
-        elif "," in result:
-            result = result.split(",")[0].strip()
         return self._NCBI_URL_FMT.format(result)
 
     def _write_value(self, worksheet, formatter, row_index, col_index, row, field_name):

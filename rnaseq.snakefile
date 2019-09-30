@@ -181,7 +181,7 @@ RSEM_ALL = [
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam', sample=config[SAMPLES_KEY]),
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY]),
     ALIGNMENT_DIR + "07-qc/alignment_qc.html",
-    expand(ALIGNMENT_DIR + '05-combine_counts/{feature}_{metric}.txt',
+    expand(ALIGNMENT_DIR + '06-annotate_combined_counts/{feature}_{metric}.annot.txt',
         feature=['gene','isoform'],
         metric=['expected_count', 'FPKM', 'TPM'])
 ]
@@ -193,7 +193,7 @@ DELIVERABLES = [
         SAMPLE_READS),
     expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
         sample=config["samples"]),
-    expand(DELIVERABLES_DIR + "counts/gene_{type}.txt",
+    expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
         type=['expected_count', 'FPKM', 'TPM']),
     DELIVERABLES_DIR + "alignment/alignment_qc.html",
     #deseq2 deliverables
@@ -250,6 +250,7 @@ include: 'rules/align_deliverables_fastq_screen.smk'
 include: 'rules/align_rsem_star.smk'
 include: 'rules/align_rsem_star_genome_generate.smk'
 include: 'rules/align_rsem_star_combined_count_matrices.smk'
+include: 'rules/align_annotate_combined_counts.smk'
 
 include: 'rules/deseq2_counts.smk'
 include: 'rules/deseq2_init.smk'

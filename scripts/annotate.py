@@ -1,11 +1,11 @@
 #!/usr/bin/env/python
 
-from __future__ import print_function, absolute_import, division
-import sys
-import os
-import datetime
-import time
 import argparse
+import datetime
+import sys
+import time
+import os
+
 import pandas as pd
 
 def time_stamp():
@@ -18,14 +18,14 @@ def log(message):
 
 def parse_command_line_args():
     parser = argparse.ArgumentParser(
-        description='Adds EntrezGeneIDs and Descrtiptions to diffex output')
+        description='Adds EntrezGeneIDs and Descrtiptions to diffex annotated_source_df')
 
     parser.add_argument(
         '-m', '--mapping_file', type=str, help='Path to mapping file with required columns "gene_id", "entrezgene_id", "external_gene_name", "description"', required=True)
     parser.add_argument(
         '-i', '--input_file', type=str, help='Path to input file', required=True)
     parser.add_argument(
-        '-o', '--output_filename', type=str, help='Path to annotated output', required=True)
+        '-o', '--annotated_source_df_filename', type=str, help='Path to annotated annotated_source_df', required=True)
     parser.add_argument(
         '--mapping_idx', type=str, help='String matching the column to use as the index of the mapping file', required=True)
     parser.add_argument(
@@ -46,26 +46,26 @@ def main():
     #items from another database, so biomaRt returns them all. Current solution
     #is to have the conflicting attributes separated by commas
     try:
-        attr_table = pd.read_csv(args.mapping_file, sep="\t", dtype=object, index_col=args.mapping_idx)
+        annotation_mapping_df = pd.read_csv(args.mapping_file, sep='\t', dtype=object, index_col=args.mapping_idx)
     except ValueError:
-        print("{} is not a column in {}".format(args.mapping_idx, args.mapping_file))
-        sys.exit(os.EX_CONFIG)
+        msg = '{} is not a column in {}'.format(args.mapping_idx, args.mapping_file)
+        raise ValueError(msg)
 
     # Read in input file
     try:
-        to_annotate = pd.read_csv(args.input_file, sep="\t", dtype=object, index_col=args.input_idx)
+        source_df = pd.read_csv(args.input_file, sep='\t', dtype=object, index_col=args.input_idx)
     except ValueError:
-        print("{} is not a column in {}".format(args.input_idx, args.input_file))
-        sys.exit(os.EX_CONFIG)
+        msg = '{} is not a column in {}'.format(args.input_idx, args.input_file)
+        raise ValueError(msg)
 
     #Add annotation columns
-    output = attr_table.join(to_annotate).reset_index()
+    annotated_source_df = annotation_mapping_df.join(source_df, how='right').reset_index()
 
     #Remove redundant external_gene_name column if it's identical to gene_id
-    if output[args.mapping_idx].equals(output['external_gene_name']):
-        output.drop(columns='external_gene_name', inplace=True)
+    if annotated_source_df[args.mapping_idx].equals(annotated_source_df['external_gene_name']):
+        annotated_source_df.drop(columns='external_gene_name', inplace=True)
 
-    output.to_csv(args.output_filename, sep="\t", na_rep="NA", index=False)
+    annotated_source_df.to_csv(args.annotated_source_df_filename, sep='\t', na_rep='.', index=False)
 
     log('done')
 

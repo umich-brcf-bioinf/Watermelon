@@ -181,8 +181,13 @@ RSEM_ALL = [
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam', sample=config[SAMPLES_KEY]),
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY]),
     ALIGNMENT_DIR + "07-qc/alignment_qc.html",
+<<<<<<< Updated upstream
     expand(ALIGNMENT_DIR + '06-annotate_combined_counts/{feature}_{metric}.annot.txt',
         feature=['gene','isoform'],
+=======
+    expand(ALIGNMENT_DIR + '06-annotated_count_matrices/{feature}_{metric}.txt',
+        feature=['gene'],
+>>>>>>> Stashed changes
         metric=['expected_count', 'FPKM', 'TPM'])
 ]
 
@@ -250,7 +255,11 @@ include: 'rules/align_deliverables_fastq_screen.smk'
 include: 'rules/align_rsem_star.smk'
 include: 'rules/align_rsem_star_genome_generate.smk'
 include: 'rules/align_rsem_star_combined_count_matrices.smk'
+<<<<<<< Updated upstream
 include: 'rules/align_annotate_combined_counts.smk'
+=======
+include: 'rules/align_annotated_count_matrices.smk'
+>>>>>>> Stashed changes
 
 include: 'rules/deseq2_counts.smk'
 include: 'rules/deseq2_init.smk'

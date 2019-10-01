@@ -1,7 +1,7 @@
 #This rule creates a volcano plot for each comparison
 rule deseq2_comparison_plots:
     input:
-        gene_list = DIFFEX_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.txt'
+        gene_list = DIFFEX_DIR + 'deseq2/annotated/{model_name}/{contrast}.annot.txt'
     output:
         volcano_plot = DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf'
     log:

@@ -24,18 +24,16 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
     method = match.arg(method)
 
     # Determine the correct column names on the basis of deseq2 or ballgown
-    if(method == 'ballgown') {
-        log2fc = 'log2fc'
-        pval = 'pval'
-        padj = 'qval'
-        gene_id = 'id'
-        de_call = 'diff_exp'
-    } else {
+    if(method == 'deseq2') {
         log2fc = 'log2FoldChange'
         pval = 'pvalue'
         padj = 'padj'
-        gene_id = 'id'
         de_call = 'Call'
+    } else {
+        log2fc = 'log2fc'
+        pval = 'pval'
+        padj = 'qval'
+        de_call = 'diff_exp'
     }
 
     # Add direction column
@@ -81,7 +79,7 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
     top = rbind(
         head(subset(de_list, direction == 'Up'), 10),
         head(subset(de_list, direction == 'Down'), 10))
-    top$label = top$id
+    top$label = top$external_gene_name
     de_list = merge(x = de_list, y = top[, c('id','label')], by = 'id', all.x = TRUE, sort = FALSE)
 
     # Volcano Plot

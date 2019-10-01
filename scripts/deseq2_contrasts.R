@@ -72,7 +72,7 @@ diffexData = as.data.frame(res)
 data.table::setDT(diffexData, keep.rownames = TRUE)[] #TWS - Is data.table really useful here at all?
 
 #rename first column
-colnames(diffexData) = c('id','baseMean','log2FoldChange','lfcSE','stat','pvalue','padj')
+colnames(diffexData) = c('gene_id','baseMean','log2FoldChange','lfcSE','stat','pvalue','padj')
 diffexData$Condition = testName
 diffexData$Control = referenceName
 

@@ -1,3 +1,4 @@
+annotation_index_column: gene_id
 dirs:
   alignment_output: analysis{job_suffix}/alignment_results
   diffex_output: analysis{job_suffix}/diffex_results

@@ -4,7 +4,8 @@ log = file(snakemake@log[[1]], open='wt')
 sink(log, split=TRUE)
 save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
-#load("/nfs/med-bfx-activeprojects/trsaari/example_output_Watermelon/diffex_results/deseq2/plots/comparison_plots/pheno_gender/comparison_plot_DM.fem_v_NDM.fem_snakemake.rda")
+#setwd("/nfs/med-bfx-activeprojects/trsaari/sandbox/20190718_test_lumeng/")
+#load("/nfs/med-bfx-activeprojects/trsaari/sandbox/20190718_test_lumeng/analysis_20190920/diffex_results/deseq2/plots/comparison_plots/model_one/.comparison_plot_DM.fem_v_NDM.fem_snakemake.rda")
 
 #Isolate conda environment: https://github.com/conda-forge/r-base-feedstock/issues/37
 #If we move away from conda in the future, we may want to remove this
@@ -28,11 +29,13 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
         log2fc = 'log2FoldChange'
         pval = 'pvalue'
         padj = 'padj'
+        id = 'gene_id'
         de_call = 'Call'
     } else {
         log2fc = 'log2fc'
         pval = 'pval'
         padj = 'qval'
+        id = 'gene_id'
         de_call = 'diff_exp'
     }
 
@@ -80,7 +83,7 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
         head(subset(de_list, direction == 'Up'), 10),
         head(subset(de_list, direction == 'Down'), 10))
     top$label = top$external_gene_name
-    de_list = merge(x = de_list, y = top[, c('id','label')], by = 'id', all.x = TRUE, sort = FALSE)
+    de_list = merge(x = de_list, y = top[, c(id,'label')], by = id, all.x = TRUE, sort = FALSE)
 
     # Volcano Plot
     volcano_plot = ggplot(de_list, aes_string(x = log2fc, y = 'log10qval', color = 'direction_count')) +
@@ -110,7 +113,7 @@ fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['linear_fold_change']]
 method = snakemake@params[['method']]
 
 # Load gene list
-gene_list = read.table(snakemake@input[['gene_list']], sep="\t", header = T)
+gene_list = read.table(snakemake@input[['gene_list']], quote="", na.strings = ".", sep="\t", header = T, stringsAsFactors = F)
 
 # Volcano plot
 out_file = snakemake@output[['volcano_plot']]

@@ -4,8 +4,8 @@ rule deliverables_deseq2:
         counts = expand(DIFFEX_DIR + 'deseq2/counts/deseq2_{name}.txt',
             name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
         #Gene lists
-        gene_lists = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-            DIFFEX_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.txt',
+        annot = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+            DIFFEX_DIR + 'deseq2/annotated/{model_name}/{contrast}.annot.txt',
             DESEQ2_CONTRAST_DICT),
         excel = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
             DIFFEX_DIR + "deseq2/excel/{model_name}/{contrast}.xlsx",
@@ -29,12 +29,12 @@ rule deliverables_deseq2:
         #counts
         counts = expand(DELIVERABLES_DIR + 'counts/deseq2_{name}.txt',
             name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
-        #Gene lists
-        gene_lists = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-            DELIVERABLES_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.txt',
+        #Gene lists - annotated and excel are placed in the same location in deliverables output
+        annot = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+            DELIVERABLES_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.annot.txt',
             DESEQ2_CONTRAST_DICT),
         excel = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-            DELIVERABLES_DIR + "deseq2/excel/{model_name}/{contrast}.xlsx",
+            DELIVERABLES_DIR + "deseq2/gene_lists/{model_name}/{contrast}.xlsx",
             DESEQ2_CONTRAST_DICT),
         #plots
         pca = expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
@@ -54,10 +54,16 @@ rule deliverables_deseq2:
 #    log:
 #        DELIVERABLES_DIR + ".deliverables_deseq2.log"
     params:
-        #Counts are placed in a separate location from the other deseq2 results
         deseq2_input_dir = DIFFEX_DIR + "deseq2/",
         deseq2_output_dir = DELIVERABLES_DIR + "deseq2",
-        counts_output_dir = DELIVERABLES_DIR + "counts"
+        #Counts are placed in a separate location from the other deseq2 results
+        counts_output_dir = DELIVERABLES_DIR + "counts",
+        #Annotated gene list and excel list are both placed in the same location
+        annot_input = DIFFEX_DIR + "deseq2/annotated/*",
+        excel_input = DIFFEX_DIR + "deseq2/excel/*",
+        gene_list_output_dir = DELIVERABLES_DIR + "deseq2/gene_lists"
     shell:
-        """rsync -rlpgoD --exclude counts --exclude ".*" --exclude "*.rda" --exclude "*.annot.txt" {params.deseq2_input_dir} {params.deseq2_output_dir}
-        for i in {input.counts} ; do cp $i {params.counts_output_dir} ; done"""
+        """rsync -rlpgoD --exclude counts --exclude gene_lists --exclude annotated --exclude excel --exclude ".*" --exclude "*.rda" {params.deseq2_input_dir} {params.deseq2_output_dir}
+        for i in {input.counts} ; do cp $i {params.counts_output_dir} ; done
+        rsync -rlpgoD {params.annot_input} {params.gene_list_output_dir}
+        rsync -rlpgoD {params.excel_input} {params.gene_list_output_dir}"""

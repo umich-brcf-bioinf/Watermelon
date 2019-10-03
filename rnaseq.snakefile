@@ -200,10 +200,10 @@ DELIVERABLES = [
     expand(DELIVERABLES_DIR + 'counts/deseq2_{name}.txt',
         name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
     rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-        DELIVERABLES_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.txt',
+        DELIVERABLES_DIR + 'deseq2/gene_lists/{model_name}/{contrast}.annot.txt',
         DESEQ2_CONTRAST_DICT),
     rnaseq_snakefile_helper.expand_model_contrast_filenames(\
-        DELIVERABLES_DIR + "deseq2/excel/{model_name}/{contrast}.xlsx",
+        DELIVERABLES_DIR + "deseq2/gene_lists/{model_name}/{contrast}.xlsx",
         DESEQ2_CONTRAST_DICT),
     expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
             phenotype = PHENOTYPES,

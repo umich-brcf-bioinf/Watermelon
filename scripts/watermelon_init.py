@@ -218,7 +218,7 @@ def _copy_and_overwrite(source, dest):
         shutil.rmtree(dest)
     source = os.path.join(source, "") #Add trailing slash for rsync's sake
     #Exclude .git/ and /envs/built (speed)
-    subprocess.run(["rsync", "-a", "--exclude", ".*", "--exclude", "envs/built", source, dest])
+    subprocess.run(["rsync", "-rlt", "--exclude", ".*", "--exclude", "envs/built", source, dest])
 
 def _dict_merge(dct, merge_dct):
     """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of

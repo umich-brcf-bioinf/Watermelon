@@ -1,4 +1,4 @@
-rule align_qc:
+rule align_multiqc:
     input:
         raw_read_fastq_files = rnaseq_snakefile_helper.expand_sample_read_endedness(\
             ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",

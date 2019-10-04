@@ -12,7 +12,7 @@ Specifically:
      is a flat dir of all fastqs for that sample.
    * Absence of fastq files for a run or an individaul sample raises an error.
 
-2) watermelon-init creates an analysis directory which contains a template
+2) watermelon_init creates an analysis directory which contains a template
    watermelon config file. The template config file contains directory
    information, reference lists, run parameters, etc.,
    These must be reviewed and edited to:
@@ -22,7 +22,7 @@ Specifically:
       based on the example pheno.Gend stanza (can add as many similar stanzas
       as required by the experiment)
 
-3) watermelon-init creates a readme file that lists basic info about when/how it was run,
+3) watermelon_init creates a readme file that lists basic info about when/how it was run,
    what it did, and what the user has to do to prepare the template config
 '''
 #pylint: disable=locally-disabled,no-member
@@ -495,7 +495,7 @@ def _parse_command_line_args(sys_argv):
         type=str,
         required=True,
         help=('A CSV file containing sample names and phenotype/characteristic '
-        'information which correspond to these samples. Watermelon-init will verify that '
+        'information which correspond to these samples. Watermelon_init will verify that '
         'sample names in this file match with those found in the input directories. '),
         )
     parser.add_argument(
@@ -576,9 +576,9 @@ def main(sys_argv):
         with open(README_FILENAME, 'w') as readme:
             print(postlude, file=readme)
     except _UsageError as usage_error:
-        message = "watermelon-init usage problem: {}".format(str(usage_error))
+        message = "watermelon_init usage problem: {}".format(str(usage_error))
         print(message, file=sys.stderr)
-        print("See 'watermelon-init --help'.", file=sys.stderr)
+        print("See 'watermelon_init --help'.", file=sys.stderr)
         sys.exit(1)
     except _InputValidationError as input_validation_error:
         print(input_validation_error, file=sys.stderr)

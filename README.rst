@@ -31,12 +31,12 @@ For more information see:
 
 
 --------------------
-watermelon-init help
+watermelon_init help
 --------------------
 
 ::
 
-  $ watermelon-init --help
+  $ watermelon_init --help
   usage: watermelon_init [-h] --genome_build
                          {GRCh37,GRCh38,hg19,hg38,mm10,rn5,rn6,ce10,ce11,WBS235,GRCz10,ecoMG1655,ecoUTI89,dm6}
                          [--job_suffix JOB_SUFFIX] --sample_sheet SAMPLE_SHEET
@@ -63,7 +63,7 @@ watermelon-init help
     --sample_sheet SAMPLE_SHEET
                           A CSV file containing sample names and
                           phenotype/characteristic information which correspond
-                          to these samples. Watermelon-init will verify that
+                          to these samples. Watermelon_init will verify that
                           sample names in this file match with those found in
                           the input directories.
 

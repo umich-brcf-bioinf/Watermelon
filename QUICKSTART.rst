@@ -26,7 +26,10 @@ To deactivate the watermelon (if it's already activated)::
 
 In order to have access to watermelon_init (which will set up an example config and prepare for the pipeline to be run), you must make sure that the watermelon/bin location is in your PATH environment variable.
 To achieve this one-time, execute the following. To achieve this every time you log in, place the same command in your ~/.bash_profile::
+
   PATH=/nfs/med-bfx-common/pipelines/Watermelon/Watermelon-seedless/bin/:$PATH
+
+Another option is to
 
 3. **Run 'watermelon_init' to setup the analysis**
   Requires:
@@ -47,7 +50,7 @@ To achieve this one-time, execute the following. To achieve this every time you 
     /nfs/med-bfx-dnaseqcore/Run_1564/lumeng/Run_1564/lumeng/ \
     /nfs/med-bfx-dnaseqcore/Run_1567/lumeng/Run_1567/lumeng/
 
-4. **Review 'watermelon-init' output:**
+4. **Review 'watermelon_init' output:**
   Generates the following:
 * inputs : Directory with links to the sample dirs of input fastqs
 * config.yaml : example configuration file for the pipeline

@@ -6,7 +6,7 @@ rule annotate_combined_counts:
        ALIGNMENT_DIR + "06-annotate_combined_counts/{feature}_{metric}.annot.txt"
    params:
        input_idx = 'gene_id',
-       mapping_idx = config['annotation_index_column']
+       mapping_idx = 'gene_id'
    shell:
        "python {WATERMELON_SCRIPTS_DIR}/annotate.py "
             "-m {input.gene_info} "

@@ -6,7 +6,7 @@ rule deseq2_annotation:
        DIFFEX_DIR + "deseq2/annotated/{model_name}/{contrast}.annot.txt"
    params:
        input_idx = 'gene_id',
-       mapping_idx = config['annotation_index_column']
+       mapping_idx = 'gene_id'
    shell:
        "python {WATERMELON_SCRIPTS_DIR}/annotate.py "
             "-m {input.gene_info} "

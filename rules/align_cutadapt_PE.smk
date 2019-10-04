@@ -14,8 +14,10 @@ rule align_cutadapt_PE:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_cutadapt.log"
     conda:
         'envs/cutadapt.yaml'
+    threads: 10
     shell:
-        '''(cutadapt -q {params.base_quality_5prime},{params.base_quality_3prime} \
+        '''(cutadapt --cores {threads} \
+                -q {params.base_quality_5prime},{params.base_quality_3prime} \
                 -u {params.trim_length_5prime} \
                 -u -{params.trim_length_3prime} \
                 --trim-n -m 20 \

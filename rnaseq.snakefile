@@ -249,7 +249,7 @@ include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'
 include: 'rules/align_rsem_star.smk'
 include: 'rules/align_rsem_star_genome_generate.smk'
-include: 'rules/align_rsem_star_combined_count_matrices.smk'
+include: 'rules/align_combine_counts_to_matrices.smk'
 include: 'rules/align_annotate_combined_counts.smk'
 
 include: 'rules/deseq2_counts.smk'

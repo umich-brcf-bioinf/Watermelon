@@ -1,4 +1,4 @@
-rule align_rsem_star_combined_count_matrices:
+rule align_combine_counts_to_matrices:
     input:
         genes = expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results',
                 sample=config['samples']),

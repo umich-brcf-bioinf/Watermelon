@@ -72,12 +72,13 @@ def validate_config(config_fp, schema_fp):
 
 
 #Perform config validation if dryrun
-if set(['-n', '--dryrun']).intersection(set(sys.argv)):
+if set(['-n', '--dryrun']).intersection(set(sys.argv)) and not 'skip_validation' in config:
     validate_config(CONFIGFILE_PATH, CONFIG_SCHEMA_PATH)
 
 onstart:
     #Perform config validation before starting
-    validate_config(CONFIGFILE_PATH, CONFIG_SCHEMA_PATH)
+    if not 'skip_validation' in config:
+        validate_config(CONFIGFILE_PATH, CONFIG_SCHEMA_PATH)
 
     #Set up error-only logfile with same basename as snakemake logfile
     #Doing this within onstart because logger.get_logfile evaluates to None for some reason during workflow execution

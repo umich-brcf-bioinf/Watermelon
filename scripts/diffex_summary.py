@@ -108,7 +108,7 @@ def main(sys_argv, log=_log):
     names = _simplify_file_names(args.input_files, args.trim_suffix)
     all_stats = []
     for input_file in sorted(args.input_files):
-        input_df = pd.read_table(input_file, header=0)
+        input_df = pd.read_csv(input_file, header=0, sep='\t')
         stats = _get_stats(args, input_df, names[input_file])
         all_stats.append(stats)
     output_df = pd.DataFrame(all_stats, columns=stats.keys())

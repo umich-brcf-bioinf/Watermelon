@@ -175,6 +175,7 @@ _WATERMELON_ROOT = os.path.dirname(_SCRIPTS_DIR)
 _CONFIG_DIR = os.path.join(_WATERMELON_ROOT, 'config')
 _DEFAULT_TEMPLATE_CONFIG = os.path.join(_CONFIG_DIR, 'template_config.yaml')
 _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, 'genome_references.yaml')
+_DEFAULT_SAMPLE_COLUMN = 'sample'
 
 _FASTQ_GLOBS = ['*.fastq', '*.fastq.gz']
 
@@ -316,8 +317,8 @@ def _build_input_summary(args):
     return input_summary
 
 '''
-Verify that the samplesheet exists, and that the sample names
-in the samplesheet correspond to those in the input directories
+Verify that the samplesheet exists, that it contains a sample column, and that
+the sample names in the samplesheet correspond to those in the input directories
 '''
 def _validate_sample_sheet(samples, sheet_file):
     #pylint: disable=locally-disabled,invalid-name
@@ -326,10 +327,14 @@ def _validate_sample_sheet(samples, sheet_file):
         msg = ("The specified sample sheet file {} cannot be found.".format(sheet_file))
         raise _InputValidationError(msg)
 
-    samplesheet = pd.read_csv(sheet_file, comment='#').set_index("sample", drop=True)
+    try:
+        samplesheet = pd.read_csv(sheet_file, comment='#').set_index(args.x_sample_column, drop=True)
+    except KeyError:
+        msg = "The sample sheet must have a column labeled '{}'".format(args.x_sample_column)
+        raise _InputValidationError(msg)
+
     sheet_samples = set(samplesheet.index)
     input_samples = set(samples)
-
     if not sheet_samples.issubset(input_samples):
         msg = ("The following sample names cannot be found in the input directories: "
         + str(sheet_samples.difference(input_samples)))
@@ -523,6 +528,12 @@ def _parse_command_line_args(sys_argv):
         '--x_genome_references',
         type=str,
         default=_DEFAULT_GENOME_REFERENCES,
+        help=argparse.SUPPRESS)
+
+    parser.add_argument(
+        '--x_sample_column',
+        type=str,
+        default=_DEFAULT_SAMPLE_COLUMN,
         help=argparse.SUPPRESS)
 
     args = parser.parse_args(sys_argv)

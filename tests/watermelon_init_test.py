@@ -1,7 +1,6 @@
 #pylint: disable=locally-disabled,too-many-public-methods, invalid-name
 #pylint: disable=locally-disabled,no-self-use,missing-docstring,protected-access
 #pylint: disable=locally-disabled,deprecated-method
-from __future__ import print_function, absolute_import, division
 
 from argparse import Namespace
 import errno
@@ -21,6 +20,7 @@ import pandas as pd
 from pandas.util.testing import assert_frame_equal
 
 import yaml
+import ruamel_yaml
 
 import scripts.watermelon_init as watermelon_init
 
@@ -144,6 +144,7 @@ class WatermelonInitTest(unittest.TestCase):
     def test_parse_args(self):
         command_line_args = ('--genome_build mm10 '
                              '--job_suffix _11_01_A '
+                             '--sample_sheet samplesheet.csv '
                              '--x_working_dir /tmp.foo '
                              '--x_template_config /tmp/watermelon/template_config.yaml '
                              '--x_genome_references /tmp/watermelon/genome_references.yaml '
@@ -152,6 +153,7 @@ class WatermelonInitTest(unittest.TestCase):
         expected_args = ['analysis_dir',
                          'config_file',
                          'genome_build',
+                         'sample_sheet',
                          'x_genome_references',
                          'tmp_input_dir',
                          'input_dir',
@@ -186,6 +188,7 @@ class WatermelonInitTest(unittest.TestCase):
     def test_parse_args_workingDirDefaultsToCwd(self):
         command_line_args = ('--genome_build mm10 '
                              '--job_suffix _11_01_A '
+                             '--sample_sheet samplesheet.csv '
                              'DNASeqCore/Run_1286/rhim/Run_1286').split(' ')
         args = watermelon_init._parse_command_line_args(command_line_args)
         self.assertEqual(os.getcwd(), args.x_working_dir)
@@ -193,6 +196,7 @@ class WatermelonInitTest(unittest.TestCase):
     def test_parse_args_templateConfigDefaultsToWatermelonConfigDir(self):
         command_line_args = ('--genome_build mm10 '
                              '--job_suffix _11_01_A '
+                             '--sample_sheet samplesheet.csv '
                              'DNASeqCore/Run_1286/rhim/Run_1286').split(' ')
         args = watermelon_init._parse_command_line_args(command_line_args)
         self.assertEqual(os.path.join(_CONFIG_DIR, 'template_config.yaml'),
@@ -201,6 +205,7 @@ class WatermelonInitTest(unittest.TestCase):
     def test_parse_args_genomeReferencesDefaultsToWatermelonConfigDir(self):
         command_line_args = ('--genome_build mm10 '
                              '--job_suffix _11_01_A '
+                             '--sample_sheet samplesheet.csv '
                              'DNASeqCore/Run_1286/rhim/Run_1286').split(' ')
         args = watermelon_init._parse_command_line_args(command_line_args)
         self.assertEqual(os.path.join(_CONFIG_DIR, 'genome_references.yaml'),
@@ -208,7 +213,7 @@ class WatermelonInitTest(unittest.TestCase):
 
     def test_GENOME_BUILD_OPTIONS_matchGenomeReferenceKeys(self):
         with open(os.path.join(_CONFIG_DIR, 'genome_references.yaml'), 'r') as yaml_file:
-            genome_references = yaml.load(yaml_file)
+            genome_references = yaml.load(yaml_file, Loader=yaml.SafeLoader)
         self.assertEqual(sorted(watermelon_init.GENOME_BUILD_OPTIONS),
                          sorted(genome_references.keys()))
 
@@ -455,12 +460,14 @@ run_total|2|0|0|2''')
         self.assertEqual(['B','C'], actual_summary.runs_missing_fastq_files)
 
     def test_make_config_dict(self):
-        template_config = yaml.load(\
+        template_config = ruamel_yaml.round_trip_load(\
 '''foo1:
     bar1: baz1
     hoopy1: frood1
 foo2:
     bar2: baz2
+dirs:
+  alignment_output: analysis{job_suffix}/alignment_results
 ''')
         genome_references = yaml.load(\
 '''genome:
@@ -470,56 +477,49 @@ references:
     gtf: /ccmb/BioinfCore/hg19_noRibo.gtf
     bowtie2_index: /ccmb/BioinfCore/iGenomes/hg19/Sequence/Bowtie2Index
     entrez_gene_info: /ccmb/BioinfCore/entrez_gene_info/2016_09_02/gene_info
-''')
+''', Loader=yaml.SafeLoader)
         args = Namespace(input_dir = '/my/input/dir',
-                         input_samples_dir='samples')
-        samples = ['sA', 'sB', 'sC', 'sD', 'sE', 'sF']
+                         input_samples_dir='samples',
+                         sample_sheet = 'samplesheet.csv',
+                         job_suffix = '_11_01_A')
         actual_config = watermelon_init._make_config_dict(template_config,
                                                           genome_references,
-                                                          args,
-                                                          samples)
+                                                          args)
         expected_keys = ['dirs',
                          'foo1', 'foo2',
-                         'genome', 'references',
-                         'main_factors', 'phenotypes', 'samples', 'comparisons']
+                         'genome', 'references']
         self.assertEquals(sorted(expected_keys), sorted(actual_config.keys()))
         self.assertEqual('/my/input/dir/samples', actual_config['dirs']['input'])
         self.assertEqual(template_config['foo1'], actual_config['foo1'])
         self.assertEqual(template_config['foo2'], actual_config['foo2'])
         self.assertEqual(genome_references['genome'], actual_config['genome'])
         self.assertEqual(genome_references['references'], actual_config['references'])
-        self.assertEqual('yes    ^ yes      ^ no', actual_config['main_factors'])
-        self.assertEqual('gender ^ genotype ^ gender.genotype', actual_config['phenotypes'])
-        self.maxDiff = None
-        self.assertEqual({'sA':'female ^ MutA     ^ female.MutA',
-                          'sB':'female ^ MutB     ^ female.MutB',
-                          'sC':'female ^ WT       ^ female.WT',
-                          'sD':'male   ^ MutA     ^ male.MutA',
-                          'sE':'male   ^ MutB     ^ male.MutB',
-                          'sF':'male   ^ WT       ^ male.WT',
-                         },
-                         actual_config['samples'])
-        self.assertEqual(['male_v_female'],
-                         actual_config['comparisons']['gender'])
-        self.assertEqual(['MutA_v_WT', 'MutB_v_WT'],
-                         actual_config['comparisons']['genotype'])
+
 
     def test_make_config_dict_intelligentlyMergesGenomeReferences(self):
-        template_config = yaml.load(\
+        template_config = ruamel_yaml.round_trip_load(\
 '''fastq_screen:
     aligner: bowtie2
+dirs:
+  alignment_output: analysis{job_suffix}/alignment_results
 ''')
         genome_references = yaml.load(\
 '''fastq_screen:
     species: human
-''')
+genome:
+    hg19
+references:
+    gtf: /ccmb/BioinfCore/hg19_noRibo.gtf
+    bowtie2_index: /ccmb/BioinfCore/iGenomes/hg19/Sequence/Bowtie2Index
+    entrez_gene_info: /ccmb/BioinfCore/entrez_gene_info/2016_09_02/gene_info
+''', Loader=yaml.SafeLoader)
         args = Namespace(input_dir='/my/input/dir',
-                         input_samples_dir='samples')
-        samples = []
+                         input_samples_dir='samples',
+                         sample_sheet = 'samplesheet.csv',
+                         job_suffix = '_11_01_A')
         actual_config = watermelon_init._make_config_dict(template_config,
                                                           genome_references,
-                                                          args,
-                                                          samples)
+                                                          args)
         expected_config = {'aligner': 'bowtie2', 'species': 'human'}
         self.assertEqual(expected_config, actual_config['fastq_screen'])
 
@@ -529,15 +529,11 @@ references:
             temp_dir_path = temp_dir.path
             config_filename = os.path.join(temp_dir_path, 'config.yaml')
             config_dict = {'dirs': {'input' : 'INPUT_DIR'},
-                           'samples' : 'SAMPLES',
-                           'comparisons' : 'COMPARISONS',
                            'genome' : 'GENOME',
                            'references' : 'REFERENCES',
                            'templateA' : {'TEMPLATE_A1': 'A1', 'TEMPLATE_A2': 'A2'},
                            'templateB' : 'TEMPLATE_B',
-                           'templateC' : 'TEMPLATE_C',
-                           'phenotypes' :   'PHENOLABEL1 ^ PHENOLABEL2',
-                           'main_factors' : 'yes ^ no'}
+                           'templateC' : 'TEMPLATE_C'}
             watermelon_init._write_config_file(config_filename, config_dict)
 
             with open(config_filename, 'r') as config_file:
@@ -551,10 +547,6 @@ references:
             next(line_iter)
         self.assertEqual('dirs:', next(line_iter))
         self.assertEqual('    input: INPUT_DIR', next(line_iter))
-        self.assertEqual('main_factors: yes ^ no', next(line_iter))
-        self.assertEqual('phenotypes: PHENOLABEL1 ^ PHENOLABEL2', next(line_iter))
-        self.assertEqual('samples: SAMPLES', next(line_iter))
-        self.assertEqual('comparisons: COMPARISONS', next(line_iter))
         self.assertEqual('genome: GENOME', next(line_iter))
         self.assertEqual('references: REFERENCES', next(line_iter))
         self.assertEqual('templateA:', next(line_iter))

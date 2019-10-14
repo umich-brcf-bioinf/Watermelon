@@ -470,13 +470,13 @@ dirs:
   alignment_output: analysis{job_suffix}/alignment_results
 ''')
         genome_references = yaml.load(\
-'''genome:
-    hg19
-
+'''genome: hg19
 references:
     gtf: /ccmb/BioinfCore/hg19_noRibo.gtf
     bowtie2_index: /ccmb/BioinfCore/iGenomes/hg19/Sequence/Bowtie2Index
     entrez_gene_info: /ccmb/BioinfCore/entrez_gene_info/2016_09_02/gene_info
+fastq_screen:
+    species: human
 ''', Loader=yaml.SafeLoader)
         args = Namespace(input_dir = '/my/input/dir',
                          input_samples_dir='samples',
@@ -485,7 +485,7 @@ references:
         actual_config = watermelon_init._make_config_dict(template_config,
                                                           genome_references,
                                                           args)
-        expected_keys = ['dirs',
+        expected_keys = ['dirs', 'email', 'fastq_screen', 'sample_description_file', 'watermelon_version',
                          'foo1', 'foo2',
                          'genome', 'references']
         self.assertEquals(sorted(expected_keys), sorted(actual_config.keys()))

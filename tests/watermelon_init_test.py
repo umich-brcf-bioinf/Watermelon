@@ -111,7 +111,6 @@ class WatermelonInitTest(unittest.TestCase):
         args = Namespace(input_dir='INPUT_DIR',
                          input_runs_dir='INPUT_RUNS_DIR',
                          input_samples_dir='INPUT_SAMPLES_DIR',
-                         analysis_dir='ANALYSIS_DIR',
                          config_file='path/to/CONFIG_FILE',
                          sample_sheet='path/to/SAMPLE_SHEET',
                          job_suffix='_JOB_SUFFIX',
@@ -150,8 +149,7 @@ class WatermelonInitTest(unittest.TestCase):
                              '--x_genome_references /tmp/watermelon/genome_references.yaml '
                              'DNASeqCore/Run_1/rhim/Run_1 DNASeqCore/Run_2/rhim/Run_2').split(' ')
         args = watermelon_init._parse_command_line_args(command_line_args)
-        expected_args = ['analysis_dir',
-                         'config_file',
+        expected_args = ['config_file',
                          'genome_build',
                          'sample_sheet',
                          'x_genome_references',
@@ -161,6 +159,7 @@ class WatermelonInitTest(unittest.TestCase):
                          'input_samples_dir',
                          'job_suffix',
                          'source_fastq_dirs',
+                         'x_sample_column',
                          'x_template_config',
                          'x_working_dir']
         self.assertEqual(sorted(expected_args), sorted(vars(args)))
@@ -171,11 +170,6 @@ class WatermelonInitTest(unittest.TestCase):
                          args.source_fastq_dirs)
         join = os.path.join
         basedir = '/tmp.foo'
-        expected_analysis_filepath = join(basedir, 'analysis_11_01_A')
-        self.assertEqual(expected_analysis_filepath, args.analysis_dir)
-        self.assertEqual(os.path.join(expected_analysis_filepath,
-                                      'config_11_01_A.yaml'),
-                         args.config_file)
         self.assertEqual(os.path.join(basedir, '.inputs'),
                          args.tmp_input_dir)
         self.assertEqual(os.path.join(basedir, 'inputs'),

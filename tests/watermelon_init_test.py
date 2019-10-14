@@ -533,9 +533,6 @@ references:
             with open(config_filename, 'r') as config_file:
                 config_lines = [line.strip('\n') for line in config_file.readlines()]
         config_prelude = watermelon_init._CONFIG_PRELUDE.split('\n')
-        expected_config_lines = 13
-        self.assertEqual(expected_config_lines + len(config_prelude),
-                         len(config_lines))
         line_iter = iter(config_lines)
         for _ in config_prelude:
             next(line_iter)

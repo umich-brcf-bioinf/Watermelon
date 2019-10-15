@@ -6,11 +6,6 @@
 lib.vector <- c("optparse", "plyr", "rtracklayer", "biomaRt")
 libs.loaded <- suppressMessages(lapply(lib.vector, library, character.only=T, warn.conflicts=F, quietly=T))
 
-library(optparse)
-library(plyr)
-library(rtracklayer)
-library(biomaRt)
-
 option_list <- list(
   make_option(c("-o", "--outfile"), action="store", default=NA, type='character',
               help="Name of output file"),
@@ -19,7 +14,9 @@ option_list <- list(
   make_option(c("-m", "--mart"), action="store", default="ENSEMBL_MART_ENSEMBL",
               help="Biomart to use [default %default]"),
   make_option(c("-H", "--host"), action="store", default="www.ensembl.org",
-              help="Biomart host to use [default %default]")
+              help="Biomart host to use [default %default]"),
+  make_option(c("-a", "--attributes"), action="store", default="ensembl_gene_id,entrezgene_id,external_gene_name,description",
+              help="Comma-separated list of attributes to gather from biomaRt - must be equivalent to defaults - [default %default]")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
@@ -27,13 +24,14 @@ mart = useMart(opt$mart, host=opt$host) #Change host here to use older version
 species.mart<- useDataset(opt$dataset, mart=mart)
 
 #Keeping track of current version used
-currentMarts <- listMarts()
+currentMarts <- listMarts(host=opt$host)
 thisMart <- currentMarts$version[currentMarts$biomart == opt$mart]
 message(paste0("Using ", thisMart))
 #Ensembl Genes 98
 
 #Gets attributes using ensembl gene id from biomaRt
-attr<- getBM(attributes=c("ensembl_gene_id", "entrezgene_id", "external_gene_name", "description"), mart=species.mart)
+attr.cols <- trimws(unlist(strsplit(opt$attributes, ",")))
+attr<- getBM(attributes=attr.cols, mart=species.mart)
 
 rename_col_by_name <- function (df, old, new) {
   #https://stackoverflow.com/a/16490387
@@ -42,7 +40,11 @@ rename_col_by_name <- function (df, old, new) {
 }
 
 #Standardize column name of unique ID to 'gene_id' - This corresponds to the unique ID used in GTF
-attr <- rename_col_by_name(attr, 'ensembl_gene_id', 'gene_id')
+attr <- rename_col_by_name(attr, attr.cols[1], 'gene_id')
+#Standardize other column names
+attr <- rename_col_by_name(attr, attr.cols[2], 'entrezgene_id')
+attr <- rename_col_by_name(attr, attr.cols[3], 'external_gene_name')
+attr <- rename_col_by_name(attr, attr.cols[4], 'description')
 
 #For queries with multiple entrez gene IDs, return these IDs in a single cell, as a string with commas separating the individual IDs
 collapsed.entrezIDs <- ddply(attr, .(gene_id), summarize, entrezgene_id=paste(entrezgene_id, collapse=","))

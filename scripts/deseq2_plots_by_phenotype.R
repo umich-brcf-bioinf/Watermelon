@@ -4,7 +4,8 @@ log = file(snakemake@log[[1]], open='wt')
 sink(log, split=TRUE)
 save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
-#load("/nfs/med-bfx-activeprojects/trsaari/example_output_Watermelon/diffex_results/plots/by_phenotype/deseq2_plots_by_phenotype_snakemake.rda")
+setwd("/nfs/med-bfx-activeprojects/Hsu_hcindy_RS1_damki_Quant-seq/")
+load("analysis_20191016/diffex_results/deseq2/plots/by_phenotype/.deseq2_plots_by_phenotype_snakemake.rda")
 
 #Isolate conda environment: https://github.com/conda-forge/r-base-feedstock/issues/37
 #If we move away from conda in the future, we may want to remove this
@@ -224,11 +225,28 @@ plot_PCA = function(compute_PCA_result, out_name = 'PCAplot.pdf') {
     var_explained = compute_PCA_result[['var_explained']]
     top_n = compute_PCA_result[['top_n']]
     factor_name = compute_PCA_result[['factor_name']]
+    factor_levels = pca_df[,factor_name]
+    rep_levels = pca_df[,'replicate']
     dims = compute_PCA_result[['dims']]
 
+    # Use colors for groups or reps, whichever has more numerous levels
+    if(nlevels(factor_levels) > nlevels(rep_levels)){
+      color.these <- factor_levels
+      shape.these <- rep_levels
+      whats.smaller <- 'replicates'
+    } else {
+      color.these <- rep_levels
+      shape.these <- factor_levels
+      whats.smaller <- 'groups'
+    }
+
+    if(nlevels(factor_levels) > 6 && nlevels(rep_levels) > 6) {
+      message(paste0("Warning - not enough symbols to represent all ", whats.smaller))
+    }
+
     # Plot PCA
-    pca_plot = ggplot(pca_df, aes(x = x, y = y, color = replicate)) +
-        geom_point(aes_string(shape = factor_name)) +
+    pca_plot = ggplot(pca_df, aes(x = x, y = y, color = color.these)) +
+        geom_point(aes_string(shape = shape.these)) +
         labs(
             title = sprintf('%s PCA plot', factor_name),
             subtitle = sprintf('Using top %s variable genes', top_n),

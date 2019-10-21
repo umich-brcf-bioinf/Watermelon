@@ -46,7 +46,7 @@ message(sprintf('Testing %s: %s vs %s', factorName, testName, referenceName))
 load(snakemake@input[['rda']])
 
 
-results.params = snakemake@config[['diffex']][[factorName]][['DESeq2']][['results']]
+results.params = snakemake@config[['diffex']][[model_name]][['DESeq2']][['results']]
 # Parse the params for results {DESeq2} call, if it can't be converted return it as string
 results.params.parsed = lapply(results.params, function(x) {
   tryCatch(eval(parse(text=x)),

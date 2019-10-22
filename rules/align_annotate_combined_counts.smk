@@ -1,4 +1,4 @@
-rule annotate_combined_counts:
+rule align_annotate_combined_counts:
    input:
        counts_file = ALIGNMENT_DIR + "05-combine_counts/{feature}_{metric}.txt",
        gene_info = config['references']['annotation_tsv']

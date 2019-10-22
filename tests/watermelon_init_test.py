@@ -558,6 +558,15 @@ class CommandValidatorTest(unittest.TestCase):
     def ok(self):
         #pylint: disable=locally-disabled,redundant-unittest-assert
         self.assertTrue(True)
+    def test_validate_genomebuild(self):
+        validator = watermelon_init._CommandValidator()
+        args = Namespace(genome_build='hg49',
+                         x_genome_references=os.path.join(_CONFIG_DIR, "genome_references.yaml"))
+        msg = (r'genome .* not found .*')
+        self.assertRaisesRegexp(watermelon_init._UsageError,
+                                    msg,
+                                    validator._validate_genomebuild,
+                                    args)
 
     def test_validate_source_fastq_dirs_raisesIfInvalid(self):
         validator = watermelon_init._CommandValidator()
@@ -591,24 +600,22 @@ class CommandValidatorTest(unittest.TestCase):
         validator = watermelon_init._CommandValidator()
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            analysis_dir = os.path.join(temp_dir_path, 'analysis')
             input_dir = os.path.join(temp_dir_path, 'inputs')
-            args = Namespace(analysis_dir=analysis_dir,
+            config_file = os.path.join(temp_dir_path, 'config_file.yaml')
+            args = Namespace(config_file=config_file,
                              input_dir=input_dir)
             validator._validate_overwrite_check(args)
             self.ok()
 
-    def test_validate_overwrite_check_raisesIfAnalysisExists(self):
+    def test_validate_overwrite_check_raisesIfConfigExists(self):
         validator = watermelon_init._CommandValidator()
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
-            analysis_dir = os.path.join(temp_dir_path, 'analysis')
-            _mkdir(analysis_dir)
-            input_dir = os.path.join(temp_dir_path, 'inputs')
-            args = Namespace(analysis_dir=analysis_dir,
-                             input_dir=input_dir)
+            config_file = os.path.join(temp_dir_path, 'config_job1.yaml')
+            touch(config_file)
+            args = Namespace(config_file=config_file)
             self.assertRaisesRegexp(watermelon_init._UsageError,
-                                    r'dirs: analysis \[.*\] exists',
+                                    r'config_file \[.*\] exists',
                                     validator._validate_overwrite_check,
                                     args)
 
@@ -618,9 +625,7 @@ class CommandValidatorTest(unittest.TestCase):
             temp_dir_path = temp_dir.path
             input_dir = os.path.join(temp_dir_path, 'inputs')
             _mkdir(os.path.join(input_dir))
-            analysis_dir = os.path.join(temp_dir_path, 'analysis')
-            args = Namespace(analysis_dir=analysis_dir,
-                             input_dir=input_dir)
+            args = Namespace(input_dir=input_dir)
             self.assertRaisesRegexp(watermelon_init._UsageError,
                                     r'dirs: input \[.*\] exists',
                                     validator._validate_overwrite_check,
@@ -839,7 +844,7 @@ class WatermelonInitFunctoinalTest(unittest.TestCase):
             }
         j = os.path.join
         with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
+            temp_dir_path = '/tmp' #temp_dir.path
             orig_wd = os.getcwd()
             try:
                 os.chdir(temp_dir_path)
@@ -850,11 +855,13 @@ class WatermelonInitFunctoinalTest(unittest.TestCase):
 
                 script_name = os.path.join(_BIN_DIR, 'watermelon_init')
 
-                redirect_output = ' 2>&1 '
-                command = '{} {} {} {}'.format(script_name,
-                                               '--genome hg19',
-                                               ' '.join(source_run_dirs),
-                                               redirect_output)
+                source_run_dirs_string = ' '.join(source_run_dirs)
+                sample_sheet = j(_TESTS_DIR, 'sample_sheet.csv')
+                command = (f'{script_name} '
+                           f'--genome hg19 '
+                           f'--sample_sheet {sample_sheet} '
+                           f'{source_run_dirs_string} '
+                           f'2>&1')
                 print(command)
                 exit_code, command_output = self.execute(command)
             finally:

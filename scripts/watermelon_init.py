@@ -71,16 +71,25 @@ class _CommandValidator(object):
     def __init__(self):
         pass
 
+
     def validate_args(self, args):
         #pylint: disable=locally-disabled, missing-docstring
         for validation in [self._validate_source_fastq_dirs,
-                           self._validate_overwrite_check]:
+                           self._validate_overwrite_check,
+                           self._validate_genomebuild]:
             validation(args)
 
     def validate_inputs(self, input_summary):
         for validation in [self._validate_runs_have_fastq_files,
                            self._validate_samples_have_fastq_files]:
             validation(input_summary)
+
+    @staticmethod
+    def _validate_genomebuild(args):
+        gemome_options=yaml.load(args.x_genome_references)
+        if args.genome_build not in gemome_options:
+            msg=(f'genome {args.genome_build} not found in {args.x_genome_references}')
+            raise _InputValidationError(msg)
 
     @staticmethod
     def _validate_samples_have_fastq_files(input_summary):
@@ -115,8 +124,11 @@ class _CommandValidator(object):
     @staticmethod
     def _validate_overwrite_check(args):
         existing_files = {}
-        if os.path.exists(args.input_dir):
+        if 'input_dir' in vars(args) and os.path.exists(args.input_dir):
             existing_files['dirs: input'] = args.input_dir
+        if 'config_file' in vars(args) and os.path.exists(args.config_file):
+            existing_files['config_file'] = args.config_file
+
         if existing_files:
             file_types = [file_type for file_type in sorted(existing_files.keys())]
             file_names = [existing_files[key] for key in file_types]

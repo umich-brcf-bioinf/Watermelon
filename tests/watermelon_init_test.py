@@ -561,8 +561,8 @@ class CommandValidatorTest(unittest.TestCase):
     def test_validate_genomebuild(self):
         validator = watermelon_init._CommandValidator()
         args = Namespace(genome_build='hg49',
-                         x_genome_references=os.path.join(_CONFIG_DIR, "genome_references.yaml"))
-        msg = (r'genome .* not found .*')
+                         x_genome_references=yaml.load(os.path.join(_CONFIG_DIR, "genome_references.yaml")))
+        msg =r'genome .* is not found'
         self.assertRaisesRegexp(watermelon_init._UsageError,
                                     msg,
                                     validator._validate_genomebuild,

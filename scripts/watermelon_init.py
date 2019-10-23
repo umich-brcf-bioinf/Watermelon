@@ -84,6 +84,30 @@ class _CommandValidator(object):
                            self._validate_samples_have_fastq_files]:
             validation(input_summary)
 
+    def validate_sample_sheet(self, args, input_summary):
+        '''
+        Verify that the samplesheet exists, that it contains a sample column, and that
+        the sample names in the samplesheet correspond to those in the input directories
+        '''
+        sheet_file = args.sample_sheet
+
+        if not os.path.isfile(sheet_file):
+            msg = ("The specified sample sheet file {} cannot be found.".format(sheet_file))
+            raise _InputValidationError(msg)
+
+        try:
+            samplesheet = pd.read_csv(sheet_file, comment='#').set_index(args.x_sample_column, drop=True)
+        except KeyError:
+            msg = "The sample sheet must have a column labeled '{}'".format(args.x_sample_column)
+            raise _InputValidationError(msg)
+
+        sheet_samples = set(samplesheet.index)
+        input_samples = set(input_summary.samples)
+        if not sheet_samples.issubset(input_samples):
+            msg = ("The following sample names cannot be found in the input directories: "
+            + str(sheet_samples.difference(input_samples)))
+            raise _InputValidationError(msg)
+
     @staticmethod
     def _validate_genomebuild(args):
         with open(args.x_genome_references) as ref_yaml:
@@ -329,30 +353,6 @@ def _build_input_summary(args):
                                        runs_missing_fastq_files=runs_missing_fastq_files)
     return input_summary
 
-'''
-Verify that the samplesheet exists, that it contains a sample column, and that
-the sample names in the samplesheet correspond to those in the input directories
-'''
-def _validate_sample_sheet(samples, sheet_file):
-    #pylint: disable=locally-disabled,invalid-name
-
-    if not os.path.isfile(sheet_file):
-        msg = ("The specified sample sheet file {} cannot be found.".format(sheet_file))
-        raise _InputValidationError(msg)
-
-    try:
-        samplesheet = pd.read_csv(sheet_file, comment='#').set_index(args.x_sample_column, drop=True)
-    except KeyError:
-        msg = "The sample sheet must have a column labeled '{}'".format(args.x_sample_column)
-        raise _InputValidationError(msg)
-
-    sheet_samples = set(samplesheet.index)
-    input_samples = set(samples)
-    if not sheet_samples.issubset(input_samples):
-        msg = ("The following sample names cannot be found in the input directories: "
-        + str(sheet_samples.difference(input_samples)))
-        raise _InputValidationError(msg)
-
 def _make_config_dict(template_config, genome_references, args):
     #Due to ruamel_yaml, template_config is an OrderedDict, and has preserved comments
     config = template_config
@@ -577,13 +577,13 @@ def main(sys_argv):
         input_summary = _build_input_summary(args)
 
         _CommandValidator().validate_inputs(input_summary)
+        _CommandValidator().validate_sample_sheet(args, input_summary)
         os.rename(args.tmp_input_dir, args.input_dir)
         print("Generating example config")
         with open(args.x_template_config, 'r') as template_config_file:
             template_config = ruamel_yaml.round_trip_load(template_config_file) #Use ruamel_yaml to preserve comments
         with open(args.x_genome_references, 'r') as genome_references_file:
             genome_references = yaml.load(genome_references_file, yaml.FullLoader)[args.genome_build]
-        _validate_sample_sheet(input_summary.samples, args.sample_sheet)
         config_dict = _make_config_dict(template_config,
                                         genome_references,
                                         args)

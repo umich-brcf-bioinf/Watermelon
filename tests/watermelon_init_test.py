@@ -205,12 +205,6 @@ class WatermelonInitTest(unittest.TestCase):
         self.assertEqual(os.path.join(_CONFIG_DIR, 'genome_references.yaml'),
                          args.x_genome_references)
 
-    def test_GENOME_BUILD_OPTIONS_matchGenomeReferenceKeys(self):
-        with open(os.path.join(_CONFIG_DIR, 'genome_references.yaml'), 'r') as yaml_file:
-            genome_references = yaml.load(yaml_file, Loader=yaml.SafeLoader)
-        self.assertEqual(sorted(watermelon_init.GENOME_BUILD_OPTIONS),
-                         sorted(genome_references.keys()))
-
     def test_link_run_dirs(self):
         source_files = {
             'Run_1': {
@@ -561,8 +555,8 @@ class CommandValidatorTest(unittest.TestCase):
     def test_validate_genomebuild(self):
         validator = watermelon_init._CommandValidator()
         args = Namespace(genome_build='hg49',
-                         x_genome_references=os.path.join(_CONFIG_DIR, "genome_references.yaml"))
-        msg = (r'genome .* not found .*')
+                         x_genome_references=yaml.load(os.path.join(_CONFIG_DIR, "genome_references.yaml")))
+        msg =r'genome .* is not found'
         self.assertRaisesRegexp(watermelon_init._UsageError,
                                     msg,
                                     validator._validate_genomebuild,

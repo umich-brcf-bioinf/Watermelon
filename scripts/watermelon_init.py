@@ -86,8 +86,9 @@ class _CommandValidator(object):
 
     @staticmethod
     def _validate_genomebuild(args):
-        gemome_options=yaml.load(args.x_genome_references)
-        if args.genome_build not in gemome_options:
+        with open(args.x_genome_references) as ref_yaml:
+            genome_options=yaml.load(ref_yaml, Loader=yaml.SafeLoader)
+        if args.genome_build not in genome_options:
             msg=(f'genome {args.genome_build} not found in {args.x_genome_references}')
             raise _InputValidationError(msg)
 

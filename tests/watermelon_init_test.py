@@ -107,39 +107,6 @@ class WatermelonInitTest(unittest.TestCase):
         self.assertRegexpMatches(actual_text,
                                  r'sample_2.*8.*16')
 
-    def test_build_postlude(self):
-        args = Namespace(input_dir='INPUT_DIR',
-                         input_runs_dir='INPUT_RUNS_DIR',
-                         input_samples_dir='INPUT_SAMPLES_DIR',
-                         config_file='path/to/CONFIG_FILE',
-                         sample_sheet='path/to/SAMPLE_SHEET',
-                         job_suffix='_JOB_SUFFIX',
-                         x_working_dir='WORKING_DIR')
-        linker_results = 'LINKER_RESULTS\n'
-        summary_text = 'SUMMARY_TEXT\n'
-
-        actual_postlude = watermelon_init._build_postlude(args,
-                                                          linker_results,
-                                                          summary_text)
-        self.assertRegexpMatches(actual_postlude,
-                                 r'LINKER_RESULTS')
-        self.assertRegexpMatches(actual_postlude,
-                                 r'SUMMARY_TEXT')
-        self.assertRegexpMatches(actual_postlude,
-                                 r'ANALYSIS_DIR')
-        self.assertRegexpMatches(actual_postlude,
-                                 r'CONFIG_FILE')
-        self.assertRegexpMatches(actual_postlude,
-                                 r'INPUT_DIR')
-        self.assertRegexpMatches(actual_postlude,
-                                 r'INPUT_RUNS_DIR')
-        self.assertRegexpMatches(actual_postlude,
-                                 r'INPUT_SAMPLES_DIR')
-        self.assertRegexpMatches(actual_postlude,
-                                 r'screen -S watermelon_JOB_SUFFIX')
-        self.assertRegexpMatches(actual_postlude,
-                                 r'watermelon --dry-run -c CONFIG_FILE')
-
     def test_parse_args(self):
         command_line_args = ('--genome_build mm10 '
                              '--job_suffix _11_01_A '
@@ -852,7 +819,7 @@ class WatermelonInitFunctoinalTest(unittest.TestCase):
                 source_run_dirs_string = ' '.join(source_run_dirs)
                 sample_sheet = j(_TESTS_DIR, 'sample_sheet.csv')
                 command = (f'{script_name} '
-                           f'--genome hg19 '
+                           f'--genome GRCh38 '
                            f'--sample_sheet {sample_sheet} '
                            f'{source_run_dirs_string} '
                            f'2>&1')

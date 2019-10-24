@@ -1,0 +1,4 @@
+printshellcmds: True
+keep-going: True
+cluster: sbatch --job-name={cluster.name} --account={cluster.account} --partition={cluster.partition} --nodes={cluster.nodes} --ntasks-per-node={cluster.ntask} --mem={cluster.memory} --time={cluster.time}
+jobs: 144

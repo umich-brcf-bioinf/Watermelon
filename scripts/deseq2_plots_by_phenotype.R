@@ -4,8 +4,8 @@ log = file(snakemake@log[[1]], open='wt')
 sink(log, split=TRUE)
 save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
-setwd("/nfs/med-bfx-activeprojects/Hsu_hcindy_RS1_damki_Quant-seq/")
-load("analysis_20191016/diffex_results/deseq2/plots/by_phenotype/.deseq2_plots_by_phenotype_snakemake.rda")
+#setwd("/nfs/med-bfx-activeprojects/Hsu_hcindy_RS1_damki_Quant-seq/")
+#load("analysis_20191016/diffex_results/deseq2/plots/by_phenotype/.deseq2_plots_by_phenotype_snakemake.rda")
 
 #Isolate conda environment: https://github.com/conda-forge/r-base-feedstock/issues/37
 #If we move away from conda in the future, we may want to remove this
@@ -225,34 +225,38 @@ plot_PCA = function(compute_PCA_result, out_name = 'PCAplot.pdf') {
     var_explained = compute_PCA_result[['var_explained']]
     top_n = compute_PCA_result[['top_n']]
     factor_name = compute_PCA_result[['factor_name']]
-    factor_levels = pca_df[,factor_name]
-    rep_levels = pca_df[,'replicate']
+    groups = pca_df[,factor_name]
+    replicates = pca_df[,'replicate']
     dims = compute_PCA_result[['dims']]
 
+    # Plot PCA
     # Use colors for groups or reps, whichever has more numerous levels
-    if(nlevels(factor_levels) > nlevels(rep_levels)){
-      color.these <- factor_levels
-      shape.these <- rep_levels
+    if(nlevels(groups) > nlevels(replicates)){
       whats.smaller <- 'replicates'
+      pca_plot = ggplot(pca_df, aes(x = x, y = y, color = groups)) +
+        geom_point(aes_string(shape = 'replicate')) +
+        labs(
+          title = sprintf('%s PCA plot', factor_name),
+          subtitle = sprintf('Using top %s variable genes', top_n),
+          x = sprintf('%s: %s%% variance', dims[1], var_explained[1]),
+          y = sprintf('%s: %s%% variance', dims[2], var_explained[2])) +
+        theme_bw()
     } else {
-      color.these <- rep_levels
-      shape.these <- factor_levels
       whats.smaller <- 'groups'
+      pca_plot = ggplot(pca_df, aes(x = x, y = y, color = replicates)) +
+        geom_point(aes_string(shape = factor_name)) +
+        labs(
+          title = sprintf('%s PCA plot', factor_name),
+          subtitle = sprintf('Using top %s variable genes', top_n),
+          x = sprintf('%s: %s%% variance', dims[1], var_explained[1]),
+          y = sprintf('%s: %s%% variance', dims[2], var_explained[2])) +
+        theme_bw()
     }
 
-    if(nlevels(factor_levels) > 6 && nlevels(rep_levels) > 6) {
+    if(nlevels(groups) > 6 && nlevels(replicates) > 6) {
       message(paste0("Warning - not enough symbols to represent all ", whats.smaller))
     }
 
-    # Plot PCA
-    pca_plot = ggplot(pca_df, aes(x = x, y = y, color = color.these)) +
-        geom_point(aes_string(shape = shape.these)) +
-        labs(
-            title = sprintf('%s PCA plot', factor_name),
-            subtitle = sprintf('Using top %s variable genes', top_n),
-            x = sprintf('%s: %s%% variance', dims[1], var_explained[1]),
-            y = sprintf('%s: %s%% variance', dims[2], var_explained[2])) +
-        theme_bw()
     ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = pca_plot, height = 6, width = 6, dpi = 300)
 
     return(pca_plot)

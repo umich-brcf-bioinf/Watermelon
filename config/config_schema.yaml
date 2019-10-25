@@ -5,21 +5,6 @@ type: object
 properties:
     genome:
         type: string
-        enum:
-            - hg38
-            - GRCh38
-            - hg19
-            - GRCh37
-            - mm10
-            - rn5
-            - rn6
-            - dm6
-            - ce10
-            - ce11
-            - WBS235
-            - GRCz10
-            - ecoMG1655
-            - ecoUTI89
     sample_description_file:
         type: string
         pattern: 'csv$'

@@ -211,23 +211,6 @@ def _umich_email():
 
 README_FILENAME = "watermelon.README"
 
-GENOME_BUILD_OPTIONS = (
-    "GRCh37",
-    "GRCh38",
-    "hg19",
-    "hg38",
-    "mm10",
-    "rn5",
-    "rn6",
-    "ce10",
-    "ce11",
-    "WBS235",
-    "GRCz10",
-    "ecoMG1655",
-    "ecoUTI89",
-    "dm6",
-)
-
 _SCRIPTS_DIR = os.path.realpath(os.path.dirname(__file__))
 _WATERMELON_ROOT = os.path.dirname(_SCRIPTS_DIR)
 _CONFIG_DIR = os.path.join(_WATERMELON_ROOT, "config")
@@ -561,7 +544,6 @@ def _parse_command_line_args(sys_argv):
     parser.add_argument(
         "--genome_build",
         type=str,
-        choices=GENOME_BUILD_OPTIONS,
         help="Config template will based on this genome",
         required=True,
     )

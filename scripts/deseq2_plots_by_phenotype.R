@@ -4,8 +4,8 @@ log = file(snakemake@log[[1]], open='wt')
 sink(log, split=TRUE)
 save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
-#setwd("/nfs/med-bfx-activeprojects/Hsu_hcindy_RS1_damki_Quant-seq/")
-#load("analysis_20191016/diffex_results/deseq2/plots/by_phenotype/.deseq2_plots_by_phenotype_snakemake.rda")
+#setwd("/nfs/med-bfx-activeprojects/trsaari/sandbox/20191023_testing_simulated_data/")
+#load("analysis_20191024/diffex_results/deseq2/plots/by_phenotype/.deseq2_plots_by_phenotype_snakemake.rda")
 
 #Isolate conda environment: https://github.com/conda-forge/r-base-feedstock/issues/37
 #If we move away from conda in the future, we may want to remove this
@@ -88,6 +88,9 @@ plot_top_variably_expressed_heatmap = function(mat, pdata, factor_name, top_n = 
         row.names = pdata$sample
     )
 
+    #Add guard for when mat has less rows than specified top_n
+    top_n = min(nrow(mat), top_n)
+
     # Calculate the top_n variable genes and put them in decreasing order
     top_var_mat = mat[order(matrixStats::rowVars(mat), decreasing = T), ][1:top_n, ]
 
@@ -119,6 +122,9 @@ plot_top_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out
         Group = pdata[, factor_name],
         row.names = pdata$sample
     )
+
+    #Add guard for when mat has less rows than specified top_n
+    top_n = min(nrow(mat), top_n)
 
     # Calculate the top_n expressed genes and put them in decreasing order
     top_exp_mat = mat[order(rowMeans(mat), decreasing = T), ][1:top_n, ]
@@ -163,6 +169,9 @@ compute_PCA = function(mat, pdata, factor_name, top_n = 500, dims = c('PC1','PC2
     if(!all(grepl('PC\\d{1,}', dims))) {
         stop("dims parameter must be e.g. c('PC1','PC2'). That is, any valid PC from prcomp.")
     }
+
+    #Add guard for when mat has less rows than specified top_n
+    top_n = min(nrow(mat), top_n)
 
     # Pull digits from dims
     pc_digits = as.integer(gsub('PC','',dims))

@@ -62,3 +62,9 @@ BDGP6:
         fasta: /nfs/med-bfx-common/ENSEMBL_references/Drosophila_melanogaster/BDGP6.22/Drosophila_melanogaster.BDGP6.22.dna_sm.toplevel.fa
         gtf: /nfs/med-bfx-common/ENSEMBL_references/Drosophila_melanogaster/BDGP6.22/Drosophila_melanogaster.BDGP6.22.98.gtf
         annotation_tsv: /nfs/med-bfx-common/ENSEMBL_references/Drosophila_melanogaster/BDGP6.22/Drosophila_melanogaster.BDGP6.22.98_annotation.tsv
+Other:
+    genome: Other
+    references:
+        fasta: /path/to/genome.fasta
+        gtf: /path/to/genes.gtf
+        annotation_tsv: /path/to/genes_annotation.tsv

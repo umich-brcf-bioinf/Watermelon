@@ -399,6 +399,9 @@ def _make_config_dict(template_config, genome_references, args):
         config["dirs"][out_dir] = config["dirs"][out_dir].format(
             job_suffix=args.job_suffix
         )
+    # If "Other" genome_build is specified, remove fastq_screen stanza from config
+    if args.genome_build == "Other":
+        config.pop('fastq_screen', None)
     # add input dir
     config["dirs"]["input"] = os.path.join(args.input_dir, args.input_samples_dir)
     # add rsem reference prefix

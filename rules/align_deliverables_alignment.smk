@@ -9,7 +9,7 @@ rule align_deliverables_alignment:
                 sample=config["samples"]),
         #combined count matrices (gene-level only for now)
         combined_counts = expand(ALIGNMENT_DIR + "06-annotate_combined_counts/gene_{type}.annot.txt",
-            type=['expected_count', 'FPKM', 'TPM']),
+            type=['FPKM', 'TPM']),
         #multiQC
         alignment_stats = ALIGNMENT_DIR + "07-qc/alignment_qc.html"
     output:
@@ -19,7 +19,7 @@ rule align_deliverables_alignment:
         expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
                 sample=config["samples"]),
         expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
-            type=['expected_count', 'FPKM', 'TPM']),
+            type=['FPKM', 'TPM']),
         alignment_stats = DELIVERABLES_DIR + "alignment/alignment_qc.html",
     params:
         raw_fastqc_input_dir    =  ALIGNMENT_DIR + "03-fastqc_reads",

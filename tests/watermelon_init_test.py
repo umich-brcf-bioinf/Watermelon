@@ -435,6 +435,7 @@ fastq_screen:
 ''', Loader=yaml.SafeLoader)
         args = Namespace(input_dir = '/my/input/dir',
                          input_samples_dir='samples',
+                         genome_build = 'GRCh38',
                          sample_sheet = 'samplesheet.csv',
                          job_suffix = '_11_01_A')
         actual_config = watermelon_init._make_config_dict(template_config,
@@ -470,6 +471,7 @@ references:
 ''', Loader=yaml.SafeLoader)
         args = Namespace(input_dir='/my/input/dir',
                          input_samples_dir='samples',
+                         genome_build = 'GRCh38',
                          sample_sheet = 'samplesheet.csv',
                          job_suffix = '_11_01_A')
         actual_config = watermelon_init._make_config_dict(template_config,

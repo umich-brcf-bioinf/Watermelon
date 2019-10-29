@@ -119,7 +119,7 @@ class _CommandValidator(object):
         with open(args.x_genome_references) as ref_yaml:
             genome_options=yaml.load(ref_yaml, Loader=yaml.SafeLoader)
         if args.genome_build not in genome_options:
-            msg='genome {} is not found in {}'.format(args.genome_build, args.x_genome_references)
+            msg='genome {} is not found in {}.\nMust be one of {}'.format(args.genome_build, args.x_genome_references, [x for x in genome_options.keys()])
             raise _UsageError(msg)
 
     @staticmethod

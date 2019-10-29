@@ -1,7 +1,42 @@
 Changelog
 =========
 
-1.0 (08/22/2019)
+1.1.0 (10/29/2019)
+------------------
+- Annotation overhaul
+
+    - Ability to use GTFs from various sources as references
+    - Now makes use of mapping table (source agnostic), matching gene_id field from GTF to entrezgene ID, gene symbol, and description
+    - Added Rscript (ensembl_biomaRt_mapping.R) to generate said mapping table for ENSEMBL GTFs using biomaRt
+    - Genome references replaced - now use ENSEMBL data - excellent versioning / standardization
+    - Old genome references made compatible with new system (except E. coli, C. elegans) - still available as genome_references_old
+    - annotate.py overhauled/simplified/generalized
+    - annotate.py now used for both combined counts and deseq2 results
+
+- Error logging improvements
+
+    - Log file attached to email if errors occurred
+    - Immediate email notification when first error occurs, pipeline will continue to run
+
+- Annotated combined count matrices (from RSEM - FPKM, TPM) added to deliverables
+- Gene lists are placed in one location in deliverables instead of separate folders (annotated, excel)
+- References to watermelon_init are now consistent within documentation
+- Fixes to make rule names & rule file names match
+- Watermelon_init no longer preserves ownership/perms when copying Watermelon to project folder
+- Removed strandedness option - option was accepted but not actually used by RSEM/STAR
+- Added workaround for limit of 6 symbols in PCA plots
+- Added guards to plotting scripts for when nrow(counts) < desired_top_n
+- Added check for sample column during config validation
+- Added watermelon_version to config and warning if config val != currently running val
+- Added genome_build validation during watermelon_init - replaces hardcoded options
+- Added ability to skip config validation
+- Groundwork laid for running watermelon on GreatLakes cluster (slurm)
+
+1.0.1 (10/22/2019)
+------------------
+- Bugfix - one variable wasn't renamed alongside others, causing contrast params to evaluate NULL
+
+1.0.0 (08/22/2019)
 ------------------
 - Watermelon (seedless)
 - Replaced HISAT2/Stringtie with RSEM/STAR

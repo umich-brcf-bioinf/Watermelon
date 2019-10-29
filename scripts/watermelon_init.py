@@ -404,9 +404,6 @@ def _make_config_dict(template_config, genome_references, args):
         config.pop('fastq_screen', None)
     # add input dir
     config["dirs"]["input"] = os.path.join(args.input_dir, args.input_samples_dir)
-    # add rsem reference prefix
-    if "alignment_options" in config:
-        config["alignment_options"]["rsem_ref_prefix"] = args.genome_build
     # Add in more needed keys
     # Watermelon version
     config["watermelon_version"] = WAT_VER

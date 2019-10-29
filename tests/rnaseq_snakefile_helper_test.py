@@ -285,55 +285,6 @@ class RnaseqSnakefileHelperTest(unittest.TestCase):
                                rnaseq_snakefile_helper.cutadapt_options,
                                params)
 
-    def test_check_strand_option_stringtie_validOptions(self):
-        make_config = lambda x: {'alignment_options': {'library_type': x}}
-        check_assert = lambda expected, input: self.assertEqual(expected, rnaseq_snakefile_helper.strand_option_stringtie(make_config(input)))
-        check_assert('', 'fr-unstranded')
-        check_assert('--rf', 'fr-firststrand')
-        check_assert('--fr', 'fr-secondstrand')
-        check_assert('', 'unstranded')
-        check_assert('--rf', 'reverse_forward')
-        check_assert('--fr', 'forward_reverse')
-
-    def test_check_strand_option_stringtie_invalidOption(self):
-        make_config = lambda x: {'alignment_options': {'library_type': x}}
-        self.assertRaisesRegex(ValueError,
-                               r'ERROR: .*=foo.*not valid',
-                               rnaseq_snakefile_helper.strand_option_stringtie,
-                               make_config('foo'))
-
-    def test_check_strand_option_hisat2_validOptions(self):
-        make_config = lambda x: {'alignment_options': {'library_type': x}}
-        check_assert = lambda expected, input: self.assertEqual(expected, rnaseq_snakefile_helper.strand_option_hisat2(make_config(input)))
-        check_assert('', 'fr-unstranded')
-        check_assert('--rna-strandness RF', 'fr-firststrand')
-        check_assert('--rna-strandness FR', 'fr-secondstrand')
-        check_assert('', 'unstranded')
-        check_assert('--rna-strandness RF', 'reverse_forward')
-        check_assert('--rna-strandness FR', 'forward_reverse')
-
-    def test_check_strand_option_hisat2_invalidOption(self):
-        make_config = lambda x: {'alignment_options': {'library_type': x}}
-        self.assertRaisesRegex(ValueError,
-                               r'ERROR: .*=foo.*not valid',
-                               rnaseq_snakefile_helper.strand_option_hisat2,
-                               make_config('foo'))
-
-    def test_hisat_detect_paired_end(self):
-        self.assertEqual('-U foo.R1.fastq',
-                         rnaseq_snakefile_helper.hisat_detect_paired_end(['foo.R1.fastq']))
-        self.assertEqual('-1 foo.R1.fastq -2 foo.R2.fastq',
-                         rnaseq_snakefile_helper.hisat_detect_paired_end(['foo.R1.fastq', 'foo.R2.fastq']))
-        self.assertRaisesRegex(ValueError,
-                               r'Found 0 fastqs',
-                               rnaseq_snakefile_helper.hisat_detect_paired_end,
-                               [])
-        self.assertRaisesRegex(ValueError,
-                               r'Found 3 fastqs',
-                               rnaseq_snakefile_helper.hisat_detect_paired_end,
-                               ['1', '2', '3'])
-
-
     def test_get_sample_reads(self):
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path

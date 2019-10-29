@@ -8,8 +8,7 @@ trimming_options: #Delete the entire trimming_options stanza if no trimming is d
     trim_length_5prime: 3
     trim_length_3prime: 0
 alignment_options:
-    library_type: unstranded #other options: forward_reverse #reverse_forward
-    read_length: 50
+    read_length: 100
 fastq_screen:
     reference_basedir: /nfs/med-bfx-common/pipelines/Watermelon/references/fastq_screen
     aligner: bowtie2

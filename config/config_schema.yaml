@@ -28,21 +28,8 @@ properties:
                 type: string
     alignment_options:
         properties:
-            library_type:
-                type: string
-                enum:
-                    - fr-unstranded
-                    - fr-firststrand
-                    - fr-secondstrand
-                    - unstranded
-                    - reverse_forward
-                    - forward_reverse
             read_length:
                 type: integer
-            rsem_ref_prefix:
-                type: string
-            transcriptome_only:
-                type: boolean
     diffex:
         properties:
             adjustedPValue:

@@ -18,10 +18,11 @@ rule align_rsem_star_genome_generate:
         join(ALIGNMENT_DIR, 'benchmarks', 'rsem_star_genome_generate.benchmark.txt')
     threads: 12
     params:
+        sjdbOverhang = int(config['alignment_options']['read_length']) - 1
         rsem_ref_base = join(\
             ALIGNMENT_DIR,
             '04-rsem_star_genome_generate',
-            config['alignment_options']['rsem_ref_prefix']
+            config['genome']
             ),
     shell: '''
 (
@@ -30,6 +31,7 @@ rsem-prepare-reference \
     --gtf {input.gtf} \
     --star \
     --star-path $STAR_PATH \
+    --sjdbOverhang {params.sjdbOverhang} \
     -p {threads} \
     {input.fasta} \
     {params.rsem_ref_base}

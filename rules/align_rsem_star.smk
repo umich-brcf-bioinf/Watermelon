@@ -24,15 +24,13 @@ rule align_rsem_star:
     resources:
         mem_gb=30
     params:
-        rsem_ref_base = ALIGNMENT_DIR + '04-rsem_star_genome_generate/' + config['alignment_options']['rsem_ref_prefix'],
+        rsem_ref_base = ALIGNMENT_DIR + '04-rsem_star_genome_generate/' + config['genome'],
         outFileNamePrefix = ALIGNMENT_DIR + '04-rsem_star_align/{sample}',
-        paired_end = lambda wildcards, input: '--paired-end' if rnaseq_snakefile_helper.detect_paired_end_bool(input.fastq_files) else '',
-        strand_flag = rnaseq_snakefile_helper.strand_option_rsem(config)
+        paired_end = lambda wildcards, input: '--paired-end' if rnaseq_snakefile_helper.detect_paired_end_bool(input.fastq_files) else ''
     shell: '''(
 STAR_PATH=$(dirname $(which STAR))
 rsem-calculate-expression \
     {params.paired_end} \
-    {params.strand_flag} \
     --star \
     --star-path $STAR_PATH \
     --star-gzipped-read-file \

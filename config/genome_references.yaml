@@ -1,11 +1,3 @@
-GRCh37:
-    genome: GRCh37
-    fastq_screen:
-        species: human
-    references:
-        fasta: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh37/Homo_sapiens.GRCh37.75.dna_sm.primary_assembly.fa
-        gtf: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh37/Homo_sapiens.GRCh37.75.gtf
-        annotation_tsv: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh37/Homo_sapiens.GRCh37.75_annotation.tsv
 GRCh38:
     genome: GRCh38
     fastq_screen:
@@ -14,6 +6,14 @@ GRCh38:
         fasta: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa
         gtf: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.98.gtf
         annotation_tsv: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.98_annotation.tsv
+GRCh37:
+    genome: GRCh37
+    fastq_screen:
+        species: human
+    references:
+        fasta: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh37/Homo_sapiens.GRCh37.75.dna_sm.primary_assembly.fa
+        gtf: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh37/Homo_sapiens.GRCh37.75.gtf
+        annotation_tsv: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh37/Homo_sapiens.GRCh37.75_annotation.tsv
 GRCm38:
     genome: GRCm38
     fastq_screen:

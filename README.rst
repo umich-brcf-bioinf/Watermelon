@@ -38,7 +38,6 @@ watermelon_init help
 
   $ watermelon_init --help
   usage: watermelon_init [-h] --genome_build
-                         {GRCh37,GRCh38,hg19,hg38,mm10,rn5,rn6,ce10,ce11,WBS235,GRCz10,ecoMG1655,ecoUTI89,dm6}
                          [--job_suffix JOB_SUFFIX] --sample_sheet SAMPLE_SHEET
                          source_fastq_dirs [source_fastq_dirs ...]
 
@@ -52,7 +51,7 @@ watermelon_init help
 
   optional arguments:
     -h, --help            show this help message and exit
-    --genome_build {GRCh37,GRCh38,hg19,hg38,mm10,rn5,rn6,ce10,ce11,WBS235,GRCz10,ecoMG1655,ecoUTI89,dm6}
+    --genome_build
                           Config template will based on this genome
     --job_suffix JOB_SUFFIX
                           =_08_21 This suffix will be appended to the names of

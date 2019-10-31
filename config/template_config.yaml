@@ -2,14 +2,14 @@ dirs:
   alignment_output: analysis{job_suffix}/alignment_results
   diffex_output: analysis{job_suffix}/diffex_results
   deliverables_output: analysis{job_suffix}/deliverables
-trimming_options: #Delete the entire trimming_options stanza if no trimming is desired
+trimming_options: #Delete the entire trimming_options stanza if trimming trimming not desired
     base_quality_5prime: 0
     base_quality_3prime: 13
     trim_length_5prime: 3
     trim_length_3prime: 0
 alignment_options:
     read_length: 100
-fastq_screen:
+fastq_screen: #Delete the entire fastq_screen stanza if fastq_screen not desired
     reference_basedir: /nfs/med-bfx-common/pipelines/Watermelon/references/fastq_screen
     aligner: bowtie2
     subset: 100000

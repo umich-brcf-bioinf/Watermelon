@@ -4,7 +4,6 @@ from __future__ import print_function, absolute_import, division
 from os.path import dirname, exists, join, realpath
 import scripts.watermelon_init as watermelon_init
 import scripts.annotate as annotate
-import scripts.ballgown_annotate as ballgown_annotate
 import unittest
 import yaml
 
@@ -15,28 +14,12 @@ _GENOME_CONFIG_PATH = join(_CONFIG_DIR, _GENOME_CONFIG_FILE_NAME)
 
 class GenomeTest(unittest.TestCase):
 
-    def test_watermelon_init_genomes_match_genome_references_config(self):
-        with open(_GENOME_CONFIG_PATH, 'r') as config_file:
-            genome_config = yaml.load(config_file)
-        self.assertEqual(sorted(watermelon_init.GENOME_BUILD_OPTIONS),
-                         sorted(genome_config.keys()))
-
-    def test_all_genomes_annotated_deseq2(self):
-        with open(_GENOME_CONFIG_PATH, 'r') as config_file:
-            genome_config = yaml.load(config_file)
-        unannotated = set(genome_config.keys()) -  set(annotate.TAXONOMY.keys())
-        self.assertEqual(unannotated, set())
-
-    def test_all_genomes_annotated_ballgown(self):
-        with open(_GENOME_CONFIG_PATH, 'r') as config_file:
-            genome_config = yaml.load(config_file)
-        unannotated = set(genome_config.keys()) -  set(ballgown_annotate.TAXONOMY.keys())
-        self.assertEqual(unannotated, set())
-
     def test_genomes_references_exist(self):
         with open(_GENOME_CONFIG_PATH, 'r') as config_file:
-            genome_config = yaml.load(config_file)
+            genome_config = yaml.load(config_file, Loader=yaml.SafeLoader)
         missing = []
+        if 'Other' in genome_config.keys():
+            del genome_config['Other'] # TWS - Genome 'Other' is a placeholder - doesn't need to exist
         for genome, values in genome_config.items():
             references = values['references']
             for file_type, file_path in references.items():
@@ -47,10 +30,9 @@ class GenomeTest(unittest.TestCase):
                          '{}: some references do not exist'.format(_GENOME_CONFIG_FILE_NAME))
 
     def test_genomes_references_well_formed(self):
-        expected_references = set(['fasta', 'gtf', 'bowtie2_index',
-                                   'entrez_gene_info', 'hisat2_index'])
+        expected_references = set(['fasta', 'gtf', 'annotation_tsv'])
         with open(_GENOME_CONFIG_PATH, 'r') as config_file:
-            genome_config = yaml.load(config_file)
+            genome_config = yaml.load(config_file, Loader=yaml.SafeLoader)
         invalid_references = {}
         for genome, values in genome_config.items():
             references = values['references']

@@ -29,7 +29,8 @@ class DiffexExcelTest(unittest.TestCase):
 
     def test_commandReturnsCorrectRowAndColumnCount(self):
         with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
+            #temp_dir_path = temp_dir.path
+            temp_dir_path = '/nfs/med-bfx-activeprojects/trsaari/sandbox/20191031_diffex_excel_test'
 
             script_name = os.path.join(SCRIPTS_DIR, 'diffex_excel.py')
             linear_fold_change_threshold = 2
@@ -39,7 +40,7 @@ class DiffexExcelTest(unittest.TestCase):
             output_filename = os.path.join(temp_dir_path, 'output.xlsx')
 
             input_file_contents = \
-'''test_id|gene_symbol|gene_id|gene_desc|value_1|value_2|log2(fold_change)|test_stat|p_value
+'''test_id|external_gene_name|entrezgene_id|description|value_1|value_2|log2(fold_change)|test_stat|p_value
 Gm11468|Gm11468|670775|desc1|0|0.358499|inf|-nan|0.0005
 Kdm5d|Kdm5d|20592|desc2|0.0212861|4.58465|7.75076|8.99024|5.00E-05
 Eif2s3y|Eif2s3y|26908|desc3|0.154875|30.2905|7.6|5.1|5.00E-05'''.replace('|', '\t')
@@ -91,4 +92,3 @@ baz     hoopy
 
         self.assertEqual((3,2), actual_glossary_df.shape)
         self.assertEqual((5,1), actual_info_df.shape)
-

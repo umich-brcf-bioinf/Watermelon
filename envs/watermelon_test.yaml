@@ -8,5 +8,6 @@ dependencies:
   - conda
   - nose
   - testfixtures
+  - openpyxl
   - xlsxwriter
   - xlrd

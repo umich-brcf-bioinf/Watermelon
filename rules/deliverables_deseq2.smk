@@ -19,7 +19,7 @@ rule deliverables_deseq2:
                 phenotype = PHENOTYPES,
                 ngenes = ['100','500']),
         summaryplots = expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/{plotType}.pdf',
-            phenotype = PHENOTYPES, plotType = ['BoxPlot', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
+            phenotype = PHENOTYPES, plotType = ['BoxPlot_raw', 'BoxPlot_rlog', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
         volcanoplots = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
                 DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf',
                 DESEQ2_CONTRAST_DICT),
@@ -45,7 +45,7 @@ rule deliverables_deseq2:
                 phenotype = PHENOTYPES,
                 ngenes = ['100','500']),
         summaryplots = expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/{plotType}.pdf',
-            phenotype = PHENOTYPES, plotType = ['BoxPlot', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
+            phenotype = PHENOTYPES, plotType = ['BoxPlot_raw', 'BoxPlot_rlog', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
         volcanoplots = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
                 DELIVERABLES_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf',
                 DESEQ2_CONTRAST_DICT),

@@ -325,7 +325,8 @@ if('bg_data' %in% ls()) {
 for(phenotype in phenotypes) {
 
     message(sprintf('Plotting boxplots for %s', phenotype))
-    log2_boxplot = plot_boxplot(mat = mat, pdata = pdata, factor_name = phenotype, title = boxplot_title, y_label = boxplot_y_lab, out_name = 'BoxPlot.pdf')
+    log2_boxplot = plot_boxplot(mat = mat, pdata = pdata, factor_name = phenotype, title = boxplot_title, y_label = boxplot_y_lab, out_name = 'BoxPlot_rlog.pdf')
+    raw_boxplot = plot_boxplot(mat = log2(raw_counts), pdata = pdata, factor_name = phenotype, title = 'Non-normalized counts', y_label = boxplot_y_lab, out_name = 'BoxPlot_raw.pdf')
 
     message(sprintf('Plotting sample heatmap for %s', phenotype))
     log2_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata, factor_name = phenotype, out_name = 'SampleHeatmap.pdf')

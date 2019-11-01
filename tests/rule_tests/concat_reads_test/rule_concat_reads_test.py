@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import
 import filecmp
 from glob import glob
+import collections
 import gzip
 import os
 import shutil
@@ -16,10 +17,23 @@ EXAMPLE_CONFIGFILE_PATH = os.path.join(TEST_DIR, '..', '..', '..', 'config', 'ex
 DEBUG = 'WATERMELON_DEBUG' in os.environ
 REDIRECT_OUTPUT = ' ' if DEBUG else ' 2>/dev/null '
 
+# https://stackoverflow.com/a/32357112
+def recursive_update(d, u):
+    for k, v in u.items():
+        if isinstance(d, collections.Mapping):
+            if isinstance(v, collections.Mapping):
+                r = recursive_update(d.get(k, {}), v)
+                d[k] = r
+            else:
+                d[k] = u[k]
+        else:
+            d = {k: u[k]}
+    return d
+
 def create_modified_config(example_file, modified_file, replacements):
     with open(example_file, 'r') as example_config_file:
         example_config = yaml.load(example_config_file, Loader=yaml.SafeLoader)
-    example_config.update(replacements)
+    recursive_update(example_config, replacements)
     with open(modified_file, 'w') as modified_config_file:
         yaml.dump(example_config, modified_config_file, default_flow_style=False, indent=4)
 
@@ -55,9 +69,14 @@ class ConcatReadsTest(unittest.TestCase):
             os.chdir(tmp_actual_dir)
             #Create modified config using example config as a template
             new_input = os.path.join(tmp_actual_dir, 'inputs', '00-multiplexed_reads')
-            replacement_vals = {'dirs': {
-                'input': new_input,
-                'alignment_output': 'alignment_results'}
+            replacement_vals = {
+                'dirs': {
+                    'input': new_input,
+                    'alignment_output': 'alignment_results'
+                },
+                'email' : {
+                    'to': 'nobody'
+                }
             }
             create_modified_config(EXAMPLE_CONFIGFILE_PATH, 'modified_config.yaml', replacement_vals)
 

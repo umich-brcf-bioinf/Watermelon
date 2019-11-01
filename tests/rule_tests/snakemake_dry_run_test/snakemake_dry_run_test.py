@@ -5,21 +5,10 @@ import unittest
 from testfixtures import TempDirectory
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
-SNAKEFILE_PATH = os.path.abspath(os.path.join(
-    TEST_DIR,
-    '..',
-    '..',
-    '..',
-    'rnaseq.snakefile'))
-CONFIGFILE_PATH = os.path.realpath(os.path.join(
-    TEST_DIR,
-    '..',
-    '..',
-    '..',
-    'config',
-    'example_config.yaml'
-))
-
+SNAKEFILE_PATH = os.path.join(TEST_DIR, '..', '..', '..', 'rnaseq.snakefile')
+EXAMPLE_CONFIGFILE_PATH = os.path.join(TEST_DIR, '..', '..', '..', 'config', 'example_config.yaml')
+DEBUG = 'WATERMELON_DEBUG' in os.environ
+REDIRECT_OUTPUT = ' ' if DEBUG else ' 2>/dev/null '
 
 class SnakemakeDryRunTest(unittest.TestCase):
     def setUp(self):
@@ -31,9 +20,8 @@ class SnakemakeDryRunTest(unittest.TestCase):
     def test_dryrun_passes(self):
         with TempDirectory() as temp_dir:
             os.chdir(temp_dir.path)
-            command_fmt = 'snakemake --snakefile {} --configfile {} -n'
-            command = command_fmt.format(SNAKEFILE_PATH, CONFIGFILE_PATH)
-            print(command)
+            command_fmt = 'snakemake --snakefile {} --configfile {} -n {}'
+            command = command_fmt.format(SNAKEFILE_PATH, EXAMPLE_CONFIGFILE_PATH, REDIRECT_OUTPUT)
             try:
                 #return code only available from subprocess.check_output if non-zero (raises CalledProcessError)
                 return_code = 0

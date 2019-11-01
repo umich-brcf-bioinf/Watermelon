@@ -1,41 +1,24 @@
 from __future__ import print_function, absolute_import
 import filecmp
 from glob import glob
-import collections
 import gzip
 import os
 import shutil
 import subprocess
+import sys
 import unittest
-import yaml
-
 from testfixtures import TempDirectory
 
+
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
-SNAKEFILE_PATH = os.path.join(TEST_DIR, '..', '..', '..', 'rnaseq.snakefile')
-EXAMPLE_CONFIGFILE_PATH = os.path.join(TEST_DIR, '..', '..', '..', 'config', 'example_config.yaml')
+WATERMELON_BASE_DIR = os.path.abspath(os.path.join(TEST_DIR, '..', '..', '..'))
+SNAKEFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'rnaseq.snakefile')
+EXAMPLE_CONFIGFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'config', 'example_config.yaml')
 DEBUG = 'WATERMELON_DEBUG' in os.environ
 REDIRECT_OUTPUT = ' ' if DEBUG else ' 2>/dev/null '
 
-# https://stackoverflow.com/a/32357112
-def recursive_update(d, u):
-    for k, v in u.items():
-        if isinstance(d, collections.Mapping):
-            if isinstance(v, collections.Mapping):
-                r = recursive_update(d.get(k, {}), v)
-                d[k] = r
-            else:
-                d[k] = u[k]
-        else:
-            d = {k: u[k]}
-    return d
-
-def create_modified_config(example_file, modified_file, replacements):
-    with open(example_file, 'r') as example_config_file:
-        example_config = yaml.load(example_config_file, Loader=yaml.SafeLoader)
-    recursive_update(example_config, replacements)
-    with open(modified_file, 'w') as modified_config_file:
-        yaml.dump(example_config, modified_config_file, default_flow_style=False, indent=4)
+sys.path.append(os.path.join(WATERMELON_BASE_DIR, 'tests'))
+from testing_utils import create_modified_config #local module
 
 
 def gunzip(source_file_pattern):
@@ -57,6 +40,7 @@ class ConcatReadsTest(unittest.TestCase):
         os.chdir(self.original_wd)
 
     def test_basecase(self):
+
         anomalies = []
         source_working_dir = os.path.join(TEST_DIR, 'basecase', 'working_dir')
         source_expected_dir = os.path.join(TEST_DIR, 'basecase', 'expected')

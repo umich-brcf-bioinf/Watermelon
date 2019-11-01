@@ -5,8 +5,9 @@ import unittest
 from testfixtures import TempDirectory
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
-SNAKEFILE_PATH = os.path.join(TEST_DIR, '..', '..', '..', 'rnaseq.snakefile')
-EXAMPLE_CONFIGFILE_PATH = os.path.join(TEST_DIR, '..', '..', '..', 'config', 'example_config.yaml')
+WATERMELON_BASE_DIR = os.path.abspath(os.path.join(TEST_DIR, '..', '..', '..'))
+SNAKEFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'rnaseq.snakefile')
+EXAMPLE_CONFIGFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'config', 'example_config.yaml')
 DEBUG = 'WATERMELON_DEBUG' in os.environ
 REDIRECT_OUTPUT = ' ' if DEBUG else ' 2>/dev/null '
 

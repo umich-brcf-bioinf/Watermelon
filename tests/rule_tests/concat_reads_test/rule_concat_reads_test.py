@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import
 import filecmp
 from glob import glob
-import gzip
 import os
 import shutil
 import subprocess
@@ -18,19 +17,8 @@ DEBUG = 'WATERMELON_DEBUG' in os.environ
 REDIRECT_OUTPUT = ' ' if DEBUG else ' 2>/dev/null '
 
 sys.path.append(os.path.join(WATERMELON_BASE_DIR, 'tests'))
-from testing_utils import create_modified_config #local module
+from testing_utils import create_modified_config, gunzip #local module
 
-
-def gunzip(source_file_pattern):
-    def _gunzip_file(source_file, dest_file):
-        with gzip.GzipFile(source_file, 'rb') as inF, \
-             open(dest_file, 'wb') as outF:
-            data = inF.read()
-            outF.write(data)
-            os.remove(source_file)
-    for source_filename in glob(source_file_pattern):
-        dest_filename = source_filename.rstrip('.gz')
-        _gunzip_file(source_filename, dest_filename)
 
 class ConcatReadsTest(unittest.TestCase):
     def setUp(self):
@@ -51,7 +39,7 @@ class ConcatReadsTest(unittest.TestCase):
             tmp_actual_dir = os.path.join(temp_dir_path, 'actual')
             shutil.copytree(source_working_dir, tmp_actual_dir)
             os.chdir(tmp_actual_dir)
-            #Create modified config using example config as a template
+            #Create modified config in this temp dir, using example config and replacing values as needed
             new_input = os.path.join(tmp_actual_dir, 'inputs', '00-multiplexed_reads')
             replacement_vals = {
                 'dirs': {

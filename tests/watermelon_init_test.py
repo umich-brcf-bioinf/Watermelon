@@ -807,7 +807,7 @@ class WatermelonInitFunctoinalTest(unittest.TestCase):
             }
         j = os.path.join
         with TempDirectory() as temp_dir:
-            temp_dir_path = '/tmp' #temp_dir.path
+            temp_dir_path = temp_dir.path
             orig_wd = os.getcwd()
             try:
                 os.chdir(temp_dir_path)

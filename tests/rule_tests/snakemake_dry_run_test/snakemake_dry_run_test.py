@@ -21,7 +21,7 @@ class SnakemakeDryRunTest(unittest.TestCase):
     def test_dryrun_passes(self):
         with TempDirectory() as temp_dir:
             os.chdir(temp_dir.path)
-            command_fmt = 'snakemake --snakefile {} --configfile {} -n {}'
+            command_fmt = 'snakemake --snakefile {} --configfile {} -n {} --config ["skip_config_validation"]'
             command = command_fmt.format(SNAKEFILE_PATH, EXAMPLE_CONFIGFILE_PATH, REDIRECT_OUTPUT)
             try:
                 #return code only available from subprocess.check_output if non-zero (raises CalledProcessError)
@@ -36,3 +36,4 @@ class SnakemakeDryRunTest(unittest.TestCase):
 
         self.assertEqual(0, return_code)
         self.assertRegex(dryrun_line, 'This was a dry-run')
+

@@ -53,6 +53,7 @@ class ConcatReadsTest(unittest.TestCase):
             create_modified_config(EXAMPLE_CONFIGFILE_PATH, 'modified_config.yaml', replacement_vals)
 
             command_fmt = ('snakemake -p --cores 2 '
+                '--config skip_validation=True '
                 '--snakefile {} '
                 '--configfile {} '
                 '--force alignment_results/01-raw_reads/Sample_0_R1.fastq.gz '

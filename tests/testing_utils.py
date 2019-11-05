@@ -1,5 +1,6 @@
 import collections
 import gzip
+import os
 import yaml
 from glob import glob
 

@@ -82,7 +82,8 @@ class PhenotypeManager(object):
         for label in samplesheet_dict:
             for samp in samplesheet_dict[label]:
                 value = samplesheet_dict[label][samp]
-                phenotype_dict[label][value].append(samp)
+                if value:
+                    phenotype_dict[label][value].append(samp)
         # {phenotype_label : {phenotype_value : [list of samples] } }
         return phenotype_dict
 

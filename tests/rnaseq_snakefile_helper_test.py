@@ -5,6 +5,7 @@ import glob
 import os
 import time
 import unittest
+import yaml
 
 try:
     from StringIO import StringIO
@@ -12,258 +13,295 @@ except ImportError:
     from io import StringIO
 
 from testfixtures.tempdirectory import TempDirectory
-import yaml
 
-import scripts.rnaseq_snakefile_helper as rnaseq_snakefile_helper
-from scripts.rnaseq_snakefile_helper import  PhenotypeManager
+from scripts import rnaseq_snakefile_helper # local module that we're testing
+from tests import testing_utils # local module
+
+TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 
 class PhenotypeManagerTest(unittest.TestCase):
-    def test_phenotype_sample_list(self):
-        phenotype_labels = 'A | B | C'
-        sample_phenotype_value_dict = {'s3' : ' a1 | b1 | c1 ',
-                                       's4' : ' a2 | b2 | c2 ',
-                                       's1' : ' a1 | b1 | c1 ',
-                                       's2' : ' a2 | b2 | c2 ',}
-        delimiter = '|'
-        manager = PhenotypeManager({'phenotypes' : phenotype_labels,
-                                     'samples' : sample_phenotype_value_dict},
-                                   delimiter)
-        actual_dict = manager.phenotype_sample_list
-        expected_dict = {'A' : {'a1': ['s1', 's3'], 'a2': ['s2','s4']},
-                         'B' : {'b1': ['s1', 's3'], 'b2': ['s2','s4']},
-                         'C' : {'c1': ['s1', 's3'], 'c2': ['s2','s4']},}
+    def setUp(self):
+        self.original_wd = os.getcwd()
 
+    def tearDown(self):
+        os.chdir(self.original_wd)
+
+    def test_phenotype_sample_list(self):
+        # phenotype_labels = 'A | B | C'
+        # sample_phenotype_value_dict = {'s3' : ' a1 | b1 | c1 ',
+        #                                's4' : ' a2 | b2 | c2 ',
+        #                                's1' : ' a1 | b1 | c1 ',
+        #                                's2' : ' a2 | b2 | c2 ',}
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            #Set up CSV lines to write
+            lines = [
+                'sample,A,B,C',
+                's3,a1,b1,c1',
+                's4,a2,b2,c2',
+                's1,a1,b1,c1',
+                's2,a2,b2,c2'
+            ]
+            lines = "\n".join(lines)
+            #Create test samplesheet in this tempdir
+            test_samplesheet_file = os.path.join(temp_dir_path, 'samplesheet.csv')
+            with open(test_samplesheet_file, 'w') as sample_sheet:
+                sample_sheet.writelines(lines)
+            #Feed it to the PhenotypeManager
+            config = {'sample_description_file' : test_samplesheet_file}
+            manager = rnaseq_snakefile_helper.PhenotypeManager(config)
+
+        actual_dict = manager.phenotype_sample_list
+        actual_dict = testing_utils.ddict2dict(actual_dict) # phenotype_sample_list is built with nested defaultdict. Convert this to builtin dict type
+        expected_dict = {'A' : {'a1': ['s3', 's1'], 'a2': ['s4','s2']},
+                         'B' : {'b1': ['s3', 's1'], 'b2': ['s4','s2']},
+                         'C' : {'c1': ['s3', 's1'], 'c2': ['s4','s2']},}
         self.assertEqual(expected_dict, actual_dict)
 
     def test_phenotype_sample_list_missingValues(self):
-        phenotype_labels = 'A | B | C'
-        sample_phenotype_value_dict = {'s3' : ' a1 | b1 | c1 ',
-                                       's4' : '    | b2 | c2 ',
-                                       's1' : ' a1 |    | c1 ',
-                                       's2' : ' a2 |    | ',}
-        delimiter = '|'
-        manager = PhenotypeManager({'phenotypes' : phenotype_labels,
-                                     'samples' : sample_phenotype_value_dict},
-                                   delimiter)
-        actual_dict = manager.phenotype_sample_list
-        expected_dict = {'A' : {'a1': ['s1', 's3'], 'a2': ['s2']},
-                         'B' : {'b1': ['s3'], 'b2': ['s4']},
-                         'C' : {'c1': ['s1', 's3'], 'c2': ['s4']},}
+        # phenotype_labels = 'A | B | C'
+        # sample_phenotype_value_dict = {'s3' : ' a1 | b1 | c1 ',
+        #                                's4' : '    | b2 | c2 ',
+        #                                's1' : ' a1 |    | c1 ',
+        #                                's2' : ' a2 |    | ',}
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            #Set up CSV lines to write
+            lines = [
+                'sample,A,B,C',
+                's3,a1,b1,c1',
+                's4,,b2,c2',
+                's1,a1,,c1',
+                's2,a2,,'
+            ]
+            lines = "\n".join(lines)
+            #Create test samplesheet in this tempdir
+            test_samplesheet_file = os.path.join(temp_dir_path, 'samplesheet.csv')
+            with open(test_samplesheet_file, 'w') as sample_sheet:
+                sample_sheet.writelines(lines)
+            #Feed it to the PhenotypeManager
+            config = {'sample_description_file' : test_samplesheet_file}
+            manager = rnaseq_snakefile_helper.PhenotypeManager(config)
 
+        actual_dict = manager.phenotype_sample_list
+        actual_dict = testing_utils.ddict2dict(actual_dict) # phenotype_sample_list is built with nested defaultdict. Convert this to builtin dict type
+        expected_dict = {'A' : {'a1': ['s3', 's1'], 'a2': ['s2']},
+                         'B' : {'b1': ['s3'], 'b2': ['s4']},
+                         'C' : {'c1': ['s3', 's1'], 'c2': ['s4']},}
         self.assertEqual(expected_dict, actual_dict)
 
-    def test_phenotype_sample_list_missingPhenotypeValues(self):
-        phenotype_labels = 'A|B'
-        sample_phenotype_value_dict = {'s1' : ' a1 | b1',
-                                       's2' : ' a2 ',}
-        delimiter = '|'
-        manager = PhenotypeManager({'phenotypes' : phenotype_labels,
-                                     'samples' : sample_phenotype_value_dict},
-                                   delimiter)
-        self.assertRaisesRegexp(ValueError,
-                                r'expected 2 .* but sample s2 .*1',
-                                getattr,
-                                manager,
-                                'phenotype_sample_list')
-
-    def test_phenotype_sample_list_extraPhenotypeValues(self):
-        phenotype_labels = 'A|B'
-        sample_phenotype_value_dict = {'s1' : ' a1 | b1',
-                                       's2' : ' a2 | b2 | c2',}
-        delimiter = '|'
-        manager = PhenotypeManager({'phenotypes' : phenotype_labels,
-                                     'samples' : sample_phenotype_value_dict},
-                                   delimiter)
-
-        self.assertRaisesRegexp(ValueError,
-                                r'expected 2 .* but sample s2 .*3',
-                                getattr,
-                                manager,
-                                'phenotype_sample_list')
-
-    def test_phenotype_sample_list_trailingDelimIsExtraPhenotypeValue(self):
-        phenotype_labels = 'A|B'
-        sample_phenotype_value_dict = {'s1' : ' a1 | b1 |',}
-        delimiter = '|'
-        manager = PhenotypeManager({'phenotypes' : phenotype_labels,
-                                    'samples' : sample_phenotype_value_dict},
-                                   delimiter)
-
-        self.assertRaisesRegexp(ValueError,
-                                r'expected 2 .* but sample s1 .*3',
-                                getattr,
-                                manager,
-                                'phenotype_sample_list')
-
-    def test_phenotype_sample_list_missingPhenotypeLabel(self):
-        phenotype_labels = 'A||C'
-        sample_phenotype_value_dict = {'s1' : ' a1 | b1 | c1',}
-        delimiter = '|'
-        manager = PhenotypeManager({'phenotypes' : phenotype_labels,
-                                     'samples' : sample_phenotype_value_dict},
-                                   delimiter)
-        self.assertRaisesRegexp(ValueError,
-                                r'label of phenotype 2 is empty',
-                                getattr,
-                                manager,
-                                'phenotype_sample_list')
-
-    def test_phenotype_sample_list_trailingDelimIsMissingPhenotypeLabel(self):
-        phenotype_labels = 'A|B|C|'
-        sample_phenotype_value_dict = {'s1' : ' a1 | b1 | c1',}
-        delimiter = '|'
-        manager = PhenotypeManager({'phenotypes' : phenotype_labels,
-                                    'samples' : sample_phenotype_value_dict},
-                                   delimiter)
-
-        self.assertRaisesRegexp(ValueError,
-                                r'label of phenotype 4 is empty',
-                                getattr,
-                                manager,
-                                'phenotype_sample_list')
-
-    def test_phenotype_with_replicates(self):
-        phenotype_labels = 'A | D | C | B'
-        sample_dict = {'s1' : ' a1 | d1 | c1 | b1',
-                       's2' : ' a2 | d1 | c2 | b2',
-                       's3' : ' a3 | d1 |    | b2',
-                       's4' : ' a4 | d2 |    |   ',}
-        delimiter = '|'
-        manager = PhenotypeManager({'phenotypes' : phenotype_labels,
-                                     'samples' : sample_dict},
-                                   delimiter)
-        actual = manager.phenotypes_with_replicates
-
-        self.assertEqual(['B', 'D'], actual)
-
-    def test_separated_comparisons(self):
-        comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
-                           'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
-        manager = PhenotypeManager({'comparisons' : comparison_dict})
-        actual_comparisons = manager.separated_comparisons('#')
-
-        expected_comparisons = {'phenoLabel1' : '1A_v_1B#1C_v_1D',
-                                'phenoLabel2' : '2A_v_2B#2C_v_2D'}
-        self.assertEqual(expected_comparisons, actual_comparisons)
-
-    def test_separated_comparisons_stripsWhitespace(self):
-        comparison_dict = {'phenoLabel1' : ['\t1A_v_1B\t','\t1C_v_1D\t'],
-                           'phenoLabel2' : ['  2A_v_2B  ','  2C_v_2D  ']}
-        manager = PhenotypeManager({'comparisons' : comparison_dict})
-        actual_comparisons = manager.separated_comparisons('$')
-
-        expected_comparisons = {'phenoLabel1' : '1A_v_1B$1C_v_1D',
-                                'phenoLabel2' : '2A_v_2B$2C_v_2D'}
-        self.assertEqual(expected_comparisons, actual_comparisons)
-
-    def test_separated_comparisons_emptyInputReturnsEmptyDict(self):
-        manager = PhenotypeManager({'comparisons' : {}})
-        actual_comparisons = manager.separated_comparisons(',')
-        self.assertEqual({}, actual_comparisons)
-
-    def test_concatenated_comparison_values(self):
-        comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
-                           'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
-        comparison_infix = '_v_'
-        delimiter = '|^|'
-        manager = PhenotypeManager({'comparisons' : comparison_dict})
-        actual_comparisons = manager.concatenated_comparison_values(delimiter)
-        expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D',
-                                'phenoLabel2' : '2A|^|2B|^|2C|^|2D'}
-        self.assertEqual(expected_comparisons, actual_comparisons)
-
-    def test_concatenated_comparison_values_stripsWhitespace(self):
-        comparison_dict = {'phenoLabel1' : [' \t1A_v_1B \t', '\t 1C_v_1D \t']}
-        comparison_infix = '_v_'
-        delimiter = '|^|'
-
-        manager = PhenotypeManager({'comparisons' : comparison_dict})
-        actual_comparisons = manager.concatenated_comparison_values(delimiter)
-
-        expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D'}
-        self.assertEqual(expected_comparisons, actual_comparisons)
-
-    def test_concatenated_comparison_values_duplicateValuesCoalesced(self):
-        comparison_dict = {'phenoLabel1' : ['1A_v_1B','1A_v_1C','1A_v_1D']}
-        comparison_infix = '_v_'
-        delimiter = '|^|'
-
-        manager = PhenotypeManager({'comparisons' : comparison_dict})
-        actual_comparisons = manager.concatenated_comparison_values(delimiter)
-
-        expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D'}
-        self.assertEqual(expected_comparisons, actual_comparisons)
-
-
-    def test_concatenated_comparison_values_reorders(self):
-        comparison_dict = {'phenoLabel1' : ['1D_v_1B','1C_v_1A']}
-        comparison_infix = '_v_'
-        delimiter = '|^|'
-
-        manager = PhenotypeManager({'comparisons' : comparison_dict})
-        actual_comparisons = manager.concatenated_comparison_values(delimiter)
-
-        expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D'}
-        self.assertEqual(expected_comparisons, actual_comparisons)
-
-    def test_phenotypes_comparisons_all_tuple(self):
-        comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
-                           'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
-
-        manager = PhenotypeManager({'comparisons' : comparison_dict})
-
-        actual = manager.phenotypes_comparisons_all_tuple
-
-        self.assertEqual(['phenoLabel1', 'phenoLabel1', 'phenoLabel2', 'phenoLabel2'],
-                         actual.phenotypes)
-        self.assertEqual(['1A_v_1B', '1C_v_1D', '2A_v_2B', '2C_v_2D'],
-                         actual.comparisons)
-
-    def test_phenotypes_comparisons_replicate_tuple(self):
-        phenotype_labels =    'pheno1 | pheno2 | pheno3 '
-        sample_dict = {'s1' : 'a1     | b1        | c1 ',
-                       's2' : 'a1     | b2        | c2 ',
-                       's3' : 'a2     | b3        | c2 ',}
-        comparison_dict = {'pheno1' : ['1A_v_1B','1C_v_1D'],
-                           'pheno2' : ['2A_v_2B','2C_v_2D'],
-                           'pheno3' : ['3A_v_3B','3C_v_3D'],}
-
-        delimiter = '|'
-        manager = PhenotypeManager({'phenotypes': phenotype_labels,
-                                    'samples': sample_dict,
-                                    'comparisons' : comparison_dict},
-                                    delimiter)
-
-        actual = manager.phenotypes_comparisons_replicates_tuple
-
-        self.assertEqual(['pheno1', 'pheno1', 'pheno3', 'pheno3'],
-                         actual.phenotypes)
-        self.assertEqual(['1A_v_1B', '1C_v_1D', '3A_v_3B', '3C_v_3D'],
-                         actual.comparisons)
-
-
-    def test_phenotypes_comparisons_all_tuple_oneLabelOneComparison(self):
-        comparison_dict = {'phenoLabel1' : ['1A_v_1B']}
-
-        manager = PhenotypeManager({'comparisons' : comparison_dict})
-        actual = manager.phenotypes_comparisons_all_tuple
-
-        self.assertEqual(['phenoLabel1'],
-                         actual.phenotypes)
-        self.assertEqual(['1A_v_1B'],
-                         actual.comparisons)
-
-    def test_phenotypes_comparisons_all_tuple_stripsWhitespace(self):
-        comparison_dict = {'phenoLabel1' : [' 1A_v_1B\t',' 1C_v_1D '],
-                           'phenoLabel2' : [' 2A_v_2B\t',' 2C_v_2D ']}
-        manager = PhenotypeManager({'comparisons' : comparison_dict})
-
-        actual = manager.phenotypes_comparisons_all_tuple
-
-        self.assertEqual(['phenoLabel1', 'phenoLabel1', 'phenoLabel2', 'phenoLabel2'],
-                         actual.phenotypes)
-        self.assertEqual(['1A_v_1B', '1C_v_1D', '2A_v_2B', '2C_v_2D'],
-                         actual.comparisons)
+    # def test_phenotype_sample_list_missingPhenotypeValues(self):
+    #     phenotype_labels = 'A|B'
+    #     sample_phenotype_value_dict = {'s1' : ' a1 | b1',
+    #                                    's2' : ' a2 ',}
+    #     delimiter = '|'
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
+    #                                  'samples' : sample_phenotype_value_dict},
+    #                                delimiter)
+    #     self.assertRaisesRegexp(ValueError,
+    #                             r'expected 2 .* but sample s2 .*1',
+    #                             getattr,
+    #                             manager,
+    #                             'phenotype_sample_list')
+    #
+    # def test_phenotype_sample_list_extraPhenotypeValues(self):
+    #     phenotype_labels = 'A|B'
+    #     sample_phenotype_value_dict = {'s1' : ' a1 | b1',
+    #                                    's2' : ' a2 | b2 | c2',}
+    #     delimiter = '|'
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
+    #                                  'samples' : sample_phenotype_value_dict},
+    #                                delimiter)
+    #
+    #     self.assertRaisesRegexp(ValueError,
+    #                             r'expected 2 .* but sample s2 .*3',
+    #                             getattr,
+    #                             manager,
+    #                             'phenotype_sample_list')
+    #
+    # def test_phenotype_sample_list_trailingDelimIsExtraPhenotypeValue(self):
+    #     phenotype_labels = 'A|B'
+    #     sample_phenotype_value_dict = {'s1' : ' a1 | b1 |',}
+    #     delimiter = '|'
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
+    #                                 'samples' : sample_phenotype_value_dict},
+    #                                delimiter)
+    #
+    #     self.assertRaisesRegexp(ValueError,
+    #                             r'expected 2 .* but sample s1 .*3',
+    #                             getattr,
+    #                             manager,
+    #                             'phenotype_sample_list')
+    #
+    # def test_phenotype_sample_list_missingPhenotypeLabel(self):
+    #     phenotype_labels = 'A||C'
+    #     sample_phenotype_value_dict = {'s1' : ' a1 | b1 | c1',}
+    #     delimiter = '|'
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
+    #                                  'samples' : sample_phenotype_value_dict},
+    #                                delimiter)
+    #     self.assertRaisesRegexp(ValueError,
+    #                             r'label of phenotype 2 is empty',
+    #                             getattr,
+    #                             manager,
+    #                             'phenotype_sample_list')
+    #
+    # def test_phenotype_sample_list_trailingDelimIsMissingPhenotypeLabel(self):
+    #     phenotype_labels = 'A|B|C|'
+    #     sample_phenotype_value_dict = {'s1' : ' a1 | b1 | c1',}
+    #     delimiter = '|'
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
+    #                                 'samples' : sample_phenotype_value_dict},
+    #                                delimiter)
+    #
+    #     self.assertRaisesRegexp(ValueError,
+    #                             r'label of phenotype 4 is empty',
+    #                             getattr,
+    #                             manager,
+    #                             'phenotype_sample_list')
+    #
+    # def test_phenotype_with_replicates(self):
+    #     phenotype_labels = 'A | D | C | B'
+    #     sample_dict = {'s1' : ' a1 | d1 | c1 | b1',
+    #                    's2' : ' a2 | d1 | c2 | b2',
+    #                    's3' : ' a3 | d1 |    | b2',
+    #                    's4' : ' a4 | d2 |    |   ',}
+    #     delimiter = '|'
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
+    #                                  'samples' : sample_dict},
+    #                                delimiter)
+    #     actual = manager.phenotypes_with_replicates
+    #
+    #     self.assertEqual(['B', 'D'], actual)
+    #
+    # def test_separated_comparisons(self):
+    #     comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
+    #                        'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
+    #     actual_comparisons = manager.separated_comparisons('#')
+    #
+    #     expected_comparisons = {'phenoLabel1' : '1A_v_1B#1C_v_1D',
+    #                             'phenoLabel2' : '2A_v_2B#2C_v_2D'}
+    #     self.assertEqual(expected_comparisons, actual_comparisons)
+    #
+    # def test_separated_comparisons_stripsWhitespace(self):
+    #     comparison_dict = {'phenoLabel1' : ['\t1A_v_1B\t','\t1C_v_1D\t'],
+    #                        'phenoLabel2' : ['  2A_v_2B  ','  2C_v_2D  ']}
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
+    #     actual_comparisons = manager.separated_comparisons('$')
+    #
+    #     expected_comparisons = {'phenoLabel1' : '1A_v_1B$1C_v_1D',
+    #                             'phenoLabel2' : '2A_v_2B$2C_v_2D'}
+    #     self.assertEqual(expected_comparisons, actual_comparisons)
+    #
+    # def test_separated_comparisons_emptyInputReturnsEmptyDict(self):
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : {}})
+    #     actual_comparisons = manager.separated_comparisons(',')
+    #     self.assertEqual({}, actual_comparisons)
+    #
+    # def test_concatenated_comparison_values(self):
+    #     comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
+    #                        'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
+    #     comparison_infix = '_v_'
+    #     delimiter = '|^|'
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
+    #     actual_comparisons = manager.concatenated_comparison_values(delimiter)
+    #     expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D',
+    #                             'phenoLabel2' : '2A|^|2B|^|2C|^|2D'}
+    #     self.assertEqual(expected_comparisons, actual_comparisons)
+    #
+    # def test_concatenated_comparison_values_stripsWhitespace(self):
+    #     comparison_dict = {'phenoLabel1' : [' \t1A_v_1B \t', '\t 1C_v_1D \t']}
+    #     comparison_infix = '_v_'
+    #     delimiter = '|^|'
+    #
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
+    #     actual_comparisons = manager.concatenated_comparison_values(delimiter)
+    #
+    #     expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D'}
+    #     self.assertEqual(expected_comparisons, actual_comparisons)
+    #
+    # def test_concatenated_comparison_values_duplicateValuesCoalesced(self):
+    #     comparison_dict = {'phenoLabel1' : ['1A_v_1B','1A_v_1C','1A_v_1D']}
+    #     comparison_infix = '_v_'
+    #     delimiter = '|^|'
+    #
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
+    #     actual_comparisons = manager.concatenated_comparison_values(delimiter)
+    #
+    #     expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D'}
+    #     self.assertEqual(expected_comparisons, actual_comparisons)
+    #
+    #
+    # def test_concatenated_comparison_values_reorders(self):
+    #     comparison_dict = {'phenoLabel1' : ['1D_v_1B','1C_v_1A']}
+    #     comparison_infix = '_v_'
+    #     delimiter = '|^|'
+    #
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
+    #     actual_comparisons = manager.concatenated_comparison_values(delimiter)
+    #
+    #     expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D'}
+    #     self.assertEqual(expected_comparisons, actual_comparisons)
+    #
+    # def test_phenotypes_comparisons_all_tuple(self):
+    #     comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
+    #                        'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
+    #
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
+    #
+    #     actual = manager.phenotypes_comparisons_all_tuple
+    #
+    #     self.assertEqual(['phenoLabel1', 'phenoLabel1', 'phenoLabel2', 'phenoLabel2'],
+    #                      actual.phenotypes)
+    #     self.assertEqual(['1A_v_1B', '1C_v_1D', '2A_v_2B', '2C_v_2D'],
+    #                      actual.comparisons)
+    #
+    # def test_phenotypes_comparisons_replicate_tuple(self):
+    #     phenotype_labels =    'pheno1 | pheno2 | pheno3 '
+    #     sample_dict = {'s1' : 'a1     | b1        | c1 ',
+    #                    's2' : 'a1     | b2        | c2 ',
+    #                    's3' : 'a2     | b3        | c2 ',}
+    #     comparison_dict = {'pheno1' : ['1A_v_1B','1C_v_1D'],
+    #                        'pheno2' : ['2A_v_2B','2C_v_2D'],
+    #                        'pheno3' : ['3A_v_3B','3C_v_3D'],}
+    #
+    #     delimiter = '|'
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes': phenotype_labels,
+    #                                 'samples': sample_dict,
+    #                                 'comparisons' : comparison_dict},
+    #                                 delimiter)
+    #
+    #     actual = manager.phenotypes_comparisons_replicates_tuple
+    #
+    #     self.assertEqual(['pheno1', 'pheno1', 'pheno3', 'pheno3'],
+    #                      actual.phenotypes)
+    #     self.assertEqual(['1A_v_1B', '1C_v_1D', '3A_v_3B', '3C_v_3D'],
+    #                      actual.comparisons)
+    #
+    #
+    # def test_phenotypes_comparisons_all_tuple_oneLabelOneComparison(self):
+    #     comparison_dict = {'phenoLabel1' : ['1A_v_1B']}
+    #
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
+    #     actual = manager.phenotypes_comparisons_all_tuple
+    #
+    #     self.assertEqual(['phenoLabel1'],
+    #                      actual.phenotypes)
+    #     self.assertEqual(['1A_v_1B'],
+    #                      actual.comparisons)
+    #
+    # def test_phenotypes_comparisons_all_tuple_stripsWhitespace(self):
+    #     comparison_dict = {'phenoLabel1' : [' 1A_v_1B\t',' 1C_v_1D '],
+    #                        'phenoLabel2' : [' 2A_v_2B\t',' 2C_v_2D ']}
+    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
+    #
+    #     actual = manager.phenotypes_comparisons_all_tuple
+    #
+    #     self.assertEqual(['phenoLabel1', 'phenoLabel1', 'phenoLabel2', 'phenoLabel2'],
+    #                      actual.phenotypes)
+    #     self.assertEqual(['1A_v_1B', '1C_v_1D', '2A_v_2B', '2C_v_2D'],
+    #                      actual.comparisons)
 
 
 class RnaseqSnakefileHelperTest(unittest.TestCase):

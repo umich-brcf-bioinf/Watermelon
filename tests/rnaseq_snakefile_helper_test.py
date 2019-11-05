@@ -27,6 +27,7 @@ class PhenotypeManagerTest(unittest.TestCase):
         os.chdir(self.original_wd)
 
     def test_phenotype_sample_list(self):
+        # Old stuff
         # phenotype_labels = 'A | B | C'
         # sample_phenotype_value_dict = {'s3' : ' a1 | b1 | c1 ',
         #                                's4' : ' a2 | b2 | c2 ',
@@ -59,6 +60,7 @@ class PhenotypeManagerTest(unittest.TestCase):
         self.assertEqual(expected_dict, actual_dict)
 
     def test_phenotype_sample_list_missingValues(self):
+        # Old stuff
         # phenotype_labels = 'A | B | C'
         # sample_phenotype_value_dict = {'s3' : ' a1 | b1 | c1 ',
         #                                's4' : '    | b2 | c2 ',
@@ -90,35 +92,71 @@ class PhenotypeManagerTest(unittest.TestCase):
                          'C' : {'c1': ['s3', 's1'], 'c2': ['s4']},}
         self.assertEqual(expected_dict, actual_dict)
 
-    # def test_phenotype_sample_list_missingPhenotypeValues(self):
-    #     phenotype_labels = 'A|B'
-    #     sample_phenotype_value_dict = {'s1' : ' a1 | b1',
-    #                                    's2' : ' a2 ',}
-    #     delimiter = '|'
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
-    #                                  'samples' : sample_phenotype_value_dict},
-    #                                delimiter)
-    #     self.assertRaisesRegexp(ValueError,
-    #                             r'expected 2 .* but sample s2 .*1',
-    #                             getattr,
-    #                             manager,
-    #                             'phenotype_sample_list')
-    #
-    # def test_phenotype_sample_list_extraPhenotypeValues(self):
-    #     phenotype_labels = 'A|B'
-    #     sample_phenotype_value_dict = {'s1' : ' a1 | b1',
-    #                                    's2' : ' a2 | b2 | c2',}
-    #     delimiter = '|'
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
-    #                                  'samples' : sample_phenotype_value_dict},
-    #                                delimiter)
-    #
-    #     self.assertRaisesRegexp(ValueError,
-    #                             r'expected 2 .* but sample s2 .*3',
-    #                             getattr,
-    #                             manager,
-    #                             'phenotype_sample_list')
-    #
+    def test_phenotype_sample_list_missingPhenotypeValues(self):
+        # Old stuff
+        # phenotype_labels = 'A|B'
+        # sample_phenotype_value_dict = {'s1' : ' a1 | b1',
+        #                                's2' : ' a2 ',}
+        # delimiter = '|'
+        # manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
+        #                              'samples' : sample_phenotype_value_dict},
+        #                            delimiter)
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            #Set up CSV lines to write
+            lines = [
+                'sample,A,B',
+                's1,a1,b1',
+                's2'
+            ]
+            lines = "\n".join(lines)
+            #Create test samplesheet in this tempdir
+            test_samplesheet_file = os.path.join(temp_dir_path, 'samplesheet.csv')
+            with open(test_samplesheet_file, 'w') as sample_sheet:
+                sample_sheet.writelines(lines)
+            #Feed it to the PhenotypeManager
+            config = {'sample_description_file' : test_samplesheet_file}
+            manager = rnaseq_snakefile_helper.PhenotypeManager(config)
+
+        actual_dict = manager.phenotype_sample_list
+        actual_dict = testing_utils.ddict2dict(actual_dict) # phenotype_sample_list is built with nested defaultdict. Convert this to builtin dict type
+        print(yaml.dump(actual_dict))
+        self.assertRaisesRegexp(ValueError,
+                                r'expected 2 .* but sample s2 .*1',
+                                getattr,
+                                manager,
+                                'phenotype_sample_list')
+        # TWS - I contend that this is more a parsing test, now redundant w/ the above
+
+    def test_phenotype_sample_list_extraPhenotypeValues(self):
+        # Old stuff
+        # phenotype_labels = 'A|B'
+        # sample_phenotype_value_dict = {'s1' : ' a1 | b1',
+        #                                's2' : ' a2 | b2 | c2',}
+        # delimiter = '|'
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            #Set up CSV lines to write
+            lines = [
+                'sample,A,B',
+                's1,a1,b1',
+                's2,a2,b2,c2'
+            ]
+            lines = "\n".join(lines)
+            #Create test samplesheet in this tempdir
+            test_samplesheet_file = os.path.join(temp_dir_path, 'samplesheet.csv')
+            with open(test_samplesheet_file, 'w') as sample_sheet:
+                sample_sheet.writelines(lines)
+            #Feed it to the PhenotypeManager
+            config = {'sample_description_file' : test_samplesheet_file}
+            manager = rnaseq_snakefile_helper.PhenotypeManager(config)
+
+        self.assertRaisesRegexp(ValueError,
+                                r'expected 2 .* but sample s2 .*3',
+                                getattr,
+                                manager,
+                                'phenotype_sample_list')
+
     # def test_phenotype_sample_list_trailingDelimIsExtraPhenotypeValue(self):
     #     phenotype_labels = 'A|B'
     #     sample_phenotype_value_dict = {'s1' : ' a1 | b1 |',}

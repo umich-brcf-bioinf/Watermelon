@@ -17,10 +17,14 @@ def recursive_update(d, u):
             d = {k: u[k]}
     return d
 
-def create_modified_config(example_file, modified_file, replacements):
+def create_modified_config(example_file, modified_file, replacements, rm_keys=None):
     with open(example_file, 'r') as example_config_file:
         example_config = yaml.load(example_config_file, Loader=yaml.SafeLoader)
     recursive_update(example_config, replacements)
+    if rm_keys:
+        for key in rm_keys:
+            if key in example_config:
+                del key
     with open(modified_file, 'w') as modified_config_file:
         yaml.dump(example_config, modified_config_file, default_flow_style=False, indent=4)
 

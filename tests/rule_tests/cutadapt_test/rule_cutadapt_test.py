@@ -6,8 +6,9 @@ import shutil
 import subprocess
 import sys
 import unittest
-
 from testfixtures import TempDirectory
+from tests import testing_utils #local module
+
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 WATERMELON_BASE_DIR = os.path.abspath(os.path.join(TEST_DIR, '..', '..', '..'))
@@ -15,9 +16,6 @@ SNAKEFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'rnaseq.snakefile')
 EXAMPLE_CONFIGFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'config', 'example_config.yaml')
 DEBUG = 'WATERMELON_DEBUG' in os.environ
 REDIRECT_OUTPUT = ' ' if DEBUG else ' 2>/dev/null '
-
-sys.path.append(os.path.join(WATERMELON_BASE_DIR, 'tests'))
-from testing_utils import create_modified_config, gunzip #local module
 
 
 class CutadaptTest(unittest.TestCase):
@@ -41,7 +39,7 @@ class CutadaptTest(unittest.TestCase):
 
             #Create modified config in this temp dir, using example config and replacing values as needed
             configfile_path = os.path.join(temp_dir_path, 'testcase_config.yaml')
-            create_modified_config(EXAMPLE_CONFIGFILE_PATH, configfile_path, config_replacement_vals, config_rm_keys)
+            testing_utils.create_modified_config(EXAMPLE_CONFIGFILE_PATH, configfile_path, config_replacement_vals, config_rm_keys)
 
             command_fmt = ('snakemake -p --cores 2 '
                 '--use-conda '
@@ -57,8 +55,8 @@ class CutadaptTest(unittest.TestCase):
                 redirect_output=REDIRECT_OUTPUT)
             subprocess.check_output(command, shell=True)
 
-            gunzip(tmp_expected_dir + '/alignment_results/02-cutadapt/*.gz')
-            gunzip('alignment_results/02-cutadapt/*.gz')
+            testing_utils.gunzip(tmp_expected_dir + '/alignment_results/02-cutadapt/*.gz')
+            testing_utils.gunzip('alignment_results/02-cutadapt/*.gz')
 
             for expected_filename in glob(tmp_expected_dir + '/alignment_results/02-cutadapt/*'):
                 basename = os.path.basename(expected_filename)

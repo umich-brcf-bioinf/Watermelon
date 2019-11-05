@@ -7,6 +7,7 @@ import subprocess
 import sys
 import unittest
 from testfixtures import TempDirectory
+from tests import testing_utils #local module
 
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
@@ -15,9 +16,6 @@ SNAKEFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'rnaseq.snakefile')
 EXAMPLE_CONFIGFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'config', 'example_config.yaml')
 DEBUG = 'WATERMELON_DEBUG' in os.environ
 REDIRECT_OUTPUT = ' ' if DEBUG else ' 2>/dev/null '
-
-sys.path.append(os.path.join(WATERMELON_BASE_DIR, 'tests'))
-from testing_utils import create_modified_config, gunzip #local module
 
 
 class ConcatReadsTest(unittest.TestCase):
@@ -50,7 +48,7 @@ class ConcatReadsTest(unittest.TestCase):
                     'to': 'nobody'
                 }
             }
-            create_modified_config(EXAMPLE_CONFIGFILE_PATH, 'modified_config.yaml', replacement_vals)
+            testing_utils.create_modified_config(EXAMPLE_CONFIGFILE_PATH, 'modified_config.yaml', replacement_vals)
 
             command_fmt = ('snakemake -p --cores 2 '
                 '--config skip_validation=True '

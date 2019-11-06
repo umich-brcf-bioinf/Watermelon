@@ -29,8 +29,8 @@ class DiffexExcelTest(unittest.TestCase):
 
     def test_commandReturnsCorrectRowAndColumnCount(self):
         with TempDirectory() as temp_dir:
-            #temp_dir_path = temp_dir.path
-            temp_dir_path = '/nfs/med-bfx-activeprojects/trsaari/sandbox/20191031_diffex_excel_test'
+            temp_dir_path = temp_dir.path
+            # temp_dir_path = '/nfs/med-bfx-activeprojects/trsaari/sandbox/20191031_diffex_excel_test'
 
             script_name = os.path.join(SCRIPTS_DIR, 'diffex_excel.py')
             linear_fold_change_threshold = 2

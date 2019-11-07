@@ -28,12 +28,6 @@ class PhenotypeManagerTest(unittest.TestCase):
         os.chdir(self.original_wd)
 
     def test_phenotype_sample_list(self):
-        # Old stuff
-        # phenotype_labels = 'A | B | C'
-        # sample_phenotype_value_dict = {'s3' : ' a1 | b1 | c1 ',
-        #                                's4' : ' a2 | b2 | c2 ',
-        #                                's1' : ' a1 | b1 | c1 ',
-        #                                's2' : ' a2 | b2 | c2 ',}
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             #Set up CSV lines to write
@@ -61,12 +55,6 @@ class PhenotypeManagerTest(unittest.TestCase):
         self.assertEqual(expected_dict, actual_dict)
 
     def test_phenotype_sample_list_missingValues(self):
-        # Old stuff
-        # phenotype_labels =                      'A | B | C'
-        # sample_phenotype_value_dict = {'s3' : ' a1 | b1 | c1 ',
-        #                                's4' : '    | b2 | c2 ',
-        #                                's1' : ' a1 |    | c1 ',
-        #                                's2' : ' a2 |    | ',}
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             #Set up CSV lines to write
@@ -95,11 +83,6 @@ class PhenotypeManagerTest(unittest.TestCase):
 
 
     def test_phenotype_sample_list_extraPhenotypeValues(self):
-        # Old stuff
-        # phenotype_labels = 'A|B'
-        # sample_phenotype_value_dict = {'s1' : ' a1 | b1',
-        #                                's2' : ' a2 | b2 | c2',}
-        # delimiter = '|'
         with TempDirectory() as temp_dir:
             temp_dir_path = temp_dir.path
             #Set up CSV lines to write
@@ -120,61 +103,29 @@ class PhenotypeManagerTest(unittest.TestCase):
                         rnaseq_snakefile_helper.PhenotypeManager,
                         config)
 
-    # def test_phenotype_sample_list_trailingDelimIsExtraPhenotypeValue(self):
-    #     phenotype_labels = 'A|B'
-    #     sample_phenotype_value_dict = {'s1' : ' a1 | b1 |',}
-    #     delimiter = '|'
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
-    #                                 'samples' : sample_phenotype_value_dict},
-    #                                delimiter)
-    #
-    #     self.assertRaisesRegexp(ValueError,
-    #                             r'expected 2 .* but sample s1 .*3',
-    #                             getattr,
-    #                             manager,
-    #                             'phenotype_sample_list')
-    #
-    # def test_phenotype_sample_list_missingPhenotypeLabel(self):
-    #     phenotype_labels = 'A||C'
-    #     sample_phenotype_value_dict = {'s1' : ' a1 | b1 | c1',}
-    #     delimiter = '|'
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
-    #                                  'samples' : sample_phenotype_value_dict},
-    #                                delimiter)
-    #     self.assertRaisesRegexp(ValueError,
-    #                             r'label of phenotype 2 is empty',
-    #                             getattr,
-    #                             manager,
-    #                             'phenotype_sample_list')
-    #
-    # def test_phenotype_sample_list_trailingDelimIsMissingPhenotypeLabel(self):
-    #     phenotype_labels = 'A|B|C|'
-    #     sample_phenotype_value_dict = {'s1' : ' a1 | b1 | c1',}
-    #     delimiter = '|'
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
-    #                                 'samples' : sample_phenotype_value_dict},
-    #                                delimiter)
-    #
-    #     self.assertRaisesRegexp(ValueError,
-    #                             r'label of phenotype 4 is empty',
-    #                             getattr,
-    #                             manager,
-    #                             'phenotype_sample_list')
-    #
-    # def test_phenotype_with_replicates(self):
-    #     phenotype_labels = 'A | D | C | B'
-    #     sample_dict = {'s1' : ' a1 | d1 | c1 | b1',
-    #                    's2' : ' a2 | d1 | c2 | b2',
-    #                    's3' : ' a3 | d1 |    | b2',
-    #                    's4' : ' a4 | d2 |    |   ',}
-    #     delimiter = '|'
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes' : phenotype_labels,
-    #                                  'samples' : sample_dict},
-    #                                delimiter)
-    #     actual = manager.phenotypes_with_replicates
-    #
-    #     self.assertEqual(['B', 'D'], actual)
-    #
+    def test_phenotype_with_replicates(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            #Set up CSV lines to write
+            lines = [
+                'sample,A,D,C,B',
+                's1,a1,d1,c1,b1',
+                's2,a2,d1,c2,b2',
+                's3,a3,d1,,b2',
+                's4,a4,d2,,'
+            ]
+            lines = "\n".join(lines)
+            #Create test samplesheet in this tempdir
+            test_samplesheet_file = os.path.join(temp_dir_path, 'samplesheet.csv')
+            with open(test_samplesheet_file, 'w') as sample_sheet:
+                sample_sheet.writelines(lines)
+            #Feed it to the PhenotypeManager
+            config = {'sample_description_file' : test_samplesheet_file}
+            manager = rnaseq_snakefile_helper.PhenotypeManager(config)
+
+        actual = manager.phenotypes_with_replicates
+        self.assertEqual(['B', 'D'], actual)
+
     # def test_separated_comparisons(self):
     #     comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
     #                        'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
@@ -185,7 +136,7 @@ class PhenotypeManagerTest(unittest.TestCase):
     #                             'phenoLabel2' : '2A_v_2B#2C_v_2D'}
     #     self.assertEqual(expected_comparisons, actual_comparisons)
     #
-    # def test_separated_comparisons_stripsWhitespace(self):
+    # # def test_separated_comparisons_stripsWhitespace(self):
     #     comparison_dict = {'phenoLabel1' : ['\t1A_v_1B\t','\t1C_v_1D\t'],
     #                        'phenoLabel2' : ['  2A_v_2B  ','  2C_v_2D  ']}
     #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})

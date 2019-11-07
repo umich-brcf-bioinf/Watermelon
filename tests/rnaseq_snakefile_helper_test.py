@@ -19,6 +19,8 @@ from scripts import rnaseq_snakefile_helper # local module that we're testing
 from tests import testing_utils # local module
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
+WATERMELON_BASE_DIR = os.path.abspath(os.path.join(TEST_DIR, '..'))
+EXAMPLE_CONFIGFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'config', 'example_config.yaml')
 
 class PhenotypeManagerTest(unittest.TestCase):
     def setUp(self):
@@ -125,136 +127,6 @@ class PhenotypeManagerTest(unittest.TestCase):
 
         actual = manager.phenotypes_with_replicates
         self.assertEqual(['B', 'D'], actual)
-
-    # def test_separated_comparisons(self):
-    #     comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
-    #                        'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
-    #     actual_comparisons = manager.separated_comparisons('#')
-    #
-    #     expected_comparisons = {'phenoLabel1' : '1A_v_1B#1C_v_1D',
-    #                             'phenoLabel2' : '2A_v_2B#2C_v_2D'}
-    #     self.assertEqual(expected_comparisons, actual_comparisons)
-    #
-    # # def test_separated_comparisons_stripsWhitespace(self):
-    #     comparison_dict = {'phenoLabel1' : ['\t1A_v_1B\t','\t1C_v_1D\t'],
-    #                        'phenoLabel2' : ['  2A_v_2B  ','  2C_v_2D  ']}
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
-    #     actual_comparisons = manager.separated_comparisons('$')
-    #
-    #     expected_comparisons = {'phenoLabel1' : '1A_v_1B$1C_v_1D',
-    #                             'phenoLabel2' : '2A_v_2B$2C_v_2D'}
-    #     self.assertEqual(expected_comparisons, actual_comparisons)
-    #
-    # def test_separated_comparisons_emptyInputReturnsEmptyDict(self):
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : {}})
-    #     actual_comparisons = manager.separated_comparisons(',')
-    #     self.assertEqual({}, actual_comparisons)
-    #
-    # def test_concatenated_comparison_values(self):
-    #     comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
-    #                        'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
-    #     comparison_infix = '_v_'
-    #     delimiter = '|^|'
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
-    #     actual_comparisons = manager.concatenated_comparison_values(delimiter)
-    #     expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D',
-    #                             'phenoLabel2' : '2A|^|2B|^|2C|^|2D'}
-    #     self.assertEqual(expected_comparisons, actual_comparisons)
-    #
-    # def test_concatenated_comparison_values_stripsWhitespace(self):
-    #     comparison_dict = {'phenoLabel1' : [' \t1A_v_1B \t', '\t 1C_v_1D \t']}
-    #     comparison_infix = '_v_'
-    #     delimiter = '|^|'
-    #
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
-    #     actual_comparisons = manager.concatenated_comparison_values(delimiter)
-    #
-    #     expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D'}
-    #     self.assertEqual(expected_comparisons, actual_comparisons)
-    #
-    # def test_concatenated_comparison_values_duplicateValuesCoalesced(self):
-    #     comparison_dict = {'phenoLabel1' : ['1A_v_1B','1A_v_1C','1A_v_1D']}
-    #     comparison_infix = '_v_'
-    #     delimiter = '|^|'
-    #
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
-    #     actual_comparisons = manager.concatenated_comparison_values(delimiter)
-    #
-    #     expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D'}
-    #     self.assertEqual(expected_comparisons, actual_comparisons)
-    #
-    #
-    # def test_concatenated_comparison_values_reorders(self):
-    #     comparison_dict = {'phenoLabel1' : ['1D_v_1B','1C_v_1A']}
-    #     comparison_infix = '_v_'
-    #     delimiter = '|^|'
-    #
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
-    #     actual_comparisons = manager.concatenated_comparison_values(delimiter)
-    #
-    #     expected_comparisons = {'phenoLabel1' : '1A|^|1B|^|1C|^|1D'}
-    #     self.assertEqual(expected_comparisons, actual_comparisons)
-    #
-    # def test_phenotypes_comparisons_all_tuple(self):
-    #     comparison_dict = {'phenoLabel1' : ['1A_v_1B','1C_v_1D'],
-    #                        'phenoLabel2' : ['2A_v_2B','2C_v_2D']}
-    #
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
-    #
-    #     actual = manager.phenotypes_comparisons_all_tuple
-    #
-    #     self.assertEqual(['phenoLabel1', 'phenoLabel1', 'phenoLabel2', 'phenoLabel2'],
-    #                      actual.phenotypes)
-    #     self.assertEqual(['1A_v_1B', '1C_v_1D', '2A_v_2B', '2C_v_2D'],
-    #                      actual.comparisons)
-    #
-    # def test_phenotypes_comparisons_replicate_tuple(self):
-    #     phenotype_labels =    'pheno1 | pheno2 | pheno3 '
-    #     sample_dict = {'s1' : 'a1     | b1        | c1 ',
-    #                    's2' : 'a1     | b2        | c2 ',
-    #                    's3' : 'a2     | b3        | c2 ',}
-    #     comparison_dict = {'pheno1' : ['1A_v_1B','1C_v_1D'],
-    #                        'pheno2' : ['2A_v_2B','2C_v_2D'],
-    #                        'pheno3' : ['3A_v_3B','3C_v_3D'],}
-    #
-    #     delimiter = '|'
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'phenotypes': phenotype_labels,
-    #                                 'samples': sample_dict,
-    #                                 'comparisons' : comparison_dict},
-    #                                 delimiter)
-    #
-    #     actual = manager.phenotypes_comparisons_replicates_tuple
-    #
-    #     self.assertEqual(['pheno1', 'pheno1', 'pheno3', 'pheno3'],
-    #                      actual.phenotypes)
-    #     self.assertEqual(['1A_v_1B', '1C_v_1D', '3A_v_3B', '3C_v_3D'],
-    #                      actual.comparisons)
-    #
-    #
-    # def test_phenotypes_comparisons_all_tuple_oneLabelOneComparison(self):
-    #     comparison_dict = {'phenoLabel1' : ['1A_v_1B']}
-    #
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
-    #     actual = manager.phenotypes_comparisons_all_tuple
-    #
-    #     self.assertEqual(['phenoLabel1'],
-    #                      actual.phenotypes)
-    #     self.assertEqual(['1A_v_1B'],
-    #                      actual.comparisons)
-    #
-    # def test_phenotypes_comparisons_all_tuple_stripsWhitespace(self):
-    #     comparison_dict = {'phenoLabel1' : [' 1A_v_1B\t',' 1C_v_1D '],
-    #                        'phenoLabel2' : [' 2A_v_2B\t',' 2C_v_2D ']}
-    #     manager = rnaseq_snakefile_helper.PhenotypeManager({'comparisons' : comparison_dict})
-    #
-    #     actual = manager.phenotypes_comparisons_all_tuple
-    #
-    #     self.assertEqual(['phenoLabel1', 'phenoLabel1', 'phenoLabel2', 'phenoLabel2'],
-    #                      actual.phenotypes)
-    #     self.assertEqual(['1A_v_1B', '1C_v_1D', '2A_v_2B', '2C_v_2D'],
-    #                      actual.comparisons)
-
 
 class RnaseqSnakefileHelperTest(unittest.TestCase):
 

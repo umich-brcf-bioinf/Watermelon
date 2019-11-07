@@ -96,14 +96,6 @@ class PhenotypeManager(object):
                 with_replicates.append(label)
         return sorted(with_replicates)
 
-    def separated_comparisons(self, output_delimiter):
-        '''Returns a dict of {phenotype_label: 'val1_v_val2,val3_v_val4'}'''
-        comparisons = {}
-        for phenotype, comparison in self.comparisons.items():
-            comp_string = output_delimiter.join(list(map(str.strip, comparison)))
-            comparisons[phenotype]= comp_string
-        return comparisons
-
     @property
     def comparison_values(self):
         '''Returns dict of {pheno_label : [val1,val2,val3,val4] }'''
@@ -116,23 +108,6 @@ class PhenotypeManager(object):
             values = sorted(unique_conditions)
             phenotype_label_values[phenotype] = values
         return phenotype_label_values
-
-    def concatenated_comparison_values(self, output_delimiter):
-        '''Returns dict of {pheno_label : 'val1,val2,val3,val4' }'''
-        phenotype_label_values = {}
-        for phenotype_label, values in self.comparison_values.items():
-            phenotype_label_values[phenotype_label] = output_delimiter.join(values)
-        return phenotype_label_values
-
-    @property
-    def phenotypes_comparisons_all_tuple(self):
-        '''Returns named tuple of phenotype, comparison for all phenotypes'''
-        return self._phenotypes_comparisons(True)
-
-    @property
-    def phenotypes_comparisons_replicates_tuple(self):
-        '''Returns named tuple of phenotype, comparison for phenotypes with replicates'''
-        return self._phenotypes_comparisons(False)
 
     def _phenotypes_comparisons(self, include_phenotypes_without_replicates=True):
         if include_phenotypes_without_replicates:
@@ -203,10 +178,10 @@ def diffex_models(diffex_config):
     model_names = [k for k in diffex_config.keys() if k not in not_factors]
     return(model_names)
 
-'''Returns contrasts dict in the form of
-{model_name: ['val1_v_val2', 'val3_v_val4']}
-'''
 def diffex_contrasts(diffex_config):
+    '''Returns contrasts dict in the form of
+    {model_name: ['val1_v_val2', 'val3_v_val4']}
+    '''
     cont_dict = {}
     for model in diffex_models(diffex_config):
         cont_dict[model] = diffex_config[model]['contrasts']

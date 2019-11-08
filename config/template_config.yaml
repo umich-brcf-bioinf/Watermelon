@@ -16,6 +16,7 @@ fastq_screen: #Delete the entire fastq_screen stanza if fastq_screen not desired
 diffex:
     linear_fold_change: 1.5
     adjustedPValue: 0.05
+    count_min_cutoff: 1 #Filter lowly expressed genes using this cutoff
     #The following is an example Diffex stanza. Additional stanzas can be added
     #which will produce results in parallel directories
     #The parent node (model name) forms the names of directories.

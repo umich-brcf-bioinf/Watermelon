@@ -36,6 +36,8 @@ properties:
                 type: number
             linear_fold_change:
                 type: number
+            count_min_cutoff:
+                type: number
     fastq_screen:
         properties:
             aligner:

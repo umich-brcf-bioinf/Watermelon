@@ -46,7 +46,8 @@ txi.rsem.gene.results$length[txi.rsem.gene.results$length == 0] <- 1
 # Note use of no design (i.e. = ~ 1) here since we only care about counts. For diffex, will need to use actual design
 dds = DESeqDataSetFromTximport(txi = txi.rsem.gene.results, colData = pdata, design = ~ 1)
 # Filter lowly expressed genes QUESTION: Should this be more stringent?
-dds = dds[ rowSums(counts(dds)) > 1, ]
+threshold = snakemake@config[['diffex']][['count_min_cutoff']]
+dds = dds[ rowSums(counts(dds)) > threshold, ]
 
 # Extract counts
 raw_counts = counts(dds) #raw

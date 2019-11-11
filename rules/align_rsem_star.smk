@@ -22,7 +22,7 @@ rule align_rsem_star:
         ALIGNMENT_DIR + 'benchmarks/rsem_star_align.{sample}.benchmark.txt'
     threads: 12
     resources:
-        mem_gb=30
+        mem_mb=40000
     params:
         rsem_ref_base = ALIGNMENT_DIR + '04-rsem_star_genome_generate/' + config['genome'],
         outFileNamePrefix = ALIGNMENT_DIR + '04-rsem_star_align/{sample}',

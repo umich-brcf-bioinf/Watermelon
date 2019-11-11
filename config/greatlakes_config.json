@@ -1,21 +1,15 @@
 {
     "__default__" : {
-        "name" : "{rule}_{wildcards.sample}",
+        "name" : "{rule}_{wildcards}",
         "account" : "medccmb_dcmb",
         "partition" : "standard",
         "nodes" : "1",
         "ntask" : "1",
-        "memory" : "4096",
+        "memory" : "1024",
         "time" : "00:30:00"
     },
     "align_annotate_combined_counts" : {
         "name" : "{rule}_{input.counts_file}",
-    },
-    "align_concat_reads" : {
-        "name" : "{rule}_{wildcards.sample}_{wildcards.read}",
-    },
-    "align_combine_counts_to_matrices" : {
-        "name" : "{rule}"
     },
     "align_cutadapt_PE" : {
         "ntask" : "{threads}"
@@ -30,15 +24,10 @@
         "name" : "{rule}"
     },
     "align_fastq_screen_biotype" : {
-        "name" : "{rule}_{wildcards.sample}_{wildcards.read_endedness}",
         "ntask" : "{threads}"
     },
     "align_fastq_screen_multi_species" : {
-        "name" : "{rule}_{wildcards.sample}_{wildcards.read_endedness}",
         "ntask" : "{threads}"
-    },
-    "align_fastqc_trimmed_reads" : {
-        "name" : "{rule}_{wildcards.sample}_{wildcards.read_endedness}"
     },
     "align_multiqc" : {
         "name" : "{rule}"
@@ -51,11 +40,10 @@
     },
     "align_rsem_star" : {
         "ntask" : "{threads}",
-        "time" : "02:00:00",
-        "memory" : "32000"
+        "time" : "02:30:00",
+        "memory" : "40000"
     },
     "align_standardize_gz" : {
-        "name" : "{rule}_{wildcards.sample}_{wildcards.read}",
         "time" : "02:00:00"
     },
     "deliverables_deseq2" : {
@@ -64,28 +52,13 @@
     "deliverables_run_info" : {
         "name" : "{rule}"
     },
-    "deseq2_annotation" : {
-        "name" : "{rule}_{wildcards.model_name}_{wildcards.contrast}"
-    },
-    "deseq2_contrasts" : {
-        "name" : "{rule}_{wildcards.model_name}_{wildcards.contrast}"
-    },
     "deseq2_counts" : {
         "name" : "{rule}"
-    },
-    "deseq2_excel" : {
-        "name" : "{rule}_{wildcards.model_name}_{wildcards.contrast}"
-    },
-    "deseq2_init" : {
-        "name" : "{rule}_{wildcards.model_name}"
     },
     "deseq2_plots_by_phenotype" : {
         "name" : "{rule}"
     },
     "deseq2_summary" : {
         "name" : "{rule}"
-    },
-    "deseq2_volcano_plots" : {
-        "name" : "{rule}_{wildcards.model_name}_{wildcards.contrast}"
     }
 }

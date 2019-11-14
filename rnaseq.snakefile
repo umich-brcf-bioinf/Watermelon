@@ -197,6 +197,7 @@ DELIVERABLES = [
     expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
         type=['FPKM', 'TPM']),
     DELIVERABLES_DIR + "alignment/alignment_qc.html",
+    DELIVERABLES_DIR + "alignment/multiqc_rsem.txt",
     #deseq2 deliverables
     expand(DELIVERABLES_DIR + 'counts/deseq2_{name}.txt',
         name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),

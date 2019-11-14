@@ -9,7 +9,8 @@ rule align_multiqc:
                                    sample=config["samples"]),
         fastq_screen_alignment = FASTQ_SCREEN_ALIGNMENT,
     output:
-        ALIGNMENT_DIR + "07-qc/alignment_qc.html"
+        ALIGNMENT_DIR + "07-qc/alignment_qc.html",
+        ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_rsem.txt"
     params:
         output_dir = ALIGNMENT_DIR + "07-qc/",
         output_filename = "alignment_qc.html",

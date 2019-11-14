@@ -14,7 +14,7 @@ rule deseq2_summary:
         output_dir = DIFFEX_DIR + "deseq2/summary/",
     shell:
         '''(python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py \
-            --annotation_column gene_id \
+            --annotation_column entrezgene_id \
             --annotation_null . \
             --diffex_call_column Call \
             --diffex_call_pass YES \

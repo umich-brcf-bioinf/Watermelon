@@ -1,6 +1,18 @@
 Changelog
 =========
 
+1.2.0 (11/14/2019)
+------------------
+- Added boxplot of non-normalized values
+- All automated tests now working
+- Added a config parameter count_min_cutoff for diffex read-count filtering threshold
+- Changed summary's annotation column to entrezgene_id, since these are what we care about
+- Added multiqc_rsem.txt to deliverables - this is a table with accurate alignment statistics from a single source (rsem), since multiQC isn't being very 'smart' about what it's reporting
+
+1.1.1 (10/31/2019)
+------------------
+- Bugfix - Constrain snakemake to version 5.6.0 in watermelon conda env - last version supporting workflow.overwrite_configfile
+
 1.1.0 (10/29/2019)
 ------------------
 - Annotation overhaul

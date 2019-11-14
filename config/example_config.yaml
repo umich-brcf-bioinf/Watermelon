@@ -1,4 +1,4 @@
-# config created 2019-10-29 14:35:00
+# config created 2019-11-14 13:12:39
 # To do:
 # ------
 # 1) Review genome and references
@@ -7,9 +7,9 @@
 #    set up the DESeq2 calls and results calls for the comparisons that match the analysis.
 
 email:
-    subject: watermelon_20191029_human
+    subject: watermelon_20191114_human
     to: trsaari@umich.edu
-watermelon_version: 1.1.0
+watermelon_version: 1.2.0
 sample_description_file: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20191023_testing_simulated_data/samplesheet.csv
 genome: GRCh38
 references:
@@ -17,9 +17,9 @@ references:
     gtf: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.98.gtf
     annotation_tsv: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.98_annotation.tsv
 dirs:
-    alignment_output: analysis_20191029_human/alignment_results
-    diffex_output: analysis_20191029_human/diffex_results
-    deliverables_output: analysis_20191029_human/deliverables
+    alignment_output: analysis_20191114_human/alignment_results
+    diffex_output: analysis_20191114_human/diffex_results
+    deliverables_output: analysis_20191114_human/deliverables
     input: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20191023_testing_simulated_data/inputs/01-source_samples
 trimming_options: #Delete the entire trimming_options stanza if no trimming is desired
     base_quality_5prime: 0
@@ -28,7 +28,7 @@ trimming_options: #Delete the entire trimming_options stanza if no trimming is d
     trim_length_3prime: 0
 alignment_options:
     read_length: 100
-fastq_screen:
+fastq_screen: #Delete the entire fastq_screen stanza if fastq_screen not desired
     reference_basedir: /nfs/med-bfx-common/pipelines/Watermelon/references/fastq_screen
     aligner: bowtie2
     subset: 100000
@@ -36,6 +36,7 @@ fastq_screen:
 diffex:
     linear_fold_change: 1.5
     adjustedPValue: 0.05
+    count_min_cutoff: 1 #Filter lowly expressed genes using this cutoff
     #The following is an example Diffex stanza. Additional stanzas can be added
     #which will produce results in parallel directories
     #The parent node (model name) forms the names of directories.

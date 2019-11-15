@@ -3,7 +3,9 @@ from __future__ import print_function, absolute_import, division
 
 import glob
 import io
+import mock
 import os
+import sys
 import time
 import unittest
 import yaml
@@ -22,6 +24,11 @@ from tests import testing_utils # local module
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 WATERMELON_BASE_DIR = os.path.abspath(os.path.join(TEST_DIR, '..'))
 EXAMPLE_CONFIGFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'config', 'example_config.yaml')
+
+#Allow suppression of stdout
+class DevNull(object):
+    def write(self, data):
+        pass
 
 class PhenotypeManagerTest(unittest.TestCase):
     def setUp(self):
@@ -112,6 +119,120 @@ class PhenotypeManagerTest(unittest.TestCase):
 
         actual = manager.phenotypes_with_replicates
         self.assertEqual(['B', 'D'], actual)
+
+class InputFileManagerTest(unittest.TestCase):
+    def setUp(self):
+        self.original_wd = os.getcwd()
+        self.original_stderr = sys.stderr
+        sys.stderr = DevNull()
+
+    def tearDown(self):
+        os.chdir(self.original_wd)
+        sys.stderr = self.original_stderr
+
+    # def test_get_sample_fastq_paths(self):
+    #     with TempDirectory() as temp_dir:
+    #         temp_dir_path = temp_dir.path
+    #         sample_1_dir = os.path.join(temp_dir_path, 'sample_1')
+    #         os.mkdir(sample_1_dir)
+    #         sample_1_expected = [os.path.join(sample_1_dir, 'sample_1_R1.fastq.gz')]
+    #         for file in sample_1_expected:
+    #             temp_dir.write(file, b'foo')
+    #
+    #         sample_2_dir = os.path.join(temp_dir_path,'sample_2')
+    #         os.mkdir(sample_2_dir)
+    #         sample_2_expected = [os.path.join(sample_2_dir, "sample_2_R{}.fastq.gz".format(x)) for x in [1,2] ]
+    #         for file in sample_2_expected:
+    #             temp_dir.write(file, b'foo')
+    #
+    #         #sample 3 is not gzipped, other samples are
+    #         sample_3_dir = os.path.join(temp_dir_path, 'sample_3')
+    #         os.mkdir(sample_3_dir)
+    #         sample_3_expected = [os.path.join(sample_3_dir, "sample_3_R{}.fastq".format(x)) for x in [1,2] ]
+    #         for file in sample_3_expected:
+    #             temp_dir.write(file, b'foo')
+    #
+    #         manager = rnaseq_snakefile_helper.InputFileManager(input_dir = 'foo')
+    #
+    #         sample_1_actual = manager._get_sample_fastq_paths(sample_1_dir)
+    #         sample_2_actual = manager._get_sample_fastq_paths(sample_2_dir)
+    #         sample_3_actual = manager._get_sample_fastq_paths(sample_3_dir)
+    #
+    #         self.assertEqual(sample_1_expected, sample_1_actual)
+    #         self.assertEqual(sample_2_expected, sample_2_actual)
+    #         self.assertEqual(sample_3_expected, sample_3_actual)
+
+    def test_get_fastq_paths_dict_from_input_dir(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            sample_1_dir = os.path.join(temp_dir_path, 'sample_1')
+            os.mkdir(sample_1_dir)
+            sample_1_expected = [os.path.join(sample_1_dir, 'sample_1_R1.fastq.gz')]
+            for file in sample_1_expected:
+                temp_dir.write(file, b'foo')
+
+            sample_2_dir = os.path.join(temp_dir_path,'sample_2')
+            os.mkdir(sample_2_dir)
+            sample_2_expected = [os.path.join(sample_2_dir, "sample_2_R{}.fastq.gz".format(x)) for x in [1,2] ]
+            for file in sample_2_expected:
+                temp_dir.write(file, b'foo')
+
+            #sample 3 is not gzipped, other samples are
+            sample_3_dir = os.path.join(temp_dir_path, 'sample_3')
+            os.mkdir(sample_3_dir)
+            sample_3_expected = [os.path.join(sample_3_dir, "sample_3_R{}.fastq".format(x)) for x in [1,2] ]
+            for file in sample_3_expected:
+                temp_dir.write(file, b'foo')
+
+            manager = rnaseq_snakefile_helper.InputFileManager(input_dir = temp_dir_path)
+            actual_dict = manager.get_fastq_paths_dict_from_input_dir()
+
+            expected_dict = {
+                'sample_1' : sample_1_expected,
+                'sample_2' : sample_2_expected,
+                'sample_3' : sample_3_expected
+            }
+
+            self.assertEqual(expected_dict, actual_dict)
+
+    def test_get_fastq_paths_dict_from_input_dir_warns_sample_no_fastqs(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            sample_1_dir = os.path.join(temp_dir_path, 'sample_1')
+            os.mkdir(sample_1_dir)
+            temp_dir.write(os.path.join(temp_dir_path, 'non_fastq.txt'), b'foo')
+
+            sample_2_dir = os.path.join(temp_dir_path,'sample_2')
+            os.mkdir(sample_2_dir)
+            sample_2_expected = [os.path.join(sample_2_dir, "sample_2_R{}.fastq.gz".format(x)) for x in [1,2] ]
+            for file in sample_2_expected:
+                temp_dir.write(file, b'foo')
+
+            manager = rnaseq_snakefile_helper.InputFileManager(input_dir = temp_dir_path)
+            self.assertWarns(Warning, manager.get_fastq_paths_dict_from_input_dir)
+
+    def test_get_fastq_paths_dict_from_input_dir_errors_no_fastqs_any_sample(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            sample_1_dir = os.path.join(temp_dir_path, 'sample_1')
+            os.mkdir(sample_1_dir)
+            temp_dir.write(os.path.join(temp_dir_path, 'non_fastq.txt'), b'foo')
+            manager = rnaseq_snakefile_helper.InputFileManager(input_dir = temp_dir_path)
+            self.assertRaises(RuntimeError, manager.get_fastq_paths_dict_from_input_dir)
+
+    def test_get_fastq_paths_dict_from_input_dir_cant_mix_gz_plaintext(self):
+        with TempDirectory() as temp_dir:
+            temp_dir_path = temp_dir.path
+            sample_1_dir = os.path.join(temp_dir_path, 'sample_1')
+            os.mkdir(sample_1_dir)
+            sample_1_file1 = os.path.join(sample_1_dir, 'sample_1_R1.fastq.gz')
+            sample_1_file2 = os.path.join(sample_1_dir, 'sample_1_R2.fastq')
+            for file in [sample_1_file1, sample_1_file2]:
+                temp_dir.write(file, b'foo')
+
+            manager = rnaseq_snakefile_helper.InputFileManager(input_dir = temp_dir_path)
+            self.assertRaises(RuntimeError, manager.get_fastq_paths_dict_from_input_dir)
+
 
 class RnaseqSnakefileHelperTest(unittest.TestCase):
 

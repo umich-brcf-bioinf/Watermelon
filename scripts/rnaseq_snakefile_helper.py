@@ -15,6 +15,7 @@ from os.path import isfile
 import pandas as pd
 import sys
 import yaml
+import warnings
 
 from snakemake import workflow
 
@@ -125,6 +126,58 @@ class PhenotypeManager(object):
         PhenotypesComparisons = collections.namedtuple('PhenotypeComparisons',
                                                        'phenotypes comparisons')
         return PhenotypesComparisons(phenotypes=phenotypes, comparisons=comparisons)
+
+class InputFileManager(object):
+    def __init__(self, input_dir, input_type='fastq'):
+        self.input_dir = input_dir
+        self.input_type = input_type
+        # if input_type == 'fastq':
+        #     self.input_files = self.get_fastq_paths_dict_from_input_dir
+
+    def _get_sample_fastq_paths(self, sample_fastq_dir):
+        ''' Uses file glob to gather list of all .fastq or .fastq.gz files in a sample's fastq dir.
+        Raises an error if sample has mixed gzipped & plaintext fastqs
+        Arguments:
+        sample_fastq_dir -- Directory where a single sample's .fastq(.gz) files reside'''
+        fastq_glob = os.path.join(sample_fastq_dir, '*.fastq')
+        fastq_gz_glob = os.path.join(sample_fastq_dir, '*.fastq.gz')
+        fastqs = glob.glob(fastq_glob)
+        fastq_gzs = glob.glob(fastq_gz_glob)
+        #Each sample should have only one or the other, plaintext or gz, not mixed
+        if fastqs and fastq_gzs:
+            msg_fmt = "{} contains a mixture of fastq and fastq.gz files. Each sample must have either gzipped or plaintext fastqs, not both."
+            raise RuntimeError(msg_fmt.format(sample_fastq_dir))
+        elif fastqs:
+            return(fastqs)
+        elif fastq_gzs:
+            return(fastq_gzs)
+        else:
+            return None
+
+    def get_fastq_paths_dict_from_input_dir(self):
+        ''' Creates a dict of fastq paths {'sample': 'path/to/fastq'} from samples in input_dir '''
+        input_dir = self.input_dir
+        fastq_paths_dict = {}
+        #Get list of subdirs
+        potential_sample_dirs = next(os.walk(input_dir))[1] #https://stackoverflow.com/a/25705093
+        for d in potential_sample_dirs:
+            fqs = self._get_sample_fastq_paths(os.path.join(input_dir, d))
+            if fqs:
+                fastq_paths_dict[d] = fqs
+            else:
+                msg = 'Sample directory {} did not contain .fastq or .fastq.gz files. Skipping'.format(
+                    os.path.join(input_dir, d)
+                )
+                warnings.warn(msg)
+        if fastq_paths_dict == {}:
+            msg = 'No .fastq or .fastq.gz files in any subdirectories {} of input directory {}. Exiting'.format(
+                potential_sample_dirs, input_dir
+            )
+            raise RuntimeError(msg)
+        else:
+            return fastq_paths_dict
+
+
 
 def detect_paired_end_bool(fastqs):
     if len(fastqs) == 2:

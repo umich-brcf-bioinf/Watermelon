@@ -9,6 +9,7 @@ dependencies:
   - conda
   - ruamel_yaml=0.15
   - watchdog
+  - mock
   - nose
   - testfixtures
   - openpyxl

@@ -199,37 +199,6 @@ class InputFileManagerTest(unittest.TestCase):
 
             self.assertRaises(RuntimeError, rnaseq_snakefile_helper.InputFileManager, input_dir=temp_dir_path, input_type='fastq')
 
-    # def test_get_basenames_dict_from_input_paths_dict_fastq(self):
-    #     with TempDirectory() as temp_dir:
-    #         temp_dir_path = temp_dir.path
-    #         sample_1_dir = os.path.join(temp_dir_path, 'sample_1')
-    #         os.mkdir(sample_1_dir)
-    #         sample_1_expected = [os.path.join(sample_1_dir, 'sample_1_R1.fastq.gz')]
-    #         for file in sample_1_expected:
-    #             temp_dir.write(file, b'foo')
-    #
-    #         sample_2_dir = os.path.join(temp_dir_path,'sample_2')
-    #         os.mkdir(sample_2_dir)
-    #         sample_2_expected = [os.path.join(sample_2_dir, "sample_2_R{}.fastq.gz".format(x)) for x in [1,2] ]
-    #         for file in sample_2_expected:
-    #             temp_dir.write(file, b'foo')
-    #
-    #         #sample 3 is not gzipped, other samples are
-    #         sample_3_dir = os.path.join(temp_dir_path, 'sample_3')
-    #         os.mkdir(sample_3_dir)
-    #         sample_3_expected = [os.path.join(sample_3_dir, "sample_3_R{}.fastq".format(x)) for x in [1,2] ]
-    #         for file in sample_3_expected:
-    #             temp_dir.write(file, b'foo')
-    #
-    #         manager = rnaseq_snakefile_helper.InputFileManager(input_dir = temp_dir_path, input_type='fastq')
-    #
-    #         expected = {'sample_1': ['sample_1_R1'],
-    #                     'sample_2': ['sample_2_R1', 'sample_2_R2'],
-    #                     'sample_3': ['sample_3_R1', 'sample_3_R2']
-    #                     }
-    #
-    #         self.assertEqual(expected, manager.get_basenames_dict_from_input_paths_dict())
-
     def test_get_basenames_dict_from_input_paths_dict_fastq(self):
         mock_input_paths_dict = {
             'sample_1': ['sample_1_R1.fastq.gz'],

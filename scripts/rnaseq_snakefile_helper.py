@@ -192,6 +192,36 @@ class InputFileManager(object):
         else:
             return fastq_paths_dict
 
+    def get_files_to_concat_by_filename(self, sample, capture_group, capture_regex=".*_R(\d+)\.fastq.*"):
+        ''' Uses filenames in input_paths_dict, to get grouping information for each sample's input files,
+        (for instance grouping by read number) and returns a list of input files to concatenate based on that grouping.
+        Arguments:
+            sample: string - sample name
+            capture_group: string - the group to gather for concatenation (e.g. read 1)
+            capture_regex: string - regular expression used to capture group information
+        Returns:
+            cat_these: list of input files to concatenate '''
+        try:
+            sample_input_files = self.input_paths_dict[sample]
+        except KeyError as e:
+            msg = 'Sample {} not found in input dictionary'.format(e)
+            raise KeyError(msg)
+
+        cat_these = []
+        for file in sample_input_files:
+            basename = os.path.basename(file)
+            rmatch = re.match(capture_regex, basename)
+            if not rmatch:
+                msg_fmt = 'File {} did not match regular expression {}. Cannot capture grouping information from filename.'
+                raise RuntimeError(msg_fmt.format(basename, capture_regex))
+            else:
+                captured = rmatch.group(1)
+
+            if captured == capture_group:
+                cat_these.append(file)
+
+        return cat_these
+
     def get_basenames_dict_from_input_paths_dict(self, sample_list=None):
         '''Uses self.input_paths_dict and self.input_type to create a dictionary mapping samples to input file basenames e.g.
         {'sample_1': ['sample_1_R1'], 'sample_2' : ['sample_2_R1', 'sample_2_R2']}.

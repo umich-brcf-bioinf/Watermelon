@@ -199,6 +199,48 @@ class InputFileManagerTest(unittest.TestCase):
 
             self.assertRaises(RuntimeError, rnaseq_snakefile_helper.InputFileManager, input_dir=temp_dir_path, input_type='fastq')
 
+    def test_get_files_to_concat_by_filename(self):
+        mock_input_paths_dict = {
+            'sample_1': [
+                '/path/to/sample_1_L001_R1.fastq.gz',
+                '/path/to/sample_1_L002_R1.fastq.gz'
+            ],
+            'sample_2': [
+                '/path/to/sample_2_R1.fastq.gz',
+                '/path/to/sample_2_R2.fastq.gz'
+            ],
+            'sample_3': [
+                '/path/to/sample_3_L001_R1.fastq',
+                '/path/to/sample_3_L002_R1.fastq',
+                '/path/to/sample_3_L001_R2.fastq',
+                '/path/to/sample_3_L002_R2.fastq'
+            ]
+        }
+        def __init__(self, input_dir, input_type):
+            self.input_dir = input_dir
+            self.input_type = input_type
+            self.input_paths_dict = mock_input_paths_dict
+
+        expected_1_1 = ['/path/to/sample_1_L001_R1.fastq.gz', '/path/to/sample_1_L002_R1.fastq.gz']
+        expected_2_1 = ['/path/to/sample_2_R1.fastq.gz']
+        expected_2_2 = ['/path/to/sample_2_R2.fastq.gz']
+        expected_3_1 = ['/path/to/sample_3_L001_R1.fastq', '/path/to/sample_3_L002_R1.fastq']
+        expected_3_2 = ['/path/to/sample_3_L001_R2.fastq', '/path/to/sample_3_L002_R2.fastq']
+
+        with mock.patch.object(rnaseq_snakefile_helper.InputFileManager, '__init__', __init__):
+            manager = rnaseq_snakefile_helper.InputFileManager(input_dir='foo', input_type='fastq')
+            actual_1_1 = manager.get_files_to_concat_by_filename(sample='sample_1', capture_group='1')
+            self.assertEqual(expected_1_1, actual_1_1)
+            actual_2_1 = manager.get_files_to_concat_by_filename(sample='sample_2', capture_group='1')
+            self.assertEqual(expected_2_1, actual_2_1)
+            actual_2_2 = manager.get_files_to_concat_by_filename(sample='sample_2', capture_group='2')
+            self.assertEqual(expected_2_2, actual_2_2)
+            actual_3_1 = manager.get_files_to_concat_by_filename(sample='sample_3', capture_group='1')
+            self.assertEqual(expected_3_1, actual_3_1)
+            actual_3_2 = manager.get_files_to_concat_by_filename(sample='sample_3', capture_group='2')
+            self.assertEqual(expected_3_2, actual_3_2)
+
+
     def test_get_basenames_dict_from_input_paths_dict_fastq(self):
         mock_input_paths_dict = {
             'sample_1': ['sample_1_R1.fastq.gz'],

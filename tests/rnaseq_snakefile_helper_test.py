@@ -205,11 +205,44 @@ class InputFileManagerTest(unittest.TestCase):
             'sample_2': ['sample_2_R1.fastq.gz', 'sample_2_R2.fastq.gz'],
             'sample_3': ['sample_3_R1.fastq', 'sample_3_R2.fastq']
         }
+        def __init__(self, input_dir, input_type):
+            self.input_dir = input_dir
+            self.input_type = input_type
+            self.input_paths_dict = mock_input_paths_dict
+
         expected = {'sample_1': ['sample_1_R1'],
                     'sample_2': ['sample_2_R1', 'sample_2_R2'],
                     'sample_3': ['sample_3_R1', 'sample_3_R2']
         }
 
+        with mock.patch.object(rnaseq_snakefile_helper.InputFileManager, '__init__', __init__):
+            manager = rnaseq_snakefile_helper.InputFileManager(input_dir='foo', input_type='fastq')
+            actual = manager.get_basenames_dict_from_input_paths_dict()
+            self.assertEqual(expected, actual)
+
+    def test_gather_basenames(self):
+        mock_input_paths_dict = {
+            'sample_1': ['sample_1_R1.fastq.gz'],
+            'sample_2': ['sample_2_R1.fastq.gz', 'sample_2_R2.fastq.gz'],
+            'sample_3': ['sample_3_R1.fastq', 'sample_3_R2.fastq']
+        }
+        def __init__(self, input_dir, input_type):
+            self.input_dir = input_dir
+            self.input_type = input_type
+            self.input_paths_dict = mock_input_paths_dict
+
+        expected = ['sample_1_R1', 'sample_2_R1', 'sample_2_R2', 'sample_3_R1', 'sample_3_R2']
+
+        with mock.patch.object(rnaseq_snakefile_helper.InputFileManager, '__init__', __init__):
+            manager = rnaseq_snakefile_helper.InputFileManager(input_dir='foo', input_type='fastq')
+            sample_list = ['sample_1', 'sample_2', 'sample_3']
+            actual = manager.gather_basenames(sample_list)
+            self.assertEqual(expected, actual)
+
+    def test_gather_basenames_error_if_missing_input(self):
+        mock_input_paths_dict = {
+            'sample_1': ['sample_1_R1.fastq.gz']
+        }
         def __init__(self, input_dir, input_type):
             self.input_dir = input_dir
             self.input_type = input_type
@@ -217,64 +250,24 @@ class InputFileManagerTest(unittest.TestCase):
 
         with mock.patch.object(rnaseq_snakefile_helper.InputFileManager, '__init__', __init__):
             manager = rnaseq_snakefile_helper.InputFileManager(input_dir='foo', input_type='fastq')
-            actual = manager.get_basenames_dict_from_input_paths_dict()
-            self.assertEqual(expected, actual)
+            sample_list = ['sample_1', 'sample_2', 'sample_3']
+            self.assertRaises(RuntimeError, manager.gather_basenames, sample_list)
 
-        # manager = rnaseq_snakefile_helper.InputFileManager(input_dir = temp_dir_path, input_type='fastq')
-        # self.assertEqual(expected, manager.get_basenames_dict_from_input_paths_dict())
+    def test_gather_basenames_warn_if_sample_excluded(self):
+        mock_input_paths_dict = {
+            'sample_1': ['sample_1_R1.fastq.gz'],
+            'sample_2': ['sample_2_R1.fastq.gz', 'sample_2_R2.fastq.gz'],
+            'sample_3': ['sample_3_R1.fastq', 'sample_3_R2.fastq']
+        }
+        def __init__(self, input_dir, input_type):
+            self.input_dir = input_dir
+            self.input_type = input_type
+            self.input_paths_dict = mock_input_paths_dict
 
-    # def test_get_readnums_from_sample_input_filenames(self):
-    #     with TempDirectory() as temp_dir:
-    #         temp_dir_path = temp_dir.path
-    #         sample_1_dir = os.path.join(temp_dir_path, 'sample_1')
-    #         os.mkdir(sample_1_dir)
-    #         sample_1_expected = [os.path.join(sample_1_dir, 'sample_1_R1.fastq.gz')]
-    #         for file in sample_1_expected:
-    #             temp_dir.write(file, b'foo')
-    #
-    #         sample_2_dir = os.path.join(temp_dir_path,'sample_2')
-    #         os.mkdir(sample_2_dir)
-    #         sample_2_expected = [os.path.join(sample_2_dir, "sample_2_R{}.fastq.gz".format(x)) for x in [1,2] ]
-    #         for file in sample_2_expected:
-    #             temp_dir.write(file, b'foo')
-    #
-    #         #sample 3 is not gzipped, other samples are
-    #         sample_3_dir = os.path.join(temp_dir_path, 'sample_3')
-    #         os.mkdir(sample_3_dir)
-    #         sample_3_expected = [os.path.join(sample_3_dir, "sample_3_R{}.fastq".format(x)) for x in [1,2] ]
-    #         for file in sample_3_expected:
-    #             temp_dir.write(file, b'foo')
-    #
-    #         manager = rnaseq_snakefile_helper.InputFileManager(input_dir = temp_dir_path, input_type='fastq')
-    #
-    #         expected_1 = {1: sample_1_expected[0]}
-    #         expected_2 = {1: sample_2_expected[0], 2: sample_2_expected[1]}
-    #         expected_3 = {1: sample_3_expected[0], 2: sample_3_expected[1]}
-    #
-    #         self.assertEqual(expected_1, manager.get_readnums_from_sample_input_filenames('sample_1'))
-    #         self.assertEqual(expected_2, manager.get_readnums_from_sample_input_filenames('sample_2'))
-    #         self.assertEqual(expected_3, manager.get_readnums_from_sample_input_filenames('sample_3'))
-    #
-    # def test_get_readnums_from_sample_input_filenames_error_regex_not_matching(self):
-    #     with TempDirectory() as temp_dir:
-    #         temp_dir_path = temp_dir.path
-    #         sample_1_dir = os.path.join(temp_dir_path, 'sample_1')
-    #         os.mkdir(sample_1_dir)
-    #         sample_1_file1 = os.path.join(sample_1_dir, 'sample_1_1.fastq.gz')
-    #         sample_1_file2 = os.path.join(sample_1_dir, 'sample_1_2.fastq.gz')
-    #         for file in [sample_1_file1, sample_1_file2]:
-    #             temp_dir.write(file, b'foo')
-    #
-    #         manager = rnaseq_snakefile_helper.InputFileManager(input_dir = temp_dir_path, input_type='fastq')
-    #
-    #         self.assertRaises(RuntimeError, manager.get_readnums_from_sample_input_filenames, 'sample_1')
-    #
-    #         #Messing around
-    #         from snakemake.io import expand
-    #         from nose.tools import set_trace; set_trace()
-    #         #TWS LEFT OFF HERE
-    #         manager.get_readnums_from_sample_input_filenames('sample_foo')
-
+        with mock.patch.object(rnaseq_snakefile_helper.InputFileManager, '__init__', __init__):
+            manager = rnaseq_snakefile_helper.InputFileManager(input_dir='foo', input_type='fastq')
+            sample_list = ['sample_1', 'sample_2']
+            self.assertWarns(Warning, manager.gather_basenames, sample_list)
 
 
 

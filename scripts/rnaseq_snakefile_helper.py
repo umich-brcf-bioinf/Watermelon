@@ -40,6 +40,20 @@ def _mkdir(newdir):
         if tail:
             os.mkdir(newdir)
 
+def _filter_dict_by_keys(dict_in, keep_keys):
+    all_keys = set(dict_in.keys())
+    keep_keys = set(keep_keys)
+    if keep_keys - all_keys:
+        #watermelon_init validation should ensure that this doesn't happen for samplesheet/input_dir discrepancies, but you never know...
+        msg_fmt = 'Some key(s) given but not found in dict:\n{}'
+        raise RuntimeError(msg_fmt.format(keep_keys - all_keys))
+    if all_keys - keep_keys:
+        msg_fmt = 'Filtering the following keys from dict:\n{}'
+        warnings.warn(msg_fmt.format(all_keys - keep_keys))
+    #Use dict comprehension to create filtered dict: https://stackoverflow.com/a/3420156
+    dict_out = {k: dict_in[k] for k in all_keys.intersection(keep_keys)}
+    return dict_out
+
 def init_references(config_references):
     def existing_link_target_is_different(link_name, link_path):
         original_abs_path = os.path.realpath(link_name)
@@ -178,8 +192,10 @@ class InputFileManager(object):
         else:
             return fastq_paths_dict
 
-    def get_basenames_dict_from_input_paths_dict(self):
-
+    def get_basenames_dict_from_input_paths_dict(self, sample_list=None):
+        '''Uses self.input_paths_dict and self.input_type to create a dictionary mapping samples to input file basenames e.g.
+        {'sample_1': ['sample_1_R1'], 'sample_2' : ['sample_2_R1', 'sample_2_R2']}.
+        Also uses optional sample list for filtering dict keys'''
         def basename_from_filepath(filepath, strip_suffix):
             filename = os.path.basename(filepath)
             bname = re.sub(strip_suffix, '', filename)
@@ -191,56 +207,19 @@ class InputFileManager(object):
         for sample, paths in self.input_paths_dict.items():
             basenames = [basename_from_filepath(x, strip_suffix) for x in paths]
             basenames_dict[sample] = basenames
+        if sample_list:
+            basenames_dict = _filter_dict_by_keys(basenames_dict, sample_list)
         return basenames_dict
 
     def gather_basenames(self, sample_list):
+        '''Gather a list of basenames from input_paths_dict, for all samples in sample_list'''
         basenames = []
-        basenames_dict = self.get_basenames_dict_from_input_paths_dict()
+        basenames_dict = self.get_basenames_dict_from_input_paths_dict(sample_list = sample_list)
 
-        samples_w_inputs = set(basenames_dict.keys())
-        samples_given = set(sample_list)
-        if samples_given - samples_w_inputs:
-            msg_fmt = 'Samples given in sample sheet but not found in input_paths_dict:\n{}'
-            raise runtimeError(msg_fmt.format(samples_given - samples_w_inputs))
-
-        # rm_samples = samples_w_inputs - samples_given
-        # for k in rm_samples: del
-
-
-
-    # def get_readnums_from_sample_input_filenames(self, sample, capture_regex=".*_R(\d+).*"):
-    #     ''' Uses filenames in input_paths_dict to get read number information for a given sample
-    #     Arguments:
-    #         sample: string - sample name
-    #         capture_regex: string - regular expression used to capture read number
-    #     Returns:
-    #         readnums -- Dict mapping read numbers (int) to input paths (str) for a given sample '''
-    #     try:
-    #         sample_input_files = self.input_paths_dict[sample]
-    #     except KeyError as e:
-    #         msg = 'Sample {} not found in input dictionary'.format(e)
-    #         raise KeyError(msg)
-    #
-    #     readnums = {}
-    #     for file in sample_input_files:
-    #         basename = os.path.basename(file)
-    #         rmatch = re.match(capture_regex, basename)
-    #         if not rmatch:
-    #             msg_fmt = 'File {} did not match regular expression {}. Cannot get read number information from filename.'
-    #             raise RuntimeError(msg_fmt.format(basename, capture_regex))
-    #         else:
-    #             readnum = rmatch.group(1)
-    #             try:
-    #                 readnum = int(readnum)
-    #             except:
-    #                 msg = '{} cannot be coerced to integer. Are you sure this is a read number?'.format(readnum)
-    #                 raise RuntimeError(msg)
-    #             readnums[readnum] = file
-    #     return readnums
-
-
-
-
+        #Gather basenames from filtered basenames_dict
+        for v in basenames_dict.values():
+            basenames.extend(v)
+        return sorted(basenames)
 
 
 def detect_paired_end_bool(fastqs):

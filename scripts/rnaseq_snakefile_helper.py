@@ -9,10 +9,12 @@ import csv
 from functools import partial
 import glob
 import hashlib
+import itertools
 import os
 from os.path import join
 from os.path import isfile
 import pandas as pd
+import re
 import sys
 import yaml
 import warnings
@@ -131,14 +133,12 @@ class InputFileManager(object):
     def __init__(self, input_dir, input_type='fastq'):
         self.input_dir = input_dir
         self.input_type = input_type
-        # if input_type == 'fastq':
-        #     self.input_files = self.get_fastq_paths_dict_from_input_dir
+        if input_type == 'fastq':
+            self.input_paths_dict = self._get_fastq_paths_dict_from_input_dir()
 
     def _get_sample_fastq_paths(self, sample_fastq_dir):
-        ''' Uses file glob to gather list of all .fastq or .fastq.gz files in a sample's fastq dir.
-        Raises an error if sample has mixed gzipped & plaintext fastqs
-        Arguments:
-        sample_fastq_dir -- Directory where a single sample's .fastq(.gz) files reside'''
+        #Uses file glob to gather list of all .fastq or .fastq.gz files in a sample's fastq dir.
+        #Raises an error if sample has mixed gzipped & plaintext fastqs
         fastq_glob = os.path.join(sample_fastq_dir, '*.fastq')
         fastq_gz_glob = os.path.join(sample_fastq_dir, '*.fastq.gz')
         fastqs = glob.glob(fastq_glob)
@@ -154,8 +154,9 @@ class InputFileManager(object):
         else:
             return None
 
-    def get_fastq_paths_dict_from_input_dir(self):
-        ''' Creates a dict of fastq paths {'sample': 'path/to/fastq'} from samples in input_dir '''
+    def _get_fastq_paths_dict_from_input_dir(self):
+        #Creates a dict of fastq paths {'sample1': ['path/to/sample1_R1.fastq', 'path/to/sample1_R2.fastq']} from samples in input_dir
+        #By calling _get_sample_fastq_paths for each subdir of self.input_dir
         input_dir = self.input_dir
         fastq_paths_dict = {}
         #Get list of subdirs
@@ -163,7 +164,7 @@ class InputFileManager(object):
         for d in potential_sample_dirs:
             fqs = self._get_sample_fastq_paths(os.path.join(input_dir, d))
             if fqs:
-                fastq_paths_dict[d] = fqs
+                fastq_paths_dict[d] = sorted(fqs)
             else:
                 msg = 'Sample directory {} did not contain .fastq or .fastq.gz files. Skipping'.format(
                     os.path.join(input_dir, d)
@@ -176,6 +177,69 @@ class InputFileManager(object):
             raise RuntimeError(msg)
         else:
             return fastq_paths_dict
+
+    def get_basenames_dict_from_input_paths_dict(self):
+
+        def basename_from_filepath(filepath, strip_suffix):
+            filename = os.path.basename(filepath)
+            bname = re.sub(strip_suffix, '', filename)
+            return bname
+
+        basenames_dict = {}
+        if self.input_type == 'fastq':
+            strip_suffix = r'\.fastq(?:\.gz)?$'
+        for sample, paths in self.input_paths_dict.items():
+            basenames = [basename_from_filepath(x, strip_suffix) for x in paths]
+            basenames_dict[sample] = basenames
+        return basenames_dict
+
+    def gather_basenames(self, sample_list):
+        basenames = []
+        basenames_dict = self.get_basenames_dict_from_input_paths_dict()
+
+        samples_w_inputs = set(basenames_dict.keys())
+        samples_given = set(sample_list)
+        if samples_given - samples_w_inputs:
+            msg_fmt = 'Samples given in sample sheet but not found in input_paths_dict:\n{}'
+            raise runtimeError(msg_fmt.format(samples_given - samples_w_inputs))
+
+        # rm_samples = samples_w_inputs - samples_given
+        # for k in rm_samples: del
+
+
+
+    # def get_readnums_from_sample_input_filenames(self, sample, capture_regex=".*_R(\d+).*"):
+    #     ''' Uses filenames in input_paths_dict to get read number information for a given sample
+    #     Arguments:
+    #         sample: string - sample name
+    #         capture_regex: string - regular expression used to capture read number
+    #     Returns:
+    #         readnums -- Dict mapping read numbers (int) to input paths (str) for a given sample '''
+    #     try:
+    #         sample_input_files = self.input_paths_dict[sample]
+    #     except KeyError as e:
+    #         msg = 'Sample {} not found in input dictionary'.format(e)
+    #         raise KeyError(msg)
+    #
+    #     readnums = {}
+    #     for file in sample_input_files:
+    #         basename = os.path.basename(file)
+    #         rmatch = re.match(capture_regex, basename)
+    #         if not rmatch:
+    #             msg_fmt = 'File {} did not match regular expression {}. Cannot get read number information from filename.'
+    #             raise RuntimeError(msg_fmt.format(basename, capture_regex))
+    #         else:
+    #             readnum = rmatch.group(1)
+    #             try:
+    #                 readnum = int(readnum)
+    #             except:
+    #                 msg = '{} cannot be coerced to integer. Are you sure this is a read number?'.format(readnum)
+    #                 raise RuntimeError(msg)
+    #             readnums[readnum] = file
+    #     return readnums
+
+
+
 
 
 

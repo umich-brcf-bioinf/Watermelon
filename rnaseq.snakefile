@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import, division
 
 from collections import defaultdict, OrderedDict
-from itertools import combinations, repeat
+from itertools import chain, combinations, repeat
 from shutil import copyfile
 import csv
 import logging
@@ -45,6 +45,8 @@ config[SAMPLES_KEY] = list(samplesheet.index)
 rnaseq_snakefile_helper.init_references(config["references"])
 
 SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(INPUT_DIR, config[SAMPLES_KEY])
+
+INPUT_MANAGER = rnaseq_snakefile_helper.InputFileManager(input_dir=INPUT_DIR, input_type='fastq')
 
 
 #Set up emailing functionality
@@ -115,22 +117,28 @@ onerror:
 #Set-up output targets
 if 'fastq_screen' in config:
     FASTQ_SCREEN_CONFIG = config['fastq_screen']
-    FASTQ_SCREEN_ALIGNMENT = [
-            rnaseq_snakefile_helper.expand_sample_read_endedness(\
-                ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
-                SAMPLE_READS),
-            rnaseq_snakefile_helper.expand_sample_read_endedness(\
-                ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
-                SAMPLE_READS)
-        ]
-    FASTQ_SCREEN_DELIVERABLES = [
-            rnaseq_snakefile_helper.expand_sample_read_endedness(
-                DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
-                SAMPLE_READS),
-            rnaseq_snakefile_helper.expand_sample_read_endedness(
-                DELIVERABLES_DIR + "alignment/fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
-                SAMPLE_READS),
-        ]
+    FASTQ_SCREEN_ALIGNMENT = expand(ALIGNMENT_DIR + "03-fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
+                                screen_type=['multi_species', 'biotype'],
+                                basename=list(chain.from_iterable(INPUT_MANAGER.create_sample_readnum_basenames(sample=x) for x in config[SAMPLES_KEY]))
+                            )
+            # rnaseq_snakefile_helper.expand_sample_read_endedness(\
+            #     ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
+            #     SAMPLE_READS),
+            # rnaseq_snakefile_helper.expand_sample_read_endedness(\
+            #     ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
+            #     SAMPLE_READS)
+    FASTQ_SCREEN_DELIVERABLES = expand(DELIVERABLES_DIR + "alignment/fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
+                                    screen_type=['multi_species', 'biotype'],
+                                    basename=list(chain.from_iterable(INPUT_MANAGER.create_sample_readnum_basenames(sample=x) for x in config[SAMPLES_KEY]))
+                                )
+        # [
+        #     rnaseq_snakefile_helper.expand_sample_read_endedness(
+        #         DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
+        #         SAMPLE_READS),
+        #     rnaseq_snakefile_helper.expand_sample_read_endedness(
+        #         DELIVERABLES_DIR + "alignment/fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
+        #         SAMPLE_READS),
+        # ]
 else:
     FASTQ_SCREEN_CONFIG = defaultdict(str)
     FASTQ_SCREEN_ALIGNMENT = []
@@ -177,21 +185,25 @@ DESeq2_ALL = [
 ]
 
 RSEM_ALL = [
-    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results', sample=config[SAMPLES_KEY]),
-    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results', sample=config[SAMPLES_KEY]),
-    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam', sample=config[SAMPLES_KEY]),
-    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam', sample=config[SAMPLES_KEY]),
+    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.{result_type}',
+        sample=config[SAMPLES_KEY],
+        result_type=['genes.results', 'isoforms.results', 'genome.bam', 'transcript.bam']
+    ),
     ALIGNMENT_DIR + "07-qc/alignment_qc.html",
     expand(ALIGNMENT_DIR + '06-annotate_combined_counts/{feature}_{metric}.annot.txt',
         feature=['gene','isoform'],
-        metric=['expected_count', 'FPKM', 'TPM'])
+        metric=['expected_count', 'FPKM', 'TPM']
+    )
 ]
 
 DELIVERABLES = [
     #align deliverables
-    rnaseq_snakefile_helper.expand_sample_read_endedness(
-        DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
-        SAMPLE_READS),
+    expand(DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{basename}_trimmed_fastqc.html",
+        basename=list(chain.from_iterable(INPUT_MANAGER.create_sample_readnum_basenames(sample=x) for x in config[SAMPLES_KEY]))
+    ),
+    # rnaseq_snakefile_helper.expand_sample_read_endedness(
+    #     DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
+    #     SAMPLE_READS),
     expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
         sample=config["samples"]),
     expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
@@ -237,10 +249,8 @@ include: 'rules/align_standardize_gz.smk'
 
 if "trimming_options" in config:
     include: 'rules/align_cutadapt_SE.smk'
-    include: 'rules/align_cutadapt_PE.smk'
 else:
     include: 'rules/align_pseudotrim_SE.smk'
-    include: 'rules/align_pseudotrim_PE.smk'
 
 include: 'rules/align_fastq_screen_biotype.smk'
 include: 'rules/align_fastq_screen_multi_species.smk'

@@ -1,8 +1,8 @@
 rule align_multiqc:
     input:
-        raw_read_fastq_files = rnaseq_snakefile_helper.expand_sample_read_endedness(\
-            ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",
-            SAMPLE_READS),
+        raw_read_fastqc_files = expand(ALIGNMENT_DIR + "03-fastqc_reads/{basename}_trimmed_fastqc.html",
+                                    basename=list(chain.from_iterable(INPUT_MANAGER.create_sample_readnum_basenames(sample=x) for x in config[SAMPLES_KEY]))
+                                ),
         align_summary_files = expand(ALIGNMENT_DIR + "04-rsem_star_align/{sample}.stat/{sample}.cnt",
                                      sample=config["samples"]),
         align_fastq_files = expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}.genome_fastqc.html",

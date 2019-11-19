@@ -1,18 +1,10 @@
 rule align_deliverables_fastq_screen:
     input:
-        rnaseq_snakefile_helper.expand_sample_read_endedness(\
-                ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
-                SAMPLE_READS),
-        rnaseq_snakefile_helper.expand_sample_read_endedness(\
-                ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
-                SAMPLE_READS),
+        rules.align_fastq_screen_biotype.output,
+        rules.align_fastq_screen_multi_species.output
     output:
-        rnaseq_snakefile_helper.expand_sample_read_endedness(
-                DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
-                SAMPLE_READS),
-        rnaseq_snakefile_helper.expand_sample_read_endedness(
-                DELIVERABLES_DIR + "alignment/fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
-                SAMPLE_READS),
+        DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/{sample}_R{read}_trimmed_screen.html",
+        DELIVERABLES_DIR + "alignment/fastq_screen/biotype/{sample}_R{read}_trimmed_screen.html"
     params:
         source_multi_species    =  ALIGNMENT_DIR + "03-fastq_screen/multi_species/",
         dest_multi_species    =  DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/",

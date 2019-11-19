@@ -1,10 +1,10 @@
 rule align_fastqc_trimmed_reads:
     input:
-        ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read_endedness}.fastq.gz"
+        ALIGNMENT_DIR + "02-cutadapt/{sample}_R{read}_trimmed.fastq.gz"
     output:
-        ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html"
+        ALIGNMENT_DIR + "03-fastqc_reads/{sample}_R{read}_trimmed_fastqc.html"
     log:
-        ALIGNMENT_DIR + "03-fastqc_reads/.log/{sample}_trimmed_{read_endedness}_fastqc.log"
+        ALIGNMENT_DIR + "03-fastqc_reads/.log/{sample}_R{read}_trimmed_fastqc.log"
     conda:
         'envs/fastqc.yaml'
     params:

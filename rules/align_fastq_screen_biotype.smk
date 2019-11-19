@@ -1,11 +1,11 @@
 rule align_fastq_screen_biotype:
     input:
-        ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read_endedness}.fastq.gz"
+        ALIGNMENT_DIR + "02-cutadapt/{sample}_R{read}_trimmed.fastq.gz"
     output:
-        ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
-        ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.txt",
+        ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_R{read}_trimmed_screen.html",
+        ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_R{read}_trimmed_screen.txt",
     log:
-        ALIGNMENT_DIR + "03-fastq_screen/biotype/.log/{sample}_trimmed_{read_endedness}_screen.log"
+        ALIGNMENT_DIR + "03-fastq_screen/biotype/.log/{sample}_R{read}_trimmed_screen.log"
     conda:
         'envs/fastq_screen.yaml'
     threads:

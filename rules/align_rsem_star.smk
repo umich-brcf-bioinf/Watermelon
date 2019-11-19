@@ -1,10 +1,9 @@
 
 rule align_rsem_star:
     input:
-        fastq_files = lambda wildcards: rnaseq_snakefile_helper.expand_sample_read_endedness(\
-                ALIGNMENT_DIR + "02-cutadapt/{sample}_trimmed_{read_endedness}.fastq.gz",
-                SAMPLE_READS,
-                wildcards.sample),
+        fastq_files = lambda wildcards: expand(ALIGNMENT_DIR + "02-cutadapt/{basename}_trimmed.fastq.gz",
+            basename=INPUT_MANAGER.create_sample_readnum_basenames(wildcards.sample)
+        ),
         #This portion determines if a new reference must be created
         genomeParameters = ALIGNMENT_DIR + '04-rsem_star_genome_generate/genomeParameters.txt'
     output:

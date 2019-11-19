@@ -119,7 +119,7 @@ if 'fastq_screen' in config:
     FASTQ_SCREEN_CONFIG = config['fastq_screen']
     FASTQ_SCREEN_ALIGNMENT = expand(ALIGNMENT_DIR + "03-fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
                                 screen_type=['multi_species', 'biotype'],
-                                basename=list(chain.from_iterable(INPUT_MANAGER.create_sample_readnum_basenames(sample=x) for x in config[SAMPLES_KEY]))
+                                basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
                             )
             # rnaseq_snakefile_helper.expand_sample_read_endedness(\
             #     ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
@@ -129,7 +129,7 @@ if 'fastq_screen' in config:
             #     SAMPLE_READS)
     FASTQ_SCREEN_DELIVERABLES = expand(DELIVERABLES_DIR + "alignment/fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
                                     screen_type=['multi_species', 'biotype'],
-                                    basename=list(chain.from_iterable(INPUT_MANAGER.create_sample_readnum_basenames(sample=x) for x in config[SAMPLES_KEY]))
+                                    basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
                                 )
         # [
         #     rnaseq_snakefile_helper.expand_sample_read_endedness(
@@ -199,7 +199,7 @@ RSEM_ALL = [
 DELIVERABLES = [
     #align deliverables
     expand(DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{basename}_trimmed_fastqc.html",
-        basename=list(chain.from_iterable(INPUT_MANAGER.create_sample_readnum_basenames(sample=x) for x in config[SAMPLES_KEY]))
+        basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
     ),
     # rnaseq_snakefile_helper.expand_sample_read_endedness(
     #     DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",

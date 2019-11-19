@@ -2,7 +2,7 @@ rule align_deliverables_alignment:
     input:
         #fastqc reads
         expand(ALIGNMENT_DIR + "03-fastqc_reads/{basename}_trimmed_fastqc.html",
-            basename=list(chain.from_iterable(INPUT_MANAGER.create_sample_readnum_basenames(sample=x) for x in config[SAMPLES_KEY]))
+            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
         ),
         # rnaseq_snakefile_helper.expand_sample_read_endedness(
         #         ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",
@@ -19,7 +19,7 @@ rule align_deliverables_alignment:
 
     output:
         expand(DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{basename}_trimmed_fastqc.html",
-            basename=list(chain.from_iterable(INPUT_MANAGER.create_sample_readnum_basenames(sample=x) for x in config[SAMPLES_KEY]))
+            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
         ),
         # rnaseq_snakefile_helper.expand_sample_read_endedness(
         #         DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",

@@ -194,10 +194,10 @@ class InputFileManager(object):
 
     def get_files_to_concat_by_filename(self, sample, capture_group, capture_regex=".*_R(\d+)\.fastq.*"):
         ''' Uses filenames in input_paths_dict, to get grouping information for each sample's input files,
-        (for instance grouping by read number) and returns a list of input files to concatenate based on that grouping.
+        (default grouping by read number in fastq file) and returns a list of input files to concatenate based on that grouping
         Arguments:
             sample: string - sample name
-            capture_group: string - the group to gather for concatenation (e.g. read 1)
+            capture_group: string - the group to gather for concatenation (e.g. '1' if capturing R1)
             capture_regex: string - regular expression used to capture group information
         Returns:
             cat_these: list of input files to concatenate '''
@@ -220,7 +220,38 @@ class InputFileManager(object):
             if captured == capture_group:
                 cat_these.append(file)
 
+        if not cat_these:
+            msg_fmt = 'No files in {} matched capture group {}. This sample / grouping will be skipped'
+            warnings.warn(msg_fmt.format(sample_input_files, capture_group))
         return cat_these
+
+    def create_sample_readnum_basenames(self, sample, capture_regex=".*_R(\d+)\.fastq.*"):
+        ''' Uses filenames in input_paths_dict, to get grouping information for a sample's input files,
+        Then creates a list of file basenames like {sample}_R{readnum} for a given sample.
+        Arguments:
+            sample: string - sample name
+            capture_regex: string - regular expression used to capture group information
+        Returns:
+            bnames: list - list of names of the form ['sample_1_R1', 'sample_1_R2'] '''
+        try:
+            sample_input_files = self.input_paths_dict[sample]
+        except KeyError as e:
+            msg = 'Sample {} not found in input dictionary'.format(e)
+            raise KeyError(msg)
+
+        captured_groups = set()
+        for file in sample_input_files:
+            basename = os.path.basename(file)
+            rmatch = re.match(capture_regex, basename)
+            if not rmatch:
+                msg_fmt = 'File {} did not match regular expression {}. Cannot capture grouping information from filename.'
+                raise RuntimeError(msg_fmt.format(basename, capture_regex))
+            else:
+                captured = rmatch.group(1)
+                captured_groups.add(captured)
+
+        basenames = ['{}_R{}'.format(sample, readnum) for readnum in captured_groups]
+        return sorted(basenames)
 
     def get_basenames_dict_from_input_paths_dict(self, sample_list=None):
         '''Uses self.input_paths_dict and self.input_type to create a dictionary mapping samples to input file basenames e.g.

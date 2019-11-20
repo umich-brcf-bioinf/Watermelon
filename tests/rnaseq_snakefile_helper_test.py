@@ -313,174 +313,175 @@ class InputFileManagerTest(unittest.TestCase):
             self.assertRaises(RuntimeError, manager.gather_basenames, sample_list)
 
 
-class RnaseqSnakefileHelperTest(unittest.TestCase):
-
-    def test_get_sample_reads(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-            rnaseq_snakefile_helper._mkdir(sample_0_dir)
-            temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
-            sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
-            rnaseq_snakefile_helper._mkdir(sample_1_dir)
-            temp_dir.write(sample_1_dir + '02_R1.fastq.gz', b'foo')
-            temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
-            samples = ['sample_0', 'sample_1']
-
-            actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
-        self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R1_PE', 'R2_PE']},
-                         actual_sample_reads)
-
-    def test_get_sample_reads_onlyConsiderR1R2(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-            rnaseq_snakefile_helper._mkdir(sample_0_dir)
-            temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
-            temp_dir.write(sample_0_dir + '01_R5.fastq.gz', b'foo')
-            sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
-            rnaseq_snakefile_helper._mkdir(sample_1_dir)
-            temp_dir.write(sample_1_dir + '02_R1.fastq.gz', b'foo')
-            temp_dir.write(sample_1_dir + '02_R9.fastq.gz', b'foo')
-            samples = ['sample_0', 'sample_1']
-
-            actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
-        self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R1_SE']},
-                         actual_sample_reads)
-
-    def test_get_sample_reads_okIfR2PresentButR1Missing(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-            rnaseq_snakefile_helper._mkdir(sample_0_dir)
-            temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
-            sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
-            rnaseq_snakefile_helper._mkdir(sample_1_dir)
-            temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
-            samples = ['sample_0', 'sample_1']
-
-            actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
-        self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R2_SE']},
-                         actual_sample_reads)
-
-    def test_get_sample_reads_considersFastqOrFastqGz(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-            rnaseq_snakefile_helper._mkdir(sample_0_dir)
-            temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
-            sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
-            rnaseq_snakefile_helper._mkdir(sample_1_dir)
-            temp_dir.write(sample_1_dir + '02_R1.fastq', b'foo')
-            samples = ['sample_0', 'sample_1']
-
-            actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
-        self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R1_SE']},
-                         actual_sample_reads)
-
-    def test_get_sample_reads_missingReads(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-            rnaseq_snakefile_helper._mkdir(sample_0_dir)
-            temp_dir.write(sample_0_dir + '01_RX.fastq.gz', b'foo')
-            samples = ['sample_0']
-
-            actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
-        self.assertEqual({'sample_0': []},
-                         actual_sample_reads)
-
-    def test_get_sample_reads_ignoresFilesThatDoNotEndWithFastq(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-            rnaseq_snakefile_helper._mkdir(sample_0_dir)
-            temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
-            temp_dir.write(sample_0_dir + '01_R2.foo', b'foo')
-            temp_dir.write(sample_0_dir + '01_R2.fasta', b'foo')
-            temp_dir.write(sample_0_dir + '01_R2', b'foo')
-            temp_dir.write(sample_0_dir + 'fastq.01_R2', b'foo')
-            samples = ['sample_0']
-
-            actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
-        self.assertEqual({'sample_0': ['R1_SE']},
-                         actual_sample_reads)
-
-    def test_flattened_sample_reads(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-            rnaseq_snakefile_helper._mkdir(sample_0_dir)
-            temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
-            sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
-            rnaseq_snakefile_helper._mkdir(sample_1_dir)
-            temp_dir.write(sample_1_dir + '02_R1.fastq.gz', b'foo')
-            temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
-            samples = ['sample_0', 'sample_1']
-
-            actual_sample_reads = rnaseq_snakefile_helper.flattened_sample_reads(temp_dir_path, samples)
-        self.assertEqual([('sample_0', 'R1_SE'), ('sample_1', 'R1_PE'), ('sample_1', 'R2_PE')],
-                         actual_sample_reads)
-
-    def test_expand_sample_read_endedness_all(self):
-        sample_read_endedness_format = 's={sample}|re={read_endedness}'
-        all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
-                                      ('s2', 'R1_SE'),
-                                      ('s3', 'R1_PE'), ('s3', 'R2_PE')]
-        actual = rnaseq_snakefile_helper.expand_sample_read_endedness(sample_read_endedness_format,
-                                                                      all_flattened_sample_reads)
-        expected = ['s=s1|re=R1_PE', 's=s1|re=R2_PE',
-                    's=s2|re=R1_SE',
-                    's=s3|re=R1_PE', 's=s3|re=R2_PE']
-        self.assertEqual(expected, actual)
-
-    def test_expand_sample_read_endedness_singleSample(self):
-        sample_read_endedness_format = 's={sample}|re={read_endedness}'
-        all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
-                                      ('s2', 'R1_SE'),
-                                      ('s3', 'R1_PE'), ('s3', 'R2_PE')]
-        actual = rnaseq_snakefile_helper.expand_sample_read_endedness(sample_read_endedness_format,
-                                                                      all_flattened_sample_reads,
-                                                                      's3')
-        expected = ['s=s3|re=R1_PE', 's=s3|re=R2_PE']
-        self.assertEqual(expected, actual)
-
-    def test_expand_sample_read_endedness_none(self):
-        sample_read_endedness_format = 's={sample}|re={read_endedness}'
-        all_flattened_sample_reads = []
-        actual = rnaseq_snakefile_helper.expand_sample_read_endedness(sample_read_endedness_format,
-                                                                      all_flattened_sample_reads)
-        self.assertEqual([], actual)
-
-    def test_expand_read_stats_if_paired(self):
-        filename_format = 's={sample}'
-        all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
-                                      ('s2', 'R1_SE')]
-        sample = 's1'
-        actual = rnaseq_snakefile_helper.expand_read_stats_if_paired(\
-                filename_format,
-                all_flattened_sample_reads,
-                sample)
-        self.assertEqual(['s=s1'], actual)
-
-    def test_expand_read_stats_if_paired_emptyIfSingle(self):
-        filename_format = 's={sample}'
-        all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
-                                      ('s2', 'R1_SE')]
-        sample = 's2'
-        actual = rnaseq_snakefile_helper.expand_read_stats_if_paired(\
-                filename_format,
-                all_flattened_sample_reads,
-                sample)
-        self.assertEqual([], actual)
-
-    def test_expand_read_stats_if_paired_emptyIfMissing(self):
-        filename_format = 's={sample}'
-        all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
-                                      ('s2', 'R1_SE')]
-        sample = 's3'
-        actual = rnaseq_snakefile_helper.expand_read_stats_if_paired(\
-                filename_format,
-                all_flattened_sample_reads,
-                sample)
-        self.assertEqual([], actual)
+# FIXME: Revive any of these?
+# class RnaseqSnakefileHelperTest(unittest.TestCase):
+#
+#     def test_get_sample_reads(self):
+#         with TempDirectory() as temp_dir:
+#             temp_dir_path = temp_dir.path
+#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
+#             temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
+#             sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
+#             rnaseq_snakefile_helper._mkdir(sample_1_dir)
+#             temp_dir.write(sample_1_dir + '02_R1.fastq.gz', b'foo')
+#             temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
+#             samples = ['sample_0', 'sample_1']
+#
+#             actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
+#         self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R1_PE', 'R2_PE']},
+#                          actual_sample_reads)
+#
+#     def test_get_sample_reads_onlyConsiderR1R2(self):
+#         with TempDirectory() as temp_dir:
+#             temp_dir_path = temp_dir.path
+#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
+#             temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
+#             temp_dir.write(sample_0_dir + '01_R5.fastq.gz', b'foo')
+#             sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
+#             rnaseq_snakefile_helper._mkdir(sample_1_dir)
+#             temp_dir.write(sample_1_dir + '02_R1.fastq.gz', b'foo')
+#             temp_dir.write(sample_1_dir + '02_R9.fastq.gz', b'foo')
+#             samples = ['sample_0', 'sample_1']
+#
+#             actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
+#         self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R1_SE']},
+#                          actual_sample_reads)
+#
+#     def test_get_sample_reads_okIfR2PresentButR1Missing(self):
+#         with TempDirectory() as temp_dir:
+#             temp_dir_path = temp_dir.path
+#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
+#             temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
+#             sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
+#             rnaseq_snakefile_helper._mkdir(sample_1_dir)
+#             temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
+#             samples = ['sample_0', 'sample_1']
+#
+#             actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
+#         self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R2_SE']},
+#                          actual_sample_reads)
+#
+#     def test_get_sample_reads_considersFastqOrFastqGz(self):
+#         with TempDirectory() as temp_dir:
+#             temp_dir_path = temp_dir.path
+#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
+#             temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
+#             sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
+#             rnaseq_snakefile_helper._mkdir(sample_1_dir)
+#             temp_dir.write(sample_1_dir + '02_R1.fastq', b'foo')
+#             samples = ['sample_0', 'sample_1']
+#
+#             actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
+#         self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R1_SE']},
+#                          actual_sample_reads)
+#
+#     def test_get_sample_reads_missingReads(self):
+#         with TempDirectory() as temp_dir:
+#             temp_dir_path = temp_dir.path
+#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
+#             temp_dir.write(sample_0_dir + '01_RX.fastq.gz', b'foo')
+#             samples = ['sample_0']
+#
+#             actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
+#         self.assertEqual({'sample_0': []},
+#                          actual_sample_reads)
+#
+#     def test_get_sample_reads_ignoresFilesThatDoNotEndWithFastq(self):
+#         with TempDirectory() as temp_dir:
+#             temp_dir_path = temp_dir.path
+#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
+#             temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
+#             temp_dir.write(sample_0_dir + '01_R2.foo', b'foo')
+#             temp_dir.write(sample_0_dir + '01_R2.fasta', b'foo')
+#             temp_dir.write(sample_0_dir + '01_R2', b'foo')
+#             temp_dir.write(sample_0_dir + 'fastq.01_R2', b'foo')
+#             samples = ['sample_0']
+#
+#             actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
+#         self.assertEqual({'sample_0': ['R1_SE']},
+#                          actual_sample_reads)
+#
+#     def test_flattened_sample_reads(self):
+#         with TempDirectory() as temp_dir:
+#             temp_dir_path = temp_dir.path
+#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
+#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
+#             temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
+#             sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
+#             rnaseq_snakefile_helper._mkdir(sample_1_dir)
+#             temp_dir.write(sample_1_dir + '02_R1.fastq.gz', b'foo')
+#             temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
+#             samples = ['sample_0', 'sample_1']
+#
+#             actual_sample_reads = rnaseq_snakefile_helper.flattened_sample_reads(temp_dir_path, samples)
+#         self.assertEqual([('sample_0', 'R1_SE'), ('sample_1', 'R1_PE'), ('sample_1', 'R2_PE')],
+#                          actual_sample_reads)
+#
+#     def test_expand_sample_read_endedness_all(self):
+#         sample_read_endedness_format = 's={sample}|re={read_endedness}'
+#         all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
+#                                       ('s2', 'R1_SE'),
+#                                       ('s3', 'R1_PE'), ('s3', 'R2_PE')]
+#         actual = rnaseq_snakefile_helper.expand_sample_read_endedness(sample_read_endedness_format,
+#                                                                       all_flattened_sample_reads)
+#         expected = ['s=s1|re=R1_PE', 's=s1|re=R2_PE',
+#                     's=s2|re=R1_SE',
+#                     's=s3|re=R1_PE', 's=s3|re=R2_PE']
+#         self.assertEqual(expected, actual)
+#
+#     def test_expand_sample_read_endedness_singleSample(self):
+#         sample_read_endedness_format = 's={sample}|re={read_endedness}'
+#         all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
+#                                       ('s2', 'R1_SE'),
+#                                       ('s3', 'R1_PE'), ('s3', 'R2_PE')]
+#         actual = rnaseq_snakefile_helper.expand_sample_read_endedness(sample_read_endedness_format,
+#                                                                       all_flattened_sample_reads,
+#                                                                       's3')
+#         expected = ['s=s3|re=R1_PE', 's=s3|re=R2_PE']
+#         self.assertEqual(expected, actual)
+#
+#     def test_expand_sample_read_endedness_none(self):
+#         sample_read_endedness_format = 's={sample}|re={read_endedness}'
+#         all_flattened_sample_reads = []
+#         actual = rnaseq_snakefile_helper.expand_sample_read_endedness(sample_read_endedness_format,
+#                                                                       all_flattened_sample_reads)
+#         self.assertEqual([], actual)
+#
+#     def test_expand_read_stats_if_paired(self):
+#         filename_format = 's={sample}'
+#         all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
+#                                       ('s2', 'R1_SE')]
+#         sample = 's1'
+#         actual = rnaseq_snakefile_helper.expand_read_stats_if_paired(\
+#                 filename_format,
+#                 all_flattened_sample_reads,
+#                 sample)
+#         self.assertEqual(['s=s1'], actual)
+#
+#     def test_expand_read_stats_if_paired_emptyIfSingle(self):
+#         filename_format = 's={sample}'
+#         all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
+#                                       ('s2', 'R1_SE')]
+#         sample = 's2'
+#         actual = rnaseq_snakefile_helper.expand_read_stats_if_paired(\
+#                 filename_format,
+#                 all_flattened_sample_reads,
+#                 sample)
+#         self.assertEqual([], actual)
+#
+#     def test_expand_read_stats_if_paired_emptyIfMissing(self):
+#         filename_format = 's={sample}'
+#         all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
+#                                       ('s2', 'R1_SE')]
+#         sample = 's3'
+#         actual = rnaseq_snakefile_helper.expand_read_stats_if_paired(\
+#                 filename_format,
+#                 all_flattened_sample_reads,
+#                 sample)
+#         self.assertEqual([], actual)

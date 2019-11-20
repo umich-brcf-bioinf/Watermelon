@@ -265,43 +265,6 @@ def detect_paired_end_bool(fastqs):
         msg_format = 'Found {} fastqs ({}); expected either 1 or 2 fastq files/sample'
         raise ValueError(msg_format.format(len(fastqs), ','.join(fastqs)))
 
-def _get_sample_reads(fastq_base_dir, samples):
-    sample_reads = {}
-    read_suffix = {0: "", 1:"_SE", 2:"_PE"}
-    is_fastq = lambda fn: fn.endswith('.fastq') or fn.endswith('.fastq.gz')
-    for sample in samples:
-        found_reads = []
-        for read in ['R1', 'R2']:
-            sample_dir = join(fastq_base_dir, sample, '')
-            read_present = list(filter(is_fastq, glob.glob(sample_dir + '*_{}*'.format(read))))
-            if read_present:
-                found_reads.append(read)
-        found_reads = list(map(lambda x: x+read_suffix[len(found_reads)], found_reads))
-        sample_reads[sample] = found_reads
-    return sample_reads
-
-def flattened_sample_reads(fastq_base_dir, samples):
-    sample_reads = _get_sample_reads(fastq_base_dir, samples)
-    return sorted([(sample,read) for (sample,reads) in sample_reads.items() for read in reads])
-
-def expand_sample_read_endedness(sample_read_endedness_format,
-                                 all_flattened_sample_reads,
-                                 sample=None):
-    if not all_flattened_sample_reads:
-        return []
-    samples, reads = zip(*[(s, r) for s, r in all_flattened_sample_reads if not sample or s == sample])
-    return workflow.expand(sample_read_endedness_format,
-                           zip,
-                           sample=samples,
-                           read_endedness=reads)
-
-def expand_read_stats_if_paired(read_stats_filename_format,
-                                flattened_sample_reads,
-                                sample):
-    result = []
-    if len([s for s,r in flattened_sample_reads if s == sample]) > 1:
-        result.append(read_stats_filename_format.format(sample=sample))
-    return result
 
 def diffex_models(diffex_config):
     not_factors = ['adjustedPValue', 'linear_fold_change', 'count_min_cutoff']

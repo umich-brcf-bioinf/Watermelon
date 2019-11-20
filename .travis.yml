@@ -16,7 +16,7 @@ install:
     # Useful for debugging any issues with conda
     - conda info -a
 
-    - conda create -f ${TRAVIS_BUILD_DIR}/envs/watermelon_test.yaml
+    - conda env create -f ${TRAVIS_BUILD_DIR}/envs/watermelon_test.yaml
 
 before_script:
     - conda activate watermelon_test

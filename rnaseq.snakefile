@@ -229,9 +229,9 @@ include: 'rules/align_concat_reads.smk'
 include: 'rules/align_standardize_gz.smk'
 
 if "trimming_options" in config:
-    include: 'rules/align_cutadapt_SE.smk'
+    include: 'rules/align_cutadapt.smk'
 else:
-    include: 'rules/align_pseudotrim_SE.smk'
+    include: 'rules/align_pseudotrim.smk'
 
 include: 'rules/align_fastq_screen_biotype.smk'
 include: 'rules/align_fastq_screen_multi_species.smk'

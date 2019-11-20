@@ -22,7 +22,7 @@ before_script:
     - conda activate watermelon_test
 
 script:
-    - nosetests --exclude=cutadapt --exclude=concat_reads --exclude=genome_references_exist --exclude=mutt_version --exclude=dryrun_passes
+    - nosetests --exclude=cutadapt --exclude=concat_reads --exclude=genomes_references_exist --exclude=mutt_version --exclude=dryrun_passes
 
 notifications:
     email:

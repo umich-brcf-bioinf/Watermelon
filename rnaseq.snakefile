@@ -44,8 +44,6 @@ config[SAMPLES_KEY] = list(samplesheet.index)
 
 rnaseq_snakefile_helper.init_references(config["references"])
 
-SAMPLE_READS = rnaseq_snakefile_helper.flattened_sample_reads(INPUT_DIR, config[SAMPLES_KEY])
-
 INPUT_MANAGER = rnaseq_snakefile_helper.InputFileManager(input_dir=INPUT_DIR, input_type='fastq')
 
 
@@ -121,24 +119,10 @@ if 'fastq_screen' in config:
                                 screen_type=['multi_species', 'biotype'],
                                 basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
                             )
-            # rnaseq_snakefile_helper.expand_sample_read_endedness(\
-            #     ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
-            #     SAMPLE_READS),
-            # rnaseq_snakefile_helper.expand_sample_read_endedness(\
-            #     ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
-            #     SAMPLE_READS)
     FASTQ_SCREEN_DELIVERABLES = expand(DELIVERABLES_DIR + "alignment/fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
                                     screen_type=['multi_species', 'biotype'],
                                     basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
                                 )
-        # [
-        #     rnaseq_snakefile_helper.expand_sample_read_endedness(
-        #         DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/{sample}_trimmed_{read_endedness}_screen.html",
-        #         SAMPLE_READS),
-        #     rnaseq_snakefile_helper.expand_sample_read_endedness(
-        #         DELIVERABLES_DIR + "alignment/fastq_screen/biotype/{sample}_trimmed_{read_endedness}_screen.html",
-        #         SAMPLE_READS),
-        # ]
 else:
     FASTQ_SCREEN_CONFIG = defaultdict(str)
     FASTQ_SCREEN_ALIGNMENT = []
@@ -201,9 +185,6 @@ DELIVERABLES = [
     expand(DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{basename}_trimmed_fastqc.html",
         basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
     ),
-    # rnaseq_snakefile_helper.expand_sample_read_endedness(
-    #     DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
-    #     SAMPLE_READS),
     expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
         sample=config["samples"]),
     expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",

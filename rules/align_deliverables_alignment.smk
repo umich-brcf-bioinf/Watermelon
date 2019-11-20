@@ -4,10 +4,6 @@ rule align_deliverables_alignment:
         expand(ALIGNMENT_DIR + "03-fastqc_reads/{basename}_trimmed_fastqc.html",
             basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
         ),
-        # rnaseq_snakefile_helper.expand_sample_read_endedness(
-        #         ALIGNMENT_DIR + "03-fastqc_reads/{sample}_trimmed_{read_endedness}_fastqc.html",
-        #         SAMPLE_READS),
-        #fastqc aligned
         expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}.genome_fastqc.html",
                 sample=config["samples"]),
         #combined count matrices (gene-level only for now)
@@ -21,9 +17,6 @@ rule align_deliverables_alignment:
         expand(DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{basename}_trimmed_fastqc.html",
             basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
         ),
-        # rnaseq_snakefile_helper.expand_sample_read_endedness(
-        #         DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{sample}_trimmed_{read_endedness}_fastqc.html",
-        #         SAMPLE_READS),
         expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
                 sample=config["samples"]),
         expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",

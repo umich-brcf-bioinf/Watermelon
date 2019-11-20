@@ -246,25 +246,6 @@ class InputFileManager(object):
         bnames_dict = {key: inner_work(key, self.input_paths_dict[key]) for key in self.input_paths_dict}
         return bnames_dict
 
-    # def get_basenames_dict_from_input_paths_dict(self, sample_list=None):
-    #     '''Uses self.input_paths_dict and self.input_type to create a dictionary mapping samples to input file basenames e.g.
-    #     {'sample_1': ['sample_1_R1'], 'sample_2' : ['sample_2_R1', 'sample_2_R2']}.
-    #     Also uses optional sample list for filtering dict keys'''
-    #     def basename_from_filepath(filepath, strip_suffix):
-    #         filename = os.path.basename(filepath)
-    #         bname = re.sub(strip_suffix, '', filename)
-    #         return bname
-    #
-    #     basenames_dict = {}
-    #     if self.input_type == 'fastq':
-    #         strip_suffix = r'\.fastq(?:\.gz)?$'
-    #     for sample, paths in self.input_paths_dict.items():
-    #         basenames = [basename_from_filepath(x, strip_suffix) for x in paths]
-    #         basenames_dict[sample] = basenames
-    #     if sample_list:
-    #         basenames_dict = _filter_dict_by_keys(basenames_dict, sample_list)
-    #     return basenames_dict
-
     def gather_basenames(self, sample_list):
         '''Gather a list of basenames from sample_bnames_dict, for all samples in sample_list'''
         basenames = []

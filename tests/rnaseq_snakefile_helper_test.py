@@ -220,6 +220,8 @@ class InputFileManagerTest(unittest.TestCase):
             self.input_dir = input_dir
             self.input_type = input_type
             self.input_paths_dict = mock_input_paths_dict
+
+            # Specifically testing the _fastqs_to_concat_from_filenames method here
             self.fastqs_to_concat_dict = self._fastqs_to_concat_from_filenames(capture_regex=r'.*_R(\d+)\.fastq.*')
 
         expected = {

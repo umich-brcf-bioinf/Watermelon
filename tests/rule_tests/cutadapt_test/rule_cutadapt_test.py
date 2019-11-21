@@ -75,6 +75,7 @@ class CutadaptTest(unittest.TestCase):
         source_expected_dir = os.path.join(TEST_DIR, 'end_trim', 'expected')
         #Replace values from the example config with these
         replacement_vals = {
+            'input_type': 'test',
             'dirs': {
                 'input': '',
                 'alignment_output': 'alignment_results'
@@ -90,11 +91,14 @@ class CutadaptTest(unittest.TestCase):
             }
         }
         snakemake_flags = ('--force '
-                          'alignment_results/02-cutadapt/Sample_0_trimmed_R1_SE.fastq.gz '
-                          'alignment_results/02-cutadapt/Sample_1_trimmed_R1_SE.fastq.gz '
-                          'alignment_results/02-cutadapt/Sample_2_trimmed_R1_PE.fastq.gz '
-                          'alignment_results/02-cutadapt/Sample_2_trimmed_R2_PE.fastq.gz '
-                          'alignment_results/02-cutadapt/Sample_3_trimmed_R2_SE.fastq.gz')
+                          'alignment_results/02-cutadapt/Sample_0_R1_trimmed.fastq.gz '
+                          'alignment_results/02-cutadapt/Sample_1_R1_trimmed.fastq.gz '
+                          'alignment_results/02-cutadapt/Sample_2_R1_trimmed.fastq.gz '
+                          'alignment_results/02-cutadapt/Sample_2_trimmed_R2.fastq.gz '
+                          'alignment_results/02-cutadapt/Sample_3_trimmed_R2.fastq.gz '
+                          '--omit-from '
+                          'align_concat_reads'
+                          )
         anomalies =  self._snakemake(source_expected_dir,
                                      source_working_dir,
                                      snakemake_flags,
@@ -124,8 +128,8 @@ class CutadaptTest(unittest.TestCase):
             }
         }
         snakemake_flags = ('--force '
-                          'alignment_results/02-cutadapt/Sample_0_trimmed_R1_SE.fastq.gz '
-                          'alignment_results/02-cutadapt/Sample_1_trimmed_R1_SE.fastq.gz ')
+                          'alignment_results/02-cutadapt/Sample_0_R1_trimmed.fastq.gz '
+                          'alignment_results/02-cutadapt/Sample_1_R1_trimmed.fastq.gz ')
         anomalies =  self._snakemake(source_expected_dir,
                                      source_working_dir,
                                      snakemake_flags,
@@ -152,8 +156,8 @@ class CutadaptTest(unittest.TestCase):
     #     #Remove trimming_options from the config
     #     rm_keys = ['trimming_options']
     #     snakemake_flags = ('--force '
-    #                       'alignment_results/02-cutadapt/Sample_0_trimmed_R1_SE.fastq.gz '
-    #                       'alignment_results/02-cutadapt/Sample_1_trimmed_R1_SE.fastq.gz ')
+    #                       'alignment_results/02-cutadapt/Sample_0_R1_trimmed.fastq.gz '
+    #                       'alignment_results/02-cutadapt/Sample_1_R1_trimmed.fastq.gz ')
     #     anomalies =  self._snakemake(source_expected_dir,
     #                                  source_working_dir,
     #                                  snakemake_flags,
@@ -181,8 +185,8 @@ class CutadaptTest(unittest.TestCase):
             }
         }
         snakemake_flags = ('--force '
-                          'alignment_results/02-cutadapt/Sample_0_trimmed_R1_SE.fastq.gz '
-                          'alignment_results/02-cutadapt/Sample_1_trimmed_R1_SE.fastq.gz ')
+                          'alignment_results/02-cutadapt/Sample_0_R1_trimmed.fastq.gz '
+                          'alignment_results/02-cutadapt/Sample_1_R1_trimmed.fastq.gz ')
         anomalies =  self._snakemake(source_expected_dir,
                                      source_working_dir,
                                      snakemake_flags,

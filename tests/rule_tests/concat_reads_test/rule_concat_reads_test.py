@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import
 import filecmp
 from glob import glob
+import io
 import os
 import shutil
 import subprocess
@@ -39,7 +40,9 @@ class ConcatReadsTest(unittest.TestCase):
             os.chdir(tmp_actual_dir)
             #Create modified config in this temp dir, using example config and replacing values as needed
             new_input = os.path.join(tmp_actual_dir, 'inputs', '00-multiplexed_reads')
+            samplesheet_path = os.path.join(source_working_dir, 'test_samplesheet.csv')
             replacement_vals = {
+                'sample_description_file' : samplesheet_path,
                 'dirs': {
                     'input': new_input,
                     'alignment_output': 'alignment_results'

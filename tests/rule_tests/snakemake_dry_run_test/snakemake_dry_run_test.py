@@ -21,7 +21,7 @@ class SnakemakeDryRunTest(unittest.TestCase):
     def test_dryrun_passes(self):
         with TempDirectory() as temp_dir:
             os.chdir(temp_dir.path)
-            command_fmt = 'snakemake --snakefile {} --configfile {} -n {} --config skip_validation=True'
+            command_fmt = 'snakemake --snakefile {} --configfile {} -n --config skip_validation=True {}'
             command = command_fmt.format(SNAKEFILE_PATH, EXAMPLE_CONFIGFILE_PATH, REDIRECT_OUTPUT)
             print(command)
             try:

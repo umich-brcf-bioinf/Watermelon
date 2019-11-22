@@ -43,13 +43,13 @@ diffex:
     model_one:
         #Several contrasts of the form testVal_v_referenceVal are listed.
         contrasts:
-        -   case_v_control
+        -   drug_v_control
         DESeq2:
             #The design is used when initializing the dataset. Note that this is design is
             #currently not used when generating the normalized count tables
-            design: ~ group
+            design: ~ treatment
             #The factor name is used within the diffex Rscripts. See results notes below
-            factor_name: group
+            factor_name: treatment
             #The following parameters are directly parsed by R
             #and used within the call to DESeq2().
             #The imported DESeq2Dataset is passed by default and isn't listed here.

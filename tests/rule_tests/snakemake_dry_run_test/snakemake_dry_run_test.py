@@ -44,8 +44,7 @@ class SnakemakeDryRunTest(unittest.TestCase):
             }
 
             #Create modified config in this temp dir, using example config and replacing values as needed
-            #configfile_path = os.path.join(temp_dir.path, 'testcase_config.yaml')
-            configfile_path = os.path.join('/tmp', 'testcase_config.yaml')
+            configfile_path = os.path.join(temp_dir.path, 'testcase_config.yaml')
             testing_utils.create_modified_config(EXAMPLE_CONFIGFILE_PATH, configfile_path, config_replacement_vals)
 
             command_fmt = 'snakemake --snakefile {} --configfile {} -n --config skip_validation=True {}'

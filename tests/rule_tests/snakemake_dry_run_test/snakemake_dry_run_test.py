@@ -1,8 +1,10 @@
 import os
+import shutil
 import subprocess
 import unittest
 
 from testfixtures import TempDirectory
+from tests import testing_utils #local module
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 WATERMELON_BASE_DIR = os.path.abspath(os.path.join(TEST_DIR, '..', '..', '..'))
@@ -21,8 +23,28 @@ class SnakemakeDryRunTest(unittest.TestCase):
     def test_dryrun_passes(self):
         with TempDirectory() as temp_dir:
             os.chdir(temp_dir.path)
+
+            example_data_dir = os.path.join(WATERMELON_BASE_DIR, 'data')
+            tmp_data_dir = os.path.join(temp_dir.path, 'data')
+            shutil.copytree(example_data_dir, tmp_data_dir)
+
+            config_replacement_vals = {
+                'dirs': {'input' : os.path.join(tmp_data_dir, 'sim_reads_human_chr22')},
+                'references': {
+                    'fasta' : os.path.join(tmp_data_dir, 'Homo_sapiens.GRCh38.98.chr22.gtf.gz'), # These just need to exist for dry-run
+                    'gtf' : os.path.join(tmp_data_dir, 'Homo_sapiens.GRCh38.dna_sm.chr22.fa.gz') # For real-deal, unzip them first
+                },
+                'email' : {
+                    'to': 'nobody'
+                },
+            }
+
+            #Create modified config in this temp dir, using example config and replacing values as needed
+            configfile_path = os.path.join(temp_dir.path, 'testcase_config.yaml')
+            testing_utils.create_modified_config(EXAMPLE_CONFIGFILE_PATH, configfile_path, config_replacement_vals)
+
             command_fmt = 'snakemake --snakefile {} --configfile {} -n --config skip_validation=True {}'
-            command = command_fmt.format(SNAKEFILE_PATH, EXAMPLE_CONFIGFILE_PATH, REDIRECT_OUTPUT)
+            command = command_fmt.format(SNAKEFILE_PATH, configfile_path, REDIRECT_OUTPUT)
             print(command)
             try:
                 #return code only available from subprocess.check_output if non-zero (raises CalledProcessError)

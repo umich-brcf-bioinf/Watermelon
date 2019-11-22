@@ -4,6 +4,7 @@ python:
 branches:
     only:
         - master
+        - develop
 install:
     # https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/use-conda-with-travis-ci.html
     - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
@@ -21,7 +22,7 @@ before_script:
     - conda activate watermelon_test
 
 script:
-    - nosetests --exclude=cutadapt --exclude=concat_reads --exclude=genomes_references_exist --exclude=mutt_version --exclude=dryrun_passes
+    - nosetests --exclude=cutadapt --exclude=concat_reads --exclude=genomes_references_exist --exclude=mutt_version
 
 notifications:
     email:

@@ -36,7 +36,8 @@ class SnakemakeDryRunTest(unittest.TestCase):
                 'dirs': {'input' : os.path.join(tmp_data_dir, 'sim_reads_human_chr22')},
                 'references': {
                     'fasta' : os.path.join(tmp_data_dir, 'Homo_sapiens.GRCh38.98.chr22.gtf.gz'), # These just need to exist for dry-run
-                    'gtf' : os.path.join(tmp_data_dir, 'Homo_sapiens.GRCh38.dna_sm.chr22.fa.gz') # For real-deal, unzip them first & point to non-gz
+                    'gtf' : os.path.join(tmp_data_dir, 'Homo_sapiens.GRCh38.dna_sm.chr22.fa.gz'), # For real-deal, unzip them first
+                    'annotation_tsv' : os.path.join(tmp_data_dir, 'Homo_sapiens.GRCh38.98_annotation.tsv.gz') # then point to those non-gz files
                 },
                 'email' : {
                     'to': 'nobody'

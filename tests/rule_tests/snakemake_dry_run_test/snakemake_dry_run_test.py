@@ -11,7 +11,7 @@ WATERMELON_BASE_DIR = os.path.abspath(os.path.join(TEST_DIR, '..', '..', '..'))
 SNAKEFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'rnaseq.snakefile')
 EXAMPLE_CONFIGFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'config', 'example_config.yaml')
 DEBUG = 'WATERMELON_DEBUG' in os.environ
-REDIRECT_OUTPUT = ' ' if DEBUG else ' 2>/dev/null '
+REDIRECT_OUTPUT = ' ' #if DEBUG else ' 2>/dev/null '
 
 class SnakemakeDryRunTest(unittest.TestCase):
     def setUp(self):
@@ -60,6 +60,8 @@ class SnakemakeDryRunTest(unittest.TestCase):
                 dryrun_line = lines.pop()
             except subprocess.CalledProcessError as e:
                 return_code = e.returncode
+                output = e.output.decode()
+                print(output)
 
         self.assertEqual(0, return_code)
         self.assertRegex(dryrun_line, 'This was a dry-run')

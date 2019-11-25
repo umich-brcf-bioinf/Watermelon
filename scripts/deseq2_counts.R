@@ -29,7 +29,7 @@ named.filepaths.from.dir <- function(rsem.dir, file.extension) {
 # Main
 
 # Get phenotype matrix
-sample.info.file = snakemake@config[['sample_description_file']]
+sample.info.file = snakemake@config[['samplesheet']]
 pdata = read.csv(sample.info.file, comment.char = "#")
 
 # Import data

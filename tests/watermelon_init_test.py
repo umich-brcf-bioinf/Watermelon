@@ -441,7 +441,7 @@ fastq_screen:
         actual_config = watermelon_init._make_config_dict(template_config,
                                                           genome_references,
                                                           args)
-        expected_keys = ['dirs', 'email', 'fastq_screen', 'sample_description_file', 'watermelon_version',
+        expected_keys = ['dirs', 'email', 'fastq_screen', 'samplesheet', 'watermelon_version',
                          'foo1', 'foo2',
                          'genome', 'references']
         self.assertEquals(sorted(expected_keys), sorted(actual_config.keys()))

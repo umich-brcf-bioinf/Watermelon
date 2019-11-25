@@ -408,7 +408,7 @@ def _make_config_dict(template_config, genome_references, args):
     # Watermelon version
     config["watermelon_version"] = WAT_VER
     # Samplesheet
-    config["sample_description_file"] = os.path.abspath(args.sample_sheet)
+    config["samplesheet"] = os.path.abspath(args.sample_sheet)
     # Genome / references
     _dict_merge(config, genome_references)
     # Email params
@@ -417,10 +417,10 @@ def _make_config_dict(template_config, genome_references, args):
         "to": getpass.getuser() + "@umich.edu",
     }
     # Reorder these added keys (move to top)
-    # resulting order: email, watermelon_version, sample_description_file, genome, references, template_config stuff
+    # resulting order: email, watermelon_version, samplesheet, genome, references, template_config stuff
     config.move_to_end("references", last=False)
     config.move_to_end("genome", last=False)
-    config.move_to_end("sample_description_file", last=False)
+    config.move_to_end("samplesheet", last=False)
     config.move_to_end("watermelon_version", last=False)
     config.move_to_end("email", last=False)
 

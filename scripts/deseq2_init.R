@@ -21,7 +21,7 @@ model_name = snakemake@wildcards[['model_name']]
 design = snakemake@config[['diffex']][[model_name]][['DESeq2']][['design']]
 deseq2.params = snakemake@config[['diffex']][[model_name]][['DESeq2']][['DESeq2']]
 # Get phenotype matrix
-sample.info.file = snakemake@config[['sample_description_file']]
+sample.info.file = snakemake@config[['samplesheet']]
 pdata = read.csv(sample.info.file, comment.char = "#")
 
 # Load count data (imported in previous rule via tximport to variable txi.rsem.gene.results)

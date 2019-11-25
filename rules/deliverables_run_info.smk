@@ -6,11 +6,11 @@ rule deliverables_run_info:
     input:
         envs = glob.glob(os.path.join(WORKFLOW_BASEDIR, 'rules', 'envs', '*.yaml')),
         conf = CONFIGFILE_PATH,
-        samplesheet = config['sample_description_file']
+        samplesheet = config['samplesheet']
     output:
         versions = DELIVERABLES_DIR + "run_info/env_software_versions.yaml",
         conf = DELIVERABLES_DIR + "run_info/" + os.path.basename(CONFIGFILE_PATH),
-        samplesheet = DELIVERABLES_DIR + "run_info/" + os.path.basename(config['sample_description_file'])
+        samplesheet = DELIVERABLES_DIR + "run_info/" + os.path.basename(config['samplesheet'])
     run:
         def transform_dict(env_dict):
             new_dict = {}

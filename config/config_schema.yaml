@@ -5,7 +5,7 @@ type: object
 properties:
     genome:
         type: string
-    sample_description_file:
+    samplesheet:
         type: string
         pattern: 'csv$'
     dirs:
@@ -61,7 +61,7 @@ properties:
 
 required:
     - genome
-    - sample_description_file
+    - samplesheet
     - dirs
     - references
     - alignment_options

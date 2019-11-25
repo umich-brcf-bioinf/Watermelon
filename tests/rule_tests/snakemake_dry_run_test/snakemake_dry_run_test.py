@@ -32,7 +32,7 @@ class SnakemakeDryRunTest(unittest.TestCase):
             shutil.copyfile(os.path.join(WATERMELON_BASE_DIR, 'config', 'example_samplesheet.csv'), 'samplesheet.csv')
 
             config_replacement_vals = {
-                'sample_description_file': os.path.join(temp_dir.path, 'samplesheet.csv'),
+                'samplesheet': os.path.join(temp_dir.path, 'samplesheet.csv'),
                 'dirs': {'input' : os.path.join(tmp_data_dir, 'sim_reads_human_chr22')},
                 'references': {
                     'fasta' : os.path.join(tmp_data_dir, 'Homo_sapiens.GRCh38.98.chr22.gtf.gz'), # These just need to exist for dry-run

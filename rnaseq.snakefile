@@ -32,7 +32,7 @@ CONFIG_SCHEMA_PATH = os.path.join(workflow.basedir, 'config', 'config_schema.yam
 SAMPLES_KEY = 'samples'
 
 #Load in samplesheet
-samplesheet = pd.read_csv(config["sample_description_file"], comment='#').set_index("sample", drop=True)
+samplesheet = pd.read_csv(config["samplesheet"], comment='#').set_index("sample", drop=True)
 
 PHENOTYPES = (list(samplesheet.columns))
 
@@ -217,7 +217,7 @@ DELIVERABLES = [
     #run info deliverables
     DELIVERABLES_DIR + "run_info/env_software_versions.yaml",
     DELIVERABLES_DIR + "run_info/" + os.path.basename(CONFIGFILE_PATH),
-    DELIVERABLES_DIR + "run_info/" + os.path.basename(config['sample_description_file'])
+    DELIVERABLES_DIR + "run_info/" + os.path.basename(config['samplesheet'])
 ]
 
 

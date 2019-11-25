@@ -133,7 +133,7 @@ class _ConfigValidator(object):
         self.config = config
         self.schema_filename = schema_filename
         try:
-            self.samplesheet = pd.read_csv(config['sample_description_file'], comment='#')
+            self.samplesheet = pd.read_csv(config['samplesheet'], comment='#')
         except:
             print('problem reading samplesheet')
         self.contrasts = _DESeq2_factor_contrasts(config['diffex'])

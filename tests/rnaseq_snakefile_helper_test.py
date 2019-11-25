@@ -50,7 +50,7 @@ class PhenotypeManagerTest(unittest.TestCase):
         #Use stringIO to create in-memory stream from lines - this is file-like-object readable by pandas
         test_samplesheet = io.StringIO(lines)
         #Feed it to the PhenotypeManager
-        config = {'sample_description_file' : test_samplesheet}
+        config = {'samplesheet' : test_samplesheet}
         manager = rnaseq_snakefile_helper.PhenotypeManager(config)
 
         actual_dict = manager.phenotype_sample_list
@@ -73,7 +73,7 @@ class PhenotypeManagerTest(unittest.TestCase):
         #Use stringIO to create in-memory stream from lines - this is file-like-object readable by pandas
         test_samplesheet = io.StringIO(lines)
         #Feed it to the PhenotypeManager
-        config = {'sample_description_file' : test_samplesheet}
+        config = {'samplesheet' : test_samplesheet}
         manager = rnaseq_snakefile_helper.PhenotypeManager(config)
 
         actual_dict = manager.phenotype_sample_list
@@ -96,7 +96,7 @@ class PhenotypeManagerTest(unittest.TestCase):
         #Use stringIO to create in-memory stream from lines - this is file-like-object readable by pandas
         test_samplesheet = io.StringIO(lines)
         #Feed it to the PhenotypeManager, pandas should raise ParserError
-        config = {'sample_description_file' : test_samplesheet}
+        config = {'samplesheet' : test_samplesheet}
         self.assertRaises(ParserError,
                     rnaseq_snakefile_helper.PhenotypeManager,
                     config)
@@ -114,7 +114,7 @@ class PhenotypeManagerTest(unittest.TestCase):
         #Use stringIO to create in-memory stream from lines - this is file-like-object readable by pandas
         test_samplesheet = io.StringIO(lines)
         #Feed it to the PhenotypeManager
-        config = {'sample_description_file' : test_samplesheet}
+        config = {'samplesheet' : test_samplesheet}
         manager = rnaseq_snakefile_helper.PhenotypeManager(config)
 
         actual = manager.phenotypes_with_replicates

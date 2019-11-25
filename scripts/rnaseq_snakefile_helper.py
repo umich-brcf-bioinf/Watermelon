@@ -82,7 +82,7 @@ class PhenotypeManager(object):
     samples map to phenotype labels and values and vice versa.'''
     def __init__(self,
                  config={}):
-        self.samplesheet = pd.read_csv(config["sample_description_file"], comment='#', keep_default_na=False).set_index("sample", drop=True)
+        self.samplesheet = pd.read_csv(config["samplesheet"], comment='#', keep_default_na=False).set_index("sample", drop=True)
         #sample_phenotype_value_dict : {sample : { pheno_label: pheno_value } }
         self.sample_phenotype_value_dict = self.samplesheet.to_dict(orient='index')
 

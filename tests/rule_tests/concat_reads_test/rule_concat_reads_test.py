@@ -42,7 +42,7 @@ class ConcatReadsTest(unittest.TestCase):
             new_input = os.path.join(tmp_actual_dir, 'inputs', '00-multiplexed_reads')
             samplesheet_path = os.path.join(source_working_dir, 'test_samplesheet.csv')
             replacement_vals = {
-                'sample_description_file' : samplesheet_path,
+                'samplesheet' : samplesheet_path,
                 'dirs': {
                     'input': new_input,
                     'alignment_output': 'alignment_results'

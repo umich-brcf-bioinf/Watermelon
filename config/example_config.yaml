@@ -10,7 +10,7 @@ email:
     subject: watermelon_20191114_human
     to: trsaari@umich.edu
 watermelon_version: 1.2.0
-sample_description_file: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20191023_testing_simulated_data/samplesheet.csv
+samplesheet: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20191023_testing_simulated_data/samplesheet.csv
 genome: GRCh38
 references:
     fasta: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa

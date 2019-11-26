@@ -309,6 +309,8 @@ if('bg_data' %in% ls()) {
 
     pdata = data.frame(colData(rld))
     colnames(pdata)[1] = 'sample'
+    #These are the strings we want. If sample names are 001, 002, etc, they are carried forward this way
+    pdata$sample = rownames(pdata)
 
     mat = as.matrix(assay(rld))
 

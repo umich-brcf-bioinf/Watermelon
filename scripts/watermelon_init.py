@@ -102,7 +102,7 @@ class _CommandValidator(object):
             raise _InputValidationError(msg)
 
         try:
-            samplesheet = pd.read_csv(sheet_file, comment='#').set_index(args.x_sample_column, drop=True)
+            samplesheet = pd.read_csv(sheet_file, comment='#', dtype='object').set_index(args.x_sample_column, drop=True)
         except KeyError:
             msg = "The sample sheet must have a column labeled '{}'".format(args.x_sample_column)
             raise _InputValidationError(msg)

@@ -7,7 +7,7 @@ from testfixtures import TempDirectory
 from tests import testing_utils #local module
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
-WATERMELON_BASE_DIR = os.path.abspath(os.path.join(TEST_DIR, '..', '..', '..'))
+WATERMELON_BASE_DIR = os.path.abspath(os.path.join(TEST_DIR, '..'))
 SNAKEFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'rnaseq.snakefile')
 EXAMPLE_CONFIGFILE_PATH = os.path.join(WATERMELON_BASE_DIR, 'config', 'example_config.yaml')
 DEBUG = 'WATERMELON_DEBUG' in os.environ

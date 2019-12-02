@@ -1,7 +1,7 @@
 '''Combines the count/FPKM/TPM from individual sample outputs into one matrix'''
 import argparse
 from glob import glob
-from os.path import commonprefix, commonpath
+from os.path import commonprefix, basename
 import re
 import sys
 
@@ -17,10 +17,9 @@ def _commonsuffix(strings):
 def _build_sample_files(file_glob):
     sample_files = []
     file_names = glob(file_glob)
-    prefix = commonpath(file_names)
     suffix = _commonsuffix(file_names)
     for file_name in sorted(file_names):
-        sample_name = file_name.lstrip(prefix).rstrip(suffix)
+        sample_name = basename(file_name).replace(suffix, '')
         sample_files.append((sample_name, file_name))
     return sample_files
 
@@ -72,7 +71,6 @@ def main(argv):
 
     new=pd.DataFrame(df[args.id_columns+[merge_column]])
     new.rename(columns={merge_column:name},inplace=True)
-
     for (name, file) in sample_files:
         df=pd.read_csv(file, sep='\t')
         name = name + '|' + merge_column

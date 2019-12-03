@@ -17,15 +17,17 @@ REDIRECT_OUTPUT = ' ' #if DEBUG else ' 2>/dev/null '
 class SnakemakeExampleDataTest(unittest.TestCase):
     def setUp(self):
         self.original_wd = os.getcwd()
-        self.addTypeEqualityFunc(pd.DataFrame, self.assertDataframeEqual)
+        self.addTypeEqualityFunc(pd.DataFrame, self.assertDataframeEqualEnough)
 
     def tearDown(self):
         os.chdir(self.original_wd)
 
-    def assertDataframeEqual(self, a, b, msg, **kwargs):
+    def assertDataframeEqualEnough(self, a, b, msg):
         #https://stackoverflow.com/a/54344148
+        # allows us to use pandas testing.assert_frame_equal within unittest.testcase
+        # Note using check_exact=False
         try:
-            pd.testing.assert_frame_equal(a, b, **kwargs)
+            pd.testing.assert_frame_equal(a, b, check_exact=False)
         except AssertionError as e:
             raise self.failureException(msg) from e
 
@@ -108,9 +110,11 @@ class SnakemakeExampleDataTest(unittest.TestCase):
                 },
             }
 
+            rm_keys = ['fastq_screen']
+
             #Create modified config in this temp dir, using example config and replacing values as needed
             configfile_path = os.path.join(temp_dir.path, 'testcase_config.yaml')
-            testing_utils.create_modified_config(EXAMPLE_CONFIGFILE_PATH, configfile_path, config_replacement_vals)
+            testing_utils.create_modified_config(EXAMPLE_CONFIGFILE_PATH, configfile_path, config_replacement_vals, rm_keys)
 
             # FIXME: This won't work with CI - however, without it will take ages to build the env(s)
             conda_prefix = '/nfs/med-bfx-common/pipelines/Watermelon/Watermelon-seedless/envs/built' # FIXME: This won't work with CI - however, without it will take ages to build the env(s)
@@ -121,31 +125,62 @@ class SnakemakeExampleDataTest(unittest.TestCase):
             command = command_fmt.format(conda_prefix, SNAKEFILE_PATH, configfile_path, REDIRECT_OUTPUT)
             print(command)
 
-            try:
-                return_code = subprocess.check_call(command)
-            except subprocess.CalledProcessError as e:
-                return_code = e.returncode
+            return_code = subprocess.call(command, shell=True)
 
-            # from nose.tools import set_trace; set_trace()
+            # from nose.tools import set_trace; set_trace() # TWS DEBUG
 
-        self.assertEqual(0, return_code)
+            self.assertEqual(0, return_code)
 
-        #Things to check:
-        # counts tables - FPKM, TPM (deliverables)
-        # deliv_FPKM = os.path.join(temp_dir.path, 'analysis_test', 'deliverables', 'counts', 'gene_FPKM.annot.txt')
-        # pd.read_csv()
-        # annotated counts tables - (alignment_results)
-        # deseq2 counts tables (deliverables)
-        deseq2_raw_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'deliverables', 'counts', 'deseq2_raw_counts.txt')
-        deseq2_raw_actual = pd.read_csv(deseq2_raw_actual_path, sep="\t")
-        deseq2_raw_expected_path = os.path.join(tmp_data_dir, 'expected_results_files', 'deseq2_raw_counts.txt')
-        deseq2_raw_expected = pd.read_csv(deseq2_raw_expected_path, sep="\t")
-        self.assertEqual(deseq2_raw_expected, deseq2_raw_actual)
-        # gene lists (deliverables, txt?)
+            #Things to check:
+            # un-annotated rsem counts tables - FPKM, TPM (alignment_results)
+            gene_FPKM_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'alignment_results', '05-combine_counts', 'gene_FPKM.txt')
+            gene_FPKM_actual = pd.read_csv(gene_FPKM_actual_path, sep="\t")
+            gene_FPKM_expected_path = os.path.join(tmp_data_dir, 'expected_results_files', 'gene_FPKM.txt')
+            gene_FPKM_expected = pd.read_csv(gene_FPKM_expected_path, sep="\t")
 
-    def test_foobar(self):
-        deseq2_raw_expected_path = os.path.join(WATERMELON_BASE_DIR, 'data', 'expected_results_files', 'deseq2_raw_counts.txt')
-        deseq2_raw_expected1 = pd.read_csv(deseq2_raw_expected_path, sep="\t")
-        deseq2_raw_expected2 = pd.read_csv(deseq2_raw_expected_path, sep="\t")
+            gene_TPM_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'alignment_results', '05-combine_counts', 'gene_TPM.txt')
+            gene_TPM_actual = pd.read_csv(gene_TPM_actual_path, sep="\t")
+            gene_TPM_expected_path = os.path.join(tmp_data_dir, 'expected_results_files', 'gene_TPM.txt')
+            gene_TPM_expected = pd.read_csv(gene_TPM_expected_path, sep="\t")
 
-        self.assertEqual(deseq2_raw_expected1, deseq2_raw_expected2, check_exact=False)
+            self.assertEqual(gene_FPKM_expected, gene_FPKM_actual)
+            self.assertEqual(gene_TPM_expected, gene_TPM_actual)
+
+            # deseq2 counts tables (deliverables)
+            deseq2_raw_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'deliverables', 'counts', 'deseq2_raw_counts.txt')
+            deseq2_raw_actual = pd.read_csv(deseq2_raw_actual_path, sep="\t")
+            deseq2_raw_expected_path = os.path.join(tmp_data_dir, 'expected_results_files', 'deseq2_raw_counts.txt')
+            deseq2_raw_expected = pd.read_csv(deseq2_raw_expected_path, sep="\t")
+
+            deseq2_rlog_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'deliverables', 'counts', 'deseq2_rlog_normalized_counts.txt')
+            deseq2_rlog_actual = pd.read_csv(deseq2_rlog_actual_path, sep="\t")
+            deseq2_rlog_expected_path = os.path.join(tmp_data_dir, 'expected_results_files', 'deseq2_rlog_normalized_counts.txt')
+            deseq2_rlog_expected = pd.read_csv(deseq2_rlog_expected_path, sep="\t")
+
+            deseq2_depthnorm_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'deliverables', 'counts', 'deseq2_depth_normalized_counts.txt')
+            deseq2_depthnorm_actual = pd.read_csv(deseq2_depthnorm_actual_path, sep="\t")
+            deseq2_depthnorm_expected_path = os.path.join(tmp_data_dir, 'expected_results_files', 'deseq2_depth_normalized_counts.txt')
+            deseq2_depthnorm_expected = pd.read_csv(deseq2_depthnorm_expected_path, sep="\t")
+
+            self.assertEqual(deseq2_raw_expected, deseq2_raw_actual)
+            self.assertEqual(deseq2_rlog_expected, deseq2_rlog_actual)
+            self.assertEqual(deseq2_depthnorm_expected, deseq2_depthnorm_actual)
+
+            # gene lists (deliverables, txt)
+            gene_list_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'deliverables', 'deseq2', 'gene_lists', 'model_one', 'drug_v_control.annot.txt')
+            gene_list_actual = pd.read_csv(gene_list_actual_path, sep="\t")
+            gene_list_expected_path = os.path.join(tmp_data_dir, 'expected_results_files', 'drug_v_control.annot.txt')
+            gene_list_expected = pd.read_csv(gene_list_expected_path, sep="\t")
+
+            self.assertEqual(gene_list_expected, gene_list_actual)
+
+
+    # def test_foobar(self):
+    #     # Note assertEqual for pd.DataFrames use check_exact=False (see addTypeEqualityFunc above)
+    #     deseq2_raw_expected_path = os.path.join(WATERMELON_BASE_DIR, 'data', 'expected_results_files', 'deseq2_rlog_normalized_counts.txt')
+    #     deseq2_raw_expected1 = pd.read_csv(deseq2_raw_expected_path, sep="\t")
+    #     # Introduce a rouding difference
+    #     deseq2_raw_expected1.at[0, 'sample_01'] = 8.2412823749 # Changed from 8.24128237490834
+    #     deseq2_raw_expected2 = pd.read_csv(deseq2_raw_expected_path, sep="\t")
+    #     from nose.tools import set_trace; set_trace()
+    #     self.assertEqual(deseq2_raw_expected1, deseq2_raw_expected2)

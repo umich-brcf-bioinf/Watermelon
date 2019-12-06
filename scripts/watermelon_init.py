@@ -35,6 +35,7 @@ import functools
 import getpass
 import itertools
 import os
+import re
 import ruamel_yaml
 import shutil
 import subprocess
@@ -408,7 +409,11 @@ def _make_config_dict(template_config, genome_references, args):
     # Watermelon version
     config["watermelon_version"] = WAT_VER
     # Samplesheet
-    config["samplesheet"] = os.path.abspath(args.sample_sheet)
+    samplesheet_path = os.path.abspath(args.sample_sheet)
+    samplesheet_path = re.sub('/ccmb/BioinfCore/ActiveProjects/', '/nfs/med-bfx-activeprojects/', samplesheet_path) #TODO: Can remove this line after comp5/6 mounts are fixed
+
+    config["samplesheet"] = samplesheet_path
+
     # Genome / references
     _dict_merge(config, genome_references)
     # Email params
@@ -607,6 +612,8 @@ def _parse_command_line_args(sys_argv):
     )
 
     args = parser.parse_args(sys_argv)
+
+    args.x_working_dir = re.sub('/ccmb/BioinfCore/ActiveProjects/', '/nfs/med-bfx-activeprojects/', args.x_working_dir) #TODO: Can remove this line after comp5/6 mounts are fixed
 
     realpath = functools.partial(os.path.join, args.x_working_dir)
     args.config_file = "config{}.yaml".format(args.job_suffix)

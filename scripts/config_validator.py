@@ -17,7 +17,7 @@ from . import __version__ as WAT_VER
 _HEADER_RULE = '=' * 70 + '\n'
 _SECTION_RULE = '-' * 70 + '\n'
 
-_LEGAL_NAME_REGEX = r'^[A-Za-z][A-Za-z0-9\-_\.]*$'
+_LEGAL_NAME_REGEX = r'^[A-Za-z][A-Za-z0-9_\.]*$'
 _RESERVED_NAMES = set(['T', 'F', 'NAN'])
 
 
@@ -331,7 +331,7 @@ class _ConfigValidator(object):
         bad_labels = sorted(set(['<blank>' if v=='' else v for v in bad_labels]))
         if bad_labels:
             msg_fmt = ('[phenotypes] labels must begin with a letter and can contain '
-                       'only (A-Za-z0-9-_.); review/revise these labels [{}]')
+                       'only (A-Za-z0-9_.); review/revise these labels [{}]')
             raise _WatermelonConfigFailure(msg_fmt, ', '.join(bad_labels))
 
     def _check_phenotype_labels_reserved_name(self):

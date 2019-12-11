@@ -40,7 +40,7 @@ To achieve this one-time, execute the following. For permanent effect, place the
 
 ## Getting Started - Conda environment
 
-The watermelon conda environment has all of the required software to start the pipeline - i.e. to run watermelon_init and snakemake. This environment is unlikely to change frequently, and so will only need to be rebuilt at a maximum of once per release. After the environment is built, it can be activated in any time it needs to be used.
+The watermelon conda environment has all of the required software to start the pipeline. This environment is unlikely to change frequently, and so will only need to be rebuilt at a maximum of once per release. After the environment is built, it can be activated whenever you want to run the pipeline, and later deactivated when it is no longer needed.
 Note: If you don't already have anaconda3/miniconda3, then I'd recommend installing miniconda3 - [Link to conda installation instructions](https://conda.io/projects/conda/en/latest/user-guide/install/index.html)
 
 There is a .yaml file in this repo which can be used to build the watermelon conda environment
@@ -56,22 +56,37 @@ After the conda environment is created, you can activate it with
 
     conda activate watermelon
 
-It can be deactivated later with
+This environment provides the basic software requirements to run watermelon_init and snakemake. It can be deactivated later with
 
     conda deactivate
 
-## Simple Example - Synthetic reads from this repo
+## Walkthrough - Example w/ simulated reads
+
+This repository contains a set of simulated paired-end read data which will be used for this example. The provided example configuration file and samplesheet used here are set up for this data for simplicity.
 
 The first step is to run watermelon_init, which will set up the analysis in project directory where you invoke it.
 
 To do this, you will need:
 
-* sample sheet - e.g. config/example_samplesheet.csv
-* genome build e.g. GRCh38
-* job suffix e.g. _20190821
+* sample sheet
+  * e.g. config/example_samplesheet.csv
+  * must have column labeled `sample` with sample IDs
+  * optional additional columns with phenotype or other sample info for diffex
+* genome build
+  * e.g. GRCh38
+  * Available genomes `GRCh38, GRCh37, GRCm38, NCBIM37, Rnor_6.0, GRCz11, BDGP6, WBcel235`
+  * These are ENSEMBL reference IDs. [Table of equivalent UCSC IDs](doc/Equivalence_UCSC_ENSEMBL.md)
+* job suffix
+  * e.g. `_20190821`
+  * Suffix will be applied to config name and analysis results dir
 * paths to sample directories with fastq files
+  * e.g. `/path/to/Watermelon/data/sim_reads_human_chr22`
+  * Path given on command line must point to a directory containing subdirectories with names matching samples in samplesheet
+  * Fastq files for a sample will reside in the appropriately named subdirectory
+  * Fastq files must have `_R1.fastq[.gz]` or `_R2.fastq[.gz]` in their filenames
 
-Here's an example (Note: replace /path/to/ with an actual valid path)
+
+Here's an example of running waterlemon_init (Note: replace /path/to/Watermelon with an actual valid path)
 
     # Create a project directory & navigate there
     mkdir ~/watermelon_example_project
@@ -98,7 +113,7 @@ These same directions should also be found in the watermelon.README file generat
     screen -S watermelon{job_suffix}
     # Activate the conda environment:
     conda activate watermelon
-    # To validate the config and check the execution plan:
+    # Dry-run to validate the config and check the execution plan:
     snakemake --dryrun --printshellcmds --configfile {config_file} --snakefile Watermelon/rnaseq.snakefile
 
 You should still be in the project directory, and ready to run the pipeline.
@@ -107,8 +122,16 @@ To run on bfx-comp5/6 (notice the profile):
 
     snakemake --use-conda --configfile {config_file} --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-comp5-6
 
-To run the pipeline on the GreatLakes compute cluster:
+Similarly, to run the pipeline on the GreatLakes compute cluster:
 
     snakemake --use-conda --configfile {config_file} --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-greatlakes
 
 ## Further Reading
+
+* [Troubleshooting](doc/troubleshooting.md)
+* [Pipeline Rulegraph](doc/rulegraph.svg)
+* [Example - MAGC data](doc/example_magc_data.md)
+* [Example - Alignment & QC Only](doc/example_align_qc_only.md)
+* [Example - SRA data](doc/example_sra_data.md)
+* [Example - alternative references](doc/example_alt_refs.md)
+* [Snakemake documentation](https://snakemake.readthedocs.io/en/stable/)

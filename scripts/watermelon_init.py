@@ -33,6 +33,8 @@ import datetime
 import errno
 import functools
 import getpass
+import glob
+import gzip
 import itertools
 import os
 import re
@@ -47,7 +49,7 @@ import yaml
 import pandas as pd
 
 from . import __version__ as WAT_VER
-
+from tests import testing_utils # Using gunzip_glob, maybe should move this to helper module?
 
 DESCRIPTION = (
     """Creates template config file and directories for a watermelon rnaseq job."""
@@ -118,9 +120,10 @@ class _CommandValidator(object):
     @staticmethod
     def _validate_genomebuild(args):
         with open(args.x_genome_references) as ref_yaml:
-            genome_options=yaml.load(ref_yaml, Loader=yaml.SafeLoader)
+            ref_dict=yaml.load(ref_yaml, Loader=yaml.SafeLoader)
+            genome_options = list(ref_dict.keys()) + ['TestData'] #Add TestData as a valid option (special case which is set up before _make_config_dict)
         if args.genome_build not in genome_options:
-            msg='genome {} is not found in {}.\nMust be one of {}'.format(args.genome_build, args.x_genome_references, [x for x in genome_options.keys()])
+            msg='genome {} is not found in {}.\nMust be one of {}'.format(args.genome_build, args.x_genome_references, [x for x in genome_options])
             raise _UsageError(msg)
 
     @staticmethod
@@ -273,6 +276,21 @@ def _copy_and_overwrite(source, dest):
         ["rsync", "-rlt", "--exclude", ".*", "--exclude", "envs/built", source, dest]
     )
 
+def _setup_test_data(datapath):
+    #Unzip the human chr22 example references
+    data_gz_glob = os.path.join(datapath , '*.gz')
+    testing_utils.gunzip_glob(data_gz_glob)
+    #These refs should now exist. If not, it'll be caught during snakemake run w/ init_references
+    refs = {
+        'genome' : 'GRCh38',
+        'references' : {
+            'fasta' : os.path.join(datapath, 'Homo_sapiens.GRCh38.dna_sm.chr22.fa'),
+            'gtf' : os.path.join(datapath, 'Homo_sapiens.GRCh38.98.chr22.gtf'),
+            'annotation_tsv' : os.path.join(datapath, 'Homo_sapiens.GRCh38.98_annotation.tsv')
+        }
+    }
+    return refs
+
 
 def _dict_merge(dct, merge_dct):
     """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
@@ -400,8 +418,8 @@ def _make_config_dict(template_config, genome_references, args):
         config["dirs"][out_dir] = config["dirs"][out_dir].format(
             job_suffix=args.job_suffix
         )
-    # If "Other" genome_build is specified, remove fastq_screen stanza from config
-    if args.genome_build == "Other":
+    # If "Other" or "TestData" genome_build is specified, remove fastq_screen stanza from config
+    if args.genome_build == "Other" or args.genome_build == "TestData":
         config.pop('fastq_screen', None)
     # add input dir
     config["dirs"]["input"] = os.path.join(args.input_dir, args.input_samples_dir)
@@ -650,9 +668,16 @@ def main(sys_argv):
         with open(args.x_template_config, 'r') as template_config_file:
             template_config = ruamel_yaml.round_trip_load(template_config_file) #Use ruamel_yaml to preserve comments
         with open(args.x_genome_references, 'r') as genome_references_file:
-            genome_references = yaml.load(genome_references_file, yaml.FullLoader)[args.genome_build]
+            all_genome_refs = yaml.load(genome_references_file, yaml.SafeLoader)
+
+        if args.genome_build == "TestData":
+            test_data_dir = os.path.join(args.x_working_dir, 'Watermelon', 'data')
+            selected_genome_refs = _setup_test_data(test_data_dir)
+        else:
+            selected_genome_refs = all_genome_refs[args.genome_build]
+
         config_dict = _make_config_dict(template_config,
-                                        genome_references,
+                                        selected_genome_refs,
                                         args)
 
         # _write_config_file(args.config_file, config_dict)

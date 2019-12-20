@@ -24,6 +24,7 @@ rule align_multiqc:
         multiqc --force \
             --exclude cutadapt \
             --exclude bowtie2 \
+            --exclude rsem \
             --config {params.multiqc_config_filename} \
             --outdir {params.output_dir} \
             --filename {params.output_filename} \

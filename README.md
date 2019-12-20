@@ -8,9 +8,8 @@ The official repository is located at [https://github.com/umich-brcf-bioinf/Wate
 
 ## Overview
 
-Watermelon interprets fastqs and configuration to produce alignments, QC data, feature counts, and diffex results.
-Watermelon uses snakemake, which in turn wraps calls to the various bioinformatic tools
-in the pipeline (e.g. cutadapt, fastqc, etc.).
+Watermelon is an RNAseq pipeline that produces alignments, QC data, feature counts, and differential expression results.
+Watermelon uses snakemake, which in turn wraps calls to the various bioinformatic tools in the pipeline.
 
 There are two main steps:
 
@@ -64,9 +63,9 @@ This environment provides the basic software requirements to run watermelon_init
 
 ## Walkthrough - Example w/ simulated reads
 
-This repository contains a set of simulated paired-end read data which will be used for this example. The provided example configuration file and samplesheet used here are set up for this data for simplicity.
+This repository contains a set of simulated paired-end read data which will be used for this example. The provided example configuration file and samplesheet used here are set up to run this on this example without any modification, for illustrative purposes. For more examples, see "Further Reading" section below.
 
-The first step is to run watermelon_init, which will set up the analysis in project directory where you invoke it.
+The first step is to run watermelon_init, which will set up the analysis in the project directory where you invoke it.
 
 To do this, you will need:
 
@@ -78,6 +77,9 @@ To do this, you will need:
   * e.g. GRCh38
   * Available genomes `GRCh38, GRCh37, GRCm38, NCBIM37, Rnor_6.0, GRCz11, BDGP6, WBcel235`
   * These are ENSEMBL reference IDs. [Table of equivalent UCSC  & ENSEMBL IDs](doc/Equivalence_UCSC_ENSEMBL.md)
+  * There are also the special genome build options `Other` & `TestData`.
+    * The link to alternative reference example below outlines using `Other` for customized references.
+    * The current example uses the `TestData` genome build, which is a human chr22 reference included with this repository.
 * job suffix
   * e.g. `_20190821`
   * Suffix will be applied to config name and analysis results dir
@@ -88,7 +90,7 @@ To do this, you will need:
   * Fastq files must have `_R1.fastq[.gz]` or `_R2.fastq[.gz]` in their filenames
 
 
-Here's an example of running waterlemon_init (Note: replace /path/to/Watermelon with an actual valid path)
+Here's an example of running waterlemon_init (Note: replace /path/to/Watermelon in the following code block with valid paths)
 
     # Create a project directory & navigate there
     mkdir ~/watermelon_example_project
@@ -130,10 +132,9 @@ Similarly, to run the pipeline on the GreatLakes compute cluster:
 
 ## Further Reading
 
-* [Troubleshooting](doc/troubleshooting.md)
+* Troubleshooting - Document coming soon
 * [Pipeline Rulegraph](doc/rulegraph.svg)
 * [Example - MAGC data](doc/example_magc_data.md)
-* [Example - Alignment & QC Only](doc/example_align_qc_only.md)
-* [Example - SRA data](doc/example_sra_data.md)
-* [Example - alternative references](doc/example_alt_refs.md)
+* [Example - Alignment, feature count, & QC Only](doc/example_align_qc_only.md)
+* Example - alternative references - Document coming soon
 * [Snakemake documentation](https://snakemake.readthedocs.io/en/stable/)

@@ -1,5 +1,7 @@
 rule align_deliverables_alignment:
     input:
+        #"Hidden" deliverable - just needs to be stated as input even if it's not used
+        ALIGNMENT_DIR + "05-combine_counts/gene_expected_count.txt",
         #fastqc reads
         expand(ALIGNMENT_DIR + "03-fastqc_reads/{basename}_trimmed_fastqc.html",
             basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])

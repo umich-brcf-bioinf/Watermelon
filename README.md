@@ -63,7 +63,7 @@ This environment provides the basic software requirements to run watermelon_init
 
 ## Walkthrough - Example w/ simulated reads
 
-This repository contains a set of simulated paired-end read data which will be used for this example. The provided example configuration file and samplesheet used here are set up to run this on this example without any modification, for illustrative purposes. For more examples, see "Further Reading" section below.
+This repository contains a set of simulated paired-end read data which will be used for this example. The provided example configuration file and samplesheet used here are set up to run this on this example without any modification, for illustrative purposes. For more examples, see the "Further Reading" section below.
 
 The first step is to run watermelon_init, which will set up the analysis in the project directory where you invoke it.
 
@@ -132,9 +132,10 @@ Similarly, to run the pipeline on the GreatLakes compute cluster:
 
 ## Further Reading
 
-* Troubleshooting - Document coming soon
-* [Pipeline Rulegraph](doc/rulegraph.svg)
+* [Troubleshooting](doc/troubleshooting.md)
+* [Pipeline rulegraph](doc/rulegraph.svg)
 * [Example - MAGC data](doc/example_magc_data.md)
 * [Example - Alignment, feature count, & QC Only](doc/example_align_qc_only.md)
-* Example - alternative references - Document coming soon
+* [Example - Alternative references](doc/example_alt_refs.md)
+* [Example - Generating an annotation TSV file](doc/generating_annotation_tsv.md)
 * [Snakemake documentation](https://snakemake.readthedocs.io/en/stable/)

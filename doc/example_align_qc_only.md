@@ -25,8 +25,9 @@ Watermelon_init will still run just fine:
     #running watermelon_init
     watermelon_init --genome_build GRCh38 --job_suffix _20190823 --sample_sheet samplesheet.csv /path/to/Run_2248
 
-Then instead of adjusting the diffex portion of the config, we can delete it entirely. This way, everything except the differential expression portions will run. Calling snakemake can be done in the same manner as the other examples.
+Then instead of adjusting the diffex portion of the config, we can delete it entirely. This way, everything except the differential expression portions will run. Calling snakemake can be done in the same manner as the other examples:
 
+    snakemake --use-conda --configfile config_20190823.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-comp5-6
 
 As an additional option, it is possible to achieve the same effect leaving the config file as-is, and nullifying the diffex section directly from the command line, by adding `--config diffex=None` to the invocation like so:
 

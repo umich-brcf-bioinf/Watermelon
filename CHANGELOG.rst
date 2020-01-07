@@ -1,6 +1,31 @@
 Changelog
 =========
 
+1.3.0 (01/03/2019)
+------------------
+- Documentation overhaul
+
+    - Most documents in markdown
+    - All documents up-to-date
+    - Made up of README, Troubleshooting doc, and several examples covering different scenarios
+
+- Created built-in TestData genome build for watermelon_init
+    - Special case - not listed in genome_references.yaml, but still usable as genome_build argument to watermelon_init
+    - Sets up human chr22 references included with the repository
+    - For use with the simulated data also included in the repository
+    - Sets up a config perfectly compatible with README example
+
+- Now possible to completely delete diffex portion from config, to run alignment, QC, & feature counting only
+- Added functional test running snakemake with example data
+- Travis-CI set up and working for repository
+- Config validation bugfix - dashes no longer allowed in phenotype values
+- Bugfix for unwanted trimming of column names in combined matrices
+- Bugfixes for purely numeric samplenames
+- Workaround to ensure watermelon_init always uses /nfs/med-bfx... over /ccmb/BioinfCore/... paths
+- For consistency, all references to 'sample_description_file' changed to 'samplesheet'
+- Fastqs now managed with InputFileManager (May be renamed to InputFastqManager in the future)
+
+
 1.2.0 (11/14/2019)
 ------------------
 - Added boxplot of non-normalized values

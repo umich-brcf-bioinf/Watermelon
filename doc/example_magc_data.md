@@ -1,4 +1,4 @@
-# Example - running with data from MAGC
+# Example - running with data from UMich Advanced Genomics Core
 
 The walkthrough in the readme provided an example that should work out-of-the-box, where things were simplified for illustrative purposes. The current example goes a bit further, highlighting a few more details which might be useful when running with real data. One major thing to note is the modification of the configuration file in-between running watermelon_init and running the pipeline.
 

@@ -28,10 +28,17 @@ pdata = read.csv(sample.info.file, comment.char = "#")
 load(snakemake@input[['data_import']])
 # Create DESeqDataSet and filter lowly expressed genes
 message('Initializing DESeq2 result')
-# Create dataset from tximport object
-dds = DESeqDataSetFromTximport(txi = txi.rsem.gene.results, colData = pdata, design = as.formula(design))
-# Filter lowly expressed genes - QUESTION: Should this be more stringent?
-dds = dds[ rowSums(counts(dds)) > 1, ]
+if(exists('txi.rsem.gene.results')){
+    # Create dataset from tximport object if it was imported above
+    dds = DESeqDataSetFromTximport(txi = txi.rsem.gene.results, colData = pdata, design = as.formula(design))
+} else if(exists('counts')){
+    # Create dataset from count matrix if it was imported above
+    dds = DESeqDataSetFromMatrix(countData = counts, colData = pdata, design = as.formula(design))
+}
+
+# Filter lowly expressed genes
+threshold = snakemake@config[['diffex']][['count_min_cutoff']]
+dds = dds[ rowSums(counts(dds)) > threshold, ]
 
 # Parse the params for DESeq call, if it can't be converted return it as string
 deseq2.params.parsed = lapply(deseq2.params, function(x) {

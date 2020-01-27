@@ -1,10 +1,9 @@
-'''This rule imports DESeq2 data from RSEM,
+'''This rule imports count data from a count matrix,
     outputs the raw counts and normalized counts as calculated by DESeq2
 '''
-rule deseq2_counts_from_tximport_rsem:
+rule deseq2_counts_from_matrix:
     input:
-        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results', sample=config[SAMPLES_KEY]),
-        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results', sample=config[SAMPLES_KEY])
+        config['count_matrix']
     output:
         count_data_rda = DIFFEX_DIR + 'deseq2/counts/count_data.rda',
         raw = DIFFEX_DIR + 'deseq2/counts/deseq2_raw_counts.txt',
@@ -15,7 +14,6 @@ rule deseq2_counts_from_tximport_rsem:
     conda:
         'envs/diffex.yaml'
     params:
-        rsem_dir = ALIGNMENT_DIR + '04-rsem_star_align',
         snakemake_rdata = DIFFEX_DIR + 'deseq2/counts/.deseq2_counts_snakemake.rda' #TWS DEBUG
     script:
         '../scripts/deseq2_counts.R'

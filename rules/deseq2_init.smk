@@ -1,7 +1,7 @@
 #This rule initializes the DESeq2 object for each given model.
 rule deseq2_init:
     input:
-        data_import = DIFFEX_DIR + 'deseq2/counts/txi_rsem_genes.rda',
+        data_import = DIFFEX_DIR + 'deseq2/counts/count_data.rda',
     output:
         rda = DIFFEX_DIR + 'deseq2/deseq2_init_{model_name}.rda'
     threads: 8

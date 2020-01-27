@@ -12,8 +12,7 @@ rule align_deliverables_alignment:
         combined_counts = expand(ALIGNMENT_DIR + "06-annotate_combined_counts/gene_{type}.annot.txt",
             type=['FPKM', 'TPM']),
         #multiQC
-        alignment_html = ALIGNMENT_DIR + "07-qc/alignment_qc.html",
-        alignment_rsem_stats = ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_rsem.txt"
+        alignment_html = ALIGNMENT_DIR + "07-qc/alignment_qc.html"
 
     output:
         expand(DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{basename}_trimmed_fastqc.html",
@@ -23,8 +22,7 @@ rule align_deliverables_alignment:
                 sample=config["samples"]),
         expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
             type=['FPKM', 'TPM']),
-        alignment_html = DELIVERABLES_DIR + "alignment/alignment_qc.html",
-        alignment_rsem_stats = DELIVERABLES_DIR + "alignment/multiqc_rsem.txt"
+        alignment_html = DELIVERABLES_DIR + "alignment/alignment_qc.html"
     params:
         raw_fastqc_input_dir    =  ALIGNMENT_DIR + "03-fastqc_reads",
         raw_fastqc_output_dir   =  DELIVERABLES_DIR + "alignment/sequence_reads_fastqc",
@@ -36,5 +34,4 @@ rule align_deliverables_alignment:
         "cp -r {params.raw_fastqc_input_dir}/* {params.raw_fastqc_output_dir} ; "
         "cp -r {params.align_fastqc_input_dir}/* {params.align_fastqc_output_dir} ; "
         "for i in {input.combined_counts} ; do cp $i {params.combined_counts_output_dir} ; done ; "
-        "cp {input.alignment_html} {output.alignment_html} ; "
-        "cp {input.alignment_rsem_stats} {output.alignment_rsem_stats} "
+        "cp {input.alignment_html} {output.alignment_html} "

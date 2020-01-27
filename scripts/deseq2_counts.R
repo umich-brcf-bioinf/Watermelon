@@ -28,24 +28,36 @@ named.filepaths.from.dir <- function(rsem.dir, file.extension) {
 ##########
 # Main
 
+DEFAULT_SAMPLE_COLUMN = 'sample'
+
 # Get phenotype matrix
 sample.info.file = snakemake@config[['samplesheet']]
 pdata = read.csv(sample.info.file, comment.char = "#", colClasses=c('character'))
 
 # Import data
-message('Importing rsem data')
-rsem_dir = snakemake@params[['rsem_dir']]
-gene.files.list <- named.filepaths.from.dir(rsem_dir, ".genes.results")
-txi.rsem.gene.results <- tximport(gene.files.list, type = "rsem", txIn = F, txOut = F)
-#Some genes have length zero (what does this even mean?), causing issues with creating DESeqDataSet
-#Mike Love recommends changing these from 0 to 1; https://support.bioconductor.org/p/84304/#84368
-txi.rsem.gene.results$length[txi.rsem.gene.results$length == 0] <- 1
+message('Importing count data')
+if(snakemake@rule == 'deseq2_counts_from_tximport_rsem'){
+    message('Using tximport on rsem data')
+    rsem_dir = snakemake@params[['rsem_dir']]
+    gene.files.list <- named.filepaths.from.dir(rsem_dir, ".genes.results")
+    txi.rsem.gene.results <- tximport(gene.files.list, type = "rsem", txIn = F, txOut = F)
+    #Some genes have length zero (what does this even mean?), causing issues with creating DESeqDataSet
+    #Mike Love recommends changing these from 0 to 1; https://support.bioconductor.org/p/84304/#84368
+    txi.rsem.gene.results$length[txi.rsem.gene.results$length == 0] <- 1
+    # Create DESeqDataSet from tximport object
+    # Note use of no design (i.e. = ~ 1) here since we only care about counts. For diffex, will need to use actual design
+    dds = DESeqDataSetFromTximport(txi = txi.rsem.gene.results, colData = pdata, design = ~ 1)
+} else if(snakemake@rule == 'deseq2_counts_from_matrix'){
+    # Load count data and subset based on samplesheet
+    counts = read.table(snakemake@input[['counts']], header=T, row.names=1, sep="\t",stringsAsFactors=F)
+    counts = counts[,samples.list]
+    samples.list = pdata[,DEFAULT_SAMPLE_COLUMN]
+    # Create DESeqDataSet from matrix
+    # Note use of no design (i.e. = ~ 1) here since we only care about counts. For diffex, will need to use actual design
+    dds = DESeqDataSetFromMatrix(countData = counts, colData = pdata, design = ~ 1)
+}
 
-# Create DESeqDataSet and filter lowly expressed genes
-# Import data from rsem
-# Note use of no design (i.e. = ~ 1) here since we only care about counts. For diffex, will need to use actual design
-dds = DESeqDataSetFromTximport(txi = txi.rsem.gene.results, colData = pdata, design = ~ 1)
-# Filter lowly expressed genes QUESTION: Should this be more stringent?
+# Filter lowly expressed genes
 threshold = snakemake@config[['diffex']][['count_min_cutoff']]
 dds = dds[ rowSums(counts(dds)) > threshold, ]
 
@@ -58,9 +70,13 @@ norm_counts = counts(dds.withSF, normalized = TRUE) #raw/lib size factors
 rld = rlog(dds, blind = FALSE)
 
 #Save the dataset and extracted counts to rdata files
-save(txi.rsem.gene.results, file=snakemake@output[['txi']])
-counts.tables.list = c('raw_counts', 'norm_counts', 'rld')
-save(list = counts.tables.list, file=snakemake@output[['count_tables_rda']])
+count.data.list = c('raw_counts', 'norm_counts', 'rld')
+if(exists('txi.rsem.gene.results')){
+    count.data.list = c(count.data.list, 'txi.rsem.gene.results')
+} else if(exists('counts')){
+    count.data.list = c(count.data.list, 'counts')
+}
+save(list = count.data.list, file=snakemake@output[['count_data_rda']])
 
 
 # Write counts tables

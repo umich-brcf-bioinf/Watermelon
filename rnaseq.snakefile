@@ -132,7 +132,6 @@ if 'diffex' in config and config['diffex'] != None:
     DESEQ2_CONTRAST_DICT = rnaseq_snakefile_helper.diffex_contrasts(config['diffex'])
     DESeq2_ALL = [
         #deseq2_counts
-        DIFFEX_DIR + 'deseq2/counts/txi_rsem_genes.rda',
         DIFFEX_DIR + 'deseq2/counts/count_data.rda',
         expand(DIFFEX_DIR + 'deseq2/counts/deseq2_{name}.txt',
             name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
@@ -220,8 +219,7 @@ ALIGN_DELIVERABLES = [
         sample=config["samples"]),
     expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
         type=['FPKM', 'TPM']),
-    DELIVERABLES_DIR + "alignment/alignment_qc.html",
-    DELIVERABLES_DIR + "alignment/multiqc_rsem.txt"
+    DELIVERABLES_DIR + "alignment/alignment_qc.html"
 ]
 
 RUN_INFO_DELIVERABLES = [

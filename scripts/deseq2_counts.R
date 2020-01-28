@@ -48,10 +48,11 @@ if(snakemake@rule == 'deseq2_counts_from_tximport_rsem'){
     # Note use of no design (i.e. = ~ 1) here since we only care about counts. For diffex, will need to use actual design
     dds = DESeqDataSetFromTximport(txi = txi.rsem.gene.results, colData = pdata, design = ~ 1)
 } else if(snakemake@rule == 'deseq2_counts_from_matrix'){
+    message('Using count matrix')
     # Load count data and subset based on samplesheet
-    counts = read.table(snakemake@input[['counts']], header=T, row.names=1, sep="\t",stringsAsFactors=F)
-    counts = counts[,samples.list]
+    counts = read.table(snakemake@input[['count_matrix']], header=T, row.names=1, sep="\t",stringsAsFactors=F)
     samples.list = pdata[,DEFAULT_SAMPLE_COLUMN]
+    counts = counts[,samples.list]
     # Create DESeqDataSet from matrix
     # Note use of no design (i.e. = ~ 1) here since we only care about counts. For diffex, will need to use actual design
     dds = DESeqDataSetFromMatrix(countData = counts, colData = pdata, design = ~ 1)

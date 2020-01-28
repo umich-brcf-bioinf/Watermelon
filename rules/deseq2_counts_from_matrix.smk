@@ -3,7 +3,7 @@
 '''
 rule deseq2_counts_from_matrix:
     input:
-        config['count_matrix']
+        count_matrix = config['count_matrix']
     output:
         count_data_rda = DIFFEX_DIR + 'deseq2/counts/count_data.rda',
         raw = DIFFEX_DIR + 'deseq2/counts/deseq2_raw_counts.txt',

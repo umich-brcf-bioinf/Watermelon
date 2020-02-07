@@ -98,8 +98,7 @@ Here's an example of running waterlemon_init (Note: replace /path/to/Watermelon 
     # Copy the samplesheet from the repo to here
     cp /path/to/Watermelon/config/example_samplesheet.csv .
     # Now run watermelon_init
-    watermelon_init --sample_sheet example_samplesheet.csv --genome_build GRCh38 --job_suffix _20190821 \
-    /path/to/Watermelon/data/sim_reads_human_chr22
+    watermelon_init --sample_sheet example_samplesheet.csv --genome_build TestData --job_suffix _20190821 /path/to/Watermelon/data/sim_reads_human_chr22
 
 Now is a good time to review the output from watermelon_init. It generates the following:
 

@@ -1,0 +1,9 @@
+name: python3_pandas_excel
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8.1
+  - pandas=1.0.1
+  - openpyxl=3.0.3
+  - xlsxwriter=1.2.7
+  - xlrd=1.2.0

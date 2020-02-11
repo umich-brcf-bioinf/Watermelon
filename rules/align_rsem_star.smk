@@ -15,8 +15,7 @@ rule align_rsem_star:
 
     log:
         ALIGNMENT_DIR + '04-rsem_star_align/.log/{sample}.rsem_star_align.log'
-    conda:
-        'envs/rsem_star.yaml'
+    conda: 'envs/rsem_star/rsem_star.yaml'
     benchmark:
         ALIGNMENT_DIR + 'benchmarks/rsem_star_align.{sample}.benchmark.txt'
     threads: 12

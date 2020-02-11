@@ -7,8 +7,7 @@ rule deseq2_contrasts:
     threads: 8
     log:
         DIFFEX_DIR + 'deseq2/gene_lists/.log/{model_name}_{contrast}_deseq2_contrast.log'
-    conda:
-        'envs/diffex.yaml'
+    conda: 'envs/WAT_diffex/WAT_diffex.yaml'
     params:
         snakemake_rdata = DIFFEX_DIR + 'deseq2/gene_lists/{model_name}/.{contrast}_snakemake.rda' #TWS DEBUG
     script:

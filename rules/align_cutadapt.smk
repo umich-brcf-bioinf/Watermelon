@@ -10,8 +10,7 @@ rule align_cutadapt:
         trim_length_3prime = config["trimming_options"]["trim_length_3prime"]
     log:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_R{read}.align_cutadapt.log"
-    conda:
-        'envs/cutadapt.yaml'
+    conda: 'envs/cutadapt/cutadapt.yaml'
     threads: 10
     shell:
         '''(cutadapt --cores {threads} \

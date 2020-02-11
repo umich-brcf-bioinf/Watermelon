@@ -14,8 +14,7 @@ rule align_multiqc:
         output_dir = ALIGNMENT_DIR + "07-qc/",
         output_filename = "alignment_qc.html",
         multiqc_config_filename = WATERMELON_CONFIG_DIR + "multiqc_config.yaml",
-    conda:
-        'envs/align_qc.yaml'
+    conda: 'envs/multiqc/multiqc.yaml'
     log:
         ALIGNMENT_DIR + "07-qc/.log/align_qc.log"
     shell:

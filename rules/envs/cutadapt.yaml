@@ -1,5 +1,0 @@
-name: cutadapt
-channels:
-  - bioconda
-dependencies:
-  - cutadapt=2.3

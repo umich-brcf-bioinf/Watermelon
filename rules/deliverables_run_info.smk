@@ -4,7 +4,7 @@ import shutil
 
 rule deliverables_run_info:
     input:
-        envs = glob.glob(os.path.join(WORKFLOW_BASEDIR, 'rules', 'envs', '*.yaml')),
+        envs = glob.glob(os.path.join(WORKFLOW_BASEDIR, 'rules', 'envs', '*', '*.yaml')),
         conf = CONFIGFILE_PATH,
         samplesheet = config['samplesheet']
     output:

@@ -12,8 +12,7 @@ rule deseq2_counts_from_tximport_rsem:
         rlog = DIFFEX_DIR + 'deseq2/counts/deseq2_rlog_normalized_counts.txt'
     log:
         DIFFEX_DIR + 'deseq2/counts/.log/DESeq2_counts.log'
-    conda:
-        'envs/diffex.yaml'
+    conda: 'envs/WAT_diffex/WAT_diffex.yaml'
     params:
         rsem_dir = ALIGNMENT_DIR + '04-rsem_star_align',
         snakemake_rdata = DIFFEX_DIR + 'deseq2/counts/.deseq2_counts_snakemake.rda' #TWS DEBUG

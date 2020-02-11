@@ -5,8 +5,7 @@ rule align_fastqc_trimmed_reads:
         ALIGNMENT_DIR + "03-fastqc_reads/{sample}_R{read}_trimmed_fastqc.html"
     log:
         ALIGNMENT_DIR + "03-fastqc_reads/.log/{sample}_R{read}_trimmed_fastqc.log"
-    conda:
-        'envs/fastqc.yaml'
+    conda: 'envs/fastqc/fastqc.yaml'
     params:
         fastqc_dir = ALIGNMENT_DIR + "03-fastqc_reads"
     threads:

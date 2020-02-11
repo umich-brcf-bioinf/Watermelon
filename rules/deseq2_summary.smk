@@ -8,8 +8,7 @@ rule deseq2_summary:
         summary_xlsx = DIFFEX_DIR + "deseq2/summary/deseq2_summary.xlsx",
     log:
         DIFFEX_DIR + "deseq2/summary/.log/deseq2_summary.log"
-    conda:
-        'envs/python_3.6.1.yaml'
+    conda: 'envs/python3_pandas_excel/python3_pandas_excel.yaml'
     params:
         output_dir = DIFFEX_DIR + "deseq2/summary/",
     shell:

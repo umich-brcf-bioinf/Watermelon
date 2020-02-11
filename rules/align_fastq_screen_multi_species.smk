@@ -6,8 +6,7 @@ rule align_fastq_screen_multi_species:
         ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_R{read}_trimmed_screen.txt",
     log:
         ALIGNMENT_DIR + "03-fastq_screen/multi_species/.log/{sample}_R{read}_trimmed_screen.log"
-    conda:
-        'envs/fastq_screen.yaml'
+    conda: 'envs/fastq_screen/fastq_screen.yaml'
     threads:
         8
     params:

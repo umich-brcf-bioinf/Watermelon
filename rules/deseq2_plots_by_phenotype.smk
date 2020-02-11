@@ -15,8 +15,7 @@ rule deseq2_plots_by_phenotype:
         expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES)
     log:
         DIFFEX_DIR + 'deseq2/plots/by_phenotype/.log/deseq2_plots_by_phenotype.log'
-    conda:
-        'envs/diffex.yaml'
+    conda: 'envs/WAT_diffex/WAT_diffex.yaml'
     params:
         phenotypes = PHENOTYPES,
         diffex_dir = DIFFEX_DIR,

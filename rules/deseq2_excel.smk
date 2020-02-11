@@ -6,8 +6,7 @@ rule deseq2_excel:
         annotated_file = DIFFEX_DIR + "deseq2/excel/{model_name}/{contrast}.xlsx",
     log:
         DIFFEX_DIR + "deseq2/excel/.log/{model_name}_{contrast}.diffex_excel.log",
-    conda:
-        'envs/deseq2_excel.yaml'
+    conda: 'envs/python3_pandas_excel/python3_pandas_excel.yaml'
     shell:'''(
         python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py \
             -g {input.gene} \

@@ -6,8 +6,7 @@ rule deseq2_volcano_plots:
         volcano_plot = DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf'
     log:
         DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/.log/{contrast}_deseq2_comparison_plots.log'
-    conda:
-        'envs/diffex.yaml'
+    conda: 'envs/WAT_diffex/WAT_diffex.yaml'
     params:
         method = "deseq2",
         snakemake_rdata = DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/.comparison_plot_{contrast}_snakemake.rda' #TWS DEBUG

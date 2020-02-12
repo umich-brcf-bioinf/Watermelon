@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:4.5.12
+FROM continuumio/miniconda3:4.7.12
 
 ARG env_name
 
@@ -7,5 +7,5 @@ COPY ${env_name}.yaml /tmp/
 
 RUN conda env create -f /tmp/${env_name}.yaml && conda clean --all -y
 
-ENV PATH opt/conda/envs/${env_name}/bin:$PATH
+ENV PATH /opt/conda/envs/${env_name}/bin:$PATH
 

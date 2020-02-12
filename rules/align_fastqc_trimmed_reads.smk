@@ -6,6 +6,7 @@ rule align_fastqc_trimmed_reads:
     log:
         ALIGNMENT_DIR + "03-fastqc_reads/.log/{sample}_R{read}_trimmed_fastqc.log"
     conda: 'envs/fastqc/fastqc.yaml'
+    singularity: 'docker://umichbfxcore/fastqc'
     params:
         fastqc_dir = ALIGNMENT_DIR + "03-fastqc_reads"
     threads:

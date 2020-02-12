@@ -11,6 +11,7 @@ rule align_cutadapt:
     log:
         ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_R{read}.align_cutadapt.log"
     conda: 'envs/cutadapt/cutadapt.yaml'
+    singularity: 'docker://umichbfxcore/cutadapt'
     threads: 10
     shell:
         '''(cutadapt --cores {threads} \

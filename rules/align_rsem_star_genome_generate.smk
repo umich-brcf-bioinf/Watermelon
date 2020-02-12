@@ -13,6 +13,7 @@ rule align_rsem_star_genome_generate:
     log:
         join(ALIGNMENT_DIR, '04-rsem_star_genome_generate', '.log', 'rsem_star_genome_generate.log')
     conda: 'envs/rsem_star/rsem_star.yaml'
+    singularity: 'docker://umichbfxcore/rsem_star'
     benchmark:
         join(ALIGNMENT_DIR, 'benchmarks', 'rsem_star_genome_generate.benchmark.txt')
     threads: 12

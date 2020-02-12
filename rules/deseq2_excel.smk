@@ -7,6 +7,7 @@ rule deseq2_excel:
     log:
         DIFFEX_DIR + "deseq2/excel/.log/{model_name}_{contrast}.diffex_excel.log",
     conda: 'envs/python3_pandas_excel/python3_pandas_excel.yaml'
+    singularity: 'docker://umichbfxcore/python3_pandas_excel'
     shell:'''(
         python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py \
             -g {input.gene} \

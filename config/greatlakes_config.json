@@ -1,7 +1,7 @@
 {
     "__default__" : {
         "name" : "{rule}_{wildcards}",
-        "account" : "medccmb_dcmb",
+        "account" : "cgates1",
         "partition" : "standard",
         "nodes" : "1",
         "ntask" : "1",

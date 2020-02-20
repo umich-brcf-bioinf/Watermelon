@@ -234,8 +234,8 @@ plot_PCA = function(compute_PCA_result, out_name = 'PCAplot.pdf') {
     var_explained = compute_PCA_result[['var_explained']]
     top_n = compute_PCA_result[['top_n']]
     factor_name = compute_PCA_result[['factor_name']]
-    groups = pca_df[,factor_name]
-    replicates = pca_df[,'replicate']
+    groups = as.factor(pca_df[,factor_name])
+    replicates = as.factor(pca_df[,'replicate'])
     dims = compute_PCA_result[['dims']]
 
     # Plot PCA

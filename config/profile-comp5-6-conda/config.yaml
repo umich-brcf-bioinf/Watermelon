@@ -1,5 +1,6 @@
 printshellcmds: True
 keep-going: True
+use-conda: True
 conda-prefix: /nfs/med-bfx-common/pipelines/Watermelon/Watermelon-seedless/envs/built/
 cores: 20
 resources: memoryInGb=64

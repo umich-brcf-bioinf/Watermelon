@@ -1,0 +1,7 @@
+printshellcmds: True
+keep-going: True
+use-singularity: True
+#singularity-prefix: /nfs/med-bfx-common/pipelines/Watermelon/Watermelon-seedless/envs/simg/
+cluster-config: Watermelon/config/greatlakes_config_UMBFX.json
+cluster: sbatch --job-name={cluster.name} --account={cluster.account} --partition={cluster.partition} --nodes={cluster.nodes} --ntasks-per-node={cluster.ntask} --mem={cluster.memory} --time={cluster.time} --output=%x-%j.log
+jobs: 144

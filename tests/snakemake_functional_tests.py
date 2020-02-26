@@ -116,13 +116,8 @@ class SnakemakeExampleDataTest(unittest.TestCase):
             configfile_path = os.path.join(temp_dir.path, 'testcase_config.yaml')
             testing_utils.create_modified_config(EXAMPLE_CONFIGFILE_PATH, configfile_path, config_replacement_vals, rm_keys)
 
-            # FIXME: This won't work with CI - however, without it will take ages to build the env(s)
-            conda_prefix = '/nfs/med-bfx-common/pipelines/Watermelon/Watermelon-seedless/envs/built' # FIXME: This won't work with CI - however, without it will take ages to build the env(s)
-
-            command_fmt = ('snakemake --use-conda --conda-prefix {} '
-                '--snakefile {} --configfile {} --config skip_validation=True {}'
-            )
-            command = command_fmt.format(conda_prefix, SNAKEFILE_PATH, configfile_path, REDIRECT_OUTPUT)
+            command_fmt = 'snakemake --use-singularity --singularity-args \'-B {}\' --snakefile {} --configfile {} --config skip_validation=True {}'
+            command = command_fmt.format(WATERMELON_BASE_DIR, SNAKEFILE_PATH, configfile_path, REDIRECT_OUTPUT)
             print(command)
 
             return_code = subprocess.call(command, shell=True)
@@ -142,6 +137,8 @@ class SnakemakeExampleDataTest(unittest.TestCase):
             gene_TPM_actual = pd.read_csv(gene_TPM_actual_path, sep="\t")
             gene_TPM_expected_path = os.path.join(tmp_data_dir, 'expected_results_files', 'gene_TPM.txt')
             gene_TPM_expected = pd.read_csv(gene_TPM_expected_path, sep="\t")
+
+            # from nose.tools import set_trace; set_trace() # TWS DEBUG
 
             self.assertEqual(gene_FPKM_expected, gene_FPKM_actual)
             self.assertEqual(gene_TPM_expected, gene_TPM_actual)

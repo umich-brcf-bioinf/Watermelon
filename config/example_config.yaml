@@ -22,6 +22,7 @@ dirs:
     deliverables_output: analysis_20191114_human/deliverables
     input: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20191023_testing_simulated_data/inputs/01-source_samples
 trimming_options: #Delete the entire trimming_options stanza if no trimming is desired
+    paired_end_mode: True
     base_quality_5prime: 0
     base_quality_3prime: 13
     trim_length_5prime: 3

@@ -1,4 +1,4 @@
-rule align_cutadapt:
+rule align_cutadapt_SE:
     input:
         raw_fastq = ALIGNMENT_DIR + "02-gz_reads/{sample}_R{read}.fastq.gz",
     output:

@@ -15,8 +15,11 @@ from watchdog.events import PatternMatchingEventHandler
 from scripts import rnaseq_snakefile_helper, config_validator, __version__
 
 WAT_VER = __version__
-WATERMELON_CONFIG_DIR = os.path.join(os.environ.get('WATERMELON_CONFIG_DIR', srcdir('config')), '')
-WATERMELON_SCRIPTS_DIR = os.path.join(os.environ.get('WATERMELON_SCRIPTS_DIR', srcdir('scripts')), '')
+WORKFLOW_BASEDIR = workflow.basedir
+WATERMELON_CONFIG_DIR = os.path.join(WORKFLOW_BASEDIR, 'config', '')
+WATERMELON_SCRIPTS_DIR = os.path.join(WORKFLOW_BASEDIR, 'scripts', '')
+# WATERMELON_CONFIG_DIR = os.path.join(os.environ.get('WATERMELON_CONFIG_DIR', srcdir('config')), '')
+# WATERMELON_SCRIPTS_DIR = os.path.join(os.environ.get('WATERMELON_SCRIPTS_DIR', srcdir('scripts')), '')
 
 
 _DIRS = config.get("dirs", {})
@@ -26,8 +29,8 @@ DIFFEX_DIR = os.path.join(_DIRS.get("diffex_output", "diffex_results"), "")
 DELIVERABLES_DIR = os.path.join(_DIRS.get("deliverables_output", "deliverables"), "")
 
 CONFIGFILE_PATH = workflow.overwrite_configfile
-WORKFLOW_BASEDIR = workflow.basedir
-CONFIG_SCHEMA_PATH = os.path.join(workflow.basedir, 'config', 'config_schema.yaml')
+
+CONFIG_SCHEMA_PATH = os.path.join(WATERMELON_CONFIG_DIR, 'config_schema.yaml')
 
 SAMPLES_KEY = 'samples'
 
@@ -237,8 +240,11 @@ ALL = RSEM_ALL + ALIGN_DELIVERABLES + RUN_INFO_DELIVERABLES + FASTQ_SCREEN_ALIGN
 include: 'rules/align_concat_reads.smk'
 include: 'rules/align_standardize_gz.smk'
 
-if "trimming_options" in config:
-    include: 'rules/align_cutadapt.smk'
+if 'trimming_options' in config:
+    if config['trimming_options'].get('paired_end_mode'):
+        include: 'rules/align_cutadapt_PE.smk'
+    else:
+        include: 'rules/align_cutadapt_SE.smk'
 else:
     include: 'rules/align_pseudotrim.smk'
 

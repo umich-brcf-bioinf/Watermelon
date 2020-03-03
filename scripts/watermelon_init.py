@@ -519,8 +519,12 @@ $ screen -S watermelon{job_suffix}
 $ conda activate watermelon
 # To validate the config and check the execution plan:
 $ snakemake --dryrun --printshellcmds --configfile {config_basename} --snakefile {snakefile_path}
-# To run:
-$ snakemake --use-conda --configfile {config_basename} --snakefile {snakefile_path} --profile {profile_path}
+#
+# To run on comp5/6:
+$ snakemake --configfile {config_basename} --snakefile {snakefile_path} --profile {profile_path_comps}
+#
+# To run on the greatlakes cluster:
+$ snakemake --configfile {config_basename} --snakefile {snakefile_path} --profile {profile_path_gl}
 """.format(
         watermelon_init_invocation=" ".join(sys.argv[:]),
         linker_results=linker_results,
@@ -535,7 +539,8 @@ $ snakemake --use-conda --configfile {config_basename} --snakefile {snakefile_pa
         config_basename=os.path.basename(args.config_file),
         job_suffix=args.job_suffix,
         snakefile_path="Watermelon/rnaseq.snakefile",
-        profile_path="Watermelon/config/profile-comp5-6",
+        profile_path_comps="Watermelon/config/profile-comp5-6",
+        profile_path_gl="Watermelon/config/profile-greatlakes"
     )
     return postlude
 

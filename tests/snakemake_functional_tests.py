@@ -164,7 +164,7 @@ class SnakemakeExampleDataTest(unittest.TestCase):
             self.assertEqual(deseq2_depthnorm_expected, deseq2_depthnorm_actual)
 
             # gene lists (deliverables, txt)
-            gene_list_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'deliverables', 'deseq2', 'gene_lists', 'model_one', 'drug_v_control.annot.txt')
+            gene_list_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'deliverables', 'deseq2', 'gene_lists', 'model_treatment', 'drug_v_control.annot.txt')
             gene_list_actual = pd.read_csv(gene_list_actual_path, sep="\t")
             gene_list_expected_path = os.path.join(tmp_data_dir, 'expected_results_files', 'drug_v_control.annot.txt')
             gene_list_expected = pd.read_csv(gene_list_expected_path, sep="\t")

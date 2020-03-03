@@ -1,4 +1,4 @@
-# config created 2019-11-14 13:12:39
+# config created 2020-03-03 16:26:18
 # To do:
 # ------
 # 1) Review genome and references
@@ -7,42 +7,38 @@
 #    set up the DESeq2 calls and results calls for the comparisons that match the analysis.
 
 email:
-    subject: watermelon_20191114_human
+    subject: watermelon_test
     to: trsaari@umich.edu
-watermelon_version: 1.2.0
-samplesheet: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20191023_testing_simulated_data/samplesheet.csv
+watermelon_version: 1.3.0
+samplesheet: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200303_wat_prerelease/samplesheet.csv
 genome: GRCh38
 references:
-    fasta: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa
-    gtf: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.98.gtf
-    annotation_tsv: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.98_annotation.tsv
+    fasta: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200303_wat_prerelease/Watermelon/data/Homo_sapiens.GRCh38.dna_sm.chr22.fa
+    gtf: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200303_wat_prerelease/Watermelon/data/Homo_sapiens.GRCh38.98.chr22.gtf
+    annotation_tsv: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200303_wat_prerelease/Watermelon/data/Homo_sapiens.GRCh38.98_annotation.tsv
 dirs:
-    alignment_output: analysis_20191114_human/alignment_results
-    diffex_output: analysis_20191114_human/diffex_results
-    deliverables_output: analysis_20191114_human/deliverables
-    input: /ccmb/BioinfCore/ActiveProjects/trsaari/sandbox/20191023_testing_simulated_data/inputs/01-source_samples
+    alignment_output: analysis_test/alignment_results
+    diffex_output: analysis_test/diffex_results
+    deliverables_output: analysis_test/deliverables
+    input: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200303_wat_prerelease/inputs/01-source_samples
 trimming_options: #Delete the entire trimming_options stanza if no trimming is desired
-    paired_end_mode: True
+    paired_end_mode: true
     base_quality_5prime: 0
     base_quality_3prime: 13
     trim_length_5prime: 3
     trim_length_3prime: 0
 alignment_options:
     read_length: 100
-fastq_screen: #Delete the entire fastq_screen stanza if fastq_screen not desired
-    reference_basedir: /nfs/med-bfx-common/pipelines/Watermelon/references/fastq_screen
-    aligner: bowtie2
-    subset: 100000
-    species: human
 diffex:
     linear_fold_change: 1.5
     adjustedPValue: 0.05
     count_min_cutoff: 1 #Filter lowly expressed genes using this cutoff
     #The following is an example Diffex stanza. Additional stanzas can be added
     #which will produce results in parallel directories
-    #The parent node (model name) forms the names of directories.
-    model_one:
-        #Several contrasts of the form testVal_v_referenceVal are listed.
+    #The parent node forms the name of directory for that model, in this case model_treatment.
+    model_treatment:
+        #Several contrasts of the form testVal_v_referenceVal can be listed here.
+        #These contrasts will be pulled from the same DESeqDataset
         contrasts:
         -   drug_v_control
         DESeq2:
@@ -53,15 +49,15 @@ diffex:
             factor_name: treatment
             #The following parameters are directly parsed by R
             #and used within the call to DESeq2().
-            #The imported DESeq2Dataset is passed by default and isn't listed here.
+            #The imported DESeqDataset is passed by default and isn't listed here.
             DESeq2:
                 betaPrior: true
             #The below parameters are also parsed by R and used to call results() {DESeq2}.
-            #The initialized DESeq2Dataset is passed by default and isn't listed here.
+            #The initialized DESeqDataset is passed by default and isn't listed here.
             #There are several ways to list the contrast parameter. This way produces results equivalent to
             #previous Watermelon pipelines. The variables factorName, testName, & referenceName are defined
             #within the Rscript. Using the first contrast as an example this would parse to
-            #list('pheno.GendDM.male', 'pheno.GendNDM.male'), which are the two elements
+            #list('treatmentdrug', 'treatmentcontrol'), which are the two elements
             #of resultsNames() relevant for that comparison.
             results:
                 contrast: list(paste0(factorName, testName), paste0(factorName, referenceName))

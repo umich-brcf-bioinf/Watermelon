@@ -1,7 +1,8 @@
 ##########
 # Set up logging and save snakemake S4 object (for debugging or running manually)
 log = file(snakemake@log[[1]], open='wt')
-sink(log, split=TRUE)
+sink(log)
+sink(log, type='message')
 save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
 #setwd("/nfs/med-bfx-activeprojects/trsaari/sandbox/20191023_testing_simulated_data/")

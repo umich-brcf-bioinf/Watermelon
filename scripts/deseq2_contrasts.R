@@ -1,7 +1,8 @@
 ##########
 # Set up logging and save snakemake S4 object (for debugging or running manually)
 log = file(snakemake@log[[1]], open='wt')
-sink(log, split=TRUE)
+sink(log)
+sink(log, type='message')
 save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
 #load("/nfs/med-bfx-activeprojects/trsaari/sandbox/20190725_test_Delono_RS1/analysis_test_Delano_RS1/diffex_results/deseq2/gene_lists/phenotype.CellState.treatment/DIO.WCLP.none_v_DIO.DCLP.none_snakemake.rda") #TWS DEBUG

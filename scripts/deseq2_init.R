@@ -1,7 +1,8 @@
 ##########
 # Set up logging and save snakemake S4 object (for debugging or running manually)
-log = file(snakemake@log[[1]], open='wt')
-sink(log, split=TRUE)
+log = file(snakemake@log[[1]], open = 'wt')
+sink(log)
+sink(log, type = 'message')
 save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
 #Isolate conda environment: https://github.com/conda-forge/r-base-feedstock/issues/37

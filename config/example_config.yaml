@@ -9,7 +9,7 @@
 email:
     subject: watermelon_test
     to: trsaari@umich.edu
-watermelon_version: 1.3.0
+watermelon_version: 1.4.0
 samplesheet: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200303_wat_prerelease/samplesheet.csv
 genome: GRCh38
 references:

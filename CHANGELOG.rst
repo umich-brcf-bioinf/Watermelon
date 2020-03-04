@@ -1,7 +1,21 @@
 Changelog
 =========
 
-1.3.0 (01/03/2019)
+1.4.0 (03/04/2020)
+------------------
+- Converted to singularity
+    - Profiles are set-up for snakemake to use singularity by default
+    - Old conda environments still work with alternative profiles, e.g. `profile-comp5-6-conda`
+    - Images are auto-built by bfxcore github repositories connected to DockerHub.
+
+- Profile added for UM-AGC (first iteration)
+
+- Bugfix - Cutadapt was running in single-end mode in all cases. This sometimes caused issues with RSEM/STAR when resulting fastqs were out-of-sync. Now `paired_end_mode` is a cutadapt option specified in the configuration
+- Bugfix - PCA plotting fix in v1.1.0 was working inconsistently.
+- RScript logging is improved, though still unable to capture errors as well as we'd like.
+
+
+1.3.0 (01/03/2020)
 ------------------
 - Documentation overhaul
 

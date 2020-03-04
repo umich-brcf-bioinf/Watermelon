@@ -1,7 +1,7 @@
 {
     "__default__" : {
         "name" : "{rule}_{wildcards}",
-        "account" : "cgates1",
+        "account" : "okoues1",
         "partition" : "standard",
         "nodes" : "1",
         "ntask" : "1",

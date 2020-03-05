@@ -37,4 +37,4 @@ Example of workflow:
     #Run the pipeline as you normally would
     # Singularity must be available to snakemake, for environment management under the hood
     module load singularity/3.5.2
-    snakemake --use-conda --configfile config_20190824.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-comp5-6
+    snakemake --configfile config_20190824.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-comp5-6

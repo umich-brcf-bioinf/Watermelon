@@ -222,4 +222,4 @@ Still in the project directory, now ready to run the pipeline - run on bfx-comp5
 
     # Singularity must be available to snakemake, for environment management under the hood
     module load singularity/3.5.2
-    snakemake --use-conda --configfile config_20190822.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-comp5-6
+    snakemake --configfile config_20190822.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-comp5-6

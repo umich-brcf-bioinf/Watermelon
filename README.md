@@ -123,10 +123,14 @@ You should still be in the project directory, and ready to run the pipeline.
 
 To run on bfx-comp5/6 (notice the profile):
 
+    # Singularity must be available to snakemake, for environment management under the hood
+    module load singularity/3.5.2
     snakemake --configfile config_20190821.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-comp5-6
 
 Similarly, to run the pipeline on the GreatLakes compute cluster:
 
+    # Singularity must be available to snakemake, for environment management under the hood
+    module load singularity/3.5.2
     snakemake --configfile config_20190821.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-greatlakes
 
 ## Further Reading

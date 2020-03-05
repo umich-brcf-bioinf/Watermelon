@@ -27,8 +27,12 @@ Watermelon_init will still run just fine:
 
 Then instead of adjusting the diffex portion of the config, we can delete it entirely. This way, everything except the differential expression portions will run. Calling snakemake can be done in the same manner as the other examples:
 
-    snakemake --use-conda --configfile config_20190823.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-comp5-6
+    # Singularity must be available to snakemake, for environment management under the hood
+    module load singularity/3.5.2
+    snakemake --use-conda --configfile config_20190823.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-greatlakes
 
 As an additional option, it is possible to achieve the same effect leaving the config file as-is, and nullifying the diffex section directly from the command line, by adding `--config diffex=None` to the invocation like so:
 
-    snakemake --use-conda --configfile config_20190823.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-comp5-6 --config diffex=None
+    # Singularity must be available to snakemake, for environment management under the hood
+    module load singularity/3.5.2
+    snakemake --use-conda --configfile config_20190823.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-greatlakes --config diffex=None

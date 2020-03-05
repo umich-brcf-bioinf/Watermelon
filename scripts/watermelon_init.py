@@ -521,9 +521,13 @@ $ conda activate watermelon
 $ snakemake --dryrun --printshellcmds --configfile {config_basename} --snakefile {snakefile_path}
 #
 # To run on comp5/6:
+# Singularity must be available to snakemake, for environment management under the hood
+$ module load singularity/3.5.2
 $ snakemake --configfile {config_basename} --snakefile {snakefile_path} --profile {profile_path_comps}
 #
 # To run on the greatlakes cluster:
+# Singularity must be available to snakemake, for environment management under the hood
+$ module load singularity/3.5.2
 $ snakemake --configfile {config_basename} --snakefile {snakefile_path} --profile {profile_path_gl}
 """.format(
         watermelon_init_invocation=" ".join(sys.argv[:]),

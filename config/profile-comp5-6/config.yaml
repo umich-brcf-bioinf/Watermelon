@@ -2,6 +2,5 @@ printshellcmds: True
 keep-going: True
 use-singularity: True
 singularity-args: "-B $(pwd) -B /nfs/med-bfx-common:/nfs/med-bfx-common:ro"
-#singularity-prefix: /nfs/med-bfx-common/pipelines/Watermelon/Watermelon-seedless/envs/simg/
 cores: 20
 resources: memoryInGb=64

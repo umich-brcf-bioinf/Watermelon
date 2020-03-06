@@ -16,7 +16,7 @@ Using alternative references is largely a matter of altering the above reference
 
 ## Details on using alternative references
 
-The following organisms have ENSEMBL references already set up in the default `/nfs/med-bfx-common` location:
+The following organisms have ENSEMBL references already set up in the default `/nfs/turbo/umms-brcfpipeline/references` location:
 
 Human, mouse, rat, zebrafish, C. elegans, and D. melanogaster
 

@@ -9,7 +9,7 @@
         "time" : "00:30:00"
     },
     "align_annotate_combined_counts" : {
-        "name" : "{rule}_{input.counts_file}",
+        "name" : "{rule}_{wildcards.feature}_{wildcards.metric}",
     },
     "align_cutadapt_PE" : {
         "ntask" : "{threads}"
@@ -24,9 +24,11 @@
         "name" : "{rule}"
     },
     "align_fastq_screen_biotype" : {
+        "memory" : 8000,
         "ntask" : "{threads}"
     },
     "align_fastq_screen_multi_species" : {
+        "memory" : 8000,
         "ntask" : "{threads}"
     },
     "align_multiqc" : {

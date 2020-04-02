@@ -1,5 +1,9 @@
 Changelog
 =========
+1.4.2 (04/02/2020)
+------------------
+- Bugfix for regex capture w/ new file naming convention from AGC. Allows previous and current file names e.g. '_R1.fastq.gz' and '_R1_001.fastq.gz'
+
 1.4.1 (03/25/2020)
 ------------------
 - Refactored align_deliverables_fastq_screen (addresses errors from interference w/ parallel rule executions)

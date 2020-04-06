@@ -1,0 +1,7 @@
+## Pipeline
+
+We use Snakemake [@Koster2012] to manage the bioinformatics workflow in a reproducible manner.
+
+## QC and sequence alignment
+
+At the UM Bioinformatics Core, we downloaded the reads files from the Sequencing Core’s storage and trimmed adapters using Cutadapt (v2.3). FastQC [@Andrews2010] (v0.11.8) was used to ensure the quality of data. Reads were mapped to the reference genome hg38 (UCSC), including both mRNAs and lncRNAs, using STAR [@Dobin2013] (v2.6.1b) and assigned count estimates to genes with RSEM [@Li2011] (v1.3.1). Alignment options followed ENCODE standards for RNA-seq [@Dobin:STARmanual]. FastQC was used in an additional post-alignment step to ensure that only high-quality data were used for expression quantitation and differential expression.

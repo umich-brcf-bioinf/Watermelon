@@ -27,6 +27,7 @@ INPUT_DIR = os.path.join(_DIRS.get("input", "inputs"), "")
 ALIGNMENT_DIR = os.path.join(_DIRS.get("alignment_output", "alignment_results"), "")
 DIFFEX_DIR = os.path.join(_DIRS.get("diffex_output", "diffex_results"), "")
 DELIVERABLES_DIR = os.path.join(_DIRS.get("deliverables_output", "deliverables"), "")
+REPORT_DIR = os.path.join(_DIRS.get("report_output", "report"), "")
 
 CONFIGFILE_PATH = workflow.overwrite_configfile
 
@@ -232,9 +233,14 @@ RUN_INFO_DELIVERABLES = [
     DELIVERABLES_DIR + "run_info/" + os.path.basename(config['samplesheet'])
 ]
 
+REPORT_ALL = [
+    REPORT_DIR + 'report_draft.md',
+    REPORT_DIR + 'report_draft.html'
+]
+
 
 # FASTQ_SCREEN & DESeq2 targets may or may not be populated, see if/else defs above
-ALL = RSEM_ALL + ALIGN_DELIVERABLES + RUN_INFO_DELIVERABLES + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES + DESeq2_ALL + DESeq2_DELIVERABLES
+ALL = RSEM_ALL + ALIGN_DELIVERABLES + RUN_INFO_DELIVERABLES + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES + DESeq2_ALL + DESeq2_DELIVERABLES + REPORT_ALL
 
 
 include: 'rules/align_concat_reads.smk'
@@ -272,6 +278,7 @@ if 'diffex' in config and config['diffex'] != None:
     include: 'rules/deliverables_deseq2.smk'
 
 include: 'rules/deliverables_run_info.smk'
+include: 'rules/report.smk'
 
 
 rule all:

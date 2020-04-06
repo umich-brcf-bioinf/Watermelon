@@ -1,0 +1,167 @@
+---
+title: "PROJECT_NAME Project Report"
+author: "UM Bioinformatics Core"
+date: "`r Sys.Date()`"
+output:
+        html_document:
+            theme: readable
+            toc: true
+            toc_depth: 4
+            toc_float: true
+            number_sections: true
+            fig_caption: true
+            keep_md: true
+bibliography: references_WAT.bib
+csl: bioinformatics.csl
+---
+
+<!---
+Can change this either in the .md or .Rmd document...
+
+For docx output to get edits, change output field above to:
+        word_document:
+            toc: true
+            toc_depth: 3
+            fig_caption: true
+            keep_md: true
+
+Default HTML output:
+
+        html_document:
+            toc: true
+            toc_depth: 3
+            toc_float: true
+            keep_md: true
+--->
+
+<!--- Allow the page to be wider --->
+<style>
+    body .main-container {
+        max-width: 1200px;
+    }
+</style>
+
+```{r include = FALSE}
+################################################################################
+
+# packages = data.frame(installed.packages())
+
+# Read the config file
+config = snakemake@config
+
+################################################################################
+# Collect various objects you'll need downstream
+
+# has_comparisons = 'comparisons' %in% names(config)
+#
+# if(has_comparisons) {
+#     comparisons = names(config$comparisons)
+# }
+#
+# factor_covs = config$covariates$factor
+
+################################################################################
+# Flags for showing particular sections
+
+show_background_biology = TRUE
+
+show_background_samples = TRUE
+show_methods_qc_sequencing = TRUE
+# show_results_qc = TRUE
+# show_appendix_qc = TRUE
+#
+# if(has_comparisons) {
+    show_background_analysis = TRUE
+    show_methods_analysis_de = TRUE
+#     show_results_analysis_de = TRUE
+#     show_appendix_analysis = TRUE
+# } else {
+#     show_background_analysis = FALSE
+#     show_methods_analysis_de = FALSE
+#     show_results_analysis_de = FALSE
+#     show_appendix_analysis = FALSE
+# }
+
+show_methods_wetlab = TRUE
+
+show_methods_custom = TRUE
+# show_results_custom = TRUE
+# show_appendix_custom = TRUE
+```
+
+*Contact:*
+
+* Bioinformatics Core <bioinformatics@umich.edu>
+
+<!---
+Background
+--->
+```{r background_biology_section, child = 'child_background_biology.Rmd', eval = show_background_biology}
+```
+
+```{r background_samples_section, child = 'child_background_samples.Rmd', eval = show_background_samples}
+```
+
+```{r background_analysis_section, child = 'child_background_analysis.Rmd', eval = show_background_analysis}
+```
+
+<!---
+Methods
+--->
+```{r methods_wetlab_section, child = 'child_methods_wetlab.Rmd', eval = show_methods_wetlab}
+```
+
+```{r methods_qc_sequencing_section, child = 'child_methods_qc_sequencing.Rmd', eval = show_methods_qc_sequencing}
+```
+
+```{r methods_analysis_de_section, child = 'child_methods_analysis_de.Rmd', eval = show_methods_analysis_de}
+```
+
+```{r methods_custom_section, child = 'child_methods_custom.Rmd', eval = show_methods_custom}
+```
+
+<!---
+Results
+
+```{r results, child = 'child_results_qc.Rmd', eval = show_results_qc}
+```
+
+```{r results, child = 'child_results_analysis.Rmd', eval = show_results_analysis_dm}
+```
+
+```{r results_custom_section, child = 'child_results_custom.Rmd', eval = show_results_custom}
+```
+--->
+
+# Follow-On
+
+We are happy to answer any questions you may have and/or set-up a meeting to go over the results of your experiment.
+
+In addition, if you would like more detailed output (e.g. FastQC and/or DESeq2 detailed output, etc.) please let us know. For information on the RNA-seq workflows and a comparison between available differential expression tools, please refer to reference [9].
+
+
+# Citation
+
+It is important to document use of each Biomedical Research Core Facility by investigators in publications. This facilitates efforts to obtain funding for our Cores and their continued functioning.
+
+Please recognize the core’s contribution in the Acknowledgment section of your publications:
+
+“We acknowledge support from the Bioinformatics Core of the University of Michigan Medical School’s Biomedical Research Core Facilities.”
+
+If core staff have added scientific value to your project — made intellectual contributions in design, analysis and interpretation of data and/or manuscript writing, then please consider including them as co-authors in your publications.
+
+<!---
+Appendices
+
+# Appendices
+
+```{r appendix_qc_section, child = 'child_appendix_qc.Rmd', eval = show_appendix_qc}
+```
+
+```{r appendix_analysis_section, child = 'child_appendix_analysis.Rmd', eval = show_appendix_analysis}
+```
+
+```{r appendix_custom_section, child = 'child_appendix_custom.Rmd', eval = show_appendix_custom}
+```
+--->
+# References

@@ -1,0 +1,22 @@
+## Comparisons
+
+The following comparisons were performed. [REPLACE: Anything to note?]
+
+<!-- ```{r eval = has_comparisons, include = FALSE} -->
+<!--     # Read diff summaries here and use different views of this table throughout -->
+<!--     comp_table = lapply(names(config$comparisons), function(comparison) { -->
+<!--         sum_sig_file = sprintf('%s/%s/02-differential_methylation/%s/02-significant_probes/%s_diff_summary.txt', project_dir, analysis_dir, comparison, comparison) -->
+<!--         tmp_sig = read_tsv(sum_sig_file) -->
+<!--         return(tmp_sig) -->
+<!--     }) -->
+<!--     comp_table = Reduce(rbind, comp_table) -->
+<!--     colnames(comp_table) = c('Name', 'Model', 'Test', 'Hyper', 'Hypo', 'No DM', 'Filter By', 'Sig. Filter', 'Delta Beta Filter') -->
+<!--     comparisons_kable = kable(comp_table %>% select(Name, Model, Test), row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>% -->
+<!--         kable_styling(bootstrap_options = c('striped', 'condensed')) %>% -->
+<!--         scroll_box(width = '100%') -->
+<!-- ``` -->
+
+<!-- ```{r eval = has_comparisons, echo = FALSE, results = 'asis', message = FALSE} -->
+<!--     cat(comparisons_kable) -->
+<!-- ``` -->
+

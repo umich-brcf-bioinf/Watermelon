@@ -11,12 +11,18 @@ library(tidyverse)
 library(kableExtra)
 library(knitr)
 
-project_dir = snakemake@config[['project_dir']]
-analysis_dir = snakemake@config[['analysis_dir']]
+report_dir = snakemake@params[['report_dir']]
+output_prefix = paste0(report_dir, 'report_draft')
 
-load(snakemake@input[['filter_rdata']])
-# Loads filter_summary and targets
+cat(getwd())
 
-setwd(file.path(analysis_dir, 'doc'))
+# if(!dir.exists(report_dir)) {
+#     dir.create(report_dir, recursive = TRUE)
+# }
 
-rmarkdown::render('report.Rmd', output_format = 'all')
+report_rmd = snakemake@input[['report_rmd']]
+report_rmd = sub("/ccmb/BioinfCore/ActiveProjects", "/nfs/med-bfx-activeprojects", report_rmd)
+
+#setwd(dirname(report_rmd))
+
+rmarkdown::render(report_rmd, output_format = 'all', output_file = output_prefix, output_dir = report_dir)

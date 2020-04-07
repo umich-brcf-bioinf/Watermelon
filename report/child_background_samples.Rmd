@@ -5,22 +5,17 @@ The analyzed samples were as follows. [REPLACE: Describe columns as necessary.]
 TODO: Refactor for WAT
 
 
-<!-- ```{r include = FALSE} -->
-<!--     if('drop' %in% colnames(targets)) { -->
-<!--         targets = subset(targets, select = -c(Sample_Name, Sample_Plate, Sample_Group, Pool_ID, Basename, filenames, drop)) -->
-<!--         targets = targets[order(targets$Sample.ID), ] -->
-<!--     } else { -->
-<!--         targets = subset(targets, select = -c(Sample_Name, Sample_Plate, Sample_Group, Pool_ID, Basename, filenames)) -->
-<!--         targets = targets[order(targets$Sample.ID), ] -->
-<!--     } -->
-<!--     samples_kable = kable(targets, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>% -->
-<!--         kable_styling(bootstrap_options = c('striped', 'condensed')) %>% -->
-<!--         scroll_box(width = '100%', height = '600px') -->
-<!-- ``` -->
+```{r include = FALSE}
+    samplesheet_file = config[['samplesheet']]
+    samplesheet = read.csv(samplesheet_file)
+    samples_kable = kable(samplesheet, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+        kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
+        scroll_box(width = '100%', height = '400px')
+```
 
 
 
-<!-- ```{r eval = TRUE, echo = FALSE, results = 'asis', message = FALSE} -->
-<!--     cat(samples_kable) -->
-<!-- ``` -->
+```{r eval = TRUE, echo = FALSE, results = 'asis', message = FALSE}
+    cat(samples_kable)
+```
 

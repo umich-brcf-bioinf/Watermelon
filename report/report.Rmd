@@ -52,12 +52,10 @@ config = snakemake@config
 ################################################################################
 # Collect various objects you'll need downstream
 
-# has_comparisons = 'comparisons' %in% names(config)
-#
-# if(has_comparisons) {
-#     comparisons = names(config$comparisons)
-# }
-#
+contrasts = snakemake@params$contrasts
+
+has_contrasts = str_length(paste0(contrasts)) != 0
+
 # factor_covs = config$covariates$factor
 
 ################################################################################
@@ -70,17 +68,17 @@ show_methods_qc_sequencing = TRUE
 # show_results_qc = TRUE
 # show_appendix_qc = TRUE
 #
-# if(has_comparisons) {
+if(has_contrasts) {
     show_background_analysis = TRUE
     show_methods_analysis_de = TRUE
 #     show_results_analysis_de = TRUE
 #     show_appendix_analysis = TRUE
-# } else {
-#     show_background_analysis = FALSE
-#     show_methods_analysis_de = FALSE
+} else {
+    show_background_analysis = FALSE
+    show_methods_analysis_de = FALSE
 #     show_results_analysis_de = FALSE
 #     show_appendix_analysis = FALSE
-# }
+}
 
 show_methods_wetlab = TRUE
 
@@ -122,16 +120,17 @@ Methods
 
 <!---
 Results
-
-```{r results, child = 'child_results_qc.Rmd', eval = show_results_qc}
-```
-
-```{r results, child = 'child_results_analysis.Rmd', eval = show_results_analysis_dm}
-```
-
-```{r results_custom_section, child = 'child_results_custom.Rmd', eval = show_results_custom}
-```
 --->
+
+<!-- ```{r results, child = 'child_results_qc.Rmd', eval = show_results_qc} -->
+<!-- ``` -->
+
+<!-- ```{r results, child = 'child_results_analysis.Rmd', eval = show_results_analysis_dm} -->
+<!-- ``` -->
+
+<!-- ```{r results_custom_section, child = 'child_results_custom.Rmd', eval = show_results_custom} -->
+<!-- ``` -->
+
 
 # Follow-On
 
@@ -152,16 +151,17 @@ If core staff have added scientific value to your project — made intellectual 
 
 <!---
 Appendices
+-->
 
 # Appendices
 
-```{r appendix_qc_section, child = 'child_appendix_qc.Rmd', eval = show_appendix_qc}
-```
+<!-- ```{r appendix_qc_section, child = 'child_appendix_qc.Rmd', eval = show_appendix_qc} -->
+<!-- ``` -->
 
-```{r appendix_analysis_section, child = 'child_appendix_analysis.Rmd', eval = show_appendix_analysis}
-```
+<!-- ```{r appendix_analysis_section, child = 'child_appendix_analysis.Rmd', eval = show_appendix_analysis} -->
+<!-- ``` -->
 
-```{r appendix_custom_section, child = 'child_appendix_custom.Rmd', eval = show_appendix_custom}
-```
---->
+<!-- ```{r appendix_custom_section, child = 'child_appendix_custom.Rmd', eval = show_appendix_custom} -->
+<!-- ``` -->
+
 # References

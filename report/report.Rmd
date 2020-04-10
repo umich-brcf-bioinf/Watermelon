@@ -41,20 +41,28 @@ Default HTML output:
     }
 </style>
 
-```{r include = FALSE}
+```{r include = TRUE}
 ################################################################################
+# Load Libraries
+library(yaml)
 
 # packages = data.frame(installed.packages())
 
 # Read the config file
 config = snakemake@config
 
+# Set working directory to project dir
+setwd(project_dir)
+# Read the software environment version yaml
+versions = yaml.load_file(snakemake@input[['versions']])
+
+
 ################################################################################
 # Collect various objects you'll need downstream
 
-contrasts = snakemake@params$contrasts
+sample_phenotypes = snakemake@params[['sample_phenotypes']]
 
-has_contrasts = str_length(paste0(contrasts)) != 0
+# has_contrasts = str_length(paste0(contrast_list)) != 0
 
 # factor_covs = config$covariates$factor
 
@@ -68,17 +76,17 @@ show_methods_qc_sequencing = TRUE
 # show_results_qc = TRUE
 # show_appendix_qc = TRUE
 #
-if(has_contrasts) {
+# if(has_contrasts) {
     show_background_analysis = TRUE
     show_methods_analysis_de = TRUE
 #     show_results_analysis_de = TRUE
 #     show_appendix_analysis = TRUE
-} else {
-    show_background_analysis = FALSE
-    show_methods_analysis_de = FALSE
+# } else {
+    # show_background_analysis = FALSE
+    # show_methods_analysis_de = FALSE
 #     show_results_analysis_de = FALSE
 #     show_appendix_analysis = FALSE
-}
+# }
 
 show_methods_wetlab = TRUE
 
@@ -136,7 +144,7 @@ Results
 
 We are happy to answer any questions you may have and/or set-up a meeting to go over the results of your experiment.
 
-In addition, if you would like more detailed output (e.g. FastQC and/or DESeq2 detailed output, etc.) please let us know. For information on the RNA-seq workflows and a comparison between available differential expression tools, please refer to reference [9].
+In addition, if you would like more detailed output (e.g. FastQC and/or DESeq2 detailed output, etc.) please let us know. For information on the RNA-seq workflows and a comparison between available differential expression tools, please refer to [@Zhang2014].
 
 
 # Citation

@@ -133,6 +133,7 @@ else:
     FASTQ_SCREEN_DELIVERABLES = []
 
 if 'diffex' in config and config['diffex']:
+    PHENOTYPE_MANAGER = rnaseq_snakefile_helper.PhenotypeManager(config)
     DESEQ2_CONTRAST_DICT = rnaseq_snakefile_helper.diffex_contrasts(config['diffex'])
     DESeq2_ALL = [
         #deseq2_counts

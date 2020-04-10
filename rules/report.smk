@@ -11,7 +11,9 @@ rule report_draft:
     singularity: 'docker://twsaari/report_env'
     params:
         snakemake_rdata = REPORT_DIR + '.report_draft_snakemake.rda',
-        report_dir = REPORT_DIR
+        report_dir = REPORT_DIR,
+        sample_phenotypes = PHENOTYPE_MANAGER.phenotype_sample_list if 'diffex' in config and config['diffex'] else '',
+
     script:
         '../scripts/report_rmd.R'
 

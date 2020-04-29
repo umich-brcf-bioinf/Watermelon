@@ -149,8 +149,8 @@ class InputFileManager(object):
         self.input_type = input_type
         if input_type == 'fastq':
             self.input_paths_dict = self._get_fastq_paths_dict_from_input_dir()
-            self.fastqs_to_concat_dict = self._fastqs_to_concat_from_filenames(capture_regex=r'.*_R(\d+)\.fastq.*')
-            self.sample_bnames_dict = self._sample_bnames_from_filenames(capture_regex=r'.*_R(\d+)\.fastq.*', bname_fmt='{}_R{}')
+            self.fastqs_to_concat_dict = self._fastqs_to_concat_from_filenames(capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*')
+            self.sample_bnames_dict = self._sample_bnames_from_filenames(capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*', bname_fmt='{}_R{}')
 
 
     def _get_sample_fastq_paths(self, sample_fastq_dir):

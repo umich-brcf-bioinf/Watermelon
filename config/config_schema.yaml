@@ -1,7 +1,6 @@
 $schema: 'http://json-schema.org/draft-04/schema#'
 title: Watermelon yaml schema
 type: object
-
 properties:
     genome:
         type: string
@@ -16,11 +15,20 @@ properties:
                 type: string
             diffex_output:
                 type: string
+            report_output:
+                type: string
             input:
                 type: string
+        required:
+            - alignment_output
+            - diffex_output
+            - deliverables_output
+            - report_output
+            - input
+
     references:
         properties:
-            entrez_gene_info:
+            annotation_tsv:
                 type: string
             fasta:
                 type: string
@@ -58,7 +66,6 @@ properties:
                 type: integer
             trim_length_5prime:
                 type: integer
-
 required:
     - genome
     - samplesheet

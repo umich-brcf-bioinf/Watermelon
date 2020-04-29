@@ -7,15 +7,15 @@ fn_ignore_paths:
   - '*/.log/'
 
 module_order:
+  - star:
+      path_filters:
+        - '*rsem_star_align*'
   - fastqc:
       name: 'FastQC (trimmed sequences)'
       path_filters:
-        - '*trim*'
-  - fastq_screen
-  - hisat2:
-      path_filters:
-        - '*_align_summary*'
+        - '*fastqc_reads*'
   - fastqc:
       name: 'FastQC (aligned reads)'
       path_filters:
-        - '*-fastqc_align*'
+        - '*fastqc_align*'
+  - fastq_screen

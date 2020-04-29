@@ -3,7 +3,7 @@ rule align_multiqc:
         raw_read_fastqc_files = expand(ALIGNMENT_DIR + "03-fastqc_reads/{basename}_trimmed_fastqc.html",
                                     basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
                                 ),
-        align_summary_files = expand(ALIGNMENT_DIR + "04-rsem_star_align/{sample}.stat/{sample}.cnt",
+        align_summary_files = expand(ALIGNMENT_DIR + "04-rsem_star_align/{sample}.temp/{sample}Log.final.out",
                                      sample=config[SAMPLES_KEY]),
         align_fastq_files = expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}.genome_fastqc.html",
                                    sample=config[SAMPLES_KEY]),
@@ -21,6 +21,7 @@ rule align_multiqc:
     shell:
         '''(multiqc --version
         multiqc --force \
+            --exclude general_stats \
             --exclude cutadapt \
             --exclude bowtie2 \
             --exclude rsem \

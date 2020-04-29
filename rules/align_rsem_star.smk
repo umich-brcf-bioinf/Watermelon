@@ -11,7 +11,8 @@ rule align_rsem_star:
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam',
-        ALIGNMENT_DIR + "04-rsem_star_align/{sample}.stat/{sample}.cnt",
+        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.stat/{sample}.cnt',
+        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.temp/{sample}Log.final.out'
 
     log:
         ALIGNMENT_DIR + '04-rsem_star_align/.log/{sample}.rsem_star_align.log'
@@ -34,6 +35,7 @@ rsem-calculate-expression \
     --star-path $STAR_PATH \
     --star-gzipped-read-file \
     --star-output-genome-bam \
+    --keep-intermediate-files \
     -p {threads} \
     {input.fastq_files} \
     {params.rsem_ref_base} \

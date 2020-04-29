@@ -21,7 +21,7 @@ WATERMELON_SCRIPTS_DIR = os.path.join(WORKFLOW_BASEDIR, 'scripts', '')
 # WATERMELON_CONFIG_DIR = os.path.join(os.environ.get('WATERMELON_CONFIG_DIR', srcdir('config')), '')
 # WATERMELON_SCRIPTS_DIR = os.path.join(os.environ.get('WATERMELON_SCRIPTS_DIR', srcdir('scripts')), '')
 
-
+#TWS TODO: Consider refactoring - Should we really return "" if key doesn't exist? Added requirements to schema for now
 _DIRS = config.get("dirs", {})
 INPUT_DIR = os.path.join(_DIRS.get("input", "inputs"), "")
 ALIGNMENT_DIR = os.path.join(_DIRS.get("alignment_output", "alignment_results"), "")

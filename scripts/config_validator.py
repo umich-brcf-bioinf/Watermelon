@@ -3,16 +3,22 @@
 from collections import Counter,defaultdict
 from functools import partial
 from itertools import chain
+import jsonschema
 import os
 import re
 import sys
-from snakemake import utils # Using utils.validate, keeping the utils name to prevent confusion
+#from snakemake import utils # Using utils.validate, keeping the utils name to prevent confusion
 
 import yaml
 import pandas as pd
 
-from . import rnaseq_snakefile_helper
-from . import __version__ as WAT_VER
+if __package__ == None or __package__ == "": # If not loaded as a module
+    # helper is colocated with this validator
+    import rnaseq_snakefile_helper
+    import __init__ as WAT_VER
+else:
+    from . import rnaseq_snakefile_helper
+    from . import __init__ as WAT_VER
 
 _HEADER_RULE = '=' * 70 + '\n'
 _SECTION_RULE = '-' * 70 + '\n'
@@ -105,10 +111,10 @@ class _ValidationCollector(object):
         self._log.write('config validation: {}\n'.format(self.summary_result))
         if not self.passed:
             self._log.write(_SECTION_RULE)
-        for failure in self.failures:
-            self._log.write('failure: {}\n'.format(failure))
         for warning in self.warnings:
             self._log.write('warning: {}\n'.format(warning))
+        for failure in self.failures:
+            self._log.write('failure: {}\n'.format(failure))
 
     def ok_to_proceed(self, prompt_to_override_warnings):
         result = True
@@ -129,9 +135,9 @@ class _ValidationCollector(object):
 
 
 class _ConfigValidator(object):
-    def __init__(self, config, schema_filename, log=sys.stderr):
+    def __init__(self, config, schema, log=sys.stderr):
         self.config = config
-        self.schema_filename = schema_filename
+        self.schema = schema
         try:
             self.samplesheet = pd.read_csv(config['samplesheet'], comment='#')
         except:
@@ -171,8 +177,9 @@ class _ConfigValidator(object):
 
     def _check_config_against_schema(self):
         try:
-            utils.validate(self.config, self.schema_filename) #snakemake utils schema validator
-        except Exception as msg:
+            jsonschema.validate(self.config, self.schema) #snakemake utils schema validator
+        except Exception as e:
+            msg = e.message #This is given by jsonschema.exceptions.ValidationError
             raise(_WatermelonConfigFailure(str(msg)))
 
     def _check_config_matches_watermelon_version(self):
@@ -399,20 +406,32 @@ def main(config_filename,
          schema_filename,
          log=sys.stderr,
          prompt_to_override=prompt_to_override):
-    exit_code = 1
+
+    exit_code = 1 #Assume that it doesn't pass
+
     try:
         with open(config_filename, 'r') as config_file:
             config = yaml.load(config_file, Loader=yaml.SafeLoader)
-        validator = _ConfigValidator(config, schema_filename, log=log)
-        validation_collector = validator.validate()
-        validation_collector.log_results()
-        if validation_collector.ok_to_proceed(prompt_to_override):
-            exit_code = 0
-    except yaml.YAMLError:
+    except (yaml.parser.ParserError, yaml.scanner.ScannerError, yaml.YAMLError) as e:
         log.write(_HEADER_RULE)
-        log.write('config validation: ERROR\n')
-        log.write(('Could not parse this config file [{}]; '
-                   'is it valid YAML?\n').format(config_filename))
+        log.write(('Error: Could not parse the following config file [{}]\n'
+                   'Verify that YAML is valid.\n').format(config_filename))
+        return exit_code
+    try:
+        with open(schema_filename, 'r') as schema_file:
+            schema = yaml.load(schema_file, Loader=yaml.SafeLoader)
+    except (yaml.parser.ParserError, yaml.scanner.ScannerError, yaml.YAMLError) as e:
+        log.write(_HEADER_RULE)
+        log.write(('Error: Could not parse the following schema file [{}]\n'
+                   'Verify that YAML is valid.\n').format(schema_filename))
+        return exit_code
+
+    validator = _ConfigValidator(config, schema, log=log)
+    validation_collector = validator.validate()
+    validation_collector.log_results()
+    if validation_collector.ok_to_proceed(prompt_to_override):
+        exit_code = 0
+
     return exit_code
 
 if __name__ == '__main__':

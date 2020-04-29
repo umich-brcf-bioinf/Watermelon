@@ -1,9 +1,20 @@
 Changelog
 =========
+1.4.2 (04/02/2020)
+------------------
+- Bugfix for regex capture w/ new file naming convention from AGC. Allows previous and current file names e.g. '_R1.fastq.gz' and '_R1_001.fastq.gz'
+
+1.4.1 (03/25/2020)
+------------------
+- Refactored align_deliverables_fastq_screen (addresses errors from interference w/ parallel rule executions)
+- Bugfix when order of samples in DESeqDataSet does not match samplesheet
+- Bugfix for issue #20
+- Cluster resource requirement tuning
 
 1.4.0 (03/04/2020)
 ------------------
 - Converted to singularity
+
     - Profiles are set-up for snakemake to use singularity by default
     - Old conda environments still work with alternative profiles, e.g. `profile-comp5-6-conda`
     - Images are auto-built by bfxcore github repositories connected to DockerHub.
@@ -14,7 +25,6 @@ Changelog
 - Bugfix - PCA plotting fix in v1.1.0 was working inconsistently.
 - RScript logging is improved, though still unable to capture errors as well as we'd like.
 
-
 1.3.0 (01/03/2020)
 ------------------
 - Documentation overhaul
@@ -24,6 +34,7 @@ Changelog
     - Made up of README, Troubleshooting doc, and several examples covering different scenarios
 
 - Created built-in TestData genome build for watermelon_init
+
     - Special case - not listed in genome_references.yaml, but still usable as genome_build argument to watermelon_init
     - Sets up human chr22 references included with the repository
     - For use with the simulated data also included in the repository
@@ -38,7 +49,6 @@ Changelog
 - Workaround to ensure watermelon_init always uses /nfs/med-bfx... over /ccmb/BioinfCore/... paths
 - For consistency, all references to 'sample_description_file' changed to 'samplesheet'
 - Fastqs now managed with InputFileManager (May be renamed to InputFastqManager in the future)
-
 
 1.2.0 (11/14/2019)
 ------------------

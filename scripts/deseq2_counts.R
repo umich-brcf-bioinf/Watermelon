@@ -41,6 +41,8 @@ if(snakemake@rule == 'deseq2_counts_from_tximport_rsem'){
     message('Using tximport on rsem data')
     rsem_dir = snakemake@params[['rsem_dir']]
     gene.files.list <- named.filepaths.from.dir(rsem_dir, ".genes.results")
+    # tximport will have the correct order only if the files list matches pdata
+    gene.files.list <- gene.files.list[order(match(names(gene.files.list), pdata$sample), na.last = NA)]
     txi.rsem.gene.results <- tximport(gene.files.list, type = "rsem", txIn = F, txOut = F)
     #Some genes have length zero (what does this even mean?), causing issues with creating DESeqDataSet
     #Mike Love recommends changing these from 0 to 1; https://support.bioconductor.org/p/84304/#84368

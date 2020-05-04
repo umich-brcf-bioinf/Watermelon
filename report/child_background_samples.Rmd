@@ -2,8 +2,6 @@
 
 The analyzed samples were as follows. [REPLACE: Describe columns as necessary.]
 
-TODO: Refactor for WAT
-
 
 ```{r include = FALSE}
     samplesheet_file = config[['samplesheet']]

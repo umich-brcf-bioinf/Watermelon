@@ -3,6 +3,9 @@ rule report_draft:
     input:
         report_rmd = WORKFLOW_BASEDIR + '/report/report.Rmd',
         versions = DELIVERABLES_DIR + "run_info/env_software_versions.yaml",
+        multiqc_html = DELIVERABLES_DIR + "alignment/alignment_qc.html",
+        multiqc_gen_stats = ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_general_stats.txt",
+        multiqc_star = ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_star.txt"
     output:
         report_md = REPORT_DIR + 'report_draft.md',
         report_html = REPORT_DIR + 'report_draft.html'

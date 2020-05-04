@@ -41,7 +41,7 @@ Default HTML output:
     }
 </style>
 
-```{r include = TRUE}
+```{r echo = FALSE}
 ################################################################################
 # Load Libraries
 library(yaml)
@@ -89,8 +89,9 @@ show_methods_qc_sequencing = TRUE
 # }
 
 show_methods_wetlab = TRUE
-
 show_methods_custom = TRUE
+
+show_results_qc = TRUE
 # show_results_custom = TRUE
 # show_appendix_custom = TRUE
 ```
@@ -130,8 +131,8 @@ Methods
 Results
 --->
 
-<!-- ```{r results, child = 'child_results_qc.Rmd', eval = show_results_qc} -->
-<!-- ``` -->
+```{r results, child = 'child_results_qc.Rmd', eval = show_results_qc}
+```
 
 <!-- ```{r results, child = 'child_results_analysis.Rmd', eval = show_results_analysis_dm} -->
 <!-- ``` -->

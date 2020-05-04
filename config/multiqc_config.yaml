@@ -3,8 +3,14 @@ intro_text: ''
 
 no_version_check: True
 
+export_plot_formats:
+  - png
+
 fn_ignore_paths:
   - '*/.log/'
+
+extra_fn_clean_exts:
+  - '.genome'
 
 module_order:
   - star:

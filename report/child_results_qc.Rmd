@@ -1,0 +1,81 @@
+# Results
+
+## QC
+
+### Alignment
+
+```{r include = FALSE}
+# Generate relative link to multiqc html
+cwd = sub("/ccmb/BioinfCore/ActiveProjects", "/nfs/med-bfx-activeprojects", getwd()) # TODO: when we remove /ccmb/ completely this will no longer be necessary, can just use getwd()
+mqc_fullpath = file.path(project_dir, snakemake@input[['multiqc_html']])
+realpath_args = c('--relative-to', cwd, mqc_fullpath)
+
+multiqc_link_rel = system2(command = 'realpath', args = realpath_args, stdout = TRUE, timeout = 60)
+
+# TODO: Can't get error-handling to work as I would like. 
+# Have to use a syscall to realpath because there's no other way to resolve relative paths in R that I can tell. 
+# If realpath exit status is non-zero, we just get a warning from system2. 
+# I was trying to catch the warning, add a useful message, and exit the script. 
+# Seems I can't get the positive case and the failure case to behave as intended. 
+
+# multiqc_link_rel = tryCatch(
+#   expr = {
+#     link_rel = system2(command = 'realpath', args = realpath_args, stdout = TRUE, stderr = NULL, timeout = 60)
+#     return(link_rel)
+#   },
+#   warning = {
+#     #e = simpleError(str(w))
+#     e = simpleError('Failed generating relative link to multiqc HTML.')
+#     #stop(e)
+#     return(e)
+#   },
+#   error = function(emsg){
+#     e = simpleError(emsg)
+#     #stop(e)
+#     return(e)
+#   }
+# )
+
+cat(multiqc_link_rel)
+```
+
+A summary of alignment statistics can be seen in the table below. A detailed report from MultiQC can also be found [at this link](`r multiqc_link_rel`).
+
+[REPLACE: Any notable trends?]
+
+```{r include = FALSE}
+# Read in multiqc tab-separated files
+multiqc_gen_file = file.path(project_dir, snakemake@input[['multiqc_gen_stats']])
+multiqc_star_file = file.path(project_dir, snakemake@input[['multiqc_star']])
+
+multiqc_gen = read.table(multiqc_gen_file, header = TRUE, sep='\t', quote = "", stringsAsFactors = FALSE)
+multiqc_star = read.table(multiqc_star_file, header = TRUE, sep='\t', quote = "", stringsAsFactors = FALSE)
+
+# Subset STAR table to desired properties
+star_keep_cols = c('Sample', 'total_reads', 'uniquely_mapped', 'uniquely_mapped_percent', 'avg_mapped_read_length', 'multimapped', 'multimapped_percent')
+multiqc_star_subset = multiqc_star[,star_keep_cols]
+
+# Subset general table to desired properties (just fastqc aligned percent-dup for now)
+fastqc_aligned_pcdups = grep("^FastQC.*aligned.*percent_duplicates$", colnames(multiqc_gen), value = TRUE)
+multiqc_gen_subset = multiqc_gen[,c('Sample', fastqc_aligned_pcdups)] #Just grab Sample and aligned dup percentage from general stats
+
+# Function to trim e.g. foo.bar.baz to baz (for simplifying column names)
+trim_to_suffix = function(fullname) {return(sub(".*\\.", "", fullname))} # Trim to final suffix (all else captured by greedy . match)
+
+# Clean column names
+colnames(multiqc_gen_subset) = trim_to_suffix(colnames(multiqc_gen_subset))
+
+# Remove rows with NA (in this case, everything except fastqc_aligned data rows)
+multiqc_gen_subset = multiqc_gen_subset[complete.cases(multiqc_gen_subset),]
+
+# Combine subset of STAR results table with subset of general results table
+multiqc_report_df = merge(multiqc_star_subset, multiqc_gen_subset, by = 'Sample', all = TRUE)
+
+multiqc_kable = kable(multiqc_report_df, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+  kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
+  scroll_box(width = '100%', height = '600px')
+```
+
+```{r eval = TRUE, echo = FALSE, results = 'asis', message = FALSE}
+    cat(multiqc_kable)
+```

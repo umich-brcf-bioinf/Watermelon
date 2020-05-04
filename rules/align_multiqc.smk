@@ -9,7 +9,8 @@ rule align_multiqc:
                                    sample=config[SAMPLES_KEY]),
         fastq_screen_alignment = FASTQ_SCREEN_ALIGNMENT,
     output:
-        ALIGNMENT_DIR + "07-qc/alignment_qc.html"
+        ALIGNMENT_DIR + "07-qc/alignment_qc.html",
+        ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_general_stats.txt"
     params:
         output_dir = ALIGNMENT_DIR + "07-qc/",
         output_filename = "alignment_qc.html",
@@ -25,6 +26,7 @@ rule align_multiqc:
             --exclude cutadapt \
             --exclude bowtie2 \
             --exclude rsem \
+            --export \
             --config {params.multiqc_config_filename} \
             --outdir {params.output_dir} \
             --filename {params.output_filename} \

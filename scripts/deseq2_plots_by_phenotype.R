@@ -277,9 +277,6 @@ plot_PCA = function(compute_PCA_result, out_name = 'PCAplot.pdf') {
 ########################################################
 ########################################################
 
-fdr_cutoff = as.numeric(snakemake@config[['diffex']][['adjustedPValue']])
-fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['linear_fold_change']]))
-
 phenotypes = snakemake@params[['phenotypes']]
 
 diffex_dir = snakemake@params[['diffex_dir']]

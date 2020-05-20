@@ -18,7 +18,7 @@ if __package__ == None or __package__ == "": # If not loaded as a module
     import __init__ as WAT_VER
 else:
     from . import rnaseq_snakefile_helper
-    from . import __init__ as WAT_VER
+    from .__init__ import __version__ as WAT_VER
 
 _HEADER_RULE = '=' * 70 + '\n'
 _SECTION_RULE = '-' * 70 + '\n'

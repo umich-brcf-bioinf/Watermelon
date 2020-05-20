@@ -108,9 +108,6 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
 
 ########################################################
 # Set up
-fdr_cutoff = as.numeric(snakemake@config[['diffex']][['adjustedPValue']])
-fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][['linear_fold_change']]))
-
 method = snakemake@params[['method']]
 
 # Load gene list
@@ -119,6 +116,8 @@ gene_list = read.table(snakemake@input[['gene_list']], quote="", na.strings = ".
 # Volcano plot
 out_file = snakemake@output[['volcano_plot']]
 model_name = snakemake@wildcards[['model_name']]
+fdr_cutoff = as.numeric(snakemake@config[['diffex']][[model_name]][['adjustedPValue']])
+fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][[model_name]][['linear_fold_change']]))
 factor_name = snakemake@config[['diffex']][[model_name]][['factor_name']]
 contrast_name = snakemake@wildcards[['contrast']]
 exp = unlist(str_split(contrast_name, '_v_'))[1]

@@ -2,6 +2,7 @@ dirs:
   alignment_output: analysis{job_suffix}/alignment_results
   diffex_output: analysis{job_suffix}/diffex_results
   deliverables_output: analysis{job_suffix}/deliverables
+  report_output: analysis{job_suffix}/report
 trimming_options: #Delete the entire trimming_options stanza if no trimming is desired
     paired_end_mode: True
     base_quality_5prime: 0
@@ -15,13 +16,13 @@ fastq_screen: #Delete the entire fastq_screen stanza if fastq_screen not desired
     aligner: bowtie2
     subset: 100000
 diffex:
-    linear_fold_change: 1.5
-    adjustedPValue: 0.05
     count_min_cutoff: 1 #Filter lowly expressed genes using this cutoff
     #The following is an example Diffex stanza. Additional stanzas can be added
     #which will produce results in parallel directories
     #The parent node forms the name of directory for that model, in this case model_treatment.
     model_treatment:
+        linear_fold_change: 1.5
+        adjustedPValue: 0.05
         #Several contrasts of the form testVal_v_referenceVal can be listed here.
         #These contrasts will be pulled from the same DESeqDataset
         contrasts:

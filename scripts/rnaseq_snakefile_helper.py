@@ -113,36 +113,6 @@ class PhenotypeManager(object):
                 with_replicates.append(label)
         return sorted(with_replicates)
 
-    @property
-    def comparison_values(self):
-        '''Returns dict of {pheno_label : [val1,val2,val3,val4] }'''
-        phenotype_label_values = {}
-        for phenotype, comparison_list in self.comparisons.items():
-            comparison_list = list(map(str.strip, comparison_list))
-            unique_conditions = set()
-            for group in comparison_list:
-                unique_conditions.update(group.split(self.comparison_infix))
-            values = sorted(unique_conditions)
-            phenotype_label_values[phenotype] = values
-        return phenotype_label_values
-
-    def _phenotypes_comparisons(self, include_phenotypes_without_replicates=True):
-        if include_phenotypes_without_replicates:
-            include = lambda p: True
-        else:
-            with_replicates = set(self.phenotypes_with_replicates)
-            include = lambda p: p in with_replicates
-        pheno_comps = [(p, c) for p,c in self.comparisons.items() if include(p)]
-        phenotypes=[]
-        comparisons=[]
-        for pheno, comps in sorted(pheno_comps):
-            for comp in sorted(comps):
-                phenotypes.append(pheno)
-                comparisons.append(comp.strip())
-        PhenotypesComparisons = collections.namedtuple('PhenotypeComparisons',
-                                                       'phenotypes comparisons')
-        return PhenotypesComparisons(phenotypes=phenotypes, comparisons=comparisons)
-
 class InputFileManager(object):
     def __init__(self, input_dir, input_type='fastq'):
         self.input_dir = input_dir
@@ -267,18 +237,29 @@ def detect_paired_end_bool(fastqs):
 
 
 def diffex_models(diffex_config):
-    not_factors = ['adjustedPValue', 'linear_fold_change', 'count_min_cutoff']
+    not_factors = ['count_min_cutoff']
     model_names = [k for k in diffex_config.keys() if k not in not_factors]
     return(model_names)
 
-def diffex_contrasts(diffex_config):
-    '''Returns contrasts dict in the form of
-    {model_name: ['val1_v_val2', 'val3_v_val4']}
+def diffex_model_info(diffex_config):
+    '''Returns dict with tuple of contrasts, linear fold-change, and p-val cutoff for each model.
+    Using a tuple - easier to work with in an Rscript.
+    Example:
+    {model_foo:
+      (
+        ['val1_v_val2', 'val3_v_val4'],
+        1.5,
+        0.05
+      )
+    }
     '''
-    cont_dict = {}
+    info_dict = {}
     for model in diffex_models(diffex_config):
-        cont_dict[model] = diffex_config[model]['contrasts']
-    return(cont_dict)
+        contrasts = diffex_config[model]['contrasts']
+        fc = diffex_config[model]['linear_fold_change']
+        pval = diffex_config[model]['adjustedPValue']
+        info_dict[model] = (contrasts, fc, pval)
+    return(info_dict)
 
 def expand_model_contrast_filenames(model_contrasts_format, contrast_dict):
     paths = []

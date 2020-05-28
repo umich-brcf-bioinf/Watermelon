@@ -53,16 +53,21 @@ config = snakemake@config
 
 # Set working directory to project dir
 setwd(project_dir)
+
 # Read the software environment version yaml
 versions = yaml.load_file(snakemake@input[['versions']])
 
 
 ################################################################################
-# Collect various objects you'll need downstream
+# Set things up you'll need downstream
 
-sample_phenotypes = snakemake@params[['sample_phenotypes']]
+diffex_info = snakemake@params[['diffex_model_info']]
 
-# has_contrasts = str_length(paste0(contrast_list)) != 0
+contrasts = snakemake@params[['contrasts']]
+
+exclude_diffex = typeof(contrasts) == 'character' && contrasts == ''
+
+add_custom = snakemake@params[['add_custom']]
 
 # factor_covs = config$covariates$factor
 
@@ -70,30 +75,36 @@ sample_phenotypes = snakemake@params[['sample_phenotypes']]
 # Flags for showing particular sections
 
 show_background_biology = TRUE
+show_methods_wetlab = TRUE
 
 show_background_samples = TRUE
 show_methods_qc_sequencing = TRUE
-# show_results_qc = TRUE
-# show_appendix_qc = TRUE
-#
-# if(has_contrasts) {
-    show_background_analysis = TRUE
-    show_methods_analysis_de = TRUE
-#     show_results_analysis_de = TRUE
-#     show_appendix_analysis = TRUE
-# } else {
-    # show_background_analysis = FALSE
-    # show_methods_analysis_de = FALSE
-#     show_results_analysis_de = FALSE
-#     show_appendix_analysis = FALSE
-# }
-
-show_methods_wetlab = TRUE
-show_methods_custom = TRUE
-
 show_results_qc = TRUE
-# show_results_custom = TRUE
-# show_appendix_custom = TRUE
+
+show_appendix_qc = TRUE
+
+if(exclude_diffex) {
+    show_background_diffex = FALSE
+    show_methods_diffex = FALSE
+    show_results_diffex = FALSE
+    show_appendix_diffex = FALSE
+} else {
+    show_background_diffex = TRUE
+    show_methods_diffex = TRUE
+    show_results_diffex = TRUE
+    show_appendix_diffex = TRUE
+}
+
+if(add_custom){
+    show_methods_custom = TRUE
+    show_results_custom = TRUE
+    show_appendix_custom = TRUE
+} else {
+    show_methods_custom = FALSE
+    show_results_custom = FALSE
+    show_appendix_custom = FALSE
+}
+
 ```
 
 *Contact:*
@@ -109,7 +120,7 @@ Background
 ```{r background_samples_section, child = 'child_background_samples.Rmd', eval = show_background_samples}
 ```
 
-```{r background_analysis_section, child = 'child_background_analysis.Rmd', eval = show_background_analysis}
+```{r background_diffex_section, child = 'child_background_diffex.Rmd', eval = show_background_diffex}
 ```
 
 <!---
@@ -121,7 +132,7 @@ Methods
 ```{r methods_qc_sequencing_section, child = 'child_methods_qc_sequencing.Rmd', eval = show_methods_qc_sequencing}
 ```
 
-```{r methods_analysis_de_section, child = 'child_methods_analysis_de.Rmd', eval = show_methods_analysis_de}
+```{r methods_diffex_section, child = 'child_methods_diffex.Rmd', eval = show_methods_diffex}
 ```
 
 ```{r methods_custom_section, child = 'child_methods_custom.Rmd', eval = show_methods_custom}
@@ -134,11 +145,11 @@ Results
 ```{r results, child = 'child_results_qc.Rmd', eval = show_results_qc}
 ```
 
-<!-- ```{r results, child = 'child_results_analysis.Rmd', eval = show_results_analysis_dm} -->
-<!-- ``` -->
+```{r results, child = 'child_results_diffex.Rmd', eval = show_results_diffex}
+```
 
-<!-- ```{r results_custom_section, child = 'child_results_custom.Rmd', eval = show_results_custom} -->
-<!-- ``` -->
+```{r results_custom_section, child = 'child_results_custom.Rmd', eval = show_results_custom}
+```
 
 
 # Follow-On
@@ -162,12 +173,12 @@ If core staff have added scientific value to your project — made intellectual 
 Appendices
 -->
 
-# Appendices
+<!-- # Appendices -->
 
 <!-- ```{r appendix_qc_section, child = 'child_appendix_qc.Rmd', eval = show_appendix_qc} -->
 <!-- ``` -->
 
-<!-- ```{r appendix_analysis_section, child = 'child_appendix_analysis.Rmd', eval = show_appendix_analysis} -->
+<!-- ```{r appendix_diffex_section, child = 'child_appendix_diffex.Rmd', eval = show_appendix_diffex} -->
 <!-- ``` -->
 
 <!-- ```{r appendix_custom_section, child = 'child_appendix_custom.Rmd', eval = show_appendix_custom} -->

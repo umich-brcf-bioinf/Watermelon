@@ -134,8 +134,7 @@ else:
 
 if 'diffex' in config and config['diffex']:
     PHENOTYPE_MANAGER = rnaseq_snakefile_helper.PhenotypeManager(config)
-    DIFFEX_MODEL_INFO = rnaseq_snakefile_helper.diffex_model_info(config['diffex'])
-    DESEQ2_CONTRAST_DICT = {k: v[0] for k,v in DIFFEX_MODEL_INFO.items()} # Contrasts list is first item in tuple for each entry
+    DIFFEX_MODEL_INFO, DESEQ2_CONTRAST_DICT = rnaseq_snakefile_helper.diffex_model_info(config['diffex'])
     DESeq2_ALL = [
         #deseq2_counts
         DIFFEX_DIR + 'deseq2/counts/count_data.rda',

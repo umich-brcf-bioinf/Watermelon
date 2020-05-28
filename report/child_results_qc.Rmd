@@ -2,7 +2,13 @@
 
 ## QC
 
-### Alignment
+A detailed MultiQC report can be found at the following link:
+
+### [Alignment Results - MultiQC report](`r multiqc_link_rel`)
+
+### Alignment Results - Summary & Selected Figures
+
+A summary of alignment statistics can be seen in the table below.
 
 ```{r include = FALSE}
 # Generate relative link to multiqc html
@@ -39,7 +45,9 @@ multiqc_link_rel = system2(command = 'realpath', args = realpath_args, stdout = 
 cat(multiqc_link_rel)
 ```
 
-A summary of alignment statistics can be seen in the table below. A detailed report from MultiQC can also be found [at this link](`r multiqc_link_rel`).
+
+
+#[at this link](`r multiqc_link_rel`).
 
 [REPLACE: Any notable trends?]
 
@@ -71,11 +79,14 @@ multiqc_gen_subset = multiqc_gen_subset[complete.cases(multiqc_gen_subset),]
 # Combine subset of STAR results table with subset of general results table
 multiqc_report_df = merge(multiqc_star_subset, multiqc_gen_subset, by = 'Sample', all = TRUE)
 
+# Transform the column names
+colnames(multiqc_report_df) = gsub("_", " ", colnames(multiqc_report_df))
+
 multiqc_kable = kable(multiqc_report_df, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
   kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
   scroll_box(width = '100%', height = '600px')
 ```
 
-```{r eval = TRUE, echo = FALSE, results = 'asis', message = FALSE}
-    cat(multiqc_kable)
+```{r echo = FALSE, results = 'asis', message = FALSE}
+cat(multiqc_kable)
 ```

@@ -16,7 +16,8 @@ rule report_draft:
         snakemake_rdata = REPORT_DIR + '.report_draft_snakemake.rda',
         report_dir = REPORT_DIR,
         add_custom = False, # TODO: This could later be moved out to config
-        diffex_model_info = DIFFEX_MODEL_INFO if 'diffex' in config and config['diffex'] else '', # Empty val here can also be used within the script to exclude diffex sections
+        contrasts = DESEQ2_CONTRAST_DICT if 'diffex' in config and config['diffex'] else '', # Empty val here can also be used within the script to exclude diffex sections
+        diffex_model_info = DIFFEX_MODEL_INFO if 'diffex' in config and config['diffex'] else ''
     script:
         '../scripts/report_rmd.R'
 

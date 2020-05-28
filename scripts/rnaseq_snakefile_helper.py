@@ -242,24 +242,24 @@ def diffex_models(diffex_config):
     return(model_names)
 
 def diffex_model_info(diffex_config):
-    '''Returns dict with tuple of contrasts, linear fold-change, and p-val cutoff for each model.
-    Using a tuple - easier to work with in an Rscript.
-    Example:
-    {model_foo:
-      (
-        ['val1_v_val2', 'val3_v_val4'],
-        1.5,
-        0.05
-      )
-    }
-    '''
+    '''Returns two dictionaries: one with contrasts, and one (nested) with linear fold-change and p-val cutoff, for each model.
+    Keyed by model name. Former is used to setup targets in snakefile, both used in report.
+    Examples:
+    cont_dict = { 'model_foo' : ['val1_v_val2', 'val3_v_val4'] }
+    info_dict = { 'model_foo' : {
+        'linear_fold_change' : 1.5,
+        'adjustedPValue' : 0.05
+    }'''
     info_dict = {}
+    cont_dict = {}
     for model in diffex_models(diffex_config):
-        contrasts = diffex_config[model]['contrasts']
-        fc = diffex_config[model]['linear_fold_change']
-        pval = diffex_config[model]['adjustedPValue']
-        info_dict[model] = (contrasts, fc, pval)
-    return(info_dict)
+        info_dict[model] = {
+            'model' : diffex_config[model]['DESeq2']['design'],
+            'linear_fold_change' : diffex_config[model]['linear_fold_change'],
+            'adjustedPValue' : diffex_config[model]['adjustedPValue']
+        }
+        cont_dict[model] = diffex_config[model]['contrasts']
+    return(info_dict, cont_dict)
 
 def expand_model_contrast_filenames(model_contrasts_format, contrast_dict):
     paths = []

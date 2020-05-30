@@ -4,50 +4,20 @@
 
 A detailed MultiQC report can be found at the following link:
 
+```{r include = FALSE}
+# Setup - generate relative link to multiqc html
+cwd = sub("/ccmb/BioinfCore/ActiveProjects", "/nfs/med-bfx-activeprojects", getwd()) # TODO: when we remove /ccmb/ completely this will no longer be necessary, can just use getwd()
+mqc_fullpath = file.path(project_dir, snakemake@input[['multiqc_html']])
+realpath_args = c('--relative-to', cwd, mqc_fullpath)
+
+multiqc_link_rel = xml2::url_relative(mqc_fullpath, file.path(cwd, '..'))
+```
+  
 ### [Alignment Results - MultiQC report](`r multiqc_link_rel`)
 
 ### Alignment Results - Summary & Selected Figures
 
 A summary of alignment statistics can be seen in the table below.
-
-```{r include = FALSE}
-# Generate relative link to multiqc html
-cwd = sub("/ccmb/BioinfCore/ActiveProjects", "/nfs/med-bfx-activeprojects", getwd()) # TODO: when we remove /ccmb/ completely this will no longer be necessary, can just use getwd()
-mqc_fullpath = file.path(project_dir, snakemake@input[['multiqc_html']])
-realpath_args = c('--relative-to', cwd, mqc_fullpath)
-
-multiqc_link_rel = system2(command = 'realpath', args = realpath_args, stdout = TRUE, timeout = 60)
-
-# TODO: Can't get error-handling to work as I would like. 
-# Have to use a syscall to realpath because there's no other way to resolve relative paths in R that I can tell. 
-# If realpath exit status is non-zero, we just get a warning from system2. 
-# I was trying to catch the warning, add a useful message, and exit the script. 
-# Seems I can't get the positive case and the failure case to behave as intended. 
-
-# multiqc_link_rel = tryCatch(
-#   expr = {
-#     link_rel = system2(command = 'realpath', args = realpath_args, stdout = TRUE, stderr = NULL, timeout = 60)
-#     return(link_rel)
-#   },
-#   warning = {
-#     #e = simpleError(str(w))
-#     e = simpleError('Failed generating relative link to multiqc HTML.')
-#     #stop(e)
-#     return(e)
-#   },
-#   error = function(emsg){
-#     e = simpleError(emsg)
-#     #stop(e)
-#     return(e)
-#   }
-# )
-
-cat(multiqc_link_rel)
-```
-
-
-
-#[at this link](`r multiqc_link_rel`).
 
 [REPLACE: Any notable trends?]
 

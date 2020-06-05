@@ -26,4 +26,19 @@ project_dir = dirname(dirname(dirname(report_rmd)))
 
 # project_dir = getwd() # This is another option to get the project dir. This is where snakemake is called from, should be project dir.
 
+if(grepl("^/", snakemake@params[['diffex_dir']])) { # If it looks like absolute path, use it.
+  diffex_dir = snakemake@params[['diffex_dir']]
+}else { # Otherwise, assume relative path and treat accordingly
+  diffex_dir = file.path(project_dir, snakemake@params[['diffex_dir']])
+}
+
+
+################################################################################
+
+qc_boxplot_file = '%s/deseq2/plots/by_phenotype/%s/BoxPlot_%s.pdf'
+qc_heatmap_file = '%s/deseq2/plots/by_phenotype/%s/SampleHeatmap.pdf'
+qc_pca_file = '%s/deseq2/plots/by_phenotype/%s/PCAplot_12_%s.pdf'
+
+################################################################################
+
 rmarkdown::render(report_rmd, output_format = 'all', output_file = output_prefix, output_dir = report_dir, params = list(project_dir = project_dir))

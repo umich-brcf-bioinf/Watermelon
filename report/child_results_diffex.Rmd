@@ -1,4 +1,18 @@
 ## Differential Expression
 
-[REPLACE: what to include here?]
+The table below summarizes the results of the differential tests with the name of the comparison, the model (if applicable), the test (either the coefficient or contrast tested), the number of differential loci in case and control, and the number of loci tested but not statistically significant.
+
+The following sections provide more detailed information about the differential tests, including a summary table of the top differential loci (annotated to genomic features if applicable), a volcano plot, a plot summarizing the annotations of the differential loci compared to the background of all tested loci, and a filtering of the differential loci according to genes of interest (if applicable).
+
+```{r include = FALSE}
+    conts = snakemake@params[['contrasts']]
+    conts_split = lapply(seq_len(length(conts)), function(x){data.frame(model = names(conts)[[x]], comparisons = conts[[x]])})
+    comparison_tbl = Reduce(rbind, conts_split)
+    comparison_kable = kable(comparison_tbl, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+      kable_styling(bootstrap_options = c('striped', 'condensed'))
+```
+
+```{r echo = FALSE, results = 'asis', message = FALSE}
+cat(comparison_kable)
+```
 

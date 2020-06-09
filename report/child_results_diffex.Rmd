@@ -16,3 +16,29 @@ The following sections provide more detailed information about the differential 
 cat(comparison_kable)
 ```
 
+
+```{r include = FALSE}
+    info = snakemake@params[['diffex_model_info']]
+    info_tbl = do.call(rbind, lapply(info, data.frame))
+    colnames(info_tbl) = c('Model', 'Linear fold-change', 'FDR')
+    info_kable = kable(info_tbl, row.names = TRUE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+      kable_styling(bootstrap_options = c('striped', 'condensed'))
+```
+
+```{r echo = FALSE, results = 'asis', message = FALSE}
+    cat(info_kable)
+```
+
+```{r echo = FALSE, results = 'asis', message = FALSE}
+    for(comp_name in names(comparisons)) {
+        comparison_str = gsub('_', ' ', comp_name)
+        filter_sig = info[[comp_name]][['adjustedPValue']]
+        filter_fc = info[[comp_name]][['linear_fold_change']]
+        cat(sprintf('#### Volcano Plots for %s\n\n', comp_name))
+        cat(sprintf('In the volcano plots below, each point is a tested locus. A gene is considered to be differentially expressed if FDR < %s and | linear fold-change | > %s. Points are colored according to the direction of differential expression with the total number of loci indicated in the legend. The vertical lines correspond to the fold-change cutoff. \n\n', filter_sig, filter_fc))
+        for(comparison in comparisons[[comp_name]]){
+          volcano_file = sprintf(diffex_volcano_file, diffex_dir, comp_name, comparison)
+          cat(sprintf('![**Figure:** Volcano plot for %s, comparing %s.](%s) \n\n', comp_name, comparison, volcano_file))
+        }
+    }
+```

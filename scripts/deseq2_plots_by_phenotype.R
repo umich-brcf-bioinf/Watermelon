@@ -23,7 +23,7 @@ foo = suppressMessages(lapply(lib.vector, library, character.only=T, warn.confli
 # Define plotting functions
 
 
-plot_boxplot = function(mat, pdata, factor_name, title, y_label, out_name = 'BoxPlot.pdf') {
+plot_boxplot = function(mat, pdata, factor_name, title, y_label, out_basename = 'BoxPlot') {
 
     annot_df = data.frame(
         sample = pdata$sample,
@@ -42,13 +42,14 @@ plot_boxplot = function(mat, pdata, factor_name, title, y_label, out_name = 'Box
             x = '',
             y = y_label) +
         theme_bw() + theme(axis.text.x = element_text(angle = 90))
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = box_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf')), plot = box_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), plot = box_plot, height = 8, width = 8, dpi = 300)
 
     return(box_plot)
 }
 
 
-plot_sample_correlation_heatmap = function(mat, pdata, factor_name, out_name = 'SampleHeatmap.pdf') {
+plot_sample_correlation_heatmap = function(mat, pdata, factor_name, out_basename = 'SampleHeatmap') {
 
     if(!(factor_name %in% colnames(pdata))) {
         stop(sprintf('factor_name = %s is not in columns of pdata.', factor_name))
@@ -64,7 +65,16 @@ plot_sample_correlation_heatmap = function(mat, pdata, factor_name, out_name = '
     hclust_obj = hclust(dist_obj, method = 'complete')
     dist_mat = as.matrix(dist_obj)
 
-    pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, out_name), height = 8, width = 8)
+    pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf')), height = 8, width = 8)
+        pheatmap(
+            mat = dist_mat,
+            cluster_rows = TRUE,
+            cluster_cols = TRUE,
+            annotation_col = annot_df,
+            color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
+        )
+    dev.off()
+    png(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), height = 8, width = 8)
         pheatmap(
             mat = dist_mat,
             cluster_rows = TRUE,
@@ -78,7 +88,7 @@ plot_sample_correlation_heatmap = function(mat, pdata, factor_name, out_name = '
 }
 
 
-plot_top_variably_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out_name = 'Heatmap_TopVar.pdf') {
+plot_top_variably_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out_basename = 'Heatmap_TopVar') {
 
     if(!(factor_name %in% colnames(pdata))) {
         stop(sprintf('factor_name = %s is not in columns of pdata.', factor_name))
@@ -95,7 +105,22 @@ plot_top_variably_expressed_heatmap = function(mat, pdata, factor_name, top_n = 
     # Calculate the top_n variable genes and put them in decreasing order
     top_var_mat = mat[order(matrixStats::rowVars(mat), decreasing = T), ][1:top_n, ]
 
-    pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, out_name), height = 20, width = 10)
+    pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf')), height = 20, width = 10)
+        pheatmap(
+            mat = top_var_mat,
+            scale= 'row',
+            cluster_rows = TRUE,
+            cluster_cols = TRUE,
+            show_rownames = FALSE,
+            annotation_col = annot_df,
+            fontsize = 7,
+            fontsize_row = 7,
+            las = 2,
+            main = sprintf('Top %s variably expressed genes', top_n),
+            color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
+        )
+    dev.off()
+    png(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), height = 20, width = 10)
         pheatmap(
             mat = top_var_mat,
             scale= 'row',
@@ -113,7 +138,7 @@ plot_top_variably_expressed_heatmap = function(mat, pdata, factor_name, top_n = 
 }
 
 
-plot_top_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out_name = 'Heatmap_TopExp.pdf') {
+plot_top_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out_basename = 'Heatmap_TopExp') {
 
     if(!(factor_name %in% colnames(pdata))) {
         stop(sprintf('factor_name = %s is not in columns of pdata.', factor_name))
@@ -130,7 +155,22 @@ plot_top_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out
     # Calculate the top_n expressed genes and put them in decreasing order
     top_exp_mat = mat[order(rowMeans(mat), decreasing = T), ][1:top_n, ]
 
-    pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, out_name), height = 20, width = 10)
+    pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf')), height = 20, width = 10)
+        pheatmap(
+            mat = top_exp_mat,
+            scale= 'row',
+            cluster_rows = TRUE,
+            cluster_cols = TRUE,
+            show_rownames = FALSE,
+            annotation_col = annot_df,
+            fontsize = 7,
+            fontsize_row = 7,
+            las = 2,
+            main = sprintf('Top %s expressed genes', top_n),
+            color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
+        )
+    dev.off()
+    png(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), height = 20, width = 10)
         pheatmap(
             mat = top_exp_mat,
             scale= 'row',
@@ -203,7 +243,7 @@ compute_PCA = function(mat, pdata, factor_name, top_n = 500, dims = c('PC1','PC2
 }
 
 
-plot_scree = function(compute_PCA_result, out_name = 'ScreePlot.pdf') {
+plot_scree = function(compute_PCA_result, out_basename = 'ScreePlot') {
     pca_df = compute_PCA_result[['pca_df']]
     all_var_explained = compute_PCA_result[['all_var_explained']]
     top_n = compute_PCA_result[['top_n']]
@@ -223,13 +263,14 @@ plot_scree = function(compute_PCA_result, out_name = 'ScreePlot.pdf') {
             y = 'Percent Variance Explained'
         ) +
         theme_bw()
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = scree_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf')), plot = scree_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), plot = scree_plot, height = 6, width = 6, dpi = 300)
 
     return(scree_plot)
 }
 
 
-plot_PCA = function(compute_PCA_result, out_name = 'PCAplot.pdf') {
+plot_PCA = function(compute_PCA_result, out_basename = 'PCAplot') {
 
     pca_df = compute_PCA_result[['pca_df']]
     var_explained = compute_PCA_result[['var_explained']]
@@ -267,7 +308,8 @@ plot_PCA = function(compute_PCA_result, out_name = 'PCAplot.pdf') {
       message(paste0("Warning - not enough symbols to represent all ", whats.smaller))
     }
 
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, out_name), plot = pca_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf')), plot = pca_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), plot = pca_plot, height = 6, width = 6, dpi = 300)
 
     return(pca_plot)
 }
@@ -325,40 +367,40 @@ if('bg_data' %in% ls()) {
 for(phenotype in phenotypes) {
 
     message(sprintf('Plotting boxplots for %s', phenotype))
-    log2_boxplot = plot_boxplot(mat = mat, pdata = pdata, factor_name = phenotype, title = boxplot_title, y_label = boxplot_y_lab, out_name = 'BoxPlot_rlog.pdf')
-    raw_boxplot = plot_boxplot(mat = log2(raw_counts), pdata = pdata, factor_name = phenotype, title = 'Non-normalized counts', y_label = boxplot_y_lab, out_name = 'BoxPlot_raw.pdf')
+    log2_boxplot = plot_boxplot(mat = mat, pdata = pdata, factor_name = phenotype, title = boxplot_title, y_label = boxplot_y_lab, out_basename = 'BoxPlot_rlog')
+    raw_boxplot = plot_boxplot(mat = log2(raw_counts), pdata = pdata, factor_name = phenotype, title = 'Non-normalized counts', y_label = boxplot_y_lab, out_basename = 'BoxPlot_raw')
 
     message(sprintf('Plotting sample heatmap for %s', phenotype))
-    log2_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata, factor_name = phenotype, out_name = 'SampleHeatmap.pdf')
+    log2_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata, factor_name = phenotype, out_basename = 'SampleHeatmap')
 
     message(sprintf('Plotting top variably expressed genes heatmap for %s', phenotype))
-    plot_top_variably_expressed_heatmap(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, out_name = 'Heatmap_TopVar.pdf')
+    plot_top_variably_expressed_heatmap(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, out_basename = 'Heatmap_TopVar')
 
     message(sprintf('Plotting top expressed genes heatmap for %s', phenotype))
-    plot_top_expressed_heatmap(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, out_name = 'Heatmap_TopExp.pdf')
+    plot_top_expressed_heatmap(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, out_basename = 'Heatmap_TopExp')
 
     # PCA top 500
     message(sprintf('Plotting PCA for %s in dim 1 and 2, top 500', phenotype))
     pca_result_12 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC1','PC2'))
-    log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_name = 'PCAplot_12_top500.pdf')
+    log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_basename = 'PCAplot_12_top500')
 
     message(sprintf('Plotting PCA for %s in dim 2 and 3, top 500', phenotype))
     pca_result_23 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC2','PC3'))
-    log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_name = 'PCAplot_23_top500.pdf')
+    log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_basename = 'PCAplot_23_top500')
 
     message('Plotting scree, top 500')
-    scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_name = 'ScreePlot_top500.pdf')
+    scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basename = 'ScreePlot_top500')
 
     # PCA top 100
     message(sprintf('Plotting PCA for %s in dim 1 and 2, top 100', phenotype))
     pca_result_12 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c('PC1','PC2'))
-    log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_name = 'PCAplot_12_top100.pdf')
+    log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_basename = 'PCAplot_12_top100')
 
     message(sprintf('Plotting PCA for %s in dim 2 and 3, top 100', phenotype))
     pca_result_23 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c('PC2','PC3'))
-    log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_name = 'PCAplot_23_top100.pdf')
+    log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_basename = 'PCAplot_23_top100')
 
     message('Plotting scree, top 100')
-    scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_name = 'ScreePlot_top100.pdf')
+    scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basename = 'ScreePlot_top100')
 
 }

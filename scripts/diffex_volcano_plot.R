@@ -21,7 +21,7 @@ foo = suppressMessages(lapply(lib.vector, library, character.only=T, warn.confli
 
 ########################################################
 # Functions
-plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con_name, fdr_cutoff, logfc_cutoff, out_filepath) {
+plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con_name, fdr_cutoff, logfc_cutoff, out_filepath_pdf, out_filepath_png) {
 
     method = match.arg(method)
 
@@ -101,7 +101,8 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
     if(!all(is.na(de_list$label))) {
         volcano_plot = volcano_plot + ggrepel::geom_label_repel(label = de_list$label, force = 3, segment.alpha = 0.4)
     }
-    ggsave(filename = out_filepath, plot = volcano_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = out_filepath_pdf, plot = volcano_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = out_filepath_png, plot = volcano_plot, height = 8, width = 8, dpi = 300)
 
     return(volcano_plot)
 }
@@ -114,7 +115,8 @@ method = snakemake@params[['method']]
 gene_list = read.table(snakemake@input[['gene_list']], quote="", na.strings = ".", sep="\t", header = T, stringsAsFactors = F)
 
 # Volcano plot
-out_file = snakemake@output[['volcano_plot']]
+out_pdf = snakemake@output[['volcano_plot_pdf']]
+out_png = snakemake@output[['volcano_plot_png']]
 model_name = snakemake@wildcards[['model_name']]
 fdr_cutoff = as.numeric(snakemake@config[['diffex']][[model_name]][['adjustedPValue']])
 fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][[model_name]][['linear_fold_change']]))
@@ -134,4 +136,5 @@ volcano_plot = plot_volcano(
   con_name = con,
   fdr_cutoff = fdr_cutoff,
   logfc_cutoff = fc_cutoff,
-  out_filepath = out_file)
+  out_filepath_pdf = out_pdf,
+  out_filepath_png = out_png)

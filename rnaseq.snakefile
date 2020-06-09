@@ -160,6 +160,9 @@ if 'diffex' in config and config['diffex']:
         rnaseq_snakefile_helper.expand_model_contrast_filenames(\
             DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf',
             DESEQ2_CONTRAST_DICT),
+        rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+            DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.png',
+            DESEQ2_CONTRAST_DICT),
         #deseq2_annotation
         rnaseq_snakefile_helper.expand_model_contrast_filenames(\
             DIFFEX_DIR + 'deseq2/annotated/{model_name}/{contrast}.annot.txt',
@@ -183,15 +186,19 @@ if 'diffex' in config and config['diffex']:
         rnaseq_snakefile_helper.expand_model_contrast_filenames(\
             DELIVERABLES_DIR + "deseq2/gene_lists/{model_name}/{contrast}.xlsx",
             DESEQ2_CONTRAST_DICT),
-        expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
+        expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.{extension}',
                 phenotype = PHENOTYPES,
                 dim = ['12','23'],
-                ngenes = ['100','500']),
-        expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.pdf',
+                ngenes = ['100','500'],
+                extension = ['pdf', 'png']),
+        expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/ScreePlot_top{ngenes}.{extension}',
                 phenotype = PHENOTYPES,
-                ngenes = ['100','500']),
-        expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/{plotType}.pdf',
-            phenotype = PHENOTYPES, plotType = ['BoxPlot_raw', 'BoxPlot_rlog', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
+                ngenes = ['100','500'],
+                extension = ['pdf', 'png']),
+        expand(DELIVERABLES_DIR + 'deseq2/plots/by_phenotype/{phenotype}/{plotType}.{extension}',
+            phenotype = PHENOTYPES,
+            plotType = ['BoxPlot_raw', 'BoxPlot_rlog', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp'],
+            extension = ['pdf', 'png']),
         rnaseq_snakefile_helper.expand_model_contrast_filenames(\
                 DELIVERABLES_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf',
                 DESEQ2_CONTRAST_DICT),

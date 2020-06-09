@@ -35,9 +35,10 @@ if(grepl("^/", snakemake@params[['diffex_dir']])) { # If it looks like absolute 
 
 ################################################################################
 
-qc_boxplot_file = '%s/deseq2/plots/by_phenotype/%s/BoxPlot_%s.pdf'
-qc_heatmap_file = '%s/deseq2/plots/by_phenotype/%s/SampleHeatmap.pdf'
-qc_pca_file = '%s/deseq2/plots/by_phenotype/%s/PCAplot_12_%s.pdf'
+diffex_volcano_file = '%s/deseq2/plots/comparison_plots/%s/VolcanoPlot_%s.png'
+qc_boxplot_file = '%s/deseq2/plots/by_phenotype/%s/BoxPlot_%s.png'
+qc_heatmap_file = '%s/deseq2/plots/by_phenotype/%s/SampleHeatmap.png'
+qc_pca_file = '%s/deseq2/plots/by_phenotype/%s/PCAplot_12_%s.png'
 
 ################################################################################
 

@@ -65,24 +65,40 @@ plot_sample_correlation_heatmap = function(mat, pdata, factor_name, out_basename
     hclust_obj = hclust(dist_obj, method = 'complete')
     dist_mat = as.matrix(dist_obj)
 
-    pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf')), height = 8, width = 8)
-        pheatmap(
-            mat = dist_mat,
-            cluster_rows = TRUE,
-            cluster_cols = TRUE,
-            annotation_col = annot_df,
-            color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
-        )
-    dev.off()
-    png(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), height = 8, width = 8)
-        pheatmap(
-            mat = dist_mat,
-            cluster_rows = TRUE,
-            cluster_cols = TRUE,
-            annotation_col = annot_df,
-            color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
-        )
-    dev.off()
+    pheatmap( # pdf
+        mat = dist_mat,
+        cluster_rows = TRUE,
+        cluster_cols = TRUE,
+        angle_col = 45,
+        display_numbers = TRUE,
+        cellwidth = 20,
+        cellheight = 20,
+        fontsize = 8,
+        fontsize_row = 6,
+        fontsize_col = 6,
+        fontsize_number = 6,
+        number_color = 'black',
+        annotation_col = annot_df,
+        color = colorRampPalette(RColorBrewer::brewer.pal(9, 'Blues'))(20),
+        filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf'))
+    )
+    pheatmap( # png
+        mat = dist_mat,
+        cluster_rows = TRUE,
+        cluster_cols = TRUE,
+        angle_col = 45,
+        display_numbers = TRUE,
+        cellwidth = 20,
+        cellheight = 20,
+        fontsize = 8,
+        fontsize_row = 6,
+        fontsize_col = 6,
+        fontsize_number = 6,
+        number_color = 'black',
+        annotation_col = annot_df,
+        color = colorRampPalette(RColorBrewer::brewer.pal(9, 'Blues'))(20),
+        filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png'))
+    )
 
     return(list(dist_obj = dist_obj, hclust_obj = hclust_obj))
 }
@@ -120,7 +136,7 @@ plot_top_variably_expressed_heatmap = function(mat, pdata, factor_name, top_n = 
             color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
         )
     dev.off()
-    png(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), height = 20, width = 10)
+    png(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), height = 2400, width = 1200)
         pheatmap(
             mat = top_var_mat,
             scale= 'row',
@@ -170,7 +186,7 @@ plot_top_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out
             color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
         )
     dev.off()
-    png(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), height = 20, width = 10)
+    png(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), height = 2400, width = 1200)
         pheatmap(
             mat = top_exp_mat,
             scale= 'row',

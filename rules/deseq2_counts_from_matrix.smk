@@ -12,7 +12,7 @@ rule deseq2_counts_from_matrix:
     log:
         DIFFEX_DIR + 'deseq2/counts/.log/DESeq2_counts.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
-    singularity: 'docker://umichbfxcore/wat_diffex'
+    singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
     params:
         snakemake_rdata = DIFFEX_DIR + 'deseq2/counts/.deseq2_counts_snakemake.rda' #TWS DEBUG
     script:

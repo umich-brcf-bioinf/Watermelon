@@ -8,7 +8,7 @@ rule deseq2_init:
     log:
         DIFFEX_DIR + 'deseq2/.log/deseq2_init_{model_name}.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
-    singularity: 'docker://umichbfxcore/wat_diffex'
+    singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
     params:
         snakemake_rdata = DIFFEX_DIR + 'deseq2/.deseq2_init_{model_name}_snakemake.rda' #TWS DEBUG
     script:

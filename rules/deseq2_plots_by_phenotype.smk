@@ -18,7 +18,7 @@ rule deseq2_plots_by_phenotype:
     log:
         DIFFEX_DIR + 'deseq2/plots/by_phenotype/.log/deseq2_plots_by_phenotype.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
-    singularity: 'docker://umichbfxcore/wat_diffex'
+    singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
     params:
         phenotypes = PHENOTYPES,
         diffex_dir = DIFFEX_DIR,

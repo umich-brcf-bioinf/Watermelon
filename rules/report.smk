@@ -12,7 +12,7 @@ rule report_draft:
         report_html = REPORT_DIR + 'report_draft.html'
     log:
         REPORT_DIR + '.log/report_draft.log'
-    singularity: 'docker://twsaari/report_env'
+    singularity: 'docker://umichbfxcore/report:0.1.0'
     params:
         snakemake_rdata = REPORT_DIR + '.report_draft_snakemake.rda',
         report_dir = REPORT_DIR,

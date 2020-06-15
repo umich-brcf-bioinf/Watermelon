@@ -67,7 +67,7 @@ The following boxplots show the distribution of gene expression counts in the di
 
 ```{r echo = FALSE, results = 'asis', message = FALSE}
 for(factor_cov in snakemake@params[['phenotypes']]) {
-  cat(sprintf('\n\n #### %s \n\n', factor_cov))
+  cat(sprintf('\n\n#### %s \n\n', factor_cov))
   # Include 'raw' if desired
   for(value in c('raw', 'rlog')) {
     file = sprintf(qc_boxplot_file, diffex_dir, factor_cov, value)
@@ -85,7 +85,7 @@ Clustering is a method to visualize the similarity and difference among samples.
 
 ```{r echo = FALSE, results = 'asis', message = FALSE}
 for(factor_cov in snakemake@params[['phenotypes']]) {
-  cat(sprintf('\n\n #### %s \n\n', factor_cov))
+  cat(sprintf('\n\n#### %s \n\n', factor_cov))
   file = sprintf(qc_heatmap_file, diffex_dir, factor_cov)
   cat(sprintf('![**Figure:** Unsupervised clustering of %s expression values colored by %s.](%s) \n\n', value, factor_cov, file))
 }
@@ -97,7 +97,7 @@ Principal component analysis (PCA) is another method to visualize the similarity
 
 ```{r echo = FALSE, results = 'asis', message = FALSE}
 for(factor_cov in snakemake@params[['phenotypes']]) {
-  cat(sprintf('\n\n #### %s \n\n', factor_cov))
+  cat(sprintf('\n\n#### %s \n\n', factor_cov))
   # Include 'raw' if desired
   for(value in c('top100', 'top500')) {
     pca_12_png = sprintf(qc_pca_file, diffex_dir, factor_cov, value)

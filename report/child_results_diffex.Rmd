@@ -40,5 +40,16 @@ cat(comparison_kable)
           volcano_file = sprintf(diffex_volcano_file, diffex_dir, comp_name, comparison)
           cat(sprintf('![**Figure:** Volcano plot for %s, comparing %s.](%s) \n\n', comp_name, comparison, volcano_file))
         }
+        for(comparison in comparisons[[comp_name]]){
+          annot_file = sprintf(diffex_annot_file, diffex_dir, comp_name, comparison)
+          annot_tbl = read.delim(annot_file)
+          annot_tbl = annot_tbl[1:100,]
+          annot_kable = kable(annot_tbl, row.names = TRUE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+              kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
+              scroll_box(width = '100%', height = '400px')
+          cat(sprintf('#### Top differentially expressed genes (up to 100) for %s, comparison %s \n\n', comp_name, comparison))
+          cat(annot_kable)
+          #cat(sprintf('![**Figure:** Volcano plot for %s, comparing %s.](%s) \n\n', comp_name, comparison, volcano_file))
+        }
     }
 ```

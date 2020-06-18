@@ -19,24 +19,16 @@ The following sections provide more detailed information about the differential 
 ```
 
 ```{r echo = FALSE, results = 'asis', message = FALSE}
-    conts = snakemake@params[['contrasts']]
-    for(i in seq(length(conts))) {
-      comp_name = names(conts)[[i]]
-      comp_name = gsub('_', ' ', comp_name)
-      comparison_tbl = data.frame(comparisons = conts[[i]])
-      colnames(comparison_tbl) = c('List of Comparisons')
-      comparison_kable = kable(comparison_tbl, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
-        kable_styling(bootstrap_options = c('striped', 'condensed'))
-      cat(sprintf('**%s** \n\n', comp_name))
-      cat(comparison_kable)
-    }
-
-```
-
-
-```{r echo = FALSE, results = 'asis', message = FALSE}
+    comparisons = snakemake@params[['contrasts']]
     for(comp_name in names(comparisons)) {
         comparison_str = gsub('_', ' ', comp_name)
+        comparison_tbl = data.frame(comparisons = comparisons[[comp_name]])
+        colnames(comparison_tbl) = c('List of Comparisons')
+        comparison_kable = kable(comparison_tbl, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+          kable_styling(bootstrap_options = c('striped', 'condensed'))
+        cat(sprintf('**%s** \n\n', comparison_str))
+        cat(comparison_kable)
+
         filter_sig = info[[comp_name]][['adjustedPValue']]
         filter_fc = info[[comp_name]][['linear_fold_change']]
         cat(sprintf('#### Comparisons for %s\n\n', comparison_str))

@@ -63,9 +63,8 @@ versions = yaml.load_file(snakemake@input[['versions']])
 
 diffex_info = snakemake@params[['diffex_model_info']]
 
-comparisons = snakemake@params[['contrasts']]
-
-exclude_diffex = typeof(contrasts) == 'character' && contrasts == ''
+comparisons = snakemake@params[['comparisons']]
+exclude_diffex = typeof(comparisons) == 'character' && comparisons == ''
 
 add_custom = snakemake@params[['add_custom']]
 

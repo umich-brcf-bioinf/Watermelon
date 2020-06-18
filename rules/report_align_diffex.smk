@@ -2,15 +2,15 @@
 rule report_draft:
     input:
         report_rmd = WORKFLOW_BASEDIR + '/report/report.Rmd',
-        versions = DELIVERABLES_DIR + "run_info/env_software_versions.yaml",
-        multiqc_html = DELIVERABLES_DIR + "alignment/alignment_qc.html",
-        multiqc_gen_stats = ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_general_stats.txt",
-        multiqc_star = ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_star.txt",
+        versions = DELIVERABLES_DIR + 'run_info/env_software_versions.yaml',
+        multiqc_html = DELIVERABLES_DIR + 'alignment/alignment_qc.html',
+        multiqc_gen_stats = ALIGNMENT_DIR + '07-qc/alignment_qc_data/multiqc_general_stats.txt',
+        multiqc_star = ALIGNMENT_DIR + '07-qc/alignment_qc_data/multiqc_star.txt',
         diffex_summary = DIFFEX_DIR + 'deseq2/summary/deseq2_summary.txt',
         diffex_annot = rnaseq_snakefile_helper.expand_model_contrast_filenames(
                 DIFFEX_DIR + 'deseq2/annotated/{model_name}/{contrast}.annot.txt',
                 DESEQ2_CONTRAST_DICT
-            )'',
+            ),
         #deseq2_plots_by_phenotype
         diffex_PCA_pngs = expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.png',
                 phenotype = PHENOTYPES,
@@ -28,7 +28,7 @@ rule report_draft:
         diffex_volcanoplot_pngs = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
             DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.png',
             DESEQ2_CONTRAST_DICT
-            )''
+            )
 
     output:
         report_md = REPORT_DIR + 'report_draft.md',
@@ -41,9 +41,9 @@ rule report_draft:
         report_dir = REPORT_DIR,
         diffex_dir = DIFFEX_DIR,
         add_custom = False, # TODO: This could later be moved out to config
-        contrasts = DESEQ2_CONTRAST_DICT if config.get('diffex') else '', # Empty val here can also be used within the script to exclude diffex sections
+        contrasts = DESEQ2_CONTRAST_DICT,
         phenotypes = PHENOTYPES,
-        diffex_model_info = DIFFEX_MODEL_INFO if config.get('diffex') else ''
+        diffex_model_info = DIFFEX_MODEL_INFO
     script:
         '../scripts/report_rmd.R'
 

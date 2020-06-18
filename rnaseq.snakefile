@@ -286,7 +286,7 @@ if config.get('diffex'):
     include: 'rules/deliverables_deseq2.smk'
 
 include: 'rules/deliverables_run_info.smk'
-include: 'rules/report.smk'
+include: 'rules/report_align_diffex.smk' # TODO: Use different reporting rules OR find a way to manage optional inputs within the rule
 
 
 rule all:

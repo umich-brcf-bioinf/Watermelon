@@ -132,7 +132,7 @@ else:
     FASTQ_SCREEN_ALIGNMENT = []
     FASTQ_SCREEN_DELIVERABLES = []
 
-if 'diffex' in config and config['diffex']:
+if config.get('diffex'):
     PHENOTYPE_MANAGER = rnaseq_snakefile_helper.PhenotypeManager(config)
     DIFFEX_MODEL_INFO, DESEQ2_CONTRAST_DICT = rnaseq_snakefile_helper.diffex_model_info(config['diffex'])
     DESeq2_ALL = [
@@ -274,7 +274,7 @@ include: 'rules/align_rsem_star_genome_generate.smk'
 include: 'rules/align_combine_counts_to_matrices.smk'
 include: 'rules/align_annotate_combined_counts.smk'
 
-if 'diffex' in config and config['diffex']:
+if config.get('diffex'):
     include: 'rules/deseq2_counts.smk'
     include: 'rules/deseq2_init.smk'
     include: 'rules/deseq2_contrasts.smk'

@@ -6,29 +6,29 @@ rule report_draft:
         multiqc_html = DELIVERABLES_DIR + "alignment/alignment_qc.html",
         multiqc_gen_stats = ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_general_stats.txt",
         multiqc_star = ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_star.txt",
-        diffex_summary = DIFFEX_DIR + 'deseq2/summary/deseq2_summary.txt' if config.get('diffex') else None,
+        diffex_summary = DIFFEX_DIR + 'deseq2/summary/deseq2_summary.txt',
         diffex_annot = rnaseq_snakefile_helper.expand_model_contrast_filenames(
                 DIFFEX_DIR + 'deseq2/annotated/{model_name}/{contrast}.annot.txt',
                 DESEQ2_CONTRAST_DICT
-            ) if config.get('diffex') else None,
+            )'',
         #deseq2_plots_by_phenotype
         diffex_PCA_pngs = expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.png',
                 phenotype = PHENOTYPES,
                 dim = ['12','23'],
                 ngenes = ['100','500']
-            ) if config.get('diffex') else None,
+            ),
         diffex_boxplot_pngs = expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/BoxPlot_{transformation}.png',
                 phenotype = PHENOTYPES,
                 transformation=['raw', 'rlog']
-            ) if config.get('diffex') else None,
+            ),
         diffex_heatmap_pngs = expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/SampleHeatmap.png',
                 phenotype = PHENOTYPES
-            ) if config.get('diffex') else None,
+            ),
         #deseq2_comparison_plots
         diffex_volcanoplot_pngs = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
             DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.png',
             DESEQ2_CONTRAST_DICT
-            ) if config.get('diffex') else None
+            )''
 
     output:
         report_md = REPORT_DIR + 'report_draft.md',
@@ -43,7 +43,7 @@ rule report_draft:
         add_custom = False, # TODO: This could later be moved out to config
         contrasts = DESEQ2_CONTRAST_DICT if config.get('diffex') else '', # Empty val here can also be used within the script to exclude diffex sections
         phenotypes = PHENOTYPES,
-        diffex_model_info = DIFFEX_MODEL_INFO if 'diffex' in config and config['diffex'] else ''
+        diffex_model_info = DIFFEX_MODEL_INFO if config.get('diffex') else ''
     script:
         '../scripts/report_rmd.R'
 

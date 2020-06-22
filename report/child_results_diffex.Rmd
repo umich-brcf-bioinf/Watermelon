@@ -23,21 +23,17 @@ The following sections provide more detailed information about the differential 
     for(comp_name in names(comparisons)) {
         comparison_str = gsub('_', ' ', comp_name)
         comparison_tbl = data.frame(comparisons = comparisons[[comp_name]])
-        colnames(comparison_tbl) = c('List of Comparisons')
         comparison_kable = kable(comparison_tbl, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
           kable_styling(bootstrap_options = c('striped', 'condensed'))
-        cat(sprintf('**%s** \n\n', comparison_str))
-        cat(comparison_kable)
 
         filter_sig = info[[comp_name]][['adjustedPValue']]
         filter_fc = info[[comp_name]][['linear_fold_change']]
         cat(sprintf('#### Comparisons for %s\n\n', comparison_str))
+        cat(comparison_kable)
         cat(sprintf('In the volcano plots below, each point is a tested locus. A gene is considered to be differentially expressed if FDR < %s and | linear fold-change | > %s. Points are colored according to the direction of differential expression with the total number of loci indicated in the legend. The vertical lines correspond to the fold-change cutoff. \n\n', filter_sig, filter_fc))
         for(comparison in comparisons[[comp_name]]){
           volcano_file = sprintf(diffex_volcano_file, diffex_dir, comp_name, comparison)
           cat(sprintf('![**Figure:** Volcano plot for %s.](%s) \n\n', comparison, volcano_file))
-        }
-        for(comparison in comparisons[[comp_name]]){
           annot_file = sprintf(diffex_annot_file, diffex_dir, comp_name, comparison)
           annot_tbl = read.delim(annot_file)
           annot_tbl = annot_tbl[1:100,]
@@ -46,7 +42,6 @@ The following sections provide more detailed information about the differential 
               scroll_box(width = '100%', height = '400px')
           cat(sprintf('Top differentially expressed genes for %s \n\n', comparison))
           cat(annot_kable)
-          #cat(sprintf('![**Figure:** Volcano plot for %s, comparing %s.](%s) \n\n', comp_name, comparison, volcano_file))
         }
     }
 ```

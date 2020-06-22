@@ -41,7 +41,7 @@ Default HTML output:
     }
 </style>
 
-```{r echo = FALSE}
+```{r include = FALSE}
 ################################################################################
 # Load Libraries
 library(yaml)
@@ -63,18 +63,16 @@ versions = yaml.load_file(snakemake@input[['versions']])
 
 diffex_info = snakemake@params[['diffex_model_info']]
 
-comparisons = snakemake@params[['comparisons']]
-exclude_diffex = typeof(comparisons) == 'character' && comparisons == ''
+# This will be NULL if not set in the snakemake rule (depends on the scenario)
+if(is.null(snakemake@params[['comparisons']]))    include_diffex = FALSE    else    include_diffex = TRUE
 
 add_custom = snakemake@params[['add_custom']]
-
-# factor_covs = config$covariates$factor
 
 ################################################################################
 # Flags for showing particular sections
 
-show_background_biology = TRUE
-show_methods_wetlab = TRUE
+show_background_biology = snakemake@params[['add_background']]
+show_methods_wetlab = snakemake@params[['add_wetlab']]
 
 show_background_samples = TRUE
 show_methods_qc_sequencing = TRUE
@@ -82,16 +80,16 @@ show_results_qc = TRUE
 
 show_appendix_qc = TRUE
 
-if(exclude_diffex) {
-    show_background_diffex = FALSE
-    show_methods_diffex = FALSE
-    show_results_diffex = FALSE
-    show_appendix_diffex = FALSE
-} else {
+if(include_diffex) {
     show_background_diffex = TRUE
     show_methods_diffex = TRUE
     show_results_diffex = TRUE
     show_appendix_diffex = TRUE
+} else {
+    show_background_diffex = FALSE
+    show_methods_diffex = FALSE
+    show_results_diffex = FALSE
+    show_appendix_diffex = FALSE
 }
 
 if(add_custom){

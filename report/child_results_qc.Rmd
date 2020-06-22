@@ -19,7 +19,6 @@ multiqc_link_rel = xml2::url_relative(mqc_fullpath, file.path(cwd, '..'))
 
 A summary of alignment statistics can be seen in the table below.
 
-[REPLACE: Any notable trends?]
 
 ```{r include = FALSE}
 # Read in multiqc tab-separated files
@@ -61,11 +60,8 @@ multiqc_kable = kable(multiqc_report_df, row.names = FALSE, format.args = list(b
 cat(multiqc_kable)
 ```
 
-### Boxplots
-
-The following boxplots show the distribution of gene expression counts in the different samples.
-
-```{r echo = FALSE, results = 'asis', message = FALSE}
+```{r eval = include_diffex, echo = FALSE, results = 'asis', message = FALSE}
+cat('### Boxplots\n\nThe following boxplots show the distribution of gene expression counts in the different samples.\n\n')
 for(factor_cov in snakemake@params[['phenotypes']]) {
   cat(sprintf('\n\n#### %s \n\n', factor_cov))
   # Include 'raw' if desired
@@ -79,11 +75,8 @@ for(factor_cov in snakemake@params[['phenotypes']]) {
 }
 ```
 
-### Clustering
-
-Clustering is a method to visualize the similarity and difference among samples. Unsupervised clustering using complete linkage of the Euclidian distances of the gene expression profiles of pairwise samples is shown below. [REPLACE: Anything of note? Mention it here.]
-
-```{r echo = FALSE, results = 'asis', message = FALSE}
+```{r eval = include_diffex, echo = FALSE, results = 'asis', message = FALSE}
+cat('### Clustering\n\nClustering is a method to visualize the similarity and difference among samples. Unsupervised clustering using complete linkage of the Euclidian distances of the gene expression profiles of pairwise samples is shown below. [REPLACE: Anything of note? Mention it here.]\n\n')
 for(factor_cov in snakemake@params[['phenotypes']]) {
   cat(sprintf('\n\n#### %s \n\n', factor_cov))
   file = sprintf(qc_heatmap_file, diffex_dir, factor_cov)
@@ -91,11 +84,8 @@ for(factor_cov in snakemake@params[['phenotypes']]) {
 }
 ```
 
-### PCA
-
-Principal component analysis (PCA) is another method to visualize the similarity and difference among samples. PCA was applied to the normalized gene expression profiles of the samples. [REPLACE: Anything of note? Mention it here.]
-
-```{r echo = FALSE, results = 'asis', message = FALSE}
+```{r eval = include_diffex, echo = FALSE, results = 'asis', message = FALSE}
+cat('### PCA\n\nPrincipal component analysis (PCA) is another method to visualize the similarity and difference among samples. PCA was applied to the normalized gene expression profiles of the samples. [REPLACE: Anything of note? Mention it here.]\n\n')
 for(factor_cov in snakemake@params[['phenotypes']]) {
   cat(sprintf('\n\n#### %s \n\n', factor_cov))
   # Include 'raw' if desired

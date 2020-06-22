@@ -40,7 +40,9 @@ rule report_draft:
         snakemake_rdata = REPORT_DIR + '.report_draft_snakemake.rda',
         report_dir = REPORT_DIR,
         diffex_dir = DIFFEX_DIR,
-        add_custom = False, # TODO: This could later be moved out to config
+        add_background = True, # TODO: These could later be moved out to config
+        add_custom = False,
+        add_wetlab = True,
         contrasts = DESEQ2_CONTRAST_DICT,
         phenotypes = PHENOTYPES,
         diffex_model_info = DIFFEX_MODEL_INFO

@@ -131,9 +131,7 @@ onerror:
     email('Watermelon completed with errors: ', msg=message, attachment = attach_str)
 
 
-
-#Fastq screen and diffex have optional target specifications
-if 'fastq_screen' in config:
+if config.get('fastq_screen'):
     FASTQ_SCREEN_CONFIG = config['fastq_screen']
     FASTQ_SCREEN_ALIGNMENT = expand(ALIGNMENT_DIR + "03-fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
                                 screen_type=['multi_species', 'biotype'],
@@ -223,29 +221,34 @@ else:
     DESeq2_ALL = []
     DESeq2_DELIVERABLES = []
 
-RSEM_ALL = [
-    expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.{result_type}',
-        sample=config[SAMPLES_KEY],
-        result_type=['genes.results', 'isoforms.results', 'genome.bam', 'transcript.bam']
-    ),
-    ALIGNMENT_DIR + "07-qc/alignment_qc.html",
-    expand(ALIGNMENT_DIR + '06-annotate_combined_counts/{feature}_{metric}.annot.txt',
-        feature=['gene','isoform'],
-        metric=['expected_count', 'FPKM', 'TPM']
-    )
-]
 
-ALIGN_DELIVERABLES = [
-    #align deliverables
-    expand(DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{basename}_trimmed_fastqc.html",
-        basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
-    ),
-    expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
-        sample=config["samples"]),
-    expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
-        type=['FPKM', 'TPM']),
-    DELIVERABLES_DIR + "alignment/alignment_qc.html"
-]
+# If  running from counts onward, don't populate these
+if config.get('count_matrix'):
+    ALIGN_DELIVERABLES = []
+    RSEM_ALL = []
+else:
+    ALIGN_DELIVERABLES = [
+        #align deliverables
+        expand(DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{basename}_trimmed_fastqc.html",
+            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
+        ),
+        expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
+            sample=config["samples"]),
+        expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
+            type=['FPKM', 'TPM']),
+        DELIVERABLES_DIR + "alignment/alignment_qc.html"
+    ]
+    RSEM_ALL = [
+        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.{result_type}',
+            sample=config[SAMPLES_KEY],
+            result_type=['genes.results', 'isoforms.results', 'genome.bam', 'transcript.bam']
+        ),
+        ALIGNMENT_DIR + "07-qc/alignment_qc.html",
+        expand(ALIGNMENT_DIR + '06-annotate_combined_counts/{feature}_{metric}.annot.txt',
+            feature=['gene','isoform'],
+            metric=['expected_count', 'FPKM', 'TPM']
+        )
+    ]
 
 RUN_INFO_DELIVERABLES = [
     #run info deliverables
@@ -260,7 +263,7 @@ REPORT_ALL = [
 ]
 
 
-# FASTQ_SCREEN & DESeq2 targets may or may not be populated, see if/else defs above
+# Various target lists may or may not be populated, see if/else defs above
 ALL = RSEM_ALL + ALIGN_DELIVERABLES + RUN_INFO_DELIVERABLES + FASTQ_SCREEN_ALIGNMENT + FASTQ_SCREEN_DELIVERABLES + DESeq2_ALL + DESeq2_DELIVERABLES + REPORT_ALL
 
 
@@ -288,7 +291,10 @@ include: 'rules/align_combine_counts_to_matrices.smk'
 include: 'rules/align_annotate_combined_counts.smk'
 
 if config.get('diffex'):
-    include: 'rules/deseq2_counts.smk'
+    if config.get('count_matrix'):
+        include: 'rules/deseq2_counts_from_matrix.smk'
+    else:
+        include: 'rules/deseq2_counts_from_tximport_rsem.smk'
     include: 'rules/deseq2_init.smk'
     include: 'rules/deseq2_contrasts.smk'
     include: 'rules/deseq2_plots_by_phenotype.smk'

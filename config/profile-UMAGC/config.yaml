@@ -1,7 +1,9 @@
 printshellcmds: True
 keep-going: True
 use-singularity: True
-#singularity-prefix: /nfs/med-bfx-common/pipelines/Watermelon/Watermelon-seedless/envs/simg/
+singularity-args: "-B $(pwd) -B /nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
 cluster-config: Watermelon/config/greatlakes_config_UMAGC.json
-cluster: sbatch --job-name={cluster.name} --account={cluster.account} --partition={cluster.partition} --nodes={cluster.nodes} --ntasks-per-node={cluster.ntask} --mem={cluster.memory} --time={cluster.time} --output=%x-%j.log
+cluster: sbatch --job-name={cluster.name} --account={cluster.account} --partition={cluster.partition} --nodes={cluster.nodes} --ntasks-per-node={cluster.ntask} --mem={cluster.memory} --time={cluster.time} --output=cluster-logs/%x-%j.log --parsable
+cluster-status: Watermelon/scripts/slurm_status.py
+latency-wait: 60
 jobs: 144

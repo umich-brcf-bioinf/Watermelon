@@ -64,21 +64,32 @@ versions = yaml.load_file(snakemake@input[['versions']])
 diffex_info = snakemake@params[['diffex_model_info']]
 
 # This will be NULL if not set in the snakemake rule (depends on the scenario)
-if(is.null(snakemake@params[['comparisons']]))    include_diffex = FALSE    else    include_diffex = TRUE
-
-add_custom = snakemake@params[['add_custom']]
+#if(is.null(snakemake@params[['comparisons']]))    include_diffex = FALSE    else    include_diffex = TRUE
+if(snakemake@rule == 'report_align_diffex'){
+    show_methods_qc_sequencing = TRUE
+    include_diffex = TRUE
+    show_results_qc = TRUE
+    show_appendix_qc = TRUE
+} else if(snakemake@rule == 'report_align_only') {
+    show_methods_qc_sequencing = TRUE
+    include_diffex = FALSE
+    show_results_qc = TRUE
+    show_appendix_qc = TRUE
+} else if(snakemake@rule == 'report_from_counts') {
+    show_methods_qc_sequencing = FALSE
+    include_diffex = TRUE
+    show_results_qc = FALSE
+    show_appendix_qc = FALSE
+}
 
 ################################################################################
 # Flags for showing particular sections
 
 show_background_biology = snakemake@params[['add_background']]
 show_methods_wetlab = snakemake@params[['add_wetlab']]
+add_custom = snakemake@params[['add_custom']]
 
 show_background_samples = TRUE
-show_methods_qc_sequencing = TRUE
-show_results_qc = TRUE
-
-show_appendix_qc = TRUE
 
 if(include_diffex) {
     show_background_diffex = TRUE

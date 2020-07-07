@@ -1,5 +1,5 @@
 # A rule to build the report from the R markdown
-rule report_draft:
+rule report_align_only:
     input:
         report_rmd = WORKFLOW_BASEDIR + '/report/report.Rmd',
         versions = DELIVERABLES_DIR + 'run_info/env_software_versions.yaml',
@@ -18,7 +18,7 @@ rule report_draft:
         diffex_dir = DIFFEX_DIR,
         add_background = False, # TODO: These could later be moved out to config
         add_custom = False,
-        add_wetlab = False 
+        add_wetlab = False
     script:
         '../scripts/report_rmd.R'
 

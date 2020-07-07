@@ -278,23 +278,27 @@ if 'trimming_options' in config:
 else:
     include: 'rules/align_pseudotrim.smk'
 
-include: 'rules/align_fastq_screen_biotype.smk'
-include: 'rules/align_fastq_screen_multi_species.smk'
-include: 'rules/align_fastqc_trimmed_reads.smk'
-include: 'rules/align_fastqc_align.smk'
-include: 'rules/align_multiqc.smk'
-include: 'rules/align_deliverables_alignment.smk'
-include: 'rules/align_deliverables_fastq_screen.smk'
-include: 'rules/align_rsem_star.smk'
-include: 'rules/align_rsem_star_genome_generate.smk'
-include: 'rules/align_combine_counts_to_matrices.smk'
-include: 'rules/align_annotate_combined_counts.smk'
+if config.get('count_matrix'):
+    include: 'rules/deseq2_counts_from_matrix.smk'
+    include: 'rules/report_from_counts.smk'
+else:
+    include: 'rules/align_fastq_screen_biotype.smk'
+    include: 'rules/align_fastq_screen_multi_species.smk'
+    include: 'rules/align_fastqc_trimmed_reads.smk'
+    include: 'rules/align_fastqc_align.smk'
+    include: 'rules/align_multiqc.smk'
+    include: 'rules/align_deliverables_alignment.smk'
+    include: 'rules/align_deliverables_fastq_screen.smk'
+    include: 'rules/align_rsem_star.smk'
+    include: 'rules/align_rsem_star_genome_generate.smk'
+    include: 'rules/align_combine_counts_to_matrices.smk'
+    include: 'rules/align_annotate_combined_counts.smk'
 
 if config.get('diffex'):
-    if config.get('count_matrix'):
-        include: 'rules/deseq2_counts_from_matrix.smk'
-    else:
+    if not config.get('count_matrix'):
         include: 'rules/deseq2_counts_from_tximport_rsem.smk'
+        # TODO: Find a way to manage optional inputs within the reporting rule. For now using different reporting rules
+        include: 'rules/report_align_diffex.smk'
     include: 'rules/deseq2_init.smk'
     include: 'rules/deseq2_contrasts.smk'
     include: 'rules/deseq2_plots_by_phenotype.smk'
@@ -303,11 +307,7 @@ if config.get('diffex'):
     include: 'rules/deseq2_excel.smk'
     include: 'rules/deseq2_summary.smk'
     include: 'rules/deliverables_deseq2.smk'
-    # TODO: Find a way to manage optional inputs within the reporting rule. For now using different reporting rules
-    if config.get('count_matrix'):
-        include: 'rules/report_from_counts.smk'
-    else:
-        include: 'rules/report_align_diffex.smk'
+
 else:
     include: 'rules/report_align_only.smk'
 

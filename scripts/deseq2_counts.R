@@ -33,7 +33,7 @@ DEFAULT_SAMPLE_COLUMN = 'sample'
 
 # Get phenotype matrix
 sample.info.file = snakemake@config[['samplesheet']]
-pdata = read.csv(sample.info.file, comment.char = "#", colClasses=c('character'))
+pdata = read.csv(sample.info.file, comment.char = "#", colClasses=c('character'), stringsAsFactors = FALSE)
 
 # Import data
 message('Importing count data')
@@ -52,8 +52,8 @@ if(snakemake@rule == 'deseq2_counts_from_tximport_rsem'){
     dds = DESeqDataSetFromTximport(txi = txi.rsem.gene.results, colData = pdata, design = ~ 1)
 } else if(snakemake@rule == 'deseq2_counts_from_matrix'){
     message('Using count matrix')
-    # Load count data and subset based on samplesheet
-    counts = read.table(snakemake@input[['count_matrix']], header=T, row.names=1, sep="\t",stringsAsFactors=F)
+    # Load count data and subset based on samplesheet - Note check.names=F prevents conversion of dashes to dots (e.g. samplename 'Sample_716-AS-1')
+    counts = read.table(snakemake@input[['count_matrix']], header=TRUE, check.names=FALSE, row.names=1, sep="\t",stringsAsFactors=FALSE)
     samples.list = pdata[,DEFAULT_SAMPLE_COLUMN]
     counts = counts[,samples.list]
     # Create DESeqDataSet from matrix

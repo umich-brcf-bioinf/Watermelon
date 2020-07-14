@@ -1,5 +1,3 @@
-# Results
-
 ## QC
 
 A detailed MultiQC report can be found at the following link:

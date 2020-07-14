@@ -46,25 +46,19 @@ Default HTML output:
 # Load Libraries
 library(yaml)
 
-# packages = data.frame(installed.packages())
 
-# Read the config file
+################################################################################
+# Set things up you'll need downstream
+
 config = snakemake@config
-
-# Set working directory to project dir
 setwd(project_dir)
 
 # Read the software environment version yaml
 versions = yaml.load_file(snakemake@input[['versions']])
 
-
-################################################################################
-# Set things up you'll need downstream
-
 diffex_info = snakemake@params[['diffex_model_info']]
 
-# This will be NULL if not set in the snakemake rule (depends on the scenario)
-#if(is.null(snakemake@params[['comparisons']]))    include_diffex = FALSE    else    include_diffex = TRUE
+# Depending on snakemake rule, include/exclude sections (diffex, alignment, QC)
 if(snakemake@rule == 'report_align_diffex'){
     show_methods_qc_sequencing = TRUE
     include_diffex = TRUE
@@ -83,7 +77,7 @@ if(snakemake@rule == 'report_align_diffex'){
 }
 
 ################################################################################
-# Flags for showing particular sections
+# Flags for showing additional optional sections
 
 show_background_biology = snakemake@params[['add_background']]
 show_methods_wetlab = snakemake@params[['add_wetlab']]
@@ -122,20 +116,30 @@ if(add_custom){
 <!---
 Background
 --->
+
+
+# Background
+
 ```{r background_biology_section, child = 'child_background_biology.Rmd', eval = show_background_biology}
 ```
 
 ```{r background_samples_section, child = 'child_background_samples.Rmd', eval = show_background_samples}
 ```
 
-```{r background_diffex_section, child = 'child_background_diffex.Rmd', eval = show_background_diffex}
-```
-
 <!---
 Methods
 --->
+
+
+# Methods
+
 ```{r methods_wetlab_section, child = 'child_methods_wetlab.Rmd', eval = show_methods_wetlab}
 ```
+
+
+## Pipeline
+
+We use Snakemake [@Koster2012] to manage the bioinformatics workflow in a reproducible manner.
 
 ```{r methods_qc_sequencing_section, child = 'child_methods_qc_sequencing.Rmd', eval = show_methods_qc_sequencing}
 ```
@@ -149,6 +153,9 @@ Methods
 <!---
 Results
 --->
+
+
+# Results
 
 ```{r results, child = 'child_results_qc.Rmd', eval = show_results_qc}
 ```
@@ -167,7 +174,7 @@ We are happy to answer any questions you may have and/or set-up a meeting to go 
 In addition, if you would like more detailed output (e.g. FastQC and/or DESeq2 detailed output, etc.) please let us know. For information on the RNA-seq workflows and a comparison between available differential expression tools, please refer to [@Zhang2014].
 
 
-# Citation
+# Acknowledgement for Publication
 
 It is important to document use of each Biomedical Research Core Facility by investigators in publications. This facilitates efforts to obtain funding for our Cores and their continued functioning.
 

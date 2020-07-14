@@ -36,8 +36,14 @@ The following sections provide more detailed information about the differential 
           cat(sprintf('![**Figure:** Volcano plot for %s.](%s) \n\n', comparison, volcano_file))
           annot_file = sprintf(diffex_annot_file, diffex_dir, comp_name, comparison)
           annot_tbl = read.delim(annot_file)
-          annot_tbl = annot_tbl[1:100,]
-          annot_kable = kable(annot_tbl, row.names = TRUE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+
+          annot_tbl = annot_tbl[1:100,] %>%
+              mutate(entrezgene_id = cell_spec(
+                x = entrezgene_id,
+                format = "html",
+                link = paste0('https://www.ncbi.nlm.nih.gov/gene/?term=', entrezgene_id)
+              ))
+          annot_kable = kable(annot_tbl, "html", escape = FALSE, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
               kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
               scroll_box(width = '100%', height = '400px')
           cat(sprintf('Top differentially expressed genes for %s \n\n', comparison))

@@ -10,7 +10,7 @@ realpath_args = c('--relative-to', cwd, mqc_fullpath)
 
 multiqc_link_rel = xml2::url_relative(mqc_fullpath, file.path(cwd, '..'))
 ```
-  
+
 ### [Alignment Results - MultiQC report](`r multiqc_link_rel`)
 
 ### Alignment Results - Summary & Selected Figures
@@ -43,6 +43,9 @@ colnames(multiqc_gen_subset) = trim_to_suffix(colnames(multiqc_gen_subset))
 # Remove rows with NA (in this case, everything except fastqc_aligned data rows)
 multiqc_gen_subset = multiqc_gen_subset[complete.cases(multiqc_gen_subset),]
 
+# Round the percent duplicate rates to nearest whole number
+multiqc_gen_subset$percent_duplicates = round(multiqc_gen_subset$percent_duplicates, digits = 2)
+
 # Combine subset of STAR results table with subset of general results table
 multiqc_report_df = merge(multiqc_star_subset, multiqc_gen_subset, by = 'Sample', all = TRUE)
 
@@ -59,8 +62,10 @@ cat(multiqc_kable)
 ```
 
 ```{r eval = include_diffex, echo = FALSE, results = 'asis', message = FALSE}
+phenotypes = names(snakemake@params[['sample_phenotypes']])
+
 cat('### Boxplots\n\nThe following boxplots show the distribution of gene expression counts in the different samples.\n\n')
-for(factor_cov in snakemake@params[['phenotypes']]) {
+for(factor_cov in phenotypes) {
   cat(sprintf('\n\n#### %s \n\n', factor_cov))
   # Include 'raw' if desired
   for(value in c('raw', 'rlog')) {
@@ -75,7 +80,7 @@ for(factor_cov in snakemake@params[['phenotypes']]) {
 
 ```{r eval = include_diffex, echo = FALSE, results = 'asis', message = FALSE}
 cat('### Clustering\n\nClustering is a method to visualize the similarity and difference among samples. Unsupervised clustering using complete linkage of the Euclidian distances of the gene expression profiles of pairwise samples is shown below. [REPLACE: Anything of note? Mention it here.]\n\n')
-for(factor_cov in snakemake@params[['phenotypes']]) {
+for(factor_cov in phenotypes) {
   cat(sprintf('\n\n#### %s \n\n', factor_cov))
   file = sprintf(qc_heatmap_file, diffex_dir, factor_cov)
   cat(sprintf('![**Figure:** Unsupervised clustering of %s expression values colored by %s.](%s) \n\n', value, factor_cov, file))
@@ -84,7 +89,7 @@ for(factor_cov in snakemake@params[['phenotypes']]) {
 
 ```{r eval = include_diffex, echo = FALSE, results = 'asis', message = FALSE}
 cat('### PCA\n\nPrincipal component analysis (PCA) is another method to visualize the similarity and difference among samples. PCA was applied to the normalized gene expression profiles of the samples. [REPLACE: Anything of note? Mention it here.]\n\n')
-for(factor_cov in snakemake@params[['phenotypes']]) {
+for(factor_cov in phenotypes) {
   cat(sprintf('\n\n#### %s \n\n', factor_cov))
   # Include 'raw' if desired
   for(value in c('top100', 'top500')) {

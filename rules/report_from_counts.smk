@@ -41,7 +41,7 @@ rule report_from_counts:
         add_custom = False,
         add_wetlab = True,
         contrasts = DESEQ2_CONTRAST_DICT,
-        phenotypes = PHENOTYPES,
+        sample_phenotypes = PHENOTYPE_MANAGER.phenotype_sample_list,
         diffex_model_info = DIFFEX_MODEL_INFO
     script:
         '../scripts/report_rmd.R'

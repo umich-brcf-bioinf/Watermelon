@@ -8,6 +8,7 @@ The following sections provide more detailed information about the differential 
     info = snakemake@params[['diffex_model_info']]
     names(info) = gsub('_', ' ', names(info)) # Remove _ from model names
     info_tbl = do.call(rbind, lapply(info, data.frame))
+    info_tbl[,'factor_name'] = NULL # factor_name doesn't need to be put in report, used internally by Rscripts
     info_tbl = rownames_to_column(info_tbl, var = 'Model Name')
     colnames(info_tbl) = c('Model Name', 'Model', 'Linear fold-change', 'FDR')
     info_kable = kable(info_tbl, row.names = TRUE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
@@ -20,21 +21,50 @@ The following sections provide more detailed information about the differential 
 
 ```{r echo = FALSE, results = 'asis', message = FALSE}
     comparisons = snakemake@params[['contrasts']]
-    for(comp_name in names(comparisons)) {
-        comparison_str = gsub('_', ' ', comp_name)
-        comparison_tbl = data.frame(comparisons = comparisons[[comp_name]])
-        comparison_kable = kable(comparison_tbl, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
-          kable_styling(bootstrap_options = c('striped', 'condensed'))
+    names(comparisons) = gsub('_', ' ', names(info)) # Remove _'s from model names - consistent with info list above
+    sample_phenotypes = snakemake@params[['sample_phenotypes']]
+    phenotypes = names(sample_phenotypes)
 
-        filter_sig = info[[comp_name]][['adjustedPValue']]
-        filter_fc = info[[comp_name]][['linear_fold_change']]
-        cat(sprintf('#### Comparisons for %s\n\n', comparison_str))
+    for(model_name in names(comparisons)) {
+        #Get the samples for case and control
+        factor_name = info[[model_name]][['factor_name']]
+        #Function to get case or control samples (concatenated strings)
+        #using the sample phenotype list with the comparison string
+        get_case_ctrl_samples = function(sample_phenotypes, factor, comp_str, case = FALSE, ctrl = FALSE){
+          comp.split = unlist(strsplit(comp_str, "_v_"))
+          case_name = comp.split[1] ; ctrl_name = comp.split[2]
+          if(case == TRUE) {
+            return(paste(sample_phenotypes[[factor]][[case_name]], collapse='<br>'))
+          } else if (ctrl == TRUE) {
+            return(paste(sample_phenotypes[[factor]][[ctrl_name]], collapse='<br>'))
+          }
+        }
+
+        comps_list = comparisons[[model_name]]
+        case_smpls = sapply(X = comps_list, FUN = function(x){
+            return(get_case_ctrl_samples(sample_phenotypes, factor_name, x, case = TRUE))
+        })
+        ctrl_smpls = sapply(X = comps_list, FUN = function(x){
+            return(get_case_ctrl_samples(sample_phenotypes, factor_name, x, ctrl = TRUE))
+        })
+
+        comparison_tbl = data.frame(cbind(comps_list, case_smpls, ctrl_smpls))
+        colnames(comparison_tbl) = c('Comparison', 'Case Samples', 'Ctrl Samples')
+
+        comparison_kable = kable(comparison_tbl, format = 'html', row.names = FALSE, escape = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+          kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
+          scroll_box(width = '100%')
+
+        filter_sig = info[[model_name]][['adjustedPValue']]
+        filter_fc = info[[model_name]][['linear_fold_change']]
+        cat(sprintf('#### Comparisons for %s\n\n', model_name))
         cat(comparison_kable)
         cat(sprintf('In the volcano plots below, each point is a tested locus. A gene is considered to be differentially expressed if FDR < %s and | linear fold-change | > %s. Points are colored according to the direction of differential expression with the total number of loci indicated in the legend. The vertical lines correspond to the fold-change cutoff. \n\n', filter_sig, filter_fc))
-        for(comparison in comparisons[[comp_name]]){
-          volcano_file = sprintf(diffex_volcano_file, diffex_dir, comp_name, comparison)
+        for(comparison in comps_list){
+          model_name_for_files = gsub(' ', '_', model_name) # filepaths have underscores instead of spaces
+          volcano_file = sprintf(diffex_volcano_file, diffex_dir, model_name_for_files, comparison)
           cat(sprintf('![**Figure:** Volcano plot for %s.](%s) \n\n', comparison, volcano_file))
-          annot_file = sprintf(diffex_annot_file, diffex_dir, comp_name, comparison)
+          annot_file = sprintf(diffex_annot_file, diffex_dir, model_name_for_files, comparison)
           annot_tbl = read.delim(annot_file)
 
           annot_tbl = annot_tbl[1:100,] %>%

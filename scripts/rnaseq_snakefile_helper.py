@@ -255,6 +255,7 @@ def diffex_model_info(diffex_config):
     for model in diffex_models(diffex_config):
         info_dict[model] = {
             'model' : diffex_config[model]['DESeq2']['design'],
+            'factor_name' : diffex_config[model]['DESeq2']['factor_name'],
             'linear_fold_change' : diffex_config[model]['linear_fold_change'],
             'adjustedPValue' : diffex_config[model]['adjustedPValue']
         }

@@ -20,7 +20,7 @@ There are two main steps:
 
 UMich Bioinformatics Core and Advanced Genomics Core can use the installation located at:
 
-    /nfs/med-bfx-common/pipelines/Watermelon/Watermelon-seedless/
+    /nfs/turbo/umms-brcfpipeline/pipelines/Watermelon/
 
 This is kept up to date with the master branch of this repo, so installation is already complete
 
@@ -35,7 +35,7 @@ you must make sure that the watermelon/bin location is in your PATH environment 
 To achieve this one-time, execute the following. For permanent effect, place the same command in your ~/.bash_profile or ~/.bashrc
 
     # If you're UMich BfxCore or Advanced Genomics Core:
-    PATH=$PATH:/nfs/med-bfx-common/pipelines/Watermelon/Watermelon-seedless/bin/
+    PATH=$PATH:/nfs/turbo/umms-brcfpipeline/pipelines/Watermelon/bin/
     # Or if you've cloned to your home directory
     PATH=$PATH:/home/$USER/Watermelon/bin/
 
@@ -47,7 +47,7 @@ Note: If you don't already have anaconda3/miniconda3, then I'd recommend install
 There is a .yaml file in this repo which can be used to build the watermelon conda environment
 
     # Navigate to Watermelon (BfxCore/MAGC)
-    cd /nfs/med-bfx-common/pipelines/Watermelon/Watermelon-seedless/
+    cd /nfs/turbo/umms-brcfpipeline/pipelines/Watermelon/
     # Alternatively, if you cloned it to your home dir, navigate there
     cd ~/Watermelon
     # Create the conda environment from the .yaml file

@@ -12,7 +12,7 @@ trimming_options: #Delete the entire trimming_options stanza if no trimming is d
 alignment_options:
     read_length: 100
 fastq_screen: #Delete the entire fastq_screen stanza if fastq_screen not desired
-    reference_basedir: /nfs/med-bfx-common/pipelines/Watermelon/references/fastq_screen
+    reference_basedir: /nfs/turbo/umms-brcfpipeline/references/fastq_screen
     aligner: bowtie2
     subset: 100000
 diffex:

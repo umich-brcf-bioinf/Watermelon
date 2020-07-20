@@ -40,10 +40,12 @@ import os
 import re
 import ruamel_yaml
 import shutil
+import socket
 import subprocess
 import sys
 import time
 import traceback
+import warnings
 import yaml
 
 import pandas as pd
@@ -121,7 +123,18 @@ class _CommandValidator(object):
     def _validate_genomebuild(args):
         with open(args.x_genome_references) as ref_yaml:
             ref_dict=yaml.load(ref_yaml, Loader=yaml.SafeLoader)
-            genome_options = list(ref_dict.keys()) + ['TestData'] #Add TestData as a valid option (special case which is set up before _make_config_dict)
+
+        #If none of the reference files listed for the genome build are readable, raise validation error
+        if args.genome_build in ['TestData', 'Other']:
+            reference_files = [__file__] # Trick - os.path.isfile(__file__) will always be true, thus 'passing' validation
+        else:
+            reference_files = ref_dict[args.genome_build]['references'].values()
+        if not any([os.path.isfile(x) for x in reference_files]):
+            msg_fmt = "Could not read any of the following references for genome build {}\n{}"
+            msg = msg_fmt.format(args.genome_build, ref_dict[args.genome_build]['references'])
+            raise _InputValidationError(msg)
+
+        genome_options = list(ref_dict.keys()) + ['TestData'] #Add TestData as a valid option (special case which is set up before _make_config_dict)
         if args.genome_build not in genome_options:
             msg='genome {} is not found in {}.\nMust be one of {}'.format(args.genome_build, args.x_genome_references, [x for x in genome_options])
             raise _UsageError(msg)
@@ -219,8 +232,18 @@ _SCRIPTS_DIR = os.path.realpath(os.path.dirname(__file__))
 _WATERMELON_ROOT = os.path.dirname(_SCRIPTS_DIR)
 _CONFIG_DIR = os.path.join(_WATERMELON_ROOT, "config")
 _DEFAULT_TEMPLATE_CONFIG = os.path.join(_CONFIG_DIR, "template_config.yaml")
-_DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references.yaml")
 _DEFAULT_SAMPLE_COLUMN = "sample"
+# TODO: if umms-brcfpipeline is mounted on comps, can remove this section
+if re.match('bfxcomp[56]', socket.gethostname()):
+    _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references_bfxcommon.yaml")
+elif re.search('arc-ts', socket.gethostname()):
+    _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references.yaml")
+else:
+    refs = os.path.join(_CONFIG_DIR, "genome_references.yaml")
+    msg = f"\nCould not use hostname to choose genome references. Using {refs}\nIf this causes errors, use argument --x_genome_references to specify a file."
+    warnings.warn(msg)
+    time.sleep(3)
+    _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references.yaml")
 
 _FASTQ_GLOBS = ["*.fastq", "*.fastq.gz"]
 
@@ -273,7 +296,7 @@ def _copy_and_overwrite(source, dest):
     source = os.path.join(source, "")  # Add trailing slash for rsync's sake
     # Exclude .git/ and /envs/built (speed)
     subprocess.run(
-        ["rsync", "-rlt", "--exclude", ".*", "--exclude", "envs/built", source, dest]
+        ["rsync", "-O", "-rlt", "--exclude", ".*", "--exclude", "envs/built", source, dest]
     )
 
 def _setup_test_data(datapath):

@@ -124,20 +124,20 @@ class _CommandValidator(object):
         with open(args.x_genome_references) as ref_yaml:
             ref_dict=yaml.load(ref_yaml, Loader=yaml.SafeLoader)
 
-        #If none of the reference files listed for the genome build are readable, raise validation error
-        if args.genome_build in ['TestData', 'Other']:
-            reference_files = [__file__] # Trick - os.path.isfile(__file__) will always be true, thus 'passing' validation
-        else:
-            reference_files = ref_dict[args.genome_build]['references'].values()
-        if not any([os.path.isfile(x) for x in reference_files]):
-            msg_fmt = "Could not read any of the following references for genome build {}\n{}"
-            msg = msg_fmt.format(args.genome_build, ref_dict[args.genome_build]['references'])
-            raise _InputValidationError(msg)
-
-        genome_options = list(ref_dict.keys()) + ['TestData'] #Add TestData as a valid option (special case which is set up before _make_config_dict)
+        genome_options = list(ref_dict.keys()) + ['TestData'] #Add TestData as valid options (special case which is set up before _make_config_dict)
         if args.genome_build not in genome_options:
             msg='genome {} is not found in {}.\nMust be one of {}'.format(args.genome_build, args.x_genome_references, [x for x in genome_options])
             raise _UsageError(msg)
+        if args.genome_build in ['Other', 'TestData']: # This is a placeholder genome build, thus files don't need to exist. TestData isn't built until later
+            pass
+        else:
+            reference_files = ref_dict[args.genome_build]['references'].values()
+            if not any([os.path.isfile(x) for x in reference_files]):
+                msg_fmt = "Could not read any of the following references for genome build {}\n{}"
+                msg = msg_fmt.format(args.genome_build, ref_dict[args.genome_build]['references'])
+                raise _InputValidationError(msg)
+
+
 
     @staticmethod
     def _validate_samples_have_fastq_files(input_summary):

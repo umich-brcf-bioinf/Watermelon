@@ -169,8 +169,7 @@ class WatermelonInitTest(unittest.TestCase):
                              '--sample_sheet samplesheet.csv '
                              'DNASeqCore/Run_1286/rhim/Run_1286').split(' ')
         args = watermelon_init._parse_command_line_args(command_line_args)
-        self.assertEqual(os.path.join(_CONFIG_DIR, 'genome_references.yaml'),
-                         args.x_genome_references)
+        self.assertRegex(args.x_genome_references, _CONFIG_DIR)
 
     def test_link_run_dirs(self):
         source_files = {

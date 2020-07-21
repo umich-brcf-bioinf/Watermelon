@@ -1,4 +1,4 @@
-# config created 2020-03-03 16:26:18
+# config created 2020-07-21 17:28:14
 # To do:
 # ------
 # 1) Review genome and references
@@ -9,18 +9,19 @@
 email:
     subject: watermelon_test
     to: trsaari@umich.edu
-watermelon_version: 1.4.0
-samplesheet: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200303_wat_prerelease/samplesheet.csv
+watermelon_version: 1.4.2
+samplesheet: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200720_wat_test/samplesheet.csv
 genome: GRCh38
 references:
-    fasta: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200303_wat_prerelease/Watermelon/data/Homo_sapiens.GRCh38.dna_sm.chr22.fa
-    gtf: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200303_wat_prerelease/Watermelon/data/Homo_sapiens.GRCh38.98.chr22.gtf
-    annotation_tsv: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200303_wat_prerelease/Watermelon/data/Homo_sapiens.GRCh38.98_annotation.tsv
+    fasta: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa
+    gtf: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.98.gtf
+    annotation_tsv: /nfs/med-bfx-common/ENSEMBL_references/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.98_annotation.tsv
 dirs:
     alignment_output: analysis_test/alignment_results
     diffex_output: analysis_test/diffex_results
     deliverables_output: analysis_test/deliverables
-    input: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200303_wat_prerelease/inputs/01-source_samples
+    report_output: analysis_test/report
+    input: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200720_wat_test/inputs/01-source_samples
 trimming_options: #Delete the entire trimming_options stanza if no trimming is desired
     paired_end_mode: true
     base_quality_5prime: 0
@@ -29,14 +30,19 @@ trimming_options: #Delete the entire trimming_options stanza if no trimming is d
     trim_length_3prime: 0
 alignment_options:
     read_length: 100
+fastq_screen: #Delete the entire fastq_screen stanza if fastq_screen not desired
+    reference_basedir: /nfs/turbo/umms-brcfpipeline/references/fastq_screen
+    aligner: bowtie2
+    subset: 100000
+    species: human
 diffex:
-    linear_fold_change: 1.5
-    adjustedPValue: 0.05
     count_min_cutoff: 1 #Filter lowly expressed genes using this cutoff
     #The following is an example Diffex stanza. Additional stanzas can be added
     #which will produce results in parallel directories
     #The parent node forms the name of directory for that model, in this case model_treatment.
     model_treatment:
+        linear_fold_change: 1.5
+        adjustedPValue: 0.05
         #Several contrasts of the form testVal_v_referenceVal can be listed here.
         #These contrasts will be pulled from the same DESeqDataset
         contrasts:

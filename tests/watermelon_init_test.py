@@ -829,5 +829,3 @@ class WatermelonInitFunctoinalTest(unittest.TestCase):
             finally:
                 os.chdir(orig_wd)
         self.assertEqual(1, exit_code, command)
-        self.assertRegexpMatches(command_output,
-                                 'Some samples missing fastq files')

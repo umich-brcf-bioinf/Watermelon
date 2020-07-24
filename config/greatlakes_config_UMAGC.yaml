@@ -1,0 +1,45 @@
+__default__:
+    name: '{rule}_{wildcards}'
+    account: okoues1
+    partition: standard
+    nodes: '1'
+    ntask: '1'
+    memory: '1024'
+    time: '00:30:00'
+align_annotate_combined_counts:
+    name: '{rule}_{input.counts_file}'
+align_cutadapt_PE:
+    ntask: '{threads}'
+align_cutadapt_SE:
+    ntask: '{threads}'
+align_deliverables_alignment:
+    name: '{rule}'
+align_deliverables_fastq_screen:
+    name: '{rule}'
+align_fastq_screen_biotype:
+    ntask: '{threads}'
+align_fastq_screen_multi_species:
+    ntask: '{threads}'
+align_multiqc:
+    name: '{rule}'
+align_rsem_star_genome_generate:
+    name: '{rule}'
+    ntask: '{threads}'
+    memory: '51200'
+    time: '02:00:00'
+align_rsem_star:
+    ntask: '{threads}'
+    time: '02:30:00'
+    memory: '40000'
+align_standardize_gz:
+    time: '02:00:00'
+deliverables_deseq2:
+    name: '{rule}'
+deliverables_run_info:
+    name: '{rule}'
+deseq2_counts:
+    name: '{rule}'
+deseq2_plots_by_phenotype:
+    name: '{rule}'
+deseq2_summary:
+    name: '{rule}'

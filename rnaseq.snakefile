@@ -48,7 +48,8 @@ config[SAMPLES_KEY] = list(samplesheet.index)
 
 rnaseq_snakefile_helper.init_references(config["references"])
 
-INPUT_MANAGER = rnaseq_snakefile_helper.InputFileManager(input_dir=INPUT_DIR, input_type='fastq')
+if not config.get('count_matrix'):
+    INPUT_MANAGER = rnaseq_snakefile_helper.InputFileManager(input_dir=INPUT_DIR, input_type='fastq')
 
 
 #Set up emailing functionality

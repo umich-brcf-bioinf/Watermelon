@@ -20,11 +20,9 @@ properties:
             input:
                 type: string
         required:
-            - alignment_output
             - diffex_output
             - deliverables_output
             - report_output
-            - input
 
     references:
         properties:
@@ -71,5 +69,4 @@ required:
     - samplesheet
     - dirs
     - references
-    - alignment_options
     - diffex

@@ -100,6 +100,8 @@ class _CommandValidator(object):
         Verify that the samplesheet exists, that it contains a sample column, and that
         the sample names in the samplesheet correspond to those in the input directories
         '''
+        if args.count_matrix: # If count matrix argument is present, skip this validation
+            return None
         sheet_file = args.sample_sheet
 
         if not os.path.isfile(sheet_file):
@@ -161,6 +163,8 @@ class _CommandValidator(object):
 
     @staticmethod
     def _validate_source_fastq_dirs(args):
+        if args.count_matrix: # If count matrix argument is present, skip this validation
+            return None
         bad_dirs = [x for x in args.source_fastq_dirs if not os.path.isdir(x)]
         if bad_dirs:
             msg = (
@@ -176,6 +180,8 @@ class _CommandValidator(object):
             existing_files["dirs: input"] = args.input_dir
         if "config_file" in vars(args) and os.path.exists(args.config_file):
             existing_files["config_file"] = args.config_file
+        if os.path.exists("Watermelon"):
+            existing_files["dirs: Watermelon"] = os.path.realpath("Watermelon")
 
         if existing_files:
             file_types = [file_type for file_type in sorted(existing_files.keys())]
@@ -233,11 +239,13 @@ _WATERMELON_ROOT = os.path.dirname(_SCRIPTS_DIR)
 _CONFIG_DIR = os.path.join(_WATERMELON_ROOT, "config")
 _DEFAULT_TEMPLATE_CONFIG = os.path.join(_CONFIG_DIR, "template_config.yaml")
 _DEFAULT_SAMPLE_COLUMN = "sample"
-# TODO: if umms-brcfpipeline is mounted on comps, can remove this section
+# TODO: if umms-brcfpipeline is mounted on comps, can remove default genome references section
 if re.match('bfxcomp[56]', socket.gethostname()):
     _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references_bfxcommon.yaml")
+    ANALYST_INFO = pd.read_csv('/nfs/med-bfx-common/pipelines/analyst_info.csv', comment="#", index_col='username') # This will be accessible on comp5/6
 elif re.search('arc-ts', socket.gethostname()):
     _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references.yaml")
+    ANALYST_INFO = pd.read_csv('/nfs/turbo/umms-brcfpipeline/pipelines/analyst_info.csv', comment="#", index_col='username') # This will be accessible on greatlakes
 else:
     refs = os.path.join(_CONFIG_DIR, "genome_references.yaml")
     msg = f"\nCould not use hostname to choose genome references. Using {refs}\nIf this causes errors, use argument --x_genome_references to specify a file."
@@ -444,6 +452,7 @@ def _make_config_dict(template_config, genome_references, args):
     # If "Other" or "TestData" genome_build is specified, remove fastq_screen stanza from config
     if args.genome_build == "Other" or args.genome_build == "TestData":
         config.pop('fastq_screen', None)
+
     # add input dir
     config["dirs"]["input"] = os.path.join(args.input_dir, args.input_samples_dir)
     # Add in more needed keys
@@ -458,10 +467,25 @@ def _make_config_dict(template_config, genome_references, args):
     # Genome / references
     _dict_merge(config, genome_references)
     # Email params
+    user = getpass.getuser()
     config["email"] = {
         "subject": "watermelon" + args.job_suffix,
-        "to": getpass.getuser() + "@umich.edu",
+        "to": f"{user}@umich.edu",
     }
+
+    # If count matrix argument given, Add count matrix to config, remove all unnecessary stuff
+    if args.count_matrix:
+        config["count_matrix"] = args.count_matrix
+        config.move_to_end("count_matrix")
+        config.pop("fastq_screen", None)
+        config.pop("trimming_options", None)
+        config.pop("alignment_options", None)
+        config["dirs"].pop("alignment_output", None)
+        config["dirs"].pop("input", None)
+        config["references"].pop("fasta", None)
+        config["references"].pop("gtf", None)
+
+
     # Reorder these added keys (move to top)
     # resulting order: email, watermelon_version, samplesheet, genome, references, template_config stuff
     config.move_to_end("references", last=False)
@@ -626,9 +650,20 @@ def _parse_command_line_args(sys_argv):
         ),
     )
     parser.add_argument(
+        "--count_matrix",
+        type=str,
+        default='',
+        help=(
+            "A count matrix file (Optional). If a count matrix file is supplied, watermelon_init will "
+            "create a configuration file suitable for such an analysis. Watermelon_init will verify that "
+            "column names in the count matrix match the samples in the sample sheet. "
+        ),
+    )
+    parser.add_argument(
         "source_fastq_dirs",
         type=str,
-        nargs="+",
+        nargs="?",
+        default=None,
         help=(
             "One or more paths to run dirs. Each run dir should contain "
             "samples dirs which should in turn contain one or more fastq.gz "
@@ -685,17 +720,30 @@ def main(sys_argv):
             source=_WATERMELON_ROOT, dest=os.path.join(os.getcwd(), "Watermelon")
         )
 
-        print("Linking inputs")
-        if os.path.isdir(args.tmp_input_dir):
-            shutil.rmtree(args.tmp_input_dir)
-        linker = _Linker()
-        _link_run_dirs(args, linker)
-        _merge_sample_dirs(args)
-        input_summary = _build_input_summary(args)
+        if not args.count_matrix:
+            print("Linking inputs")
+            if os.path.isdir(args.tmp_input_dir):
+                shutil.rmtree(args.tmp_input_dir)
+            linker = _Linker()
+            _link_run_dirs(args, linker)
+            _merge_sample_dirs(args)
+            input_summary = _build_input_summary(args)
+        else: # TWS FIXME: This is a temporary solution for differing procedures for watermelon_init. Refactor for ovarhaul
+            input_summary = argparse.Namespace(
+                runs_df=None,
+                sample_run_counts_df=None,
+                total_sample_count=None,
+                total_file_count=None,
+                total_run_count=None,
+                samples=None,
+                samples_missing_fastq_files=None,
+                runs_missing_fastq_files=None,
+            )
+
 
         _CommandValidator().validate_inputs(input_summary)
         _CommandValidator().validate_sample_sheet(args, input_summary)
-        os.rename(args.tmp_input_dir, args.input_dir)
+        #os.rename(args.tmp_input_dir, args.input_dir) # What even is this?
         print("Generating example config")
         with open(args.x_template_config, 'r') as template_config_file:
             template_config = ruamel_yaml.round_trip_load(template_config_file) #Use ruamel_yaml to preserve comments
@@ -719,9 +767,12 @@ def main(sys_argv):
                 config_dict, config_file, default_flow_style=False, indent=4
             )
 
-        postlude = _build_postlude(
-            args, linker.results, _build_input_summary_text(input_summary)
-        )
+        if not args.count_matrix:
+            postlude = _build_postlude(
+                args, linker.results, _build_input_summary_text(input_summary)
+            )
+        else:
+            postlude = _build_postlude(args, "", "")
         print(postlude)
         with open(README_FILENAME, "w") as readme:
             print(postlude, file=readme)

@@ -81,11 +81,14 @@ class _CommandValidator(object):
 
     def validate_args(self, args):
         # pylint: disable=locally-disabled, missing-docstring
-        for validation in [
-            self._validate_source_fastq_dirs,
+        validations_list = [
             self._validate_overwrite_check,
             self._validate_genomebuild,
-        ]:
+        ]
+        if not args.count_matrix: # If count matrix argument is present, fastq dir validation is skipped
+            validations_list.append(self._validate_source_fastq_dirs)
+
+        for validation in validations_list:
             validation(args)
 
     def validate_inputs(self, input_summary):
@@ -100,8 +103,6 @@ class _CommandValidator(object):
         Verify that the samplesheet exists, that it contains a sample column, and that
         the sample names in the samplesheet correspond to those in the input directories
         '''
-        if args.count_matrix: # If count matrix argument is present, skip this validation
-            return None
         sheet_file = args.sample_sheet
 
         if not os.path.isfile(sheet_file):
@@ -163,8 +164,6 @@ class _CommandValidator(object):
 
     @staticmethod
     def _validate_source_fastq_dirs(args):
-        if args.count_matrix: # If count matrix argument is present, skip this validation
-            return None
         bad_dirs = [x for x in args.source_fastq_dirs if not os.path.isdir(x)]
         if bad_dirs:
             msg = (
@@ -662,7 +661,7 @@ def _parse_command_line_args(sys_argv):
     parser.add_argument(
         "source_fastq_dirs",
         type=str,
-        nargs="?",
+        nargs="*",
         default=None,
         help=(
             "One or more paths to run dirs. Each run dir should contain "

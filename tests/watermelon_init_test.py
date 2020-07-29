@@ -126,6 +126,7 @@ class WatermelonInitTest(unittest.TestCase):
                          'input_samples_dir',
                          'job_suffix',
                          'source_fastq_dirs',
+                         'count_matrix',
                          'x_sample_column',
                          'x_template_config',
                          'x_working_dir']
@@ -436,7 +437,8 @@ fastq_screen:
                          input_samples_dir='samples',
                          genome_build = 'GRCh38',
                          sample_sheet = 'samplesheet.csv',
-                         job_suffix = '_11_01_A')
+                         job_suffix = '_11_01_A',
+                         count_matrix = '')
         actual_config = watermelon_init._make_config_dict(template_config,
                                                           genome_references,
                                                           args)
@@ -472,7 +474,8 @@ references:
                          input_samples_dir='samples',
                          genome_build = 'GRCh38',
                          sample_sheet = 'samplesheet.csv',
-                         job_suffix = '_11_01_A')
+                         job_suffix = '_11_01_A',
+                         count_matrix = '')
         actual_config = watermelon_init._make_config_dict(template_config,
                                                           genome_references,
                                                           args)

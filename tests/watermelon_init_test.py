@@ -128,6 +128,7 @@ class WatermelonInitTest(unittest.TestCase):
                          'source_fastq_dirs',
                          'count_matrix',
                          'x_sample_column',
+                         'x_analyst_info',
                          'x_template_config',
                          'x_working_dir']
         self.assertEqual(sorted(expected_args), sorted(vars(args)))
@@ -423,6 +424,8 @@ foo2:
     bar2: baz2
 dirs:
   alignment_output: analysis{job_suffix}/alignment_results
+report_info:
+    prep_description: Foo bar baz
 ''')
         genome_references = yaml.load(\
 '''genome: hg19
@@ -444,7 +447,7 @@ fastq_screen:
                                                           args)
         expected_keys = ['dirs', 'email', 'fastq_screen', 'samplesheet', 'watermelon_version',
                          'foo1', 'foo2',
-                         'genome', 'references']
+                         'genome', 'references', 'report_info']
         self.assertEquals(sorted(expected_keys), sorted(actual_config.keys()))
         self.assertEqual('/my/input/dir/samples', actual_config['dirs']['input'])
         self.assertEqual(template_config['foo1'], actual_config['foo1'])

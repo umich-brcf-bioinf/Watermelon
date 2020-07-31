@@ -227,10 +227,6 @@ def _timestamp():
     return datetime.datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
 
-def _umich_email():
-    return os.getlogin() + "@umich.edu"
-
-
 README_FILENAME = "watermelon.README"
 
 _SCRIPTS_DIR = os.path.realpath(os.path.dirname(__file__))
@@ -238,19 +234,20 @@ _WATERMELON_ROOT = os.path.dirname(_SCRIPTS_DIR)
 _CONFIG_DIR = os.path.join(_WATERMELON_ROOT, "config")
 _DEFAULT_TEMPLATE_CONFIG = os.path.join(_CONFIG_DIR, "template_config.yaml")
 _DEFAULT_SAMPLE_COLUMN = "sample"
-# TODO: if umms-brcfpipeline is mounted on comps, can remove default genome references section
+# TODO: if umms-brcfpipeline is mounted on comps, can remove this if elif else section
 if re.match('bfxcomp[56]', socket.gethostname()):
     _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references_bfxcommon.yaml")
-    ANALYST_INFO = pd.read_csv('/nfs/med-bfx-common/pipelines/analyst_info.csv', comment="#", index_col='username') # This will be accessible on comp5/6
+    _DEFAULT_ANALYST_INFO = pd.read_csv('/nfs/med-bfx-common/pipelines/analyst_info.csv', comment="#", index_col='username') # This will be accessible on comp5/6
 elif re.search('arc-ts', socket.gethostname()):
     _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references.yaml")
-    ANALYST_INFO = pd.read_csv('/nfs/turbo/umms-brcfpipeline/pipelines/analyst_info.csv', comment="#", index_col='username') # This will be accessible on greatlakes
+    _DEFAULT_ANALYST_INFO = pd.read_csv('/nfs/turbo/umms-brcfpipeline/pipelines/analyst_info.csv', comment="#", index_col='username') # This will be accessible on greatlakes
 else:
     refs = os.path.join(_CONFIG_DIR, "genome_references.yaml")
-    msg = f"\nCould not use hostname to choose genome references. Using {refs}\nIf this causes errors, use argument --x_genome_references to specify a file."
+    msg = f"\nCould not use hostname to choose genome references. Using {refs}\nIf this causes errors, use argument --x_genome_references to specify a genome references file."
     warnings.warn(msg)
     time.sleep(3)
     _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references.yaml")
+    _DEFAULT_ANALYST_INFO = pd.DataFrame() # An empty dataframe used as a simple check
 
 _FASTQ_GLOBS = ["*.fastq", "*.fastq.gz"]
 
@@ -472,6 +469,16 @@ def _make_config_dict(template_config, genome_references, args):
         "to": f"{user}@umich.edu",
     }
 
+    # Analyst name
+    if config.get("report_info"):
+        try:
+            config["report_info"]["analyst"] = _DEFAULT_ANALYST_INFO.at[user, 'name']
+        except KeyError:
+            # _DEFAULT_ANALYST_INFO may be empty (default file not available)
+            # Or the user is not in that DataFrame
+            config["report_info"]["analyst"] = 'Analyst'
+
+
     # If count matrix argument given, Add count matrix to config, remove all unnecessary stuff
     if args.count_matrix:
         config["count_matrix"] = args.count_matrix
@@ -686,6 +693,13 @@ def _parse_command_line_args(sys_argv):
         type=str,
         default=_DEFAULT_GENOME_REFERENCES,
         help=argparse.SUPPRESS,
+    )
+
+    parser.add_argument(
+        "--x_analyst_info",
+        type=str,
+        default=_DEFAULT_ANALYST_INFO,
+        help=argparse.SUPPRESS
     )
 
     parser.add_argument(

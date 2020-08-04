@@ -5,6 +5,7 @@ dirs:
   report_output: analysis{job_suffix}/report
 
 report_info: #These strings are used directly in the report
+    project_name: Example Project
     prep_description: 'Prior tissue or cell isolation along with generation of total RNA was performed by the researcher. Sequencing was performed by the UM Advanced Genomics Core, with libraries constructed and subsequently subjected to 100 paired end cycles on the NovaSeq-6000 platform (Illumina).'
 
 trimming_options: #Delete the entire trimming_options stanza if no trimming is desired

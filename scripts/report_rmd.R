@@ -11,6 +11,10 @@ library(tidyverse)
 library(kableExtra)
 library(knitr)
 
+project_name = snakemake@config[['report_info']][['project_name']]
+analyst_name = snakemake@config[['report_info']][['analyst_name']]
+analyst_email = snakemake@config[['email']][['to']]
+
 report_dir = snakemake@params[['report_dir']]
 output_prefix = paste0(report_dir, 'report_draft')
 

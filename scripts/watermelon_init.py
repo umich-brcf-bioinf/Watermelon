@@ -17,8 +17,9 @@ Specifically:
    information, reference lists, run parameters, etc.,
    These must be reviewed and edited to:
    a) adjust genome and references to match the experiment
-   b) adjust trimming, alignment, and fastq_screen options
-   c) specify diffex parameters, and add  DESeq2 calls and contrasts
+   b) adjust report_info with details from the experiment
+   c) adjust trimming, alignment, and fastq_screen options
+   d) specify diffex parameters, and add  DESeq2 calls and contrasts
       based on the example pheno.Gend stanza (can add as many similar stanzas
       as required by the experiment)
 
@@ -257,8 +258,9 @@ _CONFIG_PRELUDE = """# config created {timestamp}
 # To do:
 # ------
 # 1) Review genome and references
-# 2) Review alignment, trimming, and fastq_screen options
-# 3) Modify the diffex options - use the 'model_one' stanza as an example, and
+# 2) Review report information
+# 3) Review alignment, trimming, and fastq_screen options
+# 4) Modify the diffex options - use the 'model_one' stanza as an example, and
 #    set up the DESeq2 calls and results calls for the comparisons that match the analysis.
 """.format(
     timestamp=_timestamp()
@@ -472,11 +474,11 @@ def _make_config_dict(template_config, genome_references, args):
     # Analyst name
     if config.get("report_info"):
         try:
-            config["report_info"]["analyst"] = _DEFAULT_ANALYST_INFO.at[user, 'name']
+            config["report_info"]["analyst_name"] = _DEFAULT_ANALYST_INFO.at[user, 'name']
         except KeyError:
             # _DEFAULT_ANALYST_INFO may be empty (default file not available)
             # Or the user is not in that DataFrame
-            config["report_info"]["analyst"] = 'Analyst'
+            config["report_info"]["analyst_name"] = 'Analyst'
 
 
     # If count matrix argument given, Add count matrix to config, remove all unnecessary stuff
@@ -560,8 +562,9 @@ config:
 {config_relative}
 -------------------------------
 1) Review genome and references
-2) Review alignment, trimming, and fastq_screen options
-3) Modify the diffex options - use the 'model_one' stanza as an example, and
+2) Review report information
+3) Review alignment, trimming, and fastq_screen options
+4) Modify the diffex options - use the 'model_one' stanza as an example, and
    set up the DESeq2 calls and results calls for the comparisons that match the analysis.
 
 When the config & samplesheet look good:
@@ -756,7 +759,7 @@ def main(sys_argv):
 
         _CommandValidator().validate_inputs(input_summary)
         _CommandValidator().validate_sample_sheet(args, input_summary)
-        #os.rename(args.tmp_input_dir, args.input_dir) # What even is this?
+        os.rename(args.tmp_input_dir, args.input_dir)
         print("Generating example config")
         with open(args.x_template_config, 'r') as template_config_file:
             template_config = ruamel_yaml.round_trip_load(template_config_file) #Use ruamel_yaml to preserve comments

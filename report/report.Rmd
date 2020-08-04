@@ -1,5 +1,5 @@
 ---
-title: "PROJECT_NAME Project Report"
+title: "`r project_name` Project Report"
 author: "UM Bioinformatics Core"
 date: "`r Sys.Date()`"
 output:
@@ -111,6 +111,7 @@ if(add_custom){
 
 *Contact:*
 
+* `r analyst_name` <`r analyst_email`>
 * Bioinformatics Core <bioinformatics@umich.edu>
 
 <!---

@@ -72,12 +72,13 @@ The following sections provide more detailed information about the differential 
                 c('external_gene_name', 'entrezgene_id', 'description', 'log2FoldChange', 'padj')
               )) %>%
               mutate(padj = -log10(padj)) %>%
+              mutate(description = sub(" \\[Source:.*?\\]", "", description)) %>%
               rename(Gene = external_gene_name, 'log2 (FC)' = log2FoldChange, '-log10 (q-val)' = padj) %>%
-              mutate(entrezgene_id = cell_spec(
-                x = entrezgene_id,
-                format = "html",
-                link = paste0('https://www.ncbi.nlm.nih.gov/gene/?term=', entrezgene_id)
-              ))
+              mutate(entrezgene_id = ifelse(is.na(entrezgene_id), NA, cell_spec(
+                  x = entrezgene_id,
+                  format = "html",
+                  link = paste0('https://www.ncbi.nlm.nih.gov/gene/?term=', entrezgene_id)
+              )))
 
           annot_kable = kable(annot_tbl, "html", escape = FALSE, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
               kable_styling(bootstrap_options = c('striped', 'condensed')) %>%

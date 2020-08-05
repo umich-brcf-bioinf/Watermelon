@@ -24,10 +24,7 @@ dirs:
     input: /nfs/med-bfx-activeprojects/trsaari/sandbox/20200720_wat_test/inputs/01-source_samples
 trimming_options: #Delete the entire trimming_options stanza if no trimming is desired
     paired_end_mode: true
-    base_quality_5prime: 0
-    base_quality_3prime: 13
-    trim_length_5prime: 3
-    trim_length_3prime: 0
+    cutadapt_args: --nextseq-trim 13 -u 3 -m 20 --trim-n
 alignment_options:
     read_length: 100
 fastq_screen: #Delete the entire fastq_screen stanza if fastq_screen not desired

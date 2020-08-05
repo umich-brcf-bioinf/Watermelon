@@ -113,14 +113,12 @@ class PhenotypeManager(object):
                 with_replicates.append(label)
         return sorted(with_replicates)
 
-class InputFileManager(object):
-    def __init__(self, input_dir, input_type='fastq'):
+class InputFastqManager(object):
+    def __init__(self, input_dir, capture_regex):
         self.input_dir = input_dir
-        self.input_type = input_type
-        if input_type == 'fastq':
-            self.input_paths_dict = self._get_fastq_paths_dict_from_input_dir()
-            self.fastqs_to_concat_dict = self._fastqs_to_concat_from_filenames(capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*')
-            self.sample_bnames_dict = self._sample_bnames_from_filenames(capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*', bname_fmt='{}_R{}')
+        self.input_paths_dict = self._get_fastq_paths_dict_from_input_dir()
+        self.fastqs_to_concat_dict = self._fastqs_to_concat_from_filenames(capture_regex=capture_regex)
+        self.sample_bnames_dict = self._sample_bnames_from_filenames(capture_regex=capture_regex, bname_fmt='{}_R{}')
 
 
     def _get_sample_fastq_paths(self, sample_fastq_dir):

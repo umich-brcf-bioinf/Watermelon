@@ -48,8 +48,14 @@ config[SAMPLES_KEY] = list(samplesheet.index)
 
 rnaseq_snakefile_helper.init_references(config["references"])
 
+if config.get('capture_regex'):
+    capture_regex = config['capture_regex']
+else:
+    capture_regex = r'.*_R(\d+)[_0-9]*\.fastq.*'
+
+
 if not config.get('count_matrix'):
-    INPUT_MANAGER = rnaseq_snakefile_helper.InputFileManager(input_dir=INPUT_DIR, input_type='fastq')
+    INPUT_MANAGER = rnaseq_snakefile_helper.InputFastqManager(input_dir=INPUT_DIR, capture_regex=capture_regex)
 
 
 #Set up emailing functionality

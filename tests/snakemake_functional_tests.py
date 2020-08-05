@@ -104,13 +104,10 @@ class SnakemakeExampleDataTest(unittest.TestCase):
                     'fasta' : os.path.join(tmp_data_dir, 'Homo_sapiens.GRCh38.dna_sm.chr22.fa'),
                     'gtf' : os.path.join(tmp_data_dir, 'Homo_sapiens.GRCh38.98.chr22.gtf'),
                     'annotation_tsv' : os.path.join(tmp_data_dir, 'Homo_sapiens.GRCh38.98_annotation.tsv')
-                },
-                'email' : {
-                    'to': 'nobody'
-                },
+                }
             }
 
-            rm_keys = ['fastq_screen']
+            rm_keys = ['fastq_screen', 'email']
 
             #Create modified config in this temp dir, using example config and replacing values as needed
             configfile_path = os.path.join(temp_dir.path, 'testcase_config.yaml')

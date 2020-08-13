@@ -1,7 +1,7 @@
 name: watermelon_test
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
   - defaults
 dependencies:
   - git

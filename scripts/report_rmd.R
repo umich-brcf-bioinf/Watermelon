@@ -16,7 +16,8 @@ analyst_name = snakemake@config[['report_info']][['analyst_name']]
 analyst_email = snakemake@config[['email']][['to']]
 
 report_dir = snakemake@params[['report_dir']]
-output_prefix = paste0(report_dir, 'report_draft')
+report_dir = sub("/$", "", report_dir) #Remove trailing / if there is one
+output_prefix = file.path(report_dir, 'report_draft')
 
 # if(!dir.exists(report_dir)) {
 #     dir.create(report_dir, recursive = TRUE)

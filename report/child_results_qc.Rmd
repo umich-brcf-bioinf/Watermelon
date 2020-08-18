@@ -3,15 +3,20 @@
 A detailed MultiQC report can be found at the following link:
 
 ```{r include = FALSE}
-# Setup - generate relative link to multiqc html
+# Setup - copy multiqc html and link to it
 cwd = sub("/ccmb/BioinfCore/ActiveProjects", "/nfs/med-bfx-activeprojects", getwd()) # TODO: when we remove /ccmb/ completely this will no longer be necessary, can just use getwd()
-mqc_fullpath = file.path(project_dir, snakemake@input[['multiqc_html']])
-realpath_args = c('--relative-to', cwd, mqc_fullpath)
+mqc_curr_path = file.path(project_dir, snakemake@input[['multiqc_html']])
+mqc_copy_path = file.path(project_dir, report_dir, 'multiqc_linked_report.html')
+copystatus = file.copy(mqc_curr_path, mqc_copy_path, overwrite = TRUE, copy.mode = FALSE)
 
-multiqc_link_rel = xml2::url_relative(mqc_fullpath, file.path(cwd, '..'))
+if(!copystatus){
+  stop("Copying multiqc_linked_report.html to report dir failed.")
+}
+
+multiqc_link = './multiqc_linked_report.html'
 ```
 
-### [Alignment Results - MultiQC report](`r multiqc_link_rel`)
+### [Alignment Results - MultiQC report](`r multiqc_link`)
 
 ### Alignment Results - Summary & Selected Figures
 
@@ -79,7 +84,7 @@ for(factor_cov in phenotypes) {
 ```
 
 ```{r eval = include_diffex, echo = FALSE, results = 'asis', message = FALSE}
-cat('### Clustering\n\nClustering is a method to visualize the similarity and difference among samples. Unsupervised clustering using complete linkage of the Euclidian distances of the gene expression profiles of pairwise samples is shown below. [REPLACE: Anything of note? Mention it here.]\n\n')
+cat('### Clustering\n\nClustering is a method to visualize the similarity and difference among samples. Unsupervised clustering using complete linkage of the Euclidian distances of the gene expression profiles of pairwise samples is shown below.\n\n')
 for(factor_cov in phenotypes) {
   cat(sprintf('\n\n#### %s \n\n', factor_cov))
   file = sprintf(qc_heatmap_file, diffex_dir, factor_cov)
@@ -88,7 +93,7 @@ for(factor_cov in phenotypes) {
 ```
 
 ```{r eval = include_diffex, echo = FALSE, results = 'asis', message = FALSE}
-cat('### PCA\n\nPrincipal component analysis (PCA) is another method to visualize the similarity and difference among samples. PCA was applied to the normalized gene expression profiles of the samples. [REPLACE: Anything of note? Mention it here.]\n\n')
+cat('### PCA\n\nPrincipal component analysis (PCA) is another method to visualize the similarity and difference among samples. PCA was applied to the normalized gene expression profiles of the samples.\n\n')
 for(factor_cov in phenotypes) {
   cat(sprintf('\n\n#### %s \n\n', factor_cov))
   # Include 'raw' if desired

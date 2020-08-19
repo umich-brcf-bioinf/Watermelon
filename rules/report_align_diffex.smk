@@ -29,7 +29,6 @@ rule report_align_diffex:
             DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.png',
             DESEQ2_CONTRAST_DICT
             )
-
     output:
         report_md = REPORT_DIR + 'report_draft.md',
         report_html = REPORT_DIR + 'report_draft.html'
@@ -48,20 +47,3 @@ rule report_align_diffex:
         diffex_model_info = DIFFEX_MODEL_INFO
     script:
         '../scripts/report_rmd.R'
-
-# # A rule to build the report from the markdown
-# # This final report creation will copy into the results/ directory
-# rule report_md:
-#     input:
-#         report_md = report_md,
-#         report_html = report_html,
-#     output:
-#         report_final_html = report_final_html,
-#     benchmark:
-#         os.path.join(benchmark_dir, 'report_md.txt')
-#     log:
-#         os.path.join(log_dir, 'report_md.txt')
-#     params:
-#         snakemake_rdata = os.path.join(snakemake_rdata_dir, 'report_md.rda'),
-#     script:
-#         '../scripts/report_md.R'

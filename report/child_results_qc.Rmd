@@ -7,7 +7,7 @@ A detailed MultiQC report can be found at the following link:
 cwd = sub("/ccmb/BioinfCore/ActiveProjects", "/nfs/med-bfx-activeprojects", getwd()) # TODO: when we remove /ccmb/ completely this will no longer be necessary, can just use getwd()
 mqc_curr_path = file.path(project_dir, snakemake@input[['multiqc_html']])
 mqc_copy_path = file.path(project_dir, report_dir, 'multiqc_linked_report.html')
-copystatus = file.copy(mqc_curr_path, mqc_copy_path, overwrite = TRUE, copy.mode = FALSE)
+copystatus = file.copy(mqc_curr_path, mqc_copy_path, overwrite = TRUE)
 
 if(!copystatus){
   stop("Copying multiqc_linked_report.html to report dir failed.")

@@ -8,12 +8,31 @@ save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
 library(rmarkdown)
 
-project_dir = snakemake@config[['project_dir']]
-analysis_dir = snakemake@config[['analysis_dir']]
+# Two levels up from directory where report.Rmd is located, is project dir. e.g. /path/to/project/Watermelon/report/report.Rmd
+#project_dir = dirname(dirname(dirname(snakemake@input[['report_md']])))
 
-setwd(file.path(analysis_dir, 'doc'))
+project_dir = getwd() # This is another option to get the project dir. This is where snakemake is called from, should be project dir. Need more testing in different contexts
 
-rmarkdown::render('report.md', output_format = 'all')
+report_draft_fullpath = file.path(project_dir, snakemake@input[['report_md']])
+report_final_path = file.path(project_dir, snakemake@output[['report_final_html']])
 
-setwd(file.path(project_dir, analysis_dir))
-system(sprintf('cp %s %s', snakemake@input[['report_html']], snakemake@output[['report_final_html']]))
+rmarkdown::render(report_draft_fullpath, output_file = report_final_path, output_format = 'html_document')
+
+# Copy final report html to deliverables
+report_final_deliverable = file.path(project_dir, snakemake@output[['report_deliverable']])
+if(file.exists(report_final_deliverable)){
+  stop("Final report exists in deliverables folder. Will not overwrite.")
+}
+copystatus = file.copy(report_final_path, report_final_deliverable, overwrite = FALSE)
+if(!copystatus){
+  stop("Copying final report to deliverables dir failed.")
+}
+
+# Copy linked multiqc html to deliverables
+mqc_copy_path = file.path(dirname(report_draft_fullpath), 'multiqc_linked_report.html')
+if(file.exists(mqc_copy_path)){ # May not exist if report_from_counts was run to produce draft
+  copystatus = file.copy(mqc_copy_path, dirname(report_final_deliverable), overwrite = TRUE)
+  if(!copystatus){
+    stop("Copying multiqc_linked_report.html to deliverables dir failed.")
+  }
+}

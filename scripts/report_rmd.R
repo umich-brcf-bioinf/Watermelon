@@ -49,3 +49,15 @@ qc_pca_file = '%s/deseq2/plots/by_phenotype/%s/PCAplot_12_%s.png'
 ################################################################################
 
 rmarkdown::render(report_rmd, output_format = 'all', output_file = output_prefix, output_dir = report_dir, params = list(project_dir = project_dir))
+
+# Copy bioinformatics.csl and references_WAT.bib alongside draft report - simplifies report finalization step if they're colocated
+bfx.csl = file.path(dirname(report_rmd), 'bioinformatics.csl')
+refs.wat = file.path(dirname(report_rmd), 'references_WAT.bib')
+copystatus = file.copy(bfx.csl, file.path(project_dir, report_dir), overwrite = TRUE)
+if(!copystatus){
+  stop("Copying bioinformatics.csl to report dir failed.")
+}
+copystatus = file.copy(refs.wat, file.path(project_dir, report_dir), overwrite = TRUE)
+if(!copystatus){
+  stop("Copying references_WAT.bib to report dir failed.")
+}

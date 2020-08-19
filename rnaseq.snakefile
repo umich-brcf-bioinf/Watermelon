@@ -319,6 +319,7 @@ else:
     include: 'rules/report_align_only.smk'
 
 include: 'rules/deliverables_run_info.smk'
+include: 'rules/report_finalize.smk'
 
 
 rule all:

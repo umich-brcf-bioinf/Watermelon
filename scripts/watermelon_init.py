@@ -484,7 +484,7 @@ def _make_config_dict(template_config, genome_references, args):
     # If count matrix argument given, Add count matrix to config, remove all unnecessary stuff
     if args.count_matrix:
         config["count_matrix"] = args.count_matrix
-        config.move_to_end("count_matrix")
+        config.move_to_end("count_matrix", last=False)
         config.pop("fastq_screen", None)
         config.pop("trimming_options", None)
         config.pop("alignment_options", None)
@@ -744,22 +744,23 @@ def main(sys_argv):
             _link_run_dirs(args, linker)
             _merge_sample_dirs(args)
             input_summary = _build_input_summary(args)
+            _CommandValidator().validate_inputs(input_summary)
+            os.rename(args.tmp_input_dir, args.input_dir)
         else: # TWS FIXME: This is a temporary solution for differing procedures for watermelon_init. Refactor for ovarhaul
+            samplesheet = pd.read_csv(args.sample_sheet, comment='#', dtype='object').set_index("sample", drop=True)
+            samples = list(samplesheet.index)
             input_summary = argparse.Namespace(
                 runs_df=None,
                 sample_run_counts_df=None,
                 total_sample_count=None,
                 total_file_count=None,
                 total_run_count=None,
-                samples=None,
+                samples=samples,
                 samples_missing_fastq_files=None,
                 runs_missing_fastq_files=None,
             )
 
-
-        _CommandValidator().validate_inputs(input_summary)
         _CommandValidator().validate_sample_sheet(args, input_summary)
-        os.rename(args.tmp_input_dir, args.input_dir)
         print("Generating example config")
         with open(args.x_template_config, 'r') as template_config_file:
             template_config = ruamel_yaml.round_trip_load(template_config_file) #Use ruamel_yaml to preserve comments

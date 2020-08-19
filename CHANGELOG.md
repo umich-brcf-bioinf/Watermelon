@@ -9,7 +9,8 @@
 - Sliced Watermelon goals actualized
 	- To run alignment + QC + diffex, no change (default)
 	- To run alignment + QC only, either delete entire `diffex` section from config OR add `--config diffex=''` to snakemake command.
-	- To run diffex starting from a count matrix, either add `count_matrix: /path/to/count_matrix.tsv` to config or add `--config count_matrix=/path/to/count_matrix.tsv` to snakemake command.
+	- To run diffex starting from a count matrix, either `count_matrix: /path/to/count_matrix.tsv` must be in config or add `--config count_matrix=/path/to/count_matrix.tsv` to snakemake command.
+    - Note: Supplying watermelon_init with `--count_matrix /path/to/count_matrix.tsv` instead of a list of fastq input directories creates an appropriate config containing this key-value pair.
 - Genome references moved to turbo location (will be used in coordination w/ AGC)
 	- Adjustments to singularity arguments to accommodate this
 - Improvements to config validator

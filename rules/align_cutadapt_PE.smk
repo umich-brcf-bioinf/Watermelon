@@ -13,7 +13,9 @@ rule align_cutadapt_PE:
     singularity: 'docker://umichbfxcore/cutadapt'
     shell:
         '''(cutadapt {params.cutadapt_args} \
--o {output.R1} \
--p {output.R2} \
+-o {output.R1}.tmp.gz \
+-p {output.R2}.tmp.gz \
 {input.raw_fastq_R1} {input.raw_fastq_R2}
+mv {output.R1}.tmp.gz {output.R1} &&
+mv {output.R2}.tmp.gz {output.R2}
 ) 2>&1 | tee {log} '''

@@ -1,5 +1,12 @@
 # Changelog
 
+1.5.1 (09/08/2020)
+------------------
+- watermelon_init fix: only use turbo space for default refs now
+- Improvements for running on GreatLakes
+    - Increased time for trimming
+    - Fix for early cutadapt termination recovery
+
 1.5.0 (08/13/2020)
 ------------------
 - Automatic report generation

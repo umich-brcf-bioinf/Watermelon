@@ -9,8 +9,10 @@ __default__:
 align_annotate_combined_counts:
     name: '{rule}_{wildcards.feature}_{wildcards.metric}'
 align_cutadapt_PE:
+    time: '01:30:00'
     ntask: '{threads}'
 align_cutadapt_SE:
+    time: '01:30:00'
     ntask: '{threads}'
 align_deliverables_alignment:
     name: '{rule}'

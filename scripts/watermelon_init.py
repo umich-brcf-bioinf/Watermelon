@@ -235,20 +235,14 @@ _WATERMELON_ROOT = os.path.dirname(_SCRIPTS_DIR)
 _CONFIG_DIR = os.path.join(_WATERMELON_ROOT, "config")
 _DEFAULT_TEMPLATE_CONFIG = os.path.join(_CONFIG_DIR, "template_config.yaml")
 _DEFAULT_SAMPLE_COLUMN = "sample"
-# TODO: if umms-brcfpipeline is mounted on comps, can remove this if elif else section
-if re.match('bfxcomp[56]', socket.gethostname()):
-    _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references_bfxcommon.yaml")
-    _DEFAULT_ANALYST_INFO = pd.read_csv('/nfs/med-bfx-common/pipelines/analyst_info.csv', comment="#", index_col='username') # This will be accessible on comp5/6
-elif re.search('arc-ts', socket.gethostname()):
-    _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references.yaml")
+_DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references.yaml")
+
+try:
     _DEFAULT_ANALYST_INFO = pd.read_csv('/nfs/turbo/umms-brcfpipeline/pipelines/analyst_info.csv', comment="#", index_col='username') # This will be accessible on greatlakes
-else:
-    refs = os.path.join(_CONFIG_DIR, "genome_references.yaml")
-    msg = f"\nCould not use hostname to choose genome references. Using {refs}\nIf this causes errors, use argument --x_genome_references to specify a genome references file."
+except:
+    msg = f"\nCould not read analyst_info csv. Using default placeholder values"
     warnings.warn(msg)
-    time.sleep(3)
-    _DEFAULT_GENOME_REFERENCES = os.path.join(_CONFIG_DIR, "genome_references.yaml")
-    _DEFAULT_ANALYST_INFO = pd.DataFrame() # An empty dataframe used as a simple check
+    _DEFAULT_ANALYST_INFO = pd.DataFrame() # An empty dataframe used as a simple check below
 
 _FASTQ_GLOBS = ["*.fastq", "*.fastq.gz"]
 

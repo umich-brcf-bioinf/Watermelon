@@ -107,6 +107,10 @@ if(add_custom){
     show_appendix_custom = FALSE
 }
 
+if(snakemake@config[['include_follow_up']]) {
+    show_follow_up = TRUE
+}
+
 ```
 
 *Contact:*
@@ -168,22 +172,13 @@ Results
 ```
 
 
-# Follow-On
-
-We are happy to answer any questions you may have and/or set-up a meeting to go over the results of your experiment.
-
-In addition, if you would like more detailed output (e.g. FastQC and/or DESeq2 detailed output, etc.) please let us know. For information on the RNA-seq workflows and a comparison between available differential expression tools, please refer to [@Zhang2014].
+```{r follow_up, child = 'child_follow_up.Rmd', eval = show_follow_up}
+```
 
 
 # Acknowledgement for Publication
 
-It is important to document use of each Biomedical Research Core Facility by investigators in publications. This facilitates efforts to obtain funding for our Cores and their continued functioning.
-
-Please recognize the core’s contribution in the Acknowledgment section of your publications:
-
-“We acknowledge support from the Bioinformatics Core of the University of Michigan Medical School’s Biomedical Research Core Facilities.”
-
-If core staff have added scientific value to your project — made intellectual contributions in design, analysis and interpretation of data and/or manuscript writing, then please consider including them as co-authors in your publications.
+`r acknowledgement_text`
 
 <!---
 Appendices

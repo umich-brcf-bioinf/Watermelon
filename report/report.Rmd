@@ -107,9 +107,8 @@ if(add_custom){
     show_appendix_custom = FALSE
 }
 
-if(snakemake@config[['include_follow_up']]) {
-    show_follow_up = TRUE
-}
+show_follow_up = snakemake@config[['report_info']][['include_follow_up']]
+
 
 ```
 

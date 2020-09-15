@@ -663,6 +663,14 @@ def _parse_command_line_args(sys_argv):
         ),
     )
     parser.add_argument(
+        "--AGC",
+        default=False,
+        action='store_true',
+        help=(
+            "An optional flag which enables the creation of a configuration file that can be directly used by the UMich Advanced Genomics Core without modification."
+        ),
+    )
+    parser.add_argument(
         "source_fastq_dirs",
         type=str,
         nargs="*",
@@ -770,6 +778,16 @@ def main(sys_argv):
         config_dict = _make_config_dict(template_config,
                                         selected_genome_refs,
                                         args)
+
+        if args.AGC:
+            # If AGC flag is passed, remove diffex section,
+            # In report, change Bioinformatics Core to Advanced Genomics Core,
+            # Don't include follow-up text
+            config_dict.pop("diffex", None)
+            curr_txt = config_dict["report_info"]["acknowledgement_text"]
+            new_txt = re.sub("Bioinformatics", "Advanced Genomics", curr_txt)
+            config_dict["report_info"]["acknowledgement_text"] = new_txt
+            config_dict["report_info"]["include_follow_up"] = False
 
         # _write_config_file(args.config_file, config_dict)
         with open(args.config_file, "w") as config_file:

@@ -7,3 +7,4 @@ cluster: sbatch --job-name={cluster.name} --account={cluster.account} --partitio
 cluster-status: Watermelon/scripts/slurm_status.py
 latency-wait: 60
 jobs: 144
+config: skip_validation=True

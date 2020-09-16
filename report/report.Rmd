@@ -1,6 +1,6 @@
 ---
 title: "`r project_name` Project Report"
-author: "UM Bioinformatics Core"
+author: "`r doc_author`"
 date: "`r Sys.Date()`"
 output:
         html_document:
@@ -115,7 +115,6 @@ show_follow_up = snakemake@config[['report_info']][['include_follow_up']]
 *Contact:*
 
 * `r analyst_name` <`r analyst_email`>
-* Bioinformatics Core <bioinformatics@umich.edu>
 
 <!---
 Background

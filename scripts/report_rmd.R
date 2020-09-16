@@ -14,7 +14,15 @@ library(knitr)
 project_name = snakemake@config[['report_info']][['project_name']]
 analyst_name = snakemake@config[['report_info']][['analyst_name']]
 acknowledgement_text = snakemake@config[['report_info']][['acknowledgement_text']]
-analyst_email = snakemake@config[['email']][['to']]
+
+if(analyst_name == "Advanced Genomics Core"){
+    analyst_email = "agc-datateam@umich.edu"
+    doc_author = paste0("UM ", analyst_name)
+} else {
+    analyst_email = snakemake@config[['email']][['to']]
+    doc_author = "UM Bioinformatics Core"
+}
+
 
 report_dir = snakemake@params[['report_dir']]
 report_dir = sub("/$", "", report_dir) #Remove trailing / if there is one

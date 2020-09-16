@@ -3,3 +3,5 @@
 We are happy to answer any questions you may have and/or set-up a meeting to go over the results of your experiment.
 
 In addition, if you would like more detailed output (e.g. FastQC and/or DESeq2 detailed output, etc.) please let us know. For information on the RNA-seq workflows and a comparison between available differential expression tools, please refer to [@Zhang2014].
+
+* Bioinformatics Core <bioinformatics@umich.edu>

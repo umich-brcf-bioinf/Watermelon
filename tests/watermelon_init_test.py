@@ -125,6 +125,7 @@ class WatermelonInitTest(unittest.TestCase):
                          'input_runs_dir',
                          'input_samples_dir',
                          'job_suffix',
+                         'AGC',
                          'source_fastq_dirs',
                          'count_matrix',
                          'x_sample_column',

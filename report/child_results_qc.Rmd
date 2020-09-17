@@ -24,6 +24,9 @@ A summary of alignment statistics can be seen in the table below.
 
 
 ```{r include = FALSE}
+####
+# Set up summary table
+
 # Read in multiqc tab-separated files
 multiqc_gen_file = file.path(project_dir, snakemake@input[['multiqc_gen_stats']])
 multiqc_star_file = file.path(project_dir, snakemake@input[['multiqc_star']])
@@ -60,11 +63,31 @@ colnames(multiqc_report_df) = gsub("_", " ", colnames(multiqc_report_df))
 multiqc_kable = kable(multiqc_report_df, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
   kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
   scroll_box(width = '100%', height = '600px')
+
+####
+# Get subset of multiqc plots
+mqc_plots_dir = file.path(project_dir, snakemake@params[['mqc_plots_dir']])
+fig_regex_list = snakemake@config[['report_info']][['mqc_png_regex_list']]
+select_mqc_plots = list()
+for(re in fig_regex_list){
+  this_selection = grep(re, list.files(mqc_plots_dir), value=TRUE, perl=TRUE)
+  select_mqc_plots = c(select_mqc_plots, this_selection)
+}
 ```
 
 ```{r echo = FALSE, results = 'asis', message = FALSE}
 cat(multiqc_kable)
+
+cat('&nbsp;')
+cat('&nbsp;') #Some newlines to separate the table and figures
+cat('&nbsp;')
+
+for(fig in select_mqc_plots){
+    fig_path = file.path(mqc_plots_dir, fig)
+    cat(sprintf('![**Figure:** Selected MultiQC Figure](%s) \n\n', fig_path))
+}
 ```
+
 
 ```{r eval = include_diffex, echo = FALSE, results = 'asis', message = FALSE}
 phenotypes = names(snakemake@params[['sample_phenotypes']])

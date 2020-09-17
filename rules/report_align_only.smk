@@ -18,7 +18,8 @@ rule report_align_only:
         diffex_dir = DIFFEX_DIR,
         add_background = False, # TODO: These could later be moved out to config
         add_custom = False,
-        add_wetlab = False
+        add_wetlab = False,
+        mqc_plots_dir = ALIGNMENT_DIR + '07-qc/multiqc_plots/png/'
     script:
         '../scripts/report_rmd.R'
 

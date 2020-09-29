@@ -7,7 +7,7 @@ rule report_finalize:
         report_final_html = REPORT_DIR + 'report_final.html',
         report_deliverable = DELIVERABLES_DIR + 'report/report_final.html'
     log:
-        REPORT_DIR + '.log/report_finalize.log'
+        JOB_LOG_DIR + 'report_finalize.log'
     singularity: 'docker://umichbfxcore/report:0.1.0'
     params:
         snakemake_rdata = REPORT_DIR + '.report_finalize_snakemake.rda',

@@ -16,7 +16,7 @@ rule deseq2_plots_by_phenotype:
         expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/Heatmap_TopVar.{extension}', phenotype = PHENOTYPES, extension = ['pdf', 'png']),
         expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/Heatmap_TopExp.{extension}', phenotype = PHENOTYPES, extension = ['pdf', 'png'])
     log:
-        DIFFEX_DIR + 'deseq2/plots/by_phenotype/.log/deseq2_plots_by_phenotype.log'
+        JOB_LOG_DIR + 'deseq2_plots_by_phenotype.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
     singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
     params:

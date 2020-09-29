@@ -7,7 +7,7 @@ rule deseq2_summary:
         summary_txt = DIFFEX_DIR + "deseq2/summary/deseq2_summary.txt",
         summary_xlsx = DIFFEX_DIR + "deseq2/summary/deseq2_summary.xlsx",
     log:
-        DIFFEX_DIR + "deseq2/summary/.log/deseq2_summary.log"
+        JOB_LOG_DIR + "deseq2_summary.log"
     conda: 'envs/python3_pandas_excel/python3_pandas_excel.yaml'
     singularity: 'docker://umichbfxcore/python3_pandas_excel'
     params:

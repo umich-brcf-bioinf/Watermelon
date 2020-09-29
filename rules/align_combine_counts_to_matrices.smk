@@ -8,7 +8,7 @@ rule align_combine_counts_to_matrices:
         gene = ALIGNMENT_DIR + '05-combine_counts/gene_{metric}.txt',
         isoform = ALIGNMENT_DIR + '05-combine_counts/isoform_{metric}.txt'
     log:
-        ALIGNMENT_DIR + '05-combine_counts/.log/combine_counts_{metric}.log'
+        JOB_LOG_DIR + 'align_combine_counts_to_matrices_{metric}.log'
     params:
         genes_input_path = ALIGNMENT_DIR + '04-rsem_star_align/*.genes.results',
         isoforms_input_path = ALIGNMENT_DIR + '04-rsem_star_align/*.isoforms.results',

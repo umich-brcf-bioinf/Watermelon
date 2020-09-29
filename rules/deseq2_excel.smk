@@ -5,7 +5,7 @@ rule deseq2_excel:
     output:
         annotated_file = DIFFEX_DIR + "deseq2/excel/{model_name}/{contrast}.xlsx",
     log:
-        DIFFEX_DIR + "deseq2/excel/.log/{model_name}_{contrast}.diffex_excel.log",
+        JOB_LOG_DIR + "deseq2_excel_{model_name}_{contrast}.log",
     conda: 'envs/python3_pandas_excel/python3_pandas_excel.yaml'
     singularity: 'docker://umichbfxcore/python3_pandas_excel'
     shell:'''(

@@ -19,7 +19,7 @@ rule align_multiqc:
     conda: 'envs/multiqc/multiqc.yaml'
     singularity: 'docker://umichbfxcore/multiqc'
     log:
-        ALIGNMENT_DIR + "07-qc/.log/align_qc.log"
+        JOB_LOG_DIR + "align_multiqc.log"
     shell:
         '''(multiqc --version
         multiqc --force \

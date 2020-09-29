@@ -11,7 +11,7 @@ rule deseq2_counts_from_tximport_rsem:
         norm = DIFFEX_DIR + 'deseq2/counts/deseq2_depth_normalized_counts.txt',
         rlog = DIFFEX_DIR + 'deseq2/counts/deseq2_rlog_normalized_counts.txt'
     log:
-        DIFFEX_DIR + 'deseq2/counts/.log/DESeq2_counts.log'
+        JOB_LOG_DIR + 'deseq2_counts_from_tximport_rsem.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
     singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
     params:

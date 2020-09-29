@@ -4,7 +4,7 @@ rule align_fastqc_trimmed_reads:
     output:
         ALIGNMENT_DIR + "03-fastqc_reads/{sample}_R{read}_trimmed_fastqc.html"
     log:
-        ALIGNMENT_DIR + "03-fastqc_reads/.log/{sample}_R{read}_trimmed_fastqc.log"
+        JOB_LOG_DIR + "align_fastqc_trimmed_reads_{sample}_R{read}.log"
     conda: 'envs/fastqc/fastqc.yaml'
     singularity: 'docker://umichbfxcore/fastqc'
     params:

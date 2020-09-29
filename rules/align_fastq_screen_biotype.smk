@@ -5,7 +5,7 @@ rule align_fastq_screen_biotype:
         ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_R{read}_trimmed_screen.html",
         ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_R{read}_trimmed_screen.txt",
     log:
-        ALIGNMENT_DIR + "03-fastq_screen/biotype/.log/{sample}_R{read}_trimmed_screen.log"
+        JOB_LOG_DIR + "align_fastq_screen_biotype_{sample}_R{read}_trimmed_screen.log"
     conda: 'envs/fastq_screen/fastq_screen.yaml'
     singularity: 'docker://umichbfxcore/fastq_screen'
     threads:

@@ -7,7 +7,7 @@ rule align_fastqc_align:
     params:
         fastqc_dir =  ALIGNMENT_DIR + "05-fastqc_align"
     log:
-        ALIGNMENT_DIR + "05-fastqc_align/.log/{sample}_fastqc_align.log"
+        JOB_LOG_DIR + "align_fastqc_align_{sample}.log"
     conda: 'envs/fastqc/fastqc.yaml'
     singularity: 'docker://umichbfxcore/fastqc'
     threads:

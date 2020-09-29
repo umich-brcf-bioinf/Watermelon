@@ -11,7 +11,7 @@ rule align_rsem_star_genome_generate:
                 'genomeParameters.txt'
                 ),
     log:
-        join(ALIGNMENT_DIR, '04-rsem_star_genome_generate', '.log', 'rsem_star_genome_generate.log')
+        JOB_LOG_DIR + 'rsem_star_genome_generate.log'
     conda: 'envs/rsem_star/rsem_star.yaml'
     singularity: 'docker://umichbfxcore/rsem_star'
     benchmark:

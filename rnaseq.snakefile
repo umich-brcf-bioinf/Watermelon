@@ -29,6 +29,10 @@ DIFFEX_DIR = os.path.join(_DIRS.get("diffex_output", "diffex_results"), "")
 DELIVERABLES_DIR = os.path.join(_DIRS.get("deliverables_output", "deliverables"), "")
 REPORT_DIR = os.path.join(_DIRS.get("report_output", "report"), "")
 
+JOB_LOG_DIR = os.path.join(os.getcwd(), "job_logs", "")
+
+CLUSTER_LOG_DIR = os.path.join(os.getcwd(), "cluster_logs")
+
 CONFIGFILE_PATH = workflow.overwrite_configfile
 
 CONFIG_SCHEMA_PATH = os.path.join(WATERMELON_CONFIG_DIR, 'config_schema.yaml')
@@ -86,20 +90,22 @@ def validate_config(config_fp, schema_fp):
 if set(['-n', '--dryrun']).intersection(set(sys.argv)) and not 'skip_validation' in config:
     validate_config(CONFIGFILE_PATH, CONFIG_SCHEMA_PATH)
 
-#Check for cluster-logs folder if run in cluster environment
+#Check for cluster_logs folder if run in cluster environment
 if set(['-c', '--cluster']).intersection(set(sys.argv)):
-    if not os.path.exists(os.path.join(os.getcwd(), 'cluster-logs')):
-        msg = "Subfolder 'cluster-logs' not found. Please create it before running in a cluster environment."
-        sys.exit(msg)
+    if not os.path.exists(CLUSTER_LOG_DIR):
+        msg = "Cluster log folder {} not found. Creating it before running in a cluster environment."
+        logger.logger.info(msg.format(CLUSTER_LOG_DIR))
+        os.mkdir(CLUSTER_LOG_DIR)
 elif '--profile' in sys.argv:
     profile_idx = sys.argv.index('--profile') + 1
     profile = sys.argv[profile_idx]
     profile_config = snakemake.get_profile_file(profile, "config.yaml")
     with open(profile_config) as fh:
         profile_dict = yaml.load(fh, Loader=yaml.SafeLoader)
-        if 'cluster' in profile_dict and not os.path.exists(os.path.join(os.getcwd(), 'cluster-logs')):
-            msg = "Subfolder 'cluster-logs' not found. Please create it before running in a cluster environment."
-            sys.exit(msg)
+        if 'cluster' in profile_dict and not os.path.exists(CLUSTER_LOG_DIR):
+            msg = "Cluster log folder {} not found. Creating it before running in a cluster environment."
+            logger.logger.info(msg.format(CLUSTER_LOG_DIR))
+            os.mkdir(CLUSTER_LOG_DIR)
 
 
 onstart:

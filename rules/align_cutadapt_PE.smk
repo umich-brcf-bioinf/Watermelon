@@ -8,7 +8,7 @@ rule align_cutadapt_PE:
     params:
         cutadapt_args = config["trimming_options"]["cutadapt_args"]
     log:
-        ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_cutadapt.log"
+        JOB_LOG_DIR + "align_cutadapt_PE_{sample}.log"
     conda: 'envs/cutadapt/cutadapt.yaml'
     singularity: 'docker://umichbfxcore/cutadapt'
     shell:

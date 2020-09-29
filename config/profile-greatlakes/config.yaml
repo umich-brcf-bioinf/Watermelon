@@ -3,7 +3,7 @@ keep-going: True
 use-singularity: True
 singularity-args: "-B $(pwd) -B /nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
 cluster-config: Watermelon/config/greatlakes_config_UMBFX.yaml
-cluster: sbatch --job-name={cluster.name} --account={cluster.account} --partition={cluster.partition} --nodes={cluster.nodes} --ntasks-per-node={cluster.ntask} --mem={cluster.memory} --time={cluster.time} --output=cluster-logs/%x-%j.log --parsable
+cluster: sbatch --job-name={cluster.name} --account={cluster.account} --partition={cluster.partition} --nodes={cluster.nodes} --ntasks-per-node={cluster.ntask} --mem={cluster.memory} --time={cluster.time} --output=cluster_logs/%x-%j.log --parsable
 cluster-status: Watermelon/scripts/slurm_status.py
 latency-wait: 60
 jobs: 144

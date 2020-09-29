@@ -6,7 +6,7 @@ rule deseq2_init:
         rda = DIFFEX_DIR + 'deseq2/deseq2_init_{model_name}.rda'
     threads: 8
     log:
-        DIFFEX_DIR + 'deseq2/.log/deseq2_init_{model_name}.log'
+        JOB_LOG_DIR + 'deseq2_init_{model_name}.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
     singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
     params:

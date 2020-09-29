@@ -6,7 +6,7 @@ rule deseq2_volcano_plots:
         volcano_plot_pdf = DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.pdf',
         volcano_plot_png = DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.png'
     log:
-        DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/.log/{contrast}_deseq2_comparison_plots.log'
+        JOB_LOG_DIR + 'deseq2_volcano_plots_{model_name}_{contrast}.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
     singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
     params:

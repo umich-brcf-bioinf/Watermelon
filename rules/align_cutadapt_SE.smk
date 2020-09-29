@@ -6,7 +6,7 @@ rule align_cutadapt_SE:
     params:
         cutadapt_args = config["trimming_options"]["cutadapt_args"]
     log:
-        ALIGNMENT_DIR + "02-cutadapt/.log/{sample}_R{read}.align_cutadapt.log"
+        JOB_LOG_DIR + "align_cutadapt_SE_{sample}_R{read}.log"
     conda: 'envs/cutadapt/cutadapt.yaml'
     singularity: 'docker://umichbfxcore/cutadapt'
     threads: 10

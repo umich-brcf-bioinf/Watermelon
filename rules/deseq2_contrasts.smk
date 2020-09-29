@@ -6,7 +6,7 @@ rule deseq2_contrasts:
         #rda = DIFFEX_DIR + '{model_name}/DESeq2/{contrast}_data.rda'
     threads: 8
     log:
-        DIFFEX_DIR + 'deseq2/gene_lists/.log/{model_name}_{contrast}_deseq2_contrast.log'
+        JOB_LOG_DIR + 'deseq2_contrast_{model_name}_{contrast}.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
     singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
     params:

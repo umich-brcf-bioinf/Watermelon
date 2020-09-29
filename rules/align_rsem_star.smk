@@ -15,7 +15,7 @@ rule align_rsem_star:
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.temp/{sample}Log.final.out'
 
     log:
-        ALIGNMENT_DIR + '04-rsem_star_align/.log/{sample}.rsem_star_align.log'
+        JOB_LOG_DIR + 'rsem_star_align_{sample}.log'
     conda: 'envs/rsem_star/rsem_star.yaml'
     singularity: 'docker://umichbfxcore/rsem_star'
     benchmark:

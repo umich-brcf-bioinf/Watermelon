@@ -3,7 +3,7 @@ rule align_deliverables_fastq_screen:
         msp = expand(ALIGNMENT_DIR + "03-fastq_screen/multi_species/{basename}_trimmed_screen.html",
             basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
         ),
-        biot = expand(ALIGNMENT_DIR + "03-fastq_screen/multi_species/{basename}_trimmed_screen.html",
+        biot = expand(ALIGNMENT_DIR + "03-fastq_screen/biotype/{basename}_trimmed_screen.html",
             basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
         )
     output:

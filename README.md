@@ -135,6 +135,7 @@ Similarly, to run the pipeline on the GreatLakes compute cluster:
 
 ## Further Reading
 
+* [Report generation](doc/report_generation.md)
 * [Troubleshooting](doc/troubleshooting.md)
 * [Pipeline rulegraph](doc/rulegraph.svg)
 * [Example - UMich AGC data](doc/example_magc_data.md)

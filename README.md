@@ -6,6 +6,12 @@ An RNA-seq pipeline for the UMich Bioinformatics Core
 
 The official repository is located at [https://github.com/umich-brcf-bioinf/Watermelon](https://github.com/umich-brcf-bioinf/Watermelon)
 
+* [Overview](#overview)
+* [Getting Started - Installation](#getting-started---installation)
+* [Getting Started - Conda environment](#getting-started---conda-environment)
+* [Walkthrough - Example with simulated reads](#walkthrough---example-with-simulated-reads)
+* [Further Reading](#further-reading)
+
 ## Overview
 
 Watermelon is an RNAseq pipeline that produces alignments, QC data, feature counts, and differential expression results.
@@ -61,7 +67,7 @@ This environment provides the basic software requirements to run watermelon_init
 
     conda deactivate
 
-## Walkthrough - Example w/ simulated reads
+## Walkthrough - Example with simulated reads
 
 This repository contains a set of simulated paired-end read data which will be used for this example. The provided example configuration file and samplesheet used here are set up to run this on this example without any modification, for illustrative purposes. For more examples, see the "Further Reading" section below.
 

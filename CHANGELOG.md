@@ -1,5 +1,18 @@
 # Changelog
 
+1.5.2 (10/23/2020)
+------------------
+- Reporting improvements from AGC suggestions
+    - Wording changes
+    - Flexibility (authorship, configurable wording, etc)
+    - Some automatic options w/ --AGC flag of init
+- Resouce adjustments on several rules
+- Consolidated log locations - in `job_logs`
+- Documentation for generating reports (for analysts)
+- Table of contents in Readme
+- Bugfix - samplesheets w/ numeric entries caused uninformative errors
+- Bugfix - fastq_screen deliverables rule
+
 1.5.1 (09/08/2020)
 ------------------
 - watermelon_init fix: only use turbo space for default refs now

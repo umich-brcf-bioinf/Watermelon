@@ -248,6 +248,8 @@ else:
         expand(DELIVERABLES_DIR + "alignment/trimmed_reads/{basename}_trimmed.fastq.gz",
             basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
         ),
+        expand(DELIVERABLES_DIR + "alignment/aligned_bams/{sample}.genome.bam",
+            sample=config["samples"]),
         expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
             sample=config["samples"]),
         expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",

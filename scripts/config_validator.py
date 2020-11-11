@@ -392,15 +392,15 @@ class _ConfigValidator(object):
 
 def prompt_to_override():
     while True:
-        value = input('Should Watermelon ignore these problems and proceed? (yes/no): ')
+        value = input('Should Watermelon ignore these problems and proceed? (yes/no): ').lower().strip()
 
-        if value not in ['yes', 'no']:
-            print("Response must be either 'yes' or 'no'")
+        if value not in ['yes', 'y', 'no', 'n']:
+            print("Response must one of: yes, y, no, n")
             continue
         else:
             break
 
-    return value.lower().strip() == 'yes'
+    return value in ['yes', 'y']
 
 def main(config_filename,
          schema_filename,

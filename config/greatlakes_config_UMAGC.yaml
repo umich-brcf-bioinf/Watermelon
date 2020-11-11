@@ -22,7 +22,7 @@ align_fastqc_align:
     time: '04:00:00'
 align_fastq_screen_biotype:
     ntask: '{threads}'
-    memory : '8000'
+    memory: '8000'
 align_fastq_screen_multi_species:
     ntask: '{threads}'
     memory: '8000'

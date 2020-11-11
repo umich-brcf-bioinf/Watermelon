@@ -40,5 +40,8 @@ rsem-calculate-expression \
     {input.fastq_files} \
     {params.rsem_ref_base} \
     {params.outFileNamePrefix}
-mv {params.outFileNamePrefix}.STAR.genome.bam {params.outFileNamePrefix}.genome.bam
+samtools sort -@ {threads} \
+    -o {params.outFileNamePrefix}.genome.bam \
+    {params.outFileNamePrefix}.STAR.genome.bam
+rm {params.outFileNamePrefix}.STAR.genome.bam
 )2>&1 | tee {log}'''

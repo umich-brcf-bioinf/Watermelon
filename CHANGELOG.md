@@ -1,5 +1,11 @@
 # Changelog
 
+1.5.3 (11/11/2020)
+------------------
+- Added trimmed fastqs and sorted bams to deliverables
+- Updated job resource configurations
+- Config validation now accepts 'y' or 'n' answers
+
 1.5.2 (10/23/2020)
 ------------------
 - Reporting improvements from AGC suggestions

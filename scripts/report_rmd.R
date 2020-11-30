@@ -27,6 +27,7 @@ if(analyst_name == "Advanced Genomics Core"){
 report_dir = snakemake@params[['report_dir']]
 report_dir = sub("/$", "", report_dir) #Remove trailing / if there is one
 output_prefix = file.path(report_dir, 'report_draft')
+methods_out = file.path(report_dir, 'methods.html')
 
 # if(!dir.exists(report_dir)) {
 #     dir.create(report_dir, recursive = TRUE)
@@ -34,6 +35,9 @@ output_prefix = file.path(report_dir, 'report_draft')
 
 report_rmd = snakemake@input[['report_rmd']]
 report_rmd = sub("/ccmb/BioinfCore/ActiveProjects", "/nfs/med-bfx-activeprojects", report_rmd)
+
+methods_rmd = snakemake@input[['methods_rmd']]
+methods_fig = snakemake@input[['methods_fig']]
 
 # Two levels up from directory where report.Rmd is located, is project dir. e.g. /path/to/project/Watermelon/report/report.Rmd
 project_dir = dirname(dirname(dirname(report_rmd)))
@@ -57,7 +61,11 @@ qc_pca_file = '%s/deseq2/plots/by_phenotype/%s/PCAplot_12_%s.png'
 
 ################################################################################
 
+# Render report
 rmarkdown::render(report_rmd, output_format = 'all', output_file = output_prefix, output_dir = report_dir, params = list(project_dir = project_dir))
+
+# Render standalone methods doc
+rmarkdown::render(methods_rmd, output_format = 'html_document', output_file = methods_out, output_dir = report_dir, params = list(methods_fig = methods_fig))
 
 # Copy bioinformatics.csl and references_WAT.bib alongside draft report - simplifies report finalization step if they're colocated
 bfx.csl = file.path(dirname(report_rmd), 'bioinformatics.csl')

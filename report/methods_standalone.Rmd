@@ -1,0 +1,55 @@
+---
+title: "Methods"
+output:
+  html_document:
+    theme: readable
+    fig_caption: true
+    keep_md: true
+bibliography: references_WAT.bib
+csl: bioinformatics.csl
+---
+  
+<!--- Allow the page to be wider --->
+<style>
+  body .main-container {
+    max-width: 1200px;
+  }
+</style>
+  
+```{r include = FALSE}
+################################################################################
+# Load Libraries
+library(yaml)
+
+
+################################################################################
+# Set things up you'll need downstream
+
+config = snakemake@config
+setwd(project_dir)
+
+# Read the software environment version yaml
+versions = yaml.load_file(snakemake@input[['versions']])
+```
+
+
+<!---
+Methods
+--->
+
+A) The reads were trimmed using Cutadapt v`r versions[['cutadapt']][['cutadapt']]`.
+B) FastQC [@Andrews2010] (v`r versions [['fastqc']][['fastqc']]`) was used to ensure the quality of data.
+C) Fastq Screen (v`r versions[['fastq_screen']][['fastq-screen']]`) was used to screen for various types of contamination.
+D) Reads were mapped to the reference genome `r config[['genome']]` (ENSEMBL), using STAR v`r versions[['rsem_star']][['star']]` [@Dobin2013] and assigned count estimates to genes with RSEM v`r versions[['rsem_star']][['rsem']]` [@Li2011]. Alignment options followed ENCODE standards for RNA-seq.
+E) FastQC was used in an additional post-alignment step to ensure that only high-quality data were used for expression quantitation and differential expression.
+F) Multiqc (v `r versions[['multiqc']][['multiqc']]`) compiled the results from several of these tools and provided a detailed and comprehensive quality control report. 
+
+\  
+\  
+
+```{r echo = FALSE, results = 'asis', message = FALSE}
+cat(sprintf('![**Figure:** Methods overview](%s){width=500px} \n\n', methods_fig))
+```
+
+\  
+\  

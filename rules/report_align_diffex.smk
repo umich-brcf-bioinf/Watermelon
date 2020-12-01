@@ -32,12 +32,12 @@ rule report_align_diffex:
             DESEQ2_CONTRAST_DICT
             )
     output:
-        methods_doc = REPORT_DIR + 'methods.html',
+        methods_doc = REPORT_DIR + 'methods.pdf',
         report_md = REPORT_DIR + 'report_draft.md',
         report_html = REPORT_DIR + 'report_draft.html'
     log:
         JOB_LOG_DIR + 'report_align_diffex.log'
-    singularity: 'docker://umichbfxcore/report:0.1.0'
+    singularity: 'docker://umichbfxcore/report:0.1.1'
     params:
         snakemake_rdata = REPORT_DIR + '.report_draft_snakemake.rda',
         report_dir = REPORT_DIR,

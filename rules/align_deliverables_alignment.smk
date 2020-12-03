@@ -50,9 +50,9 @@ rule align_deliverables_alignment:
         align_fastqc_output_dir =  DELIVERABLES_DIR + "alignment/aligned_reads_fastqc",
         combined_counts_output_dir = DELIVERABLES_DIR + "counts"
     shell:
-        #Hard link the fastqs and bams
-        "cp -l {params.trimmed_reads_input_dir}/* {params.trimmed_reads_output_dir} ; "
-        "cp -l {params.aligned_bams_input_dir}/*.genome.bam {params.aligned_bams_output_dir} ; "
+        #Copy link the fastqs and bams will take a while
+        "cp {params.trimmed_reads_input_dir}/* {params.trimmed_reads_output_dir} ; "
+        "cp {params.aligned_bams_input_dir}/*.genome.bam {params.aligned_bams_output_dir} ; "
         #For fastqc, need to copy dirs and html files
         "cp -r {params.raw_fastqc_input_dir}/* {params.raw_fastqc_output_dir} ; "
         "cp -r {params.align_fastqc_input_dir}/* {params.align_fastqc_output_dir} ; "

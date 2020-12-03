@@ -43,7 +43,7 @@ B) FastQC v`r versions [['fastqc']][['fastqc']]` was used to ensure the quality 
 C) Fastq Screen v`r versions[['fastq_screen']][['fastq-screen']]` was used to screen for various types of contamination [@Wingett2018].
 D) Reads were mapped to the reference genome `r config[['genome']]` (ENSEMBL), using STAR v`r versions[['rsem_star']][['star']]` [@Dobin2013] and assigned count estimates to genes with RSEM v`r versions[['rsem_star']][['rsem']]` [@Li2011]. Alignment options followed ENCODE standards for RNA-seq.
 E) FastQC was used in an additional post-alignment step to ensure that only high-quality data were used for expression quantitation and differential expression.
-F) Multiqc v `r versions[['multiqc']][['multiqc']]` compiled the results from several of these tools and provided a detailed and comprehensive quality control report [@Ewels2016]. 
+F) Multiqc v`r versions[['multiqc']][['multiqc']]` compiled the results from several of these tools and provided a detailed and comprehensive quality control report [@Ewels2016]. 
 
 \  
 \  

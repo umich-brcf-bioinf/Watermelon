@@ -29,6 +29,7 @@ align_fastq_screen_multi_species:
     ntask: '{threads}'
     memory: '8000'
 align_multiqc:
+    memory: '4000'
     name: '{rule}'
 align_rsem_star_genome_generate:
     name: '{rule}'

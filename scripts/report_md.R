@@ -16,6 +16,8 @@ project_dir = getwd() # This is another option to get the project dir. This is w
 report_draft_fullpath = file.path(project_dir, snakemake@input[['report_md']])
 report_final_path = file.path(project_dir, snakemake@output[['report_final_html']])
 
+report_dir = file.path(project_dir, snakemake@params[['report_dir']])
+
 rmarkdown::render(report_draft_fullpath, output_file = report_final_path, output_format = 'html_document')
 
 # Copy final report html to deliverables
@@ -34,5 +36,13 @@ if(file.exists(mqc_copy_path)){ # May not exist if report_from_counts was run to
   copystatus = file.copy(mqc_copy_path, dirname(report_final_deliverable), overwrite = TRUE)
   if(!copystatus){
     stop("Copying multiqc_linked_report.html to deliverables dir failed.")
+  }
+}
+
+methods_pdf = file.path(report_dir, 'methods.pdf')
+if(file.exists(methods_pdf)){
+  copystatus = file.copy(methods_pdf, dirname(report_final_deliverable), overwrite = TRUE)
+  if(!copystatus){
+    stop("Copying methods.pdf to deliverables dir failed.")
   }
 }

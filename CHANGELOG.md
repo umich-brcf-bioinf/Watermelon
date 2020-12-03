@@ -1,5 +1,11 @@
 # Changelog
 
+1.6.0 (12/03/2020)
+------------------
+- Added standalone methods doc to report section & deliverables
+- Bugfix - MultiQC silent out-of-memory on cluster
+- Bugfix - Hard-linked deliverable intermediates, trimmed reads & aligned bams, are problematic for snakemake
+
 1.5.3 (11/11/2020)
 ------------------
 - Added trimmed fastqs and sorted bams to deliverables

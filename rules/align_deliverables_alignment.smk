@@ -1,7 +1,5 @@
 rule align_deliverables_alignment:
     input:
-        #"Hidden" deliverable - just needs to be stated as input even if it's not used
-        ALIGNMENT_DIR + "05-combine_counts/gene_expected_count.txt",
         #Trimmed fastqs
         expand(ALIGNMENT_DIR + "02-cutadapt/{basename}_trimmed.fastq.gz",
             basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
@@ -18,7 +16,7 @@ rule align_deliverables_alignment:
                 sample=config["samples"]),
         #combined count matrices (gene-level only for now)
         combined_counts = expand(ALIGNMENT_DIR + "06-annotate_combined_counts/gene_{type}.annot.txt",
-            type=['FPKM', 'TPM']),
+            type=['FPKM', 'TPM', 'expected_count']),
         #multiQC
         alignment_html = ALIGNMENT_DIR + "07-qc/alignment_qc.html"
 
@@ -36,7 +34,7 @@ rule align_deliverables_alignment:
                 sample=config["samples"]
         ),
         expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
-            type=['FPKM', 'TPM']
+            type=['FPKM', 'TPM', 'expected_count']
         ),
         alignment_html = DELIVERABLES_DIR + "alignment/alignment_qc.html"
     params:

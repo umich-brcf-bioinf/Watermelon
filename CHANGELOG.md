@@ -1,5 +1,11 @@
 # Changelog
 
+1.6.1 (12/22/2020)
+------------------
+- Updated cluster configurations - wall time
+- Output count matrices modified for better input to R
+- gene_expected_count matrix added to deliverables
+
 1.6.0 (12/03/2020)
 ------------------
 - Added standalone methods doc to report section & deliverables

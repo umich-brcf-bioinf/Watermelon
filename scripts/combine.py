@@ -5,6 +5,7 @@ from os.path import commonprefix, basename
 import re
 import sys
 
+import numpy as np
 import pandas as pd
 
 __version__ = '0.0.1'
@@ -66,14 +67,15 @@ def main(argv):
     merge_column = args.column
 
     name, file = sample_files.pop(0)
-    name = name + '|' + merge_column
-    df=pd.read_csv(file, sep='\t',low_memory=False)
+    df=pd.read_csv(file, sep='\t', low_memory=False)
+    # Round expected counts and convert to integers
+    df['expected_count'] = np.rint(df['expected_count']).astype(int)
 
     new=pd.DataFrame(df[args.id_columns+[merge_column]])
     new.rename(columns={merge_column:name},inplace=True)
     for (name, file) in sample_files:
         df=pd.read_csv(file, sep='\t')
-        name = name + '|' + merge_column
+        df['expected_count'] = np.rint(df['expected_count']).astype(int)
         new[name]=df[merge_column]
 
     print('saving {} ({} x {})'.format(output_filename, *new.shape))

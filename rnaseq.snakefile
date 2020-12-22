@@ -253,7 +253,7 @@ else:
         expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
             sample=config["samples"]),
         expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
-            type=['FPKM', 'TPM']),
+            type=['FPKM', 'TPM', 'expected_count']),
         DELIVERABLES_DIR + "alignment/alignment_qc.html"
     ]
     RSEM_ALL = [

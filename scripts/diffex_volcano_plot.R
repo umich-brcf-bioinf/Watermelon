@@ -87,7 +87,8 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
     de_list = merge(x = de_list, y = top[, c(id,'label')], by = id, all.x = TRUE, sort = FALSE)
 
     # Volcano Plot
-    volcano_plot = ggplot(de_list, aes_string(x = log2fc, y = 'log10qval', color = 'direction_count')) +
+    volcano_plot = ggplot(de_list, aes_string(x = log2fc, y = 'log10qval', color = 'direction_count', alpha = 0.5)) +
+        scale_alpha(guide = 'none') +
         geom_point(size = 1) +
         scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray')) +
         geom_vline(xintercept = c(0, -1*logfc_cutoff, logfc_cutoff), linetype = c(1, 2, 2), color = c('black', 'black', 'black')) +

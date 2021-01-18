@@ -33,7 +33,7 @@ JOB_LOG_DIR = os.path.join(os.getcwd(), "job_logs", "")
 
 CLUSTER_LOG_DIR = os.path.join(os.getcwd(), "cluster_logs")
 
-CONFIGFILE_PATH = workflow.overwrite_configfile
+#CONFIGFILE_PATH = workflow.overwrite_configfile
 
 CONFIG_SCHEMA_PATH = os.path.join(WATERMELON_CONFIG_DIR, 'config_schema.yaml')
 
@@ -85,6 +85,16 @@ def validate_config(config_fp, schema_fp):
         exit(config_validation_exit_code)
 
 
+#Get config file path
+if '--configfile' in list(sys.argv):
+    cfg_idx = sys.argv.index('--configfile') + 1
+elif '--configfiles' in list(sys.argv): # Cluster environment seems to use configfiles plural form under the hood
+    cfg_idx = sys.argv.index('--configfiles') + 1
+else:
+    msg = '--configfile not specified in {}'.format(sys.argv)
+    raise ValueError(msg)
+
+CONFIGFILE_PATH = sys.argv[cfg_idx]
 
 #Perform config validation if dryrun
 if set(['-n', '--dryrun']).intersection(set(sys.argv)) and not 'skip_validation' in config:
@@ -136,7 +146,7 @@ onstart:
 
     email('Watermelon started: ')
 onsuccess:
-    message = 'config file:\n{}\nlog file:\n{}'.format(workflow.overwrite_configfile, logger.get_logfile())
+    message = 'config file:\n{}\nlog file:\n{}'.format(CONFIGFILE_PATH, logger.get_logfile())
     email('Watermelon completed ok: ', msg=message)
 onerror:
     message = "Watermelon completed with errors. Full log file attached"

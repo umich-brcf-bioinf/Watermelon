@@ -5,7 +5,7 @@ channels:
   - defaults
 dependencies:
   - git
-  - snakemake=5.6.0
+  - snakemake=5.31.1
   - conda
   - pandas>=1.0
   - ruamel_yaml=0.15

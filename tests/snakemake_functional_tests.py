@@ -116,7 +116,7 @@ class SnakemakeExampleDataTest(unittest.TestCase):
             configfile_path = os.path.join(temp_dir.path, 'testcase_config.yaml')
             testing_utils.create_modified_config(EXAMPLE_CONFIGFILE_PATH, configfile_path, config_replacement_vals, rm_keys)
 
-            command_fmt = 'snakemake --use-singularity --singularity-args \'-B {}\' --snakefile {} --configfile {} --config skip_validation=True {}'
+            command_fmt = 'snakemake --cores 20 --use-singularity --singularity-args \'-B {}\' --snakefile {} --configfile {} --config skip_validation=True {}'
             command = command_fmt.format(WATERMELON_BASE_DIR, SNAKEFILE_PATH, configfile_path, REDIRECT_OUTPUT)
             print(command)
 

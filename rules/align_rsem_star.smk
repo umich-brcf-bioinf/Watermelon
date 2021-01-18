@@ -20,9 +20,7 @@ rule align_rsem_star:
     singularity: 'docker://umichbfxcore/rsem_star'
     benchmark:
         ALIGNMENT_DIR + 'benchmarks/rsem_star_align.{sample}.benchmark.txt'
-    threads: 12
-    resources:
-        mem_mb=40000
+    resources: cpus=12, mem_mb=40000, time_str='08:00:00'
     params:
         rsem_ref_base = ALIGNMENT_DIR + '04-rsem_star_genome_generate/' + config['genome'],
         outFileNamePrefix = ALIGNMENT_DIR + '04-rsem_star_align/{sample}',

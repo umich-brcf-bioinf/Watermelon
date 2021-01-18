@@ -9,9 +9,6 @@ rule align_fastqc_trimmed_reads:
     singularity: 'docker://umichbfxcore/fastqc'
     params:
         fastqc_dir = ALIGNMENT_DIR + "03-fastqc_reads"
-    threads:
-        # fastqc is not multithreaded, but Java spawns way too many processes,
-        # so this keeps Snakemake from overruning the process limit.
-        2
+    resources: time_str='04:00:00', cpus=2
     shell:
         'fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log}'

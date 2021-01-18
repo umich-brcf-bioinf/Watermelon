@@ -10,6 +10,7 @@ rule align_standardize_gz:
     threads: 1
     log:
         JOB_LOG_DIR + "align_standardize_gz_{sample}_R{read}.log"
+    resources: time_str='04:00:00'
     run:
         #TWS - This assumption will not work if a sample has mixed gzipped / plaintext fastqs!
         #Addressed via InputFastqManager._get_sample_fastq_paths throwing an error in that case

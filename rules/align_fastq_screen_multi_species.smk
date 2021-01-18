@@ -8,8 +8,7 @@ rule align_fastq_screen_multi_species:
         JOB_LOG_DIR + "align_fastq_screen_multi_species_{sample}_R{read}.log"
     conda: 'envs/fastq_screen/fastq_screen.yaml'
     singularity: 'docker://umichbfxcore/fastq_screen'
-    threads:
-        8
+    resources: cpus=8, mem_mb=8000
     params:
         aligner = FASTQ_SCREEN_CONFIG['aligner'],
         subset = FASTQ_SCREEN_CONFIG['subset'],

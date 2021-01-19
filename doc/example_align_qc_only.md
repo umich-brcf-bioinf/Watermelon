@@ -36,3 +36,7 @@ As an additional option, it is possible to achieve the same effect leaving the c
     # Singularity must be available to snakemake, for environment management under the hood
     module load singularity/3.5.2
     snakemake --configfile config_20190823.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-greatlakes --config diffex=''
+
+Note: The majority of the config validations apply to the differential expression portion of the pipeline. When running alignment & QC only, it may be desired to skip config validation. This can be done by adding `skip_validation: True` to the config file, or adding `--config skip_validation=True` to the command line.
+
+Sub-note: Snakemake command line only accepts a single `--config key=value` input, so `--config diffex=''` and `--config skip_validation=True` cannot both be specified on the command line. If that is desired, it is recommended to set one or both of these values in the configuration file.

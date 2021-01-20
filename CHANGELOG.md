@@ -1,5 +1,14 @@
 # Changelog
 
+1.7.0 (01/19/2020)
+------------------
+- Upgraded to snakemake 5.31.1
+    - Cluster resource requirements defined within rules
+    - JSON resource descriptions removed
+    - alternative way to define CONFIGFILE_PATH
+- Added transparency to volcano plot
+- Small fixes - tests, align-only doc
+
 1.6.1 (12/22/2020)
 ------------------
 - Updated cluster configurations - wall time

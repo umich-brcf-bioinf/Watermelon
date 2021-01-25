@@ -8,6 +8,8 @@
     - alternative way to define CONFIGFILE_PATH
 - Added transparency to volcano plot
 - Small fixes - tests, align-only doc
+- Updates to resource requirement needs
+- Switched to refs containing common exogenous genes (eGFP, TdTomato, etc)
 
 1.6.1 (12/22/2020)
 ------------------

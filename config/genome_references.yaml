@@ -3,33 +3,33 @@ GRCh38:
     fastq_screen:
         species: human
     references:
-        fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa
-        gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.98.gtf
-        annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.98_annotation.tsv
+        fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa
+        gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/Homo_sapiens.GRCh38.98.gtf
+        annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/Homo_sapiens.GRCh38.98_annotation.tsv
 GRCh37:
     genome: GRCh37
     fastq_screen:
         species: human
     references:
-        fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37/Homo_sapiens.GRCh37.75.dna_sm.primary_assembly.fa
-        gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37/Homo_sapiens.GRCh37.75.gtf
-        annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37/Homo_sapiens.GRCh37.75_annotation.tsv
+        fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37_exog/Homo_sapiens.GRCh37.75.dna_sm.primary_assembly.fa
+        gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37_exog/Homo_sapiens.GRCh37.75.gtf
+        annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37_exog/Homo_sapiens.GRCh37.75_annotation.tsv
 GRCm38:
     genome: GRCm38
     fastq_screen:
         species: mouse
     references:
-        fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38/Mus_musculus.GRCm38.dna_sm.primary_assembly.fa
-        gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38/Mus_musculus.GRCm38.98.gtf
-        annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38/Mus_musculus.GRCm38.98_annotation.tsv
+        fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/Mus_musculus.GRCm38.dna_sm.primary_assembly.fa
+        gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/Mus_musculus.GRCm38.98.gtf
+        annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/Mus_musculus.GRCm38.98_annotation.tsv
 NCBIM37:
     genome: NCBIM37
     fastq_screen:
         species: mouse
     references:
-        fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37/Mus_musculus.NCBIM37.67.dna.toplevel.fa
-        gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37/Mus_musculus.NCBIM37.67.gtf
-        annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37/Mus_musculus.NCBIM37.67_annotation.tsv
+        fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37_exog/Mus_musculus.NCBIM37.67.dna.toplevel.fa
+        gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37_exog/Mus_musculus.NCBIM37.67.gtf
+        annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus_exog/NCBIM37/Mus_musculus.NCBIM37.67_annotation.tsv
 Rnor_6.0:
     genome: Rnor_6.0
     fastq_screen:

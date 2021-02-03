@@ -81,7 +81,7 @@ if(snakemake@rule == 'report_align_diffex'){
 
 show_background_biology = snakemake@params[['add_background']]
 show_methods_wetlab = snakemake@params[['add_wetlab']]
-add_custom = snakemake@params[['add_custom']]
+custom_choices = unlist(strsplit(snakemake@params[['custom_sections']], ','))
 
 show_background_samples = TRUE
 
@@ -97,15 +97,23 @@ if(include_diffex) {
     show_appendix_diffex = FALSE
 }
 
-if(add_custom){
+if('methods' %in% custom_choices){
     show_methods_custom = TRUE
-    show_results_custom = TRUE
-    show_appendix_custom = TRUE
 } else {
     show_methods_custom = FALSE
+}
+if('results' %in% custom_choices){
+    show_results_custom = TRUE
+} else {
     show_results_custom = FALSE
+}
+if('appendix' %in% custom_choices){
+    show_appendix_custom = TRUE
+} else {
     show_appendix_custom = FALSE
 }
+
+
 
 show_follow_up = snakemake@config[['report_info']][['include_follow_up']]
 

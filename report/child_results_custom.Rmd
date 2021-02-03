@@ -1,0 +1,19 @@
+## Using the count matrix
+
+The count matrix `gene_expected_count.annot.txt` contains the gene counts output from RSEM, with annotations added via biomaRt. Its columns are ENSEMBL gene ID, Entrez gene ID, gene symbol, and description, followed by columns of gene counts for the samples.
+
+The ENSEMBL gene IDs are comprehensive and uniquely identifiable by nature. However, they are not usually as meaningful to researchers as the common gene symbols. One small issue is that in these datasets, gene symbols can be used multiple times for different loci - this is especially apparent with small non-coding RNA species. For downstream analysis, row names cannot be duplicated. A simple way around this is to append sequence numbers to duplicated entries. R has a built-in method for this purpose: `make.unique`. Here are details for loading the count matrix into R and preparing for differential expression analysis.
+
+```{r include = TRUE, echo = TRUE, eval=FALSE }
+# Read in the file. Don't set row names yet, and
+# read in strings as characters instead of factors.
+data <- read.delim("deliverables/counts/gene_expected_count.annot.txt", row.names = NULL, stringsAsFactors = FALSE)
+# Make the gene names unique
+data$external_gene_name <- make.unique(data$external_gene_name)
+# Then we can use the gene symbol as the row names,
+# and subset the count data for further analysis
+rownames(data) <- data$external_gene_name
+count.data <- data[,5:ncol(data)] # All columns after 4 are count data
+```
+
+After this, you are ready to use this data in an R-based differential expression package such as DESeq2. For more information on conducting differential gene expression analysis with DESeq2, see [here to get started](https://umich-brcf-bioinf.github.io/rnaseq_demystified_workshop/site/Module8b_DESeq2Initialization), with [additional modules here](https://umich-brcf-bioinf.github.io/rnaseq_demystified_workshop/).

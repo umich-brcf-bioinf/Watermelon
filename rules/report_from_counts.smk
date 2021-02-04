@@ -38,8 +38,8 @@ rule report_from_counts:
         report_dir = REPORT_DIR,
         diffex_dir = DIFFEX_DIR,
         add_background = True, # TODO: These could later be moved out to config
-        add_custom = False,
         add_wetlab = True,
+        custom_sections = '', # Rscript expects a string of comma separated values. All sections: 'methods,results,appendix'
         contrasts = DESEQ2_CONTRAST_DICT,
         sample_phenotypes = PHENOTYPE_MANAGER.phenotype_sample_list,
         diffex_model_info = DIFFEX_MODEL_INFO

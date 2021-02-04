@@ -1,6 +1,6 @@
 ## Samples
 
-The following table shows the analyzed samples:
+The following samples were analyzed:
 
 
 ```{r include = FALSE}
@@ -16,4 +16,3 @@ The following table shows the analyzed samples:
 ```{r eval = TRUE, echo = FALSE, results = 'asis', message = FALSE}
     cat(samples_kable)
 ```
-

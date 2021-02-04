@@ -8,6 +8,7 @@ export_plot_formats:
 
 fn_ignore_paths:
   - '*/.log/'
+  - '*/biotype/*'
 
 extra_fn_clean_exts:
   - '.genome'

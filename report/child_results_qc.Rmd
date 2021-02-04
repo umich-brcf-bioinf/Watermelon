@@ -18,7 +18,7 @@ multiqc_link = './multiqc_linked_report.html'
 
 ### [Alignment Results - MultiQC report](`r multiqc_link`)
 
-### Alignment Results - Summary & Selected Figures
+### Alignment Results - Summary Statistics
 
 A summary of alignment statistics can be seen in the table below.
 
@@ -57,12 +57,19 @@ multiqc_gen_subset$percent_duplicates = round(multiqc_gen_subset$percent_duplica
 # Combine subset of STAR results table with subset of general results table
 multiqc_report_df = merge(multiqc_star_subset, multiqc_gen_subset, by = 'Sample', all = TRUE)
 
+
 # Transform the column names
 colnames(multiqc_report_df) = gsub("_", " ", colnames(multiqc_report_df))
 
+# If more than 16 samples, scroll box needed.
+# Scroll box is only created if height is defined
+if(nrow(multiqc_report_df) > 16) {
+  height.choice = '590px'
+} else { height.choice = NULL }
+
 multiqc_kable = kable(multiqc_report_df, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
   kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
-  scroll_box(width = '100%', height = '600px')
+  scroll_box(width = '100%', height = height.choice)
 
 ####
 # Get subset of multiqc plots

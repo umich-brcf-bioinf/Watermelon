@@ -1,6 +1,17 @@
 # Changelog
 
-1.7.0 (01/19/2020)
+1.7.2 (02/04/2021)
+------------------
+- #27 Refactored/used custom reporting sections to include count matrix usage instructions
+- #28 Dynamic QC table height / scroll box ; cleanup edits to reporting text
+
+1.7.1 (01/29/2021)
+------------------
+- #24 Rm deprecated cluster config from UMAGC profile
+- #25 Exclude biotype fastq-screen result from in MultiQC report - only show multi-species
+- #26 Include yaml for environment w/ snakemake 5.6.0
+
+1.7.0 (01/19/2021)
 ------------------
 - Upgraded to snakemake 5.31.1
     - Cluster resource requirements defined within rules

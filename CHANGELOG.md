@@ -1,5 +1,9 @@
 # Changelog
 
+1.7.3 (02/11/2021)
+------------------
+- Increase default time and cutadapt time - adapt to needs of AGC
+
 1.7.2 (02/04/2021)
 ------------------
 - #27 Refactored/used custom reporting sections to include count matrix usage instructions

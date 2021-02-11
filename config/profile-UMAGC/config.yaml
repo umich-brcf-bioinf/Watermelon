@@ -4,7 +4,7 @@ use-singularity: True
 singularity-args: "-B $(pwd) -B /nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
 cluster: sbatch --job-name={rule}_{wildcards} --account=okoues1 --partition=standard --nodes=1 --ntasks-per-node={resources.cpus} --mem={resources.mem_mb} --time={resources.time_str} --output=cluster_logs/%x-%j.log --parsable
 cluster-status: Watermelon/scripts/slurm_status.py
-default-resources: [cpus=1, mem_mb=1000, time_str='01:00:00']
+default-resources: [cpus=1, mem_mb=1000, time_str='03:00:00']
 latency-wait: 60
 jobs: 144
 config: skip_validation=True

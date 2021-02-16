@@ -16,7 +16,7 @@ rule align_rsem_star_genome_generate:
     singularity: 'docker://umichbfxcore/rsem_star'
     benchmark:
         join(ALIGNMENT_DIR, 'benchmarks', 'rsem_star_genome_generate.benchmark.txt')
-    resources: cpus=12, mem_mb=50000, time_str='06:00:00'
+    resources: cpus=12, mem_mb=50000, time_min=360
     params:
         sjdbOverhang = int(config['alignment_options']['read_length']) - 1,
         rsem_ref_base = join(\

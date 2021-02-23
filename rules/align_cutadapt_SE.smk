@@ -11,7 +11,7 @@ rule align_cutadapt_SE:
     resources: time_min=300, cpus=8
     singularity: 'docker://umichbfxcore/cutadapt'
     shell:
-        '''(cutadapt --cores {threads} \
+        '''(cutadapt --cores {resources.cpus} \
                 {params.cutadapt_args} \
                 -o {output}.tmp.gz \
                 {input.raw_fastq}

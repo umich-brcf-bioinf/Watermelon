@@ -17,7 +17,7 @@ rule align_fastq_screen_multi_species:
     shell:
         '''(fastq_screen --version
         fastq_screen \
-            --threads {threads} \
+            --threads {resources.cpus} \
             --subset {params.subset} \
             --conf {params.multi_species_config_file} \
             --outdir {params.multi_species_output_dir} \

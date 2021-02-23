@@ -34,11 +34,11 @@ rsem-calculate-expression \
     --star-gzipped-read-file \
     --star-output-genome-bam \
     --keep-intermediate-files \
-    -p {threads} \
+    -p {resources.cpus} \
     {input.fastq_files} \
     {params.rsem_ref_base} \
     {params.outFileNamePrefix}
-samtools sort -@ {threads} \
+samtools sort -@ {resources.cpus} \
     -o {params.outFileNamePrefix}.genome.bam \
     {params.outFileNamePrefix}.STAR.genome.bam
 rm {params.outFileNamePrefix}.STAR.genome.bam

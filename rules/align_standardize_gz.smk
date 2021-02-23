@@ -7,10 +7,9 @@ rule align_standardize_gz:
         ALIGNMENT_DIR + "01-raw_reads/{sample}_R{read}.fastq.gz", # TWS - Despite the suffix, these may or may not be gzipped
     output:
         ALIGNMENT_DIR + "02-gz_reads/{sample}_R{read}.fastq.gz",
-    threads: 1
     log:
         JOB_LOG_DIR + "align_standardize_gz_{sample}_R{read}.log"
-    resources: time_min=240
+    resources: cpus=1, time_min=240
     run:
         #TWS - This assumption will not work if a sample has mixed gzipped / plaintext fastqs!
         #Addressed via InputFastqManager._get_sample_fastq_paths throwing an error in that case

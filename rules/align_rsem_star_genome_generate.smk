@@ -32,7 +32,7 @@ rsem-prepare-reference \
     --star \
     --star-path $STAR_PATH \
     --star-sjdboverhang {params.sjdbOverhang} \
-    -p {threads} \
+    -p {resources.cpus} \
     {input.fasta} \
     {params.rsem_ref_base}
 ) 2>&1 | tee {log}'''

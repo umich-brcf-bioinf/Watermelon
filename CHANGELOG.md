@@ -1,5 +1,15 @@
 # Changelog
 
+1.8.0 (02/24/2021)
+------------------
+- #29 Change time strings to integer minutes for cross-compatibility
+- #30 Replace remaining 'threads' with 'resources.cpus'
+- #31 Removed trimmed read fastqc report - redundant
+- #32 Improvements to diffex results in report
+    - Count of DE Genes included in comparison table
+    - Results tables limited to called de genes to prevent confusion
+    - Updated text
+
 1.7.3 (02/11/2021)
 ------------------
 - Increase default time and cutadapt time - adapt to needs of AGC

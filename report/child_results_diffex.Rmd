@@ -1,8 +1,8 @@
 ## Differential Expression
 
-The table below summarizes the results of the differential tests with the name of the comparison, the model (if applicable), the test (either the coefficient or contrast tested), the number of differential loci in case and control, and the number of loci tested but not statistically significant.
+The tables below summarize the setup of the differential tests with the name of the comparison, the model, and the threshold values, as well as the samples included in each comparison and the number of differentially expressed genes.
 
-The following sections provide more detailed information about the differential tests, including a summary table of the top differential loci (annotated to genomic features if applicable), a volcano plot, a plot summarizing the annotations of the differential loci compared to the background of all tested loci, and a filtering of the differential loci according to genes of interest (if applicable).
+The sections that follow provide more detailed information about the differential tests, including a summary table of the top differential loci (annotated to genomic features if applicable), and a volcano plot for each comparison.
 
 ```{r include = FALSE}
     info = snakemake@params[['diffex_model_info']]
@@ -25,6 +25,23 @@ The following sections provide more detailed information about the differential 
     sample_phenotypes = snakemake@params[['sample_phenotypes']]
     phenotypes = names(sample_phenotypes)
 
+    summary_file = sprintf(diffex_summary_file, diffex_dir)
+    summary_df = read.delim(summary_file, row.names = 'comparison', stringsAsFactors = FALSE)
+
+    if(length(comparisons) > 1) {
+      #Summary df has comparisons of form model_name/treatment_v_ctrl. Separate model name from comparison
+      summary_df$model_name = sub("(.*?)/.*", "\\1", rownames(summary_df))
+      summary_df$model_name = as.factor(summary_df$model_name)
+
+      # Split df by model_name (easier retrieval later?)
+      summary_df = split(summary_df, summary_df$model_name)
+
+      names(summary_df) = gsub('_', ' ', names(summary_df)) # make consistent with list
+
+      # remove the model_name from the rownames, so it's just the comparison used as rowname
+      summary_df = lapply(summary_df, function(x) {rownames(x) = sub(".*?/(.*)", "\\1", rownames(x)) ; return(x)})
+    }
+
     for(model_name in names(comparisons)) {
         #Get the samples for case and control
         factor_name = info[[model_name]][['factor_name']]
@@ -34,13 +51,15 @@ The following sections provide more detailed information about the differential 
           comp.split = unlist(strsplit(comp_str, "_v_"))
           case_name = comp.split[1] ; ctrl_name = comp.split[2]
           if(case == TRUE) {
-            return(paste(sample_phenotypes[[factor]][[case_name]], collapse='<br>'))
+            return(paste(sample_phenotypes[[factor]][[case_name]], collapse='<br>')) # Collapse on <br> to create multi-line entries in the table
           } else if (ctrl == TRUE) {
             return(paste(sample_phenotypes[[factor]][[ctrl_name]], collapse='<br>'))
           }
         }
 
+
         comps_list = comparisons[[model_name]]
+
         case_smpls = sapply(X = comps_list, FUN = function(x){
             return(get_case_ctrl_samples(sample_phenotypes, factor_name, x, case = TRUE))
         })
@@ -48,8 +67,25 @@ The following sections provide more detailed information about the differential 
             return(get_case_ctrl_samples(sample_phenotypes, factor_name, x, ctrl = TRUE))
         })
 
-        comparison_tbl = data.frame(cbind(comps_list, case_smpls, ctrl_smpls))
-        colnames(comparison_tbl) = c('Comparison', 'Case Samples', 'Ctrl Samples')
+        # Get summary count values
+        if(length(comparisons) == 1) { # DF is split if > 1 model available
+          idx.order = match(comps_list, rownames(summary_df)) # Ensure order is consistent with comps_list
+          de_counts = summary_df$count_diff_expressed
+          de_counts = de_counts[idx.order]
+          names(de_counts) = rownames(summary_df) # Makes it easier to pull out later
+        } else {
+          compar_summary = summary_df[[model_name]] # The summary df for that model
+          de_counts = compar_summary$count_diff_expressed
+          idx.order = match(rownames(compar_summary), comps_list) # Ensure order is consistent with comps_list
+          de_counts = de_counts[idx.order]
+          names(de_counts) = rownames(compar_summary) # Makes it easier to pull out later
+        }
+
+
+        comparison_tbl = data.frame(cbind(comps_list, case_smpls, ctrl_smpls, de_counts))
+        message("Not yet colnames(comparison_tbl)")
+        colnames(comparison_tbl) = c('Comparison', 'Case Samples', 'Ctrl Samples', 'Diff. Exp.<br>Count')
+        message("Finished colnames(comparison_tbl)")
 
         comparison_kable = kable(comparison_tbl, format = 'html', row.names = FALSE, escape = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
           kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
@@ -68,6 +104,7 @@ The following sections provide more detailed information about the differential 
           # "." is used as NA value in the annotated DESeq2 result
           annot_tbl = read_delim(annot_file, delim="\t", na = c("", ".")) %>%
               slice_head(n = 200) %>%
+              filter(Call == "YES") %>%
               dplyr::select(all_of(
                 c('external_gene_name', 'entrezgene_id', 'description', 'log2FoldChange', 'padj')
               )) %>%
@@ -83,7 +120,8 @@ The following sections provide more detailed information about the differential 
           annot_kable = kable(annot_tbl, "html", digits = 3, escape = FALSE, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
               kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
               scroll_box(width = '100%', height = '400px')
-          cat(sprintf('\n\n**Table:** Results for %s \n\nLimiting to 200 rows max. in html report.', comparison))
+          count_de = de_counts[comparison]
+          cat(sprintf('\n\n**Table:** Results for %s \n\n%s differentially expressed genes. View limited to maximum of 200 rows in html report.', comparison, count_de))
           cat(annot_kable)
         }
     }

@@ -252,9 +252,6 @@ if config.get('count_matrix'):
 else:
     ALIGN_DELIVERABLES = [
         #align deliverables
-        expand(DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{basename}_trimmed_fastqc.html",
-            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
-        ),
         expand(DELIVERABLES_DIR + "alignment/trimmed_reads/{basename}_trimmed.fastq.gz",
             basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
         ),

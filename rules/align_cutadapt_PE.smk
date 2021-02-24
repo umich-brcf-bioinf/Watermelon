@@ -10,7 +10,7 @@ rule align_cutadapt_PE:
     log:
         JOB_LOG_DIR + "align_cutadapt_PE_{sample}.log"
     conda: 'envs/cutadapt/cutadapt.yaml'
-    resources: time_str='05:00:00', cpus=8
+    resources: time_min=300, cpus=8
     singularity: 'docker://umichbfxcore/cutadapt'
     shell:
         '''(cutadapt {params.cutadapt_args} \

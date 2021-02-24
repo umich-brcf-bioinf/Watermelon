@@ -9,6 +9,6 @@ rule align_fastqc_trimmed_reads:
     singularity: 'docker://umichbfxcore/fastqc'
     params:
         fastqc_dir = ALIGNMENT_DIR + "03-fastqc_reads"
-    resources: time_str='04:00:00', cpus=2
+    resources: time_min=240, cpus=2
     shell:
         'fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log}'

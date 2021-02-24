@@ -8,10 +8,10 @@ rule align_cutadapt_SE:
     log:
         JOB_LOG_DIR + "align_cutadapt_SE_{sample}_R{read}.log"
     conda: 'envs/cutadapt/cutadapt.yaml'
-    resources: time_str='05:00:00', cpus=8
+    resources: time_min=300, cpus=8
     singularity: 'docker://umichbfxcore/cutadapt'
     shell:
-        '''(cutadapt --cores {threads} \
+        '''(cutadapt --cores {resources.cpus} \
                 {params.cutadapt_args} \
                 -o {output}.tmp.gz \
                 {input.raw_fastq}

@@ -3,6 +3,6 @@ rule align_concat_reads:
         lambda wildcards: INPUT_MANAGER.fastqs_to_concat_dict[wildcards.sample][wildcards.read],
     output:
         ALIGNMENT_DIR + "01-raw_reads/{sample}_R{read}.fastq.gz", # TWS - Despite the suffix, these may or may not be gzipped
-    resources: time_str='03:00:00'
+    resources: time_min=180
     shell:
         "cat {input} > {output}"

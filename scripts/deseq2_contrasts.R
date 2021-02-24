@@ -34,7 +34,7 @@ fdr_cutoff = as.numeric(snakemake@config[['diffex']][[model_name]][['adjustedPVa
 fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][[model_name]][['linear_fold_change']]))
 
 # Set up multithreading
-multicore_param = MulticoreParam(workers = snakemake@threads)
+multicore_param = MulticoreParam(workers = snakemake@resources[['cpus']])
 register(multicore_param, default=TRUE)
 
 # Get phenotype matrix

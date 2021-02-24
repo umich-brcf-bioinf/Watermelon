@@ -20,7 +20,7 @@ rule align_rsem_star:
     singularity: 'docker://umichbfxcore/rsem_star'
     benchmark:
         ALIGNMENT_DIR + 'benchmarks/rsem_star_align.{sample}.benchmark.txt'
-    resources: cpus=12, mem_mb=40000, time_str='12:00:00'
+    resources: cpus=12, mem_mb=40000, time_min=720
     params:
         rsem_ref_base = ALIGNMENT_DIR + '04-rsem_star_genome_generate/' + config['genome'],
         outFileNamePrefix = ALIGNMENT_DIR + '04-rsem_star_align/{sample}',
@@ -34,11 +34,11 @@ rsem-calculate-expression \
     --star-gzipped-read-file \
     --star-output-genome-bam \
     --keep-intermediate-files \
-    -p {threads} \
+    -p {resources.cpus} \
     {input.fastq_files} \
     {params.rsem_ref_base} \
     {params.outFileNamePrefix}
-samtools sort -@ {threads} \
+samtools sort -@ {resources.cpus} \
     -o {params.outFileNamePrefix}.genome.bam \
     {params.outFileNamePrefix}.STAR.genome.bam
 rm {params.outFileNamePrefix}.STAR.genome.bam

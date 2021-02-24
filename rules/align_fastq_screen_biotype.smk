@@ -17,7 +17,7 @@ rule align_fastq_screen_biotype:
     shell:
         '''(fastq_screen --version
         fastq_screen \
-            --threads {threads} \
+            --threads {resources.cpus} \
             --subset {params.subset} \
             --conf {params.biotype_config_file} \
             --outdir {params.biotype_output_dir} \

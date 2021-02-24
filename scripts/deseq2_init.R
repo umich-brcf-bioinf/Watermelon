@@ -55,7 +55,7 @@ deseq2.params.parsed[['object']] = dds
 deseq2.params.parsed[['parallel']] = TRUE
 
 # Set up multithreading
-multicore_param = MulticoreParam(workers = snakemake@threads)
+multicore_param = MulticoreParam(workers = snakemake@resources[['cpus']])
 register(multicore_param, default=TRUE)
 
 # Call to DESeq

@@ -18,10 +18,6 @@ module_order:
       path_filters:
         - '*rsem_star_align*'
   - fastqc:
-      name: 'FastQC (trimmed sequences)'
-      path_filters:
-        - '*fastqc_reads*'
-  - fastqc:
       name: 'FastQC (aligned reads)'
       path_filters:
         - '*fastqc_align*'

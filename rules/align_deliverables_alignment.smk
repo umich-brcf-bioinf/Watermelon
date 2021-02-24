@@ -9,9 +9,6 @@ rule align_deliverables_alignment:
             sample=config["samples"]
         ),
         #fastqc reads
-        expand(ALIGNMENT_DIR + "03-fastqc_reads/{basename}_trimmed_fastqc.html",
-            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
-        ),
         expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}.genome_fastqc.html",
                 sample=config["samples"]),
         #combined count matrices (gene-level only for now)

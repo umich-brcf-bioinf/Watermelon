@@ -1,8 +1,5 @@
 rule align_multiqc:
     input:
-        raw_read_fastqc_files = expand(ALIGNMENT_DIR + "03-fastqc_reads/{basename}_trimmed_fastqc.html",
-                                    basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
-                                ),
         align_summary_files = expand(ALIGNMENT_DIR + "04-rsem_star_align/{sample}.temp/{sample}Log.final.out",
                                      sample=config[SAMPLES_KEY]),
         align_fastq_files = expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}.genome_fastqc.html",

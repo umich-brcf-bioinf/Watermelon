@@ -1,6 +1,6 @@
 rule align_multiqc:
     input:
-        align_summary_files = expand(ALIGNMENT_DIR + "04-rsem_star_align/{sample}.temp/{sample}Log.final.out",
+        align_summary_files = expand(ALIGNMENT_DIR + "04-rsem_star_align/{sample}.temp/{sample}.log",
                                      sample=config[SAMPLES_KEY]),
         align_fastq_files = expand(ALIGNMENT_DIR + "05-fastqc_align/{sample}.genome_fastqc.html",
                                    sample=config[SAMPLES_KEY]),

@@ -12,7 +12,7 @@ rule align_rsem_star:
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.stat/{sample}.cnt',
-        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.temp/{sample}Log.final.out'
+        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.temp/{sample}.log'
 
     log:
         JOB_LOG_DIR + 'rsem_star_align_{sample}.log'
@@ -33,7 +33,6 @@ rsem-calculate-expression \
     --star-path $STAR_PATH \
     --star-gzipped-read-file \
     --star-output-genome-bam \
-    --keep-intermediate-files \
     -p {resources.cpus} \
     {input.fastq_files} \
     {params.rsem_ref_base} \

@@ -1,5 +1,12 @@
 # Changelog
 
+1.8.1 (03/03/2021)
+------------------
+- #33 Libcrypto error with new builds of rsem_star environment
+- #34 Bugfix - remove trimmed fastqc reads from alignment deliverables
+- #35 Add label to rsem_star image (0.1.1)
+- #36 Bugfix - adapt to change in rsem_star log naming convention
+
 1.8.0 (02/24/2021)
 ------------------
 - #29 Change time strings to integer minutes for cross-compatibility

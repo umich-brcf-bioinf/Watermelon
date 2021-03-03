@@ -24,9 +24,6 @@ rule align_deliverables_alignment:
         expand(DELIVERABLES_DIR + "alignment/aligned_bams/{sample}.genome.bam",
             sample=config["samples"]
         ),
-        expand(DELIVERABLES_DIR + "alignment/sequence_reads_fastqc/{basename}_trimmed_fastqc.html",
-            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
-        ),
         expand(DELIVERABLES_DIR + "alignment/aligned_reads_fastqc/{sample}.genome_fastqc.html",
                 sample=config["samples"]
         ),
@@ -39,8 +36,6 @@ rule align_deliverables_alignment:
         trimmed_reads_output_dir = DELIVERABLES_DIR + "alignment/trimmed_reads",
         aligned_bams_input_dir = ALIGNMENT_DIR + "04-rsem_star_align",
         aligned_bams_output_dir = DELIVERABLES_DIR + "alignment/aligned_bams",
-        raw_fastqc_input_dir    =  ALIGNMENT_DIR + "03-fastqc_reads",
-        raw_fastqc_output_dir   =  DELIVERABLES_DIR + "alignment/sequence_reads_fastqc",
         align_fastqc_input_dir  =  ALIGNMENT_DIR + "05-fastqc_align",
         align_fastqc_output_dir =  DELIVERABLES_DIR + "alignment/aligned_reads_fastqc",
         combined_counts_output_dir = DELIVERABLES_DIR + "counts"
@@ -49,7 +44,6 @@ rule align_deliverables_alignment:
         "cp {params.trimmed_reads_input_dir}/* {params.trimmed_reads_output_dir} ; "
         "cp {params.aligned_bams_input_dir}/*.genome.bam {params.aligned_bams_output_dir} ; "
         #For fastqc, need to copy dirs and html files
-        "cp -r {params.raw_fastqc_input_dir}/* {params.raw_fastqc_output_dir} ; "
         "cp -r {params.align_fastqc_input_dir}/* {params.align_fastqc_output_dir} ; "
         "for i in {input.combined_counts} ; do cp $i {params.combined_counts_output_dir} ; done ; "
         "cp {input.alignment_html} {output.alignment_html} "

@@ -12,12 +12,12 @@ rule align_rsem_star:
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.stat/{sample}.cnt',
-        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.temp/{sample}Log.final.out'
+        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.log'
 
     log:
         JOB_LOG_DIR + 'rsem_star_align_{sample}.log'
     conda: 'envs/rsem_star/rsem_star.yaml'
-    singularity: 'docker://umichbfxcore/rsem_star'
+    singularity: 'docker://umichbfxcore/rsem_star:0.1.1'
     benchmark:
         ALIGNMENT_DIR + 'benchmarks/rsem_star_align.{sample}.benchmark.txt'
     resources: cpus=12, mem_mb=40000, time_min=720
@@ -33,7 +33,6 @@ rsem-calculate-expression \
     --star-path $STAR_PATH \
     --star-gzipped-read-file \
     --star-output-genome-bam \
-    --keep-intermediate-files \
     -p {resources.cpus} \
     {input.fastq_files} \
     {params.rsem_ref_base} \

@@ -12,7 +12,7 @@ rule align_rsem_star:
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.stat/{sample}.cnt',
-        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.temp/{sample}.log'
+        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.log'
 
     log:
         JOB_LOG_DIR + 'rsem_star_align_{sample}.log'

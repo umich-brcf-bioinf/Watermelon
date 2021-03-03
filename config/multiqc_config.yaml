@@ -22,3 +22,6 @@ module_order:
       path_filters:
         - '*fastqc_align*'
   - fastq_screen
+sp:
+  star:
+    fn: '*.log'

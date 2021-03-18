@@ -1,5 +1,10 @@
 # Changelog
 
+1.8.2 (03/18/2021)
+------------------
+- #37 Bugfix - Boxplots, Heatmaps, PCAs now included in from_counts report
+- Contents nesting levels fixed /improved
+
 1.8.1 (03/03/2021)
 ------------------
 - #33 Libcrypto error with new builds of rsem_star environment

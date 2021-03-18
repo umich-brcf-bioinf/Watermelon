@@ -62,17 +62,20 @@ diffex_info = snakemake@params[['diffex_model_info']]
 if(snakemake@rule == 'report_align_diffex'){
     show_methods_qc_sequencing = TRUE
     include_diffex = TRUE
-    show_results_qc = TRUE
+    show_results_qc_align = TRUE
+    show_results_qc_diffex = TRUE
     show_appendix_qc = TRUE
 } else if(snakemake@rule == 'report_align_only') {
     show_methods_qc_sequencing = TRUE
     include_diffex = FALSE
-    show_results_qc = TRUE
+    show_results_qc_align = TRUE
+    show_results_qc_diffex = FALSE
     show_appendix_qc = TRUE
 } else if(snakemake@rule == 'report_from_counts') {
     show_methods_qc_sequencing = FALSE
     include_diffex = TRUE
-    show_results_qc = FALSE
+    show_results_qc_align = FALSE
+    show_results_qc_diffex = TRUE
     show_appendix_qc = FALSE
 }
 
@@ -168,7 +171,10 @@ Results
 
 # Results
 
-```{r results, child = 'child_results_qc.Rmd', eval = show_results_qc}
+```{r results, child = 'child_results_qc_align.Rmd', eval = show_results_qc_align}
+```
+
+```{r results, child = 'child_results_qc_diffex.Rmd', eval = show_results_qc_diffex}
 ```
 
 ```{r results, child = 'child_results_diffex.Rmd', eval = show_results_diffex}

@@ -93,7 +93,7 @@ The sections that follow provide more detailed information about the differentia
 
         filter_sig = info[[model_name]][['adjustedPValue']]
         filter_fc = info[[model_name]][['linear_fold_change']]
-        cat(sprintf('#### Comparisons for %s\n\n', model_name))
+        cat(sprintf('### Comparisons for %s\n\n', model_name))
         cat(comparison_kable)
         cat(sprintf('In the volcano plots below, each point is a tested locus. A gene is considered to be differentially expressed if FDR < %s and | linear fold-change | > %s. Points are colored according to the direction of differential expression with the total number of loci indicated in the legend. The vertical lines correspond to the fold-change cutoff. \n\n', filter_sig, filter_fc))
         for(comparison in comps_list){

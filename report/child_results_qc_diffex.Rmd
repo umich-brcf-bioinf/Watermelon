@@ -1,0 +1,37 @@
+```{r echo = FALSE, results = 'asis', message = FALSE}
+phenotypes = names(snakemake@params[['sample_phenotypes']])
+
+cat('## Boxplots\n\nThe following boxplots show the distribution of gene expression counts in the different samples.\n\n')
+for(factor_cov in phenotypes) {
+  cat(sprintf('\n\n### %s \n\n', factor_cov))
+  # Include 'raw' if desired
+  for(value in c('raw', 'rlog')) {
+    file = sprintf(qc_boxplot_file, diffex_dir, factor_cov, value)
+    if(value == 'rlog'){
+      value = 'rlog normalized' #This is nicer for the caption
+    }
+    cat(sprintf('![**Figure:** Box plot of %s gene expression colored by %s.](%s) \n\n', value, factor_cov, file))
+  }
+}
+```
+
+```{r echo = FALSE, results = 'asis', message = FALSE}
+cat('## Clustering\n\nClustering is a method to visualize the similarity and difference among samples. Unsupervised clustering using complete linkage of the Euclidian distances of the gene expression profiles of pairwise samples is shown below.\n\n')
+for(factor_cov in phenotypes) {
+  cat(sprintf('\n\n### %s \n\n', factor_cov))
+  file = sprintf(qc_heatmap_file, diffex_dir, factor_cov)
+  cat(sprintf('![**Figure:** Unsupervised clustering of %s expression values colored by %s.](%s) \n\n', value, factor_cov, file))
+}
+```
+
+```{r echo = FALSE, results = 'asis', message = FALSE}
+cat('## PCA\n\nPrincipal component analysis (PCA) is another method to visualize the similarity and difference among samples. PCA was applied to the normalized gene expression profiles of the samples.\n\n')
+for(factor_cov in phenotypes) {
+  cat(sprintf('\n\n### %s \n\n', factor_cov))
+  # Include 'raw' if desired
+  for(value in c('top100', 'top500')) {
+    pca_12_png = sprintf(qc_pca_file, diffex_dir, factor_cov, value)
+    cat(sprintf('![**Figure:** PCA plot (PC1 vs PC2) of %s expression values colored by %s.](%s) \n\n', value, factor_cov, pca_12_png))
+  }
+}
+```

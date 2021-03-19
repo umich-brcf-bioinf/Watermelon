@@ -39,7 +39,7 @@ star_keep_cols = c('Sample', 'total_reads', 'uniquely_mapped', 'uniquely_mapped_
 multiqc_star_subset = multiqc_star[,star_keep_cols]
 
 # Subset general table to desired properties (just fastqc aligned percent-dup for now)
-fastqc_aligned_pcdups = grep("^FastQC.*aligned.*percent_duplicates$", colnames(multiqc_gen), value = TRUE)
+fastqc_aligned_pcdups = grep("^FastQC.*percent_duplicates$", colnames(multiqc_gen), value = TRUE)
 multiqc_gen_subset = multiqc_gen[,c('Sample', fastqc_aligned_pcdups)] #Just grab Sample and aligned dup percentage from general stats
 
 # Function to trim e.g. foo.bar.baz to baz (for simplifying column names)

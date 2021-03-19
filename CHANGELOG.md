@@ -1,6 +1,7 @@
 # Changelog
 
 1.8.3 (03/19/2021)
+------------------
 - #38 Remove (aligned) designation from FastQC results
     - Update report text section
 

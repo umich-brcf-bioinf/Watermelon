@@ -1,5 +1,9 @@
 # Changelog
 
+1.8.3 (03/19/2021)
+- #38 Remove (aligned) designation from FastQC results
+    - Update report text section
+
 1.8.2 (03/18/2021)
 ------------------
 - #37 Bugfix - Boxplots, Heatmaps, PCAs now included in from_counts report

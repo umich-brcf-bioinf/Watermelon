@@ -146,6 +146,7 @@ Similarly, to run the pipeline on the GreatLakes compute cluster:
 * [Pipeline rulegraph](doc/rulegraph.svg)
 * [Example - UMich AGC data](doc/example_magc_data.md)
 * [Example - Alignment, feature count, & QC Only](doc/example_align_qc_only.md)
+* [Example - Starting from count matrix]
 * [Example - Alternative references](doc/example_alt_refs.md)
 * [Example - Generating an annotation TSV file](doc/generating_annotation_tsv.md)
 * [Snakemake documentation](https://snakemake.readthedocs.io/en/stable/)

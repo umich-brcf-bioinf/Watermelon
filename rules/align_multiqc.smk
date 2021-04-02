@@ -21,6 +21,7 @@ rule align_multiqc:
     shell:
         '''(multiqc --version
         multiqc --force \
+            --interactive \
             --exclude general_stats \
             --exclude cutadapt \
             --exclude bowtie2 \

@@ -108,9 +108,9 @@ The sections that follow provide more detailed information about the differentia
               dplyr::select(all_of(
                 c('external_gene_name', 'entrezgene_id', 'description', 'log2FoldChange', 'padj')
               )) %>%
-              mutate(padj = -log10(padj)) %>%
+              mutate(padj = ifelse(padj < 0.001, format(padj, scientific=TRUE, digits=2), round(padj, digits=3))) %>%
               mutate(description = sub(" \\[Source:.*?\\]", "", description)) %>%
-              rename(Gene = external_gene_name, 'log2 (FC)' = log2FoldChange, '-log10 (q-val)' = padj) %>%
+              rename(Gene = external_gene_name, 'log2 (FC)' = log2FoldChange, 'q-val' = padj) %>%
               mutate(entrezgene_id = ifelse(is.na(entrezgene_id), NA, cell_spec(
                   x = entrezgene_id,
                   format = "html",

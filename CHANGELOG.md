@@ -1,5 +1,12 @@
 # Changelog
 
+1.8.4 (04/01/2021)
+------------------
+- #39 Fix text description of PCAs
+- #40 Add documentation for starting with count matrix
+- #41 Report non-transformed Q-value
+- #42 Add --interactive to multiQC call
+
 1.8.3 (03/19/2021)
 ------------------
 - #38 Remove (aligned) designation from FastQC results

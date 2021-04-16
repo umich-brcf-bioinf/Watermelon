@@ -1,5 +1,9 @@
 # Changelog
 
+1.9.0 (04/16/2021)
+------------------
+- #43 Changing FastQC to process trimmed reads instead of aligned reads
+
 1.8.4 (04/01/2021)
 ------------------
 - #39 Fix text description of PCAs

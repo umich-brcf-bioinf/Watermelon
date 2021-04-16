@@ -20,7 +20,7 @@ module_order:
   - fastqc:
       name: 'FastQC'
       path_filters:
-        - '*fastqc_align*'
+        - '*fastqc_reads*'
   - fastq_screen
 sp:
   star:

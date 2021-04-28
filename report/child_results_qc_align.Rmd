@@ -27,6 +27,9 @@ A summary of alignment statistics can be seen in the table below.
 ####
 # Set up summary table
 
+# Determine whether or not to include % duplicates (can be problematic for AGC)
+include_dups = snakemake@config[['report_info']][['include_pct_dups']]
+
 # Read in multiqc tab-separated files
 multiqc_gen_file = file.path(project_dir, snakemake@input[['multiqc_gen_stats']])
 multiqc_star_file = file.path(project_dir, snakemake@input[['multiqc_star']])
@@ -54,8 +57,14 @@ multiqc_gen_subset = multiqc_gen_subset[complete.cases(multiqc_gen_subset),]
 # Round the percent duplicate rates to nearest whole number
 multiqc_gen_subset$percent_duplicates = round(multiqc_gen_subset$percent_duplicates, digits = 2)
 
-# Combine subset of STAR results table with subset of general results table
-multiqc_report_df = merge(multiqc_star_subset, multiqc_gen_subset, by = 'Sample', all = TRUE)
+# Percent duplicates are the only values derived from the general results table
+# Merge the tables together only if dups included
+if(include_dups){
+  # Combine subset of STAR results table with subset of general results table
+  multiqc_report_df = merge(multiqc_star_subset, multiqc_gen_subset, by = 'Sample', all = TRUE)
+} else {
+  multiqc_report_df = multiqc_star_subset
+}
 
 
 # Transform the column names

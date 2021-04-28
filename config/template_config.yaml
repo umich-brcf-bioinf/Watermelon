@@ -14,7 +14,9 @@ report_info: #These strings are used directly in the report
 
 
         If core staff have added scientific value to your project — made intellectual contributions in design, analysis and interpretation of data and/or manuscript writing, then please consider including them as co-authors in your publications.
-    include_follow_up: True # Boolean value to determine whether to include text regarding follow-up.
+    # Boolean value to determine whether to include text regarding follow-up.
+    include_follow_up: True
+    include_pct_dups: True
 trimming_options: #Delete the entire trimming_options section if no trimming is desired
     paired_end_mode: True
     cutadapt_args: --nextseq-trim 13 -u 3 -m 20 --trim-n -a AGATCGGAAGAG -A AGATCGGAAGAG

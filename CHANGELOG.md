@@ -1,5 +1,9 @@
 # Changelog
 
+1.9.1 (04/28/2021)
+------------------
+- #44 Exclude R1 & R2 pct dups from AGC output - avoid NA vals
+
 1.9.0 (04/16/2021)
 ------------------
 - #43 Changing FastQC to process trimmed reads instead of aligned reads

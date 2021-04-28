@@ -786,8 +786,11 @@ def main(sys_argv):
             config_dict.pop("diffex", None)
             curr_txt = config_dict["report_info"]["acknowledgement_text"]
             new_txt = re.sub("Bioinformatics", "Advanced Genomics", curr_txt)
+            # These values override the template vals
             config_dict["report_info"]["acknowledgement_text"] = new_txt
             config_dict["report_info"]["include_follow_up"] = False
+            config_dict["report_info"]["include_pct_dups"] = False
+
 
         # _write_config_file(args.config_file, config_dict)
         with open(args.config_file, "w") as config_file:

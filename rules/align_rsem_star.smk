@@ -10,6 +10,7 @@ rule align_rsem_star:
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bam',
+        ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genome.bai',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.transcript.bam',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.stat/{sample}.cnt',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.log'
@@ -40,5 +41,8 @@ rsem-calculate-expression \
 samtools sort -@ {resources.cpus} \
     -o {params.outFileNamePrefix}.genome.bam \
     {params.outFileNamePrefix}.STAR.genome.bam
+samtools index -@ {resources.cpus} \
+    {params.outFileNamePrefix}.genome.bam \
+    {params.outFileNamePrefix}.genome.bai
 rm {params.outFileNamePrefix}.STAR.genome.bam
 )2>&1 | tee {log}'''

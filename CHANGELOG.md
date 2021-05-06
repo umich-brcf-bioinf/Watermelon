@@ -1,5 +1,11 @@
 # Changelog
 
+1.9.2 (05/06/2021)
+-------------------
+- #45 Add bam index (.bai) to output files
+- Automatic project name for AGC
+- Updated link to vignette, updated methods text
+
 1.9.1 (04/28/2021)
 ------------------
 - #44 Exclude R1 & R2 pct dups from AGC output - avoid NA vals

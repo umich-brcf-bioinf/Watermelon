@@ -16,4 +16,4 @@ rownames(data) <- data$external_gene_name
 count.data <- data[,5:ncol(data)] # All columns after 4 are count data
 ```
 
-After this, you are ready to use this data in an R-based differential expression package such as DESeq2. For more information on conducting differential gene expression analysis with DESeq2, see [here to get started](https://umich-brcf-bioinf.github.io/rnaseq_demystified_workshop/site/Module8b_DESeq2Initialization), with [additional modules here](https://umich-brcf-bioinf.github.io/rnaseq_demystified_workshop/).
+After this, you are ready to use this data in an R-based differential expression package such as DESeq2. For more information on conducting differential gene expression analysis with DESeq2, see [here for the vignette](http://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html).

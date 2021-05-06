@@ -782,11 +782,14 @@ def main(sys_argv):
         if args.AGC:
             # If AGC flag is passed, remove diffex section,
             # In report, change Bioinformatics Core to Advanced Genomics Core,
-            # Don't include follow-up text
+            # don't include follow-up text, & change project name to args.job_suffix
             config_dict.pop("diffex", None)
+            curr_name = config_dict["report_info"]["project_name"]
+            new_name = args.job_suffix.strip("_ ")
             curr_txt = config_dict["report_info"]["acknowledgement_text"]
             new_txt = re.sub("Bioinformatics", "Advanced Genomics", curr_txt)
             # These values override the template vals
+            config_dict["report_info"]["project_name"] = new_name
             config_dict["report_info"]["acknowledgement_text"] = new_txt
             config_dict["report_info"]["include_follow_up"] = False
             config_dict["report_info"]["include_pct_dups"] = False

@@ -1,5 +1,7 @@
 ## Using the count matrix
 
+
+
 The count matrix `gene_expected_count.annot.txt` contains the gene counts output from RSEM, with annotations added via biomaRt. Its columns are ENSEMBL gene ID, Entrez gene ID, gene symbol, and description, followed by columns of gene counts for the samples.
 
 The ENSEMBL gene IDs are comprehensive and uniquely identifiable by nature. However, they are not usually as meaningful to researchers as the common gene symbols. One small issue is that in these datasets, gene symbols can be used multiple times for different loci - this is especially apparent with small non-coding RNA species. For downstream analysis, row names cannot be duplicated. A simple way around this is to append sequence numbers to duplicated entries. R has a built-in method for this purpose: `make.unique`. Here are details for loading the count matrix into R and preparing for differential expression analysis.
@@ -17,3 +19,6 @@ count.data <- data[,5:ncol(data)] # All columns after 4 are count data
 ```
 
 After this, you are ready to use this data in an R-based differential expression package such as DESeq2. For more information on conducting differential gene expression analysis with DESeq2, see [here for the vignette](http://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html).
+
+
+RSEM produces several output values for expression results, and you may be interested in their details. Above, we've used the expected_count value. For simplicity, these can be thought of as RSEM's raw count values, though technically they are a best-guess based on the Expectation Maximization (EM) algorithm. RSEM also outputs TPM and FPKM values, which are the normalized values Transcript Per Million and Fragments Per Kilobase (of transcript) per Million reads, respectively. For more information, see the [RSEM documentation](http://deweylab.biostat.wisc.edu/rsem/rsem-calculate-expression.html).

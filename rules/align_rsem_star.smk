@@ -23,6 +23,7 @@ rule align_rsem_star:
         ALIGNMENT_DIR + 'benchmarks/rsem_star_align.{sample}.benchmark.txt'
     resources: cpus=12, mem_mb=40000, time_min=720
     params:
+        project_name = config['report_info']['project_name'],
         rsem_ref_base = ALIGNMENT_DIR + '04-rsem_star_genome_generate/' + config['genome'],
         outFileNamePrefix = ALIGNMENT_DIR + '04-rsem_star_align/{sample}',
         paired_end = lambda wildcards, input: '--paired-end' if rnaseq_snakefile_helper.detect_paired_end_bool(input.fastq_files) else ''

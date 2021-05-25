@@ -31,6 +31,7 @@ rule align_deliverables_alignment:
         ),
         alignment_html = DELIVERABLES_DIR + "alignment/alignment_qc.html"
     params:
+        project_name = config['report_info']['project_name'],
         trimmed_reads_input_dir = ALIGNMENT_DIR + "02-cutadapt",
         trimmed_reads_output_dir = DELIVERABLES_DIR + "alignment/trimmed_reads",
         aligned_bams_input_dir = ALIGNMENT_DIR + "04-rsem_star_align",

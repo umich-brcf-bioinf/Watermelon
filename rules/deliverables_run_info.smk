@@ -11,6 +11,8 @@ rule deliverables_run_info:
         versions = DELIVERABLES_DIR + "run_info/env_software_versions.yaml",
         conf = DELIVERABLES_DIR + "run_info/" + os.path.basename(CONFIGFILE_PATH),
         samplesheet = DELIVERABLES_DIR + "run_info/" + os.path.basename(config['samplesheet'])
+    params:
+        project_name = config['report_info']['project_name']
     run:
         def transform_dict(env_dict):
             new_dict = {}

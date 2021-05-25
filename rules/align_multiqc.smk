@@ -10,6 +10,7 @@ rule align_multiqc:
         ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_general_stats.txt",
         ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_star.txt",
     params:
+        project_name = config['report_info']['project_name'],
         output_dir = ALIGNMENT_DIR + "07-qc/",
         output_filename = "alignment_qc.html",
         multiqc_config_filename = WATERMELON_CONFIG_DIR + "multiqc_config.yaml",

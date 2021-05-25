@@ -10,6 +10,8 @@ rule align_standardize_gz:
     log:
         JOB_LOG_DIR + "align_standardize_gz_{sample}_R{read}.log"
     resources: cpus=1, time_min=240
+    params:
+        project_name = config['report_info']['project_name']
     run:
         #TWS - This assumption will not work if a sample has mixed gzipped / plaintext fastqs!
         #Addressed via InputFastqManager._get_sample_fastq_paths throwing an error in that case

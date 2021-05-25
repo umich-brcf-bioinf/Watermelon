@@ -18,6 +18,7 @@ rule align_rsem_star_genome_generate:
         join(ALIGNMENT_DIR, 'benchmarks', 'rsem_star_genome_generate.benchmark.txt')
     resources: cpus=12, mem_mb=50000, time_min=360
     params:
+        project_name = config['report_info']['project_name'],
         sjdbOverhang = int(config['alignment_options']['read_length']) - 1,
         rsem_ref_base = join(\
             ALIGNMENT_DIR,

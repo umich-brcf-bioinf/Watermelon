@@ -5,6 +5,7 @@ rule align_fastqc_align:
     output:
         ALIGNMENT_DIR + "05-fastqc_align/{sample}.genome_fastqc.html"
     params:
+        project_name = config['report_info']['project_name'],
         fastqc_dir =  ALIGNMENT_DIR + "05-fastqc_align"
     log:
         JOB_LOG_DIR + "align_fastqc_align_{sample}.log"

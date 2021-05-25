@@ -10,6 +10,7 @@ rule align_fastq_screen_biotype:
     singularity: 'docker://umichbfxcore/fastq_screen'
     resources: cpus=8, mem_mb=8000
     params:
+        project_name = config['report_info']['project_name'],
         aligner = FASTQ_SCREEN_CONFIG['aligner'],
         subset = FASTQ_SCREEN_CONFIG['subset'],
         biotype_output_dir = ALIGNMENT_DIR + "03-fastq_screen/biotype",

@@ -10,6 +10,7 @@ rule deseq2_init:
     singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
     resources: cpus=8
     params:
+        project_name = config['report_info']['project_name'],
         snakemake_rdata = DIFFEX_DIR + 'deseq2/.deseq2_init_{model_name}_snakemake.rda' #TWS DEBUG
     script:
         '../scripts/deseq2_init.R'

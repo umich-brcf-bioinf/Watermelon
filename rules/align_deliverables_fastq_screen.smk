@@ -12,9 +12,9 @@ rule align_deliverables_fastq_screen:
             basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
         )
     params:
+        project_name = config['report_info']['project_name'],
         dest_msp = DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/",
-        dest_biot = DELIVERABLES_DIR + "alignment/fastq_screen/biotype/",
-
+        dest_biot = DELIVERABLES_DIR + "alignment/fastq_screen/biotype/"
     shell:
         "cp {input.msp} {params.dest_msp} && "
         "cp {input.biot} {params.dest_biot}"

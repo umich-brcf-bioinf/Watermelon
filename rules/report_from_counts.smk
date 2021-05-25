@@ -34,6 +34,7 @@ rule report_from_counts:
         JOB_LOG_DIR + 'report_from_counts.log'
     singularity: 'docker://umichbfxcore/report:0.1.0'
     params:
+        project_name = config['report_info']['project_name'],
         snakemake_rdata = REPORT_DIR + '.report_draft_snakemake.rda',
         report_dir = REPORT_DIR,
         diffex_dir = DIFFEX_DIR,

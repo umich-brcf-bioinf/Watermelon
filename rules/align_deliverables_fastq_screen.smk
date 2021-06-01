@@ -7,14 +7,14 @@ rule align_deliverables_fastq_screen:
             basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
         )
     output:
-        expand(DELIVERABLES_DIR + "alignment/fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
+        expand(DELIVERABLES_DIR + "fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
             screen_type=['multi_species', 'biotype'],
             basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
         )
     params:
         project_name = config['report_info']['project_name'],
-        dest_msp = DELIVERABLES_DIR + "alignment/fastq_screen/multi_species/",
-        dest_biot = DELIVERABLES_DIR + "alignment/fastq_screen/biotype/"
+        dest_msp = DELIVERABLES_DIR + "fastq_screen/multi_species/",
+        dest_biot = DELIVERABLES_DIR + "fastq_screen/biotype/"
     shell:
         "cp {input.msp} {params.dest_msp} && "
         "cp {input.biot} {params.dest_biot}"

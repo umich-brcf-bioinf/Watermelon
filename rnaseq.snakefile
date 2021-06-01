@@ -160,7 +160,7 @@ if config.get('fastq_screen'):
                                 screen_type=['multi_species', 'biotype'],
                                 basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
                             )
-    FASTQ_SCREEN_DELIVERABLES = expand(DELIVERABLES_DIR + "alignment/fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
+    FASTQ_SCREEN_DELIVERABLES = expand(DELIVERABLES_DIR + "fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
                                     screen_type=['multi_species', 'biotype'],
                                     basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
                                 )
@@ -252,12 +252,12 @@ if config.get('count_matrix'):
 else:
     ALIGN_DELIVERABLES = [
         #align deliverables
-        expand(DELIVERABLES_DIR + "alignment/trimmed_reads/{basename}_trimmed.fastq.gz",
+        expand(DELIVERABLES_DIR + "trimmed/trimmed_reads/{basename}_trimmed.fastq.gz",
             basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
         ),
         expand(DELIVERABLES_DIR + "alignment/aligned_bams/{sample}.genome.{ext}",
             sample=config["samples"], ext=["bam", "bai"]),
-        expand(DELIVERABLES_DIR + "alignment/trimmed_reads_fastqc/{basename}_trimmed_fastqc.html",
+        expand(DELIVERABLES_DIR + "trimmed/trimmed_reads_fastqc/{basename}_trimmed_fastqc.html",
              basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])),
         expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
             type=['FPKM', 'TPM', 'expected_count']),
@@ -278,7 +278,6 @@ else:
 RUN_INFO_DELIVERABLES = [
     #run info deliverables
     DELIVERABLES_DIR + "run_info/env_software_versions.yaml",
-    DELIVERABLES_DIR + "run_info/" + os.path.basename(CONFIGFILE_PATH),
     DELIVERABLES_DIR + "run_info/" + os.path.basename(config['samplesheet'])
 ]
 

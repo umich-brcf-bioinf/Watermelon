@@ -1,5 +1,17 @@
 # Changelog
 
+1.10.0 (06/02/2021)
+-------------------
+- Update methods PDF incl. image
+- leverage RSEM documentation to explain RSEM outpus
+- Add service request ID to beginning of SLURM job name
+- Rearrange deliverables
+    - Trimmed reads & fastQC in their own directory
+    - Fastq_screen in their own directory
+    - rm'd config from deliverables
+- Use pre-generated index by default
+    - retain ability to auto-generate index when needed
+
 1.9.2 (05/06/2021)
 -------------------
 - #45 Add bam index (.bai) to output files

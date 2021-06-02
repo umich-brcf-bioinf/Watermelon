@@ -6,6 +6,7 @@ rule align_cutadapt_PE:
         R1 = ALIGNMENT_DIR + "02-cutadapt/{sample}_R1_trimmed.fastq.gz",
         R2 = ALIGNMENT_DIR + "02-cutadapt/{sample}_R2_trimmed.fastq.gz",
     params:
+        project_name = config['report_info']['project_name'],
         cutadapt_args = config["trimming_options"]["cutadapt_args"]
     log:
         JOB_LOG_DIR + "align_cutadapt_PE_{sample}.log"

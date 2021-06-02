@@ -4,7 +4,7 @@ dirs:
   deliverables_output: analysis{job_suffix}/deliverables
   report_output: analysis{job_suffix}/report
 report_info: #These strings are used directly in the report
-    project_name: Example Project
+    project_name: ExampleProject #Don't use spaces in project name. Will fail on cluster
     prep_description: 'Prior tissue or cell isolation along with generation of total RNA was performed by the researcher. Sequencing was performed by the UM Advanced Genomics Core, with libraries constructed and subsequently subjected to 150 paired end cycles on the NovaSeq-6000 platform (Illumina).'
     acknowledgement_text:
         It is important to document use of each Biomedical Research Core Facility by investigators in publications. This facilitates efforts to obtain funding for our Cores and their continued functioning. Please recognize the core’s contribution in the Acknowledgment section of your publications.

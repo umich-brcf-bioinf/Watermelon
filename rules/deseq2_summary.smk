@@ -11,7 +11,8 @@ rule deseq2_summary:
     conda: 'envs/python3_pandas_excel/python3_pandas_excel.yaml'
     singularity: 'docker://umichbfxcore/python3_pandas_excel'
     params:
-        output_dir = DIFFEX_DIR + "deseq2/summary/",
+        project_name = config['report_info']['project_name'],
+        output_dir = DIFFEX_DIR + "deseq2/summary/"
     shell:
         '''(python {WATERMELON_SCRIPTS_DIR}/diffex_summary.py \
             --annotation_column entrezgene_id \

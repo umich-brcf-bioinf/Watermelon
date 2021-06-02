@@ -10,6 +10,7 @@ rule align_combine_counts_to_matrices:
     log:
         JOB_LOG_DIR + 'align_combine_counts_to_matrices_{metric}.log'
     params:
+        project_name = config['report_info']['project_name'],
         genes_input_path = ALIGNMENT_DIR + '04-rsem_star_align/*.genes.results',
         isoforms_input_path = ALIGNMENT_DIR + '04-rsem_star_align/*.isoforms.results',
         metric = '{metric}'

@@ -5,12 +5,12 @@ import shutil
 rule deliverables_run_info:
     input:
         envs = glob.glob(os.path.join(WORKFLOW_BASEDIR, 'rules', 'envs', '*', '*.yaml')),
-        conf = CONFIGFILE_PATH,
         samplesheet = config['samplesheet']
     output:
         versions = DELIVERABLES_DIR + "run_info/env_software_versions.yaml",
-        conf = DELIVERABLES_DIR + "run_info/" + os.path.basename(CONFIGFILE_PATH),
         samplesheet = DELIVERABLES_DIR + "run_info/" + os.path.basename(config['samplesheet'])
+    params:
+        project_name = config['report_info']['project_name']
     run:
         def transform_dict(env_dict):
             new_dict = {}
@@ -35,5 +35,4 @@ rule deliverables_run_info:
                 "#        software_version\n")
             yaml.dump(dep_dict, ver_file, default_flow_style=False, indent=4)
 
-        shutil.copy(input.conf, output.conf)
         shutil.copy(input.samplesheet, output.samplesheet)

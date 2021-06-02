@@ -6,6 +6,7 @@ GRCh38:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/Homo_sapiens.GRCh38.98.gtf
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/Homo_sapiens.GRCh38.98_annotation.tsv
+        rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/index/GRCh38
 GRCh37:
     genome: GRCh37
     fastq_screen:
@@ -14,6 +15,7 @@ GRCh37:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37_exog/Homo_sapiens.GRCh37.75.dna_sm.primary_assembly.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37_exog/Homo_sapiens.GRCh37.75.gtf
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37_exog/Homo_sapiens.GRCh37.75_annotation.tsv
+        rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37_exog/index/GRCh37
 GRCm38:
     genome: GRCm38
     fastq_screen:
@@ -22,6 +24,7 @@ GRCm38:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/Mus_musculus.GRCm38.dna_sm.primary_assembly.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/Mus_musculus.GRCm38.98.gtf
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/Mus_musculus.GRCm38.98_annotation.tsv
+        rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/index/GRCm38
 NCBIM37:
     genome: NCBIM37
     fastq_screen:
@@ -30,6 +33,7 @@ NCBIM37:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37_exog/Mus_musculus.NCBIM37.67.dna.toplevel.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37_exog/Mus_musculus.NCBIM37.67.gtf
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37_exog/Mus_musculus.NCBIM37.67_annotation.tsv
+        rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37_exog/index/NCBIM37
 Rnor_6.0:
     genome: Rnor_6.0
     fastq_screen:
@@ -38,6 +42,7 @@ Rnor_6.0:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Rattus_norvegicus/Rnor_6.0/Rattus_norvegicus.Rnor_6.0.dna_sm.toplevel.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Rattus_norvegicus/Rnor_6.0/Rattus_norvegicus.Rnor_6.0.98.gtf
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Rattus_norvegicus/Rnor_6.0/Rattus_norvegicus.Rnor_6.0.98_annotation.tsv
+        rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Rattus_norvegicus/Rnor_6.0/index/Rnor_6.0
 GRCz11:
     genome: GRCz11
     fastq_screen:
@@ -46,6 +51,7 @@ GRCz11:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Danio_rerio/GRCz11/Danio_rerio.GRCz11.dna_sm.primary_assembly.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Danio_rerio/GRCz11/Danio_rerio.GRCz11.98.gtf
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Danio_rerio/GRCz11/Danio_rerio.GRCz11.98_annotation.tsv
+        rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Danio_rerio/GRCz11/index/GRCz11
 WBcel235:
     genome: WBcel235
     fastq_screen:
@@ -54,6 +60,7 @@ WBcel235:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Caenorhabditis_elegans/WBcel235/Caenorhabditis_elegans.WBcel235.dna_sm.toplevel.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Caenorhabditis_elegans/WBcel235/Caenorhabditis_elegans.WBcel235.98.gtf
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Caenorhabditis_elegans/WBcel235/Caenorhabditis_elegans.WBcel235.98_annotation.tsv
+        rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Caenorhabditis_elegans/WBcel235/index/WBcel235
 BDGP6:
     genome: BDGP6
     fastq_screen:
@@ -62,6 +69,7 @@ BDGP6:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Drosophila_melanogaster/BDGP6.22/Drosophila_melanogaster.BDGP6.22.dna_sm.toplevel.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Drosophila_melanogaster/BDGP6.22/Drosophila_melanogaster.BDGP6.22.98.gtf
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Drosophila_melanogaster/BDGP6.22/Drosophila_melanogaster.BDGP6.22.98_annotation.tsv
+        rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Drosophila_melanogaster/BDGP6.22/index/BDGP6
 Other:
     genome: Other
     references:

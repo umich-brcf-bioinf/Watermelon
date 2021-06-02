@@ -10,6 +10,7 @@ rule report_finalize:
         JOB_LOG_DIR + 'report_finalize.log'
     singularity: 'docker://umichbfxcore/report:0.1.0'
     params:
+        project_name = config['report_info']['project_name'],
         snakemake_rdata = REPORT_DIR + '.report_finalize_snakemake.rda',
         report_dir = REPORT_DIR,
         workflow_basedir = WORKFLOW_BASEDIR

@@ -8,6 +8,8 @@ rule deseq2_excel:
         JOB_LOG_DIR + "deseq2_excel_{model_name}_{contrast}.log",
     conda: 'envs/python3_pandas_excel/python3_pandas_excel.yaml'
     singularity: 'docker://umichbfxcore/python3_pandas_excel'
+    params:
+        project_name = config['report_info']['project_name']
     shell:'''(
         python {WATERMELON_SCRIPTS_DIR}/diffex_excel.py \
             -g {input.gene} \

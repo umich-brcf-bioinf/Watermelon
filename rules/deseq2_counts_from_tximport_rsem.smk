@@ -15,6 +15,7 @@ rule deseq2_counts_from_tximport_rsem:
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
     singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
     params:
+        project_name = config['report_info']['project_name'],
         rsem_dir = ALIGNMENT_DIR + '04-rsem_star_align',
         snakemake_rdata = DIFFEX_DIR + 'deseq2/counts/.deseq2_counts_snakemake.rda' #TWS DEBUG
     script:

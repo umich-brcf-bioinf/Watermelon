@@ -20,6 +20,7 @@ rule deseq2_plots_by_phenotype:
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
     singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
     params:
+        project_name = config['report_info']['project_name'],
         sample_phenotypes = PHENOTYPE_MANAGER.phenotype_sample_list,
         diffex_dir = DIFFEX_DIR,
         snakemake_rdata = DIFFEX_DIR + 'deseq2/plots/by_phenotype/.deseq2_plots_by_phenotype_snakemake.rda' #TWS DEBUG

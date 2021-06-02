@@ -10,6 +10,7 @@ rule deseq2_volcano_plots:
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
     singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
     params:
+        project_name = config['report_info']['project_name'],
         method = "deseq2",
         snakemake_rdata = DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/.comparison_plot_{contrast}_snakemake.rda' #TWS DEBUG
     script:

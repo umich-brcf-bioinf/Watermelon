@@ -8,6 +8,7 @@ rule align_fastqc_trimmed_reads:
     conda: 'envs/fastqc/fastqc.yaml'
     singularity: 'docker://umichbfxcore/fastqc'
     params:
+        project_name = config['report_info']['project_name'],
         fastqc_dir = ALIGNMENT_DIR + "03-fastqc_reads"
     resources: time_min=240, cpus=2
     shell:

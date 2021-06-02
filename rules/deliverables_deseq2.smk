@@ -54,6 +54,7 @@ rule deliverables_deseq2:
 #    log:
 #        DELIVERABLES_DIR + ".deliverables_deseq2.log"
     params:
+        project_name = config['report_info']['project_name'],
         deseq2_input_dir = DIFFEX_DIR + "deseq2/",
         deseq2_output_dir = DELIVERABLES_DIR + "deseq2",
         #Counts are placed in a separate location from the other deseq2 results

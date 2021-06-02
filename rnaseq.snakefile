@@ -50,7 +50,7 @@ PHENOTYPES = (list(samplesheet.columns))
 #TWS - instead, adding only the sample names
 config[SAMPLES_KEY] = list(samplesheet.index)
 
-rnaseq_snakefile_helper.init_references(config["references"])
+#rnaseq_snakefile_helper.init_references(config["references"])
 
 if config.get('capture_regex'):
     capture_regex = config['capture_regex']

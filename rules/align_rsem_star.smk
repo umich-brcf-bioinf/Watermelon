@@ -1,3 +1,10 @@
+def get_ref_base():
+    refs = config['references']
+    if 'rsem_star_index' in refs:
+        return refs['rsem_star_index']
+    else:
+        ref_base = ALIGNMENT_DIR + '04-rsem_star_genome_generate/' + config['genome']
+        return ref_base
 
 rule align_rsem_star:
     input:
@@ -5,7 +12,7 @@ rule align_rsem_star:
             basename=INPUT_MANAGER.sample_bnames_dict[wildcards.sample]
         ),
         #This portion determines if a new reference must be created
-        genomeParameters = ALIGNMENT_DIR + '04-rsem_star_genome_generate/genomeParameters.txt'
+        genomeParameters = os.path.dirname(get_ref_base()) + '/genomeParameters.txt'
     output:
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results',
         ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results',
@@ -24,7 +31,7 @@ rule align_rsem_star:
     resources: cpus=12, mem_mb=40000, time_min=720
     params:
         project_name = config['report_info']['project_name'],
-        rsem_ref_base = ALIGNMENT_DIR + '04-rsem_star_genome_generate/' + config['genome'],
+        rsem_ref_base = get_ref_base(),
         outFileNamePrefix = ALIGNMENT_DIR + '04-rsem_star_align/{sample}',
         paired_end = lambda wildcards, input: '--paired-end' if rnaseq_snakefile_helper.detect_paired_end_bool(input.fastq_files) else ''
     shell: '''(

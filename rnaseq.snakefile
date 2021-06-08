@@ -58,6 +58,10 @@ else:
     capture_regex = r'.*_R(\d+)[_0-9]*\.fastq.*'
 
 
+# Load the biocontainer env info
+with open(os.path.join(WORKFLOW_BASEDIR, 'envs', 'biocontainer_envs.yaml'), "r") as env_file:
+    ENV_INFO = yaml.load(env_file, Loader=yaml.SafeLoader)
+
 if not config.get('count_matrix'):
     INPUT_MANAGER = rnaseq_snakefile_helper.InputFastqManager(input_dir=INPUT_DIR, capture_regex=capture_regex)
 

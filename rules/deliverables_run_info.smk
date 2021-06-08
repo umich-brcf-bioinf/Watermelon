@@ -4,7 +4,8 @@ import shutil
 
 rule deliverables_run_info:
     input:
-        envs = glob.glob(os.path.join(WORKFLOW_BASEDIR, 'rules', 'envs', '*', '*.yaml')),
+        custom_envs = glob.glob(WORKFLOW_BASEDIR + '/rules/envs/*/*.yaml'),
+        biocontainer_envs = WORKFLOW_BASEDIR + "/envs/biocontainer_envs.yaml",
         samplesheet = config['samplesheet']
     output:
         versions = DELIVERABLES_DIR + "run_info/env_software_versions.yaml",
@@ -20,13 +21,26 @@ rule deliverables_run_info:
                 new_dict[sw] = ver
             return(new_dict)
 
+        # Entry for watermelon pipeline version
         dep_dict = {'watermelon': WAT_VER}
-        for env_yaml in input.envs:
+        # Iterate over conda yamls
+        for env_yaml in input.custom_envs:
             env_name = os.path.splitext(os.path.basename(env_yaml))[0]
             with open(env_yaml) as yfile:
                 env_dict = yaml.load(yfile, Loader=yaml.SafeLoader)
 
             dep_dict[env_name] = transform_dict(env_dict)
+
+        # Add the biocontainer envs
+        with open(input.biocontainer_envs, "r") as efile:
+            env_dict = yaml.load(efile, Loader=yaml.SafeLoader)
+            # Transform to grab just the version strings
+            for envir in env_dict:
+                # Make nested to be congruent with the rest
+                env = {envir: env_dict[envir]['ver_str']}
+                env_dict[envir] = env
+            dep_dict.update(env_dict)
+
 
         with open(output.versions, 'w') as ver_file:
             ver_file.write("#This file contains software version information in the format:\n" +

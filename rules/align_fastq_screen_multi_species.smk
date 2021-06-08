@@ -7,7 +7,7 @@ rule align_fastq_screen_multi_species:
     log:
         JOB_LOG_DIR + "align_fastq_screen_multi_species_{sample}_R{read}.log"
     conda: 'envs/fastq_screen/fastq_screen.yaml'
-    singularity: 'docker://umichbfxcore/fastq_screen'
+    singularity: ENV_INFO['fastq_screen']['image_str']
     resources: cpus=8, mem_mb=8000
     params:
         project_name = config['report_info']['project_name'],

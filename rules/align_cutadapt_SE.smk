@@ -10,7 +10,7 @@ rule align_cutadapt_SE:
         JOB_LOG_DIR + "align_cutadapt_SE_{sample}_R{read}.log"
     conda: 'envs/cutadapt/cutadapt.yaml'
     resources: time_min=300, cpus=8
-    singularity: 'docker://umichbfxcore/cutadapt'
+    singularity: ENV_INFO['cutadapt']['image_str']
     shell:
         '''(cutadapt --cores {resources.cpus} \
                 {params.cutadapt_args} \

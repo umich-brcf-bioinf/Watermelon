@@ -1,15 +1,15 @@
 rule align_deliverables_fastq_screen:
     input:
         msp = expand(ALIGNMENT_DIR + "03-fastq_screen/multi_species/{basename}_trimmed_screen.html",
-            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
+            basename=INPUT_MANAGER.gather_basenames(config['samples'])
         ),
         biot = expand(ALIGNMENT_DIR + "03-fastq_screen/biotype/{basename}_trimmed_screen.html",
-            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
+            basename=INPUT_MANAGER.gather_basenames(config['samples'])
         )
     output:
         expand(DELIVERABLES_DIR + "fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
             screen_type=['multi_species', 'biotype'],
-            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
+            basename=INPUT_MANAGER.gather_basenames(config['samples'])
         )
     params:
         project_name = config['report_info']['project_name'],

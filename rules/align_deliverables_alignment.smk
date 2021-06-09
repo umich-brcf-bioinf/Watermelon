@@ -2,7 +2,7 @@ rule align_deliverables_alignment:
     input:
         #Trimmed fastqs
         expand(ALIGNMENT_DIR + "02-cutadapt/{basename}_trimmed.fastq.gz",
-            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
+            basename=INPUT_MANAGER.gather_basenames(config['samples'])
         ),
         #Aligned BAMs
         expand(ALIGNMENT_DIR + "04-rsem_star_align/{sample}.genome.{ext}",
@@ -10,7 +10,7 @@ rule align_deliverables_alignment:
         ),
         #fastqc reads
         expand(ALIGNMENT_DIR + "03-fastqc_reads/{basename}_trimmed_fastqc.html",
-            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])),
+            basename=INPUT_MANAGER.gather_basenames(config['samples'])),
         #combined count matrices (gene-level only for now)
         combined_counts = expand(ALIGNMENT_DIR + "06-annotate_combined_counts/gene_{type}.annot.txt",
             type=['FPKM', 'TPM', 'expected_count']),
@@ -19,13 +19,13 @@ rule align_deliverables_alignment:
 
     output:
         expand(DELIVERABLES_DIR + "trimmed/trimmed_reads/{basename}_trimmed.fastq.gz",
-            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])
+            basename=INPUT_MANAGER.gather_basenames(config['samples'])
         ),
         expand(DELIVERABLES_DIR + "alignment/aligned_bams/{sample}.genome.{ext}",
             sample=config["samples"], ext=["bam", "bai"]
         ),
         expand(DELIVERABLES_DIR + "trimmed/trimmed_reads_fastqc/{basename}_trimmed_fastqc.html",
-            basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])),
+            basename=INPUT_MANAGER.gather_basenames(config['samples'])),
         expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
             type=['FPKM', 'TPM', 'expected_count']
         ),

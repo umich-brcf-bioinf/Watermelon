@@ -1,22 +1,12 @@
 '''Functions that support the RNASeq Snakemake snakefile.
 '''
-from __future__ import print_function, absolute_import, division
 
-from argparse import Namespace
-import collections
 from collections import defaultdict
-import csv
 from functools import partial
 import glob
-import hashlib
-import itertools
 import os
-from os.path import join
-from os.path import isfile
 import pandas as pd
 import re
-import sys
-import yaml
 import warnings
 
 from snakemake import workflow
@@ -53,6 +43,21 @@ def _filter_dict_by_keys(dict_in, keep_keys):
     #Use dict comprehension to create filtered dict: https://stackoverflow.com/a/3420156
     dict_out = {k: dict_in[k] for k in all_keys.intersection(keep_keys)}
     return dict_out
+
+def email(subject_prefix, msg="", attachment=""):
+
+    email_config = config.get('email')
+    if not email_config:
+        print(subject_prefix, msg)
+    else:
+        command = "echo '{msg}' | mutt -s '{subject_prefix}{subject}' {attachment} {to}".format(
+                to=email_config['to'],
+                subject_prefix=subject_prefix,
+                subject=email_config['subject'],
+                attachment=attachment,
+                msg=msg,
+                )
+        shell(command)
 
 def init_references(config_references):
     def existing_link_target_is_different(link_name, link_path):

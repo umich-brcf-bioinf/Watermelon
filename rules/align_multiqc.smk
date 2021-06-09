@@ -1,9 +1,9 @@
 rule align_multiqc:
     input:
         align_summary_files = expand(ALIGNMENT_DIR + "04-rsem_star_align/{sample}.log",
-                                     sample=config[SAMPLES_KEY]),
+                                     sample=config['samples']),
         align_fastq_files = expand(ALIGNMENT_DIR + "03-fastqc_reads/{basename}_trimmed_fastqc.html",
-                                   basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])),
+                                   basename=INPUT_MANAGER.gather_basenames(config['samples'])),
         fastq_screen_alignment = FASTQ_SCREEN_ALIGNMENT,
     output:
         ALIGNMENT_DIR + "07-qc/alignment_qc.html",

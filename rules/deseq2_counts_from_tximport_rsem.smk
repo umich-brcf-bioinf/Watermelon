@@ -3,8 +3,8 @@
 '''
 rule deseq2_counts_from_tximport_rsem:
     input:
-        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results', sample=config[SAMPLES_KEY]),
-        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results', sample=config[SAMPLES_KEY])
+        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results', sample=config['samples']),
+        expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results', sample=config['samples'])
     output:
         count_data_rda = DIFFEX_DIR + 'deseq2/counts/count_data.rda',
         raw = DIFFEX_DIR + 'deseq2/counts/deseq2_raw_counts.txt',

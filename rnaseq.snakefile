@@ -1,27 +1,22 @@
-from __future__ import print_function, absolute_import, division
 
-from collections import defaultdict, OrderedDict
-from itertools import chain, combinations, repeat
-from shutil import copyfile
-import csv
 import logging
 import os
 import pandas as pd
-import subprocess
 import yaml
 
-from watchdog.observers import Observer
-from watchdog.events import PatternMatchingEventHandler
-from scripts import rnaseq_snakefile_helper, config_validator, __version__
+from scripts import rnaseq_snakefile_helper as helper
 
-WAT_VER = __version__
+include: "version_info.smk"
+
+msg = "Watermelon version: {}"
+logger.logger.info(msg.format(__version__))
+quit()
+
 WORKFLOW_BASEDIR = workflow.basedir
 WATERMELON_CONFIG_DIR = os.path.join(WORKFLOW_BASEDIR, 'config', '')
 WATERMELON_SCRIPTS_DIR = os.path.join(WORKFLOW_BASEDIR, 'scripts', '')
-# WATERMELON_CONFIG_DIR = os.path.join(os.environ.get('WATERMELON_CONFIG_DIR', srcdir('config')), '')
-# WATERMELON_SCRIPTS_DIR = os.path.join(os.environ.get('WATERMELON_SCRIPTS_DIR', srcdir('scripts')), '')
 
-#TWS TODO: Consider refactoring - Should we really return "" if key doesn't exist? Added requirements to schema for now
+
 _DIRS = config.get("dirs", {})
 INPUT_DIR = os.path.join(_DIRS.get("input", "inputs"), "")
 ALIGNMENT_DIR = os.path.join(_DIRS.get("alignment_output", "alignment_results"), "")
@@ -123,39 +118,14 @@ elif '--profile' in sys.argv:
 
 
 onstart:
-    #Perform config validation before starting
-    if not 'skip_validation' in config:
-        validate_config(CONFIGFILE_PATH, CONFIG_SCHEMA_PATH)
-
-    #Set up error-only logfile with same basename as snakemake logfile
-    #Doing this within onstart because logger.get_logfile evaluates to None for some reason during workflow execution
-    ERR_ONLY_LOGFILE = os.path.splitext(logger.get_logfile())[0] + "-errors.log"
-    #Create filehandler to create error-only logfile for error-level logging events
-    fh = logging.FileHandler(ERR_ONLY_LOGFILE, delay=True, mode='w')
-    fh.setLevel(logging.ERROR)
-    #Add this filehandler to existing snakemake logger
-    logger.logger.addHandler(fh)
-
-    #Setup handler to trigger email upon creation of error-only logfile
-    class MyWatchdogHandler(PatternMatchingEventHandler):
-        def on_created(self, event):
-            super(MyWatchdogHandler, self).on_created(event)
-            message = "Watermelon has detected at least one error. Attaching nascent error-only log-file"
-            attach_str = "-a " + ERR_ONLY_LOGFILE + " --"
-            email('Watermelon error notification: ', msg=message, attachment=attach_str)
-    event_handler = MyWatchdogHandler(patterns=[ERR_ONLY_LOGFILE])
-    observer = Observer()
-    observer.schedule(event_handler, path=os.path.dirname(ERR_ONLY_LOGFILE), recursive=False)
-    observer.start()
-
-    email('Watermelon started: ')
+    helper.email('Watermelon started: ')
 onsuccess:
     message = 'config file:\n{}\nlog file:\n{}'.format(CONFIGFILE_PATH, logger.get_logfile())
-    email('Watermelon completed ok: ', msg=message)
+    helper.email('Watermelon completed ok: ', msg=message)
 onerror:
     message = "Watermelon completed with errors. Full log file attached"
     attach_str = "-a " + logger.get_logfile() + " --"
-    email('Watermelon completed with errors: ', msg=message, attachment = attach_str)
+    helper.email('Watermelon completed with errors: ', msg=message, attachment = attach_str)
 
 
 if config.get('fastq_screen'):

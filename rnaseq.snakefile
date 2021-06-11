@@ -21,8 +21,6 @@ REPORT_DIR = os.path.join(_DIRS.get("report_output", "report"), "")
 JOB_LOG_DIR = os.path.join(os.getcwd(), "job_logs", "")
 CLUSTER_LOG_DIR = os.path.join(os.getcwd(), "cluster_logs")
 
-
-
 #Load in samplesheet
 samplesheet = pd.read_csv(config["samplesheet"], comment='#', dtype='object').set_index("sample", drop=True)
 
@@ -69,49 +67,18 @@ else:
 # Now with the index, get the value
 CONFIGFILE_PATH = sys.argv[cfg_idx]
 
-# Includes
-# version_info.smk gives access to VER_INFO with software version info
-# and also to ENV_INFO - a singularity info dict
-include: "version_info.smk"
-
-# Include rule snakefiles
-include: 'rules/align_concat_reads.smk'
-include: 'rules/align_standardize_gz.smk'
-#
-if 'trimming_options' in config:
-    if config['trimming_options'].get('paired_end_mode'):
-        include: 'rules/align_cutadapt_PE.smk'
-    else:
-        include: 'rules/align_cutadapt_SE.smk'
-else:
-    include: 'rules/align_pseudotrim.smk'
-#
-include: 'rules/align_fastq_screen_biotype.smk'
-include: 'rules/align_fastq_screen_multi_species.smk'
-include: 'rules/align_fastqc_trimmed_reads.smk'
-include: 'rules/align_fastqc_align.smk'
-include: 'rules/align_multiqc.smk'
-include: 'rules/align_deliverables_alignment.smk'
-include: 'rules/align_deliverables_fastq_screen.smk'
-include: 'rules/align_rsem_star.smk'
-include: 'rules/align_rsem_star_genome_generate.smk'
-include: 'rules/align_combine_counts_to_matrices.smk'
-include: 'rules/align_annotate_combined_counts.smk'
-
-include: 'rules/report_align_only.smk'
-
-include: 'rules/deliverables_run_info.smk'
-include: 'rules/report_finalize.smk'
+# Set up the input manager
+INPUT_MANAGER = helper.InputFastqManager(input_dir=INPUT_DIR, capture_regex=capture_regex)
 
 onstart:
-    helper.email('Watermelon started: ')
+    helper.email(email_config=config.get('email', None), subject_prefix='Watermelon started: ')
 onsuccess:
     message = 'config file:\n{}\nlog file:\n{}'.format(CONFIGFILE_PATH, logger.get_logfile())
-    helper.email('Watermelon completed ok: ', msg=message)
+    helper.email(email_config=config.get('email', None), subject_prefix='Watermelon completed ok: ', msg=message)
 onerror:
     message = "Watermelon completed with errors. Full log file attached"
     attach_str = "-a " + logger.get_logfile() + " --"
-    helper.email('Watermelon completed with errors: ', msg=message, attachment = attach_str)
+    helper.email(email_config=config.get('email', None), subject_prefix='Watermelon completed with errors: ', msg=message, attachment = attach_str)
 
 
 # Defining targets
@@ -168,3 +135,37 @@ ALL = RSEM_ALL + ALIGN_DELIVERABLES + RUN_INFO_DELIVERABLES + FASTQ_SCREEN_DELIV
 rule all:
     input:
         *ALL
+
+# Includes put last - variables used in rules must be defined above
+# version_info.smk gives access to VER_INFO with software version info
+# and also to ENV_INFO - a singularity info dict
+include: "version_info.smk"
+
+# Include rule snakefiles
+include: 'rules/align_concat_reads.smk'
+include: 'rules/align_standardize_gz.smk'
+#
+if 'trimming_options' in config:
+    if config['trimming_options'].get('paired_end_mode'):
+        include: 'rules/align_cutadapt_PE.smk'
+    else:
+        include: 'rules/align_cutadapt_SE.smk'
+else:
+    include: 'rules/align_pseudotrim.smk'
+if 'fastq_screen' in config:
+    include: 'rules/align_fastq_screen_biotype.smk'
+    include: 'rules/align_fastq_screen_multi_species.smk'
+include: 'rules/align_fastqc_trimmed_reads.smk'
+include: 'rules/align_fastqc_align.smk'
+include: 'rules/align_multiqc.smk'
+include: 'rules/align_deliverables_alignment.smk'
+include: 'rules/align_deliverables_fastq_screen.smk'
+include: 'rules/align_rsem_star.smk'
+include: 'rules/align_rsem_star_genome_generate.smk'
+include: 'rules/align_combine_counts_to_matrices.smk'
+include: 'rules/align_annotate_combined_counts.smk'
+#
+include: 'rules/report_align_only.smk'
+#
+include: 'rules/deliverables_run_info.smk'
+include: 'rules/report_finalize.smk'

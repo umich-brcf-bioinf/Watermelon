@@ -1,4 +1,7 @@
+import copy
 import glob
+import os
+import yaml
 
 _PIPE_VER = '1.10.0'
 
@@ -27,7 +30,7 @@ ENV_INFO = {} # Context
 # Add the biocontainer envs
 with open(WORKFLOW_BASEDIR + "/envs/biocontainer_envs.yaml", "r") as efile:
     env_dict = yaml.load(efile, Loader=yaml.SafeLoader)
-    ENV_INFO = env_dict # Make this available to workflow
+    ENV_INFO = copy.copy(env_dict) # Keep a copy of orig, make available to workflow
     # Transform to grab just the version strings
     for envir in env_dict:
         # Make nested to be congruent with the rest

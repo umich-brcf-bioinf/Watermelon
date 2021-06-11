@@ -4,7 +4,7 @@ rule report_from_counts:
         report_rmd = WORKFLOW_BASEDIR + '/report/report.Rmd',
         versions = DELIVERABLES_DIR + 'run_info/env_software_versions.yaml',
         diffex_summary = DIFFEX_DIR + 'deseq2/summary/deseq2_summary.txt',
-        diffex_annot = rnaseq_snakefile_helper.expand_model_contrast_filenames(
+        diffex_annot = helper.expand_model_contrast_filenames(
                 DIFFEX_DIR + 'deseq2/annotated/{model_name}/{contrast}.annot.txt',
                 DESEQ2_CONTRAST_DICT
             ),
@@ -22,7 +22,7 @@ rule report_from_counts:
                 phenotype = PHENOTYPES
             ),
         #deseq2_comparison_plots
-        diffex_volcanoplot_pngs = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+        diffex_volcanoplot_pngs = helper.expand_model_contrast_filenames(\
             DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.png',
             DESEQ2_CONTRAST_DICT
             )

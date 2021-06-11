@@ -11,10 +11,10 @@ rule align_fastq_screen_multi_species:
     resources: cpus=8, mem_mb=8000
     params:
         project_name = config['report_info']['project_name'],
-        aligner = FASTQ_SCREEN_CONFIG['aligner'],
-        subset = FASTQ_SCREEN_CONFIG['subset'],
+        aligner = config['fastq_screen']['aligner'],
+        subset = config['fastq_screen']['subset'],
         multi_species_output_dir = ALIGNMENT_DIR + "03-fastq_screen/multi_species",
-        multi_species_config_file = FASTQ_SCREEN_CONFIG['reference_basedir'] +"/multi_species.conf"
+        multi_species_config_file = config['fastq_screen']['reference_basedir'] +"/multi_species.conf"
     shell:
         '''(fastq_screen --version
         fastq_screen \

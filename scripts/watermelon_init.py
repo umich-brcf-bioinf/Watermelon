@@ -51,7 +51,7 @@ import yaml
 
 import pandas as pd
 
-from . import __version__ as WAT_VER
+
 from tests import testing_utils # Using gunzip_glob, maybe should move this to helper module?
 
 DESCRIPTION = (
@@ -303,7 +303,7 @@ def _setup_test_data(datapath):
     #Unzip the human chr22 example references
     data_gz_glob = os.path.join(datapath , '*.gz')
     testing_utils.gunzip_glob(data_gz_glob)
-    #These refs should now exist. If not, it'll be caught during snakemake run w/ init_references
+    #These refs should now exist
     refs = {
         'genome' : 'GRCh38',
         'references' : {
@@ -449,7 +449,7 @@ def _make_config_dict(template_config, genome_references, args):
     config["dirs"]["input"] = os.path.join(args.input_dir, args.input_samples_dir)
     # Add in more needed keys
     # Watermelon version
-    config["watermelon_version"] = WAT_VER
+    config["watermelon_version"] = args.version_info['watermelon']
     # Samplesheet
     samplesheet_path = os.path.abspath(args.sample_sheet)
     samplesheet_path = re.sub('/ccmb/BioinfCore/ActiveProjects/', '/nfs/med-bfx-activeprojects/', samplesheet_path) #TODO: Can remove this line after comp5/6 mounts are fixed
@@ -729,6 +729,7 @@ def _parse_command_line_args(sys_argv):
 
 def main(sys_argv):
     """See DESCRIPTION"""
+
     try:
         args = _parse_command_line_args(sys_argv)
         _CommandValidator().validate_args(args)
@@ -737,6 +738,14 @@ def main(sys_argv):
         _copy_and_overwrite(
             source=_WATERMELON_ROOT, dest=os.path.join(os.getcwd(), "Watermelon")
         )
+
+        with open(os.path.join(os.getcwd(), "Watermelon", "version_info.smk")) as ifh: # TWS FIXME - just a proof of concept
+            # version_info.smk gives access to VER_INFO with software version info
+            # and also to ENV_INFO - a singularity info dict
+            WORKFLOW_BASEDIR = os.path.join(os.getcwd(), "Watermelon")
+            _locals = locals()
+            exec(ifh.read(), _locals, globals())
+            args.version_info = VER_INFO
 
         if not args.count_matrix:
             print("Linking inputs")

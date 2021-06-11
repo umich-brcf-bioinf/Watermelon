@@ -7,6 +7,7 @@ import glob
 import os
 import pandas as pd
 import re
+import subprocess
 import warnings
 
 from snakemake import workflow
@@ -44,9 +45,7 @@ def _filter_dict_by_keys(dict_in, keep_keys):
     dict_out = {k: dict_in[k] for k in all_keys.intersection(keep_keys)}
     return dict_out
 
-def email(subject_prefix, msg="", attachment=""):
-
-    email_config = config.get('email')
+def email(email_config, subject_prefix, msg="", attachment=""):
     if not email_config:
         print(subject_prefix, msg)
     else:
@@ -57,30 +56,7 @@ def email(subject_prefix, msg="", attachment=""):
                 attachment=attachment,
                 msg=msg,
                 )
-        shell(command)
-
-def init_references(config_references):
-    def existing_link_target_is_different(link_name, link_path):
-        original_abs_path = os.path.realpath(link_name)
-        new_abs_path = os.path.realpath(link_path)
-        return original_abs_path != new_abs_path
-    if not os.path.exists("references"):
-        os.mkdir("references")
-    os.chdir("references")
-    references = config_references if config_references else {}
-    for link_name, link_path in references.items():
-        if not os.path.exists(link_path):
-            msg_fmt = 'ERROR: specified config reference files/dirs [{}:{}] cannot be read'
-            msg = msg_fmt.format(link_name, link_path)
-            raise ValueError(msg)
-        elif not os.path.exists(link_name):
-            os.symlink(link_path, link_name)
-        elif existing_link_target_is_different(link_name, link_path):
-            os.remove(link_name)
-            os.symlink(link_path, link_name)
-        else:
-            pass #link matches existing link
-    os.chdir("..")
+        subprocess.run(command, shell=True)
 
 class PhenotypeManager(object):
     '''Interprets a subset of the config to help answer questions around how

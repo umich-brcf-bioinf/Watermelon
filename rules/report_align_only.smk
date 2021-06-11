@@ -19,7 +19,7 @@ rule report_align_only:
         project_name = config['report_info']['project_name'],
         snakemake_rdata = REPORT_DIR + '.report_draft_snakemake.rda',
         report_dir = REPORT_DIR,
-        diffex_dir = DIFFEX_DIR,
+        diffex_dir = "",
         add_background = False, # TODO: These could later be moved out to config
         add_wetlab = False,
         custom_sections = 'results', # Rscript expects a string of comma separated values. All sections: 'methods,results,appendix'

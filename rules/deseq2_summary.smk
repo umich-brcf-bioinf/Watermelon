@@ -1,6 +1,6 @@
 rule deseq2_summary:
     input:
-        input_files = rnaseq_snakefile_helper.expand_model_contrast_filenames(\
+        input_files = helper.expand_model_contrast_filenames(\
             DIFFEX_DIR + "deseq2/annotated/{model_name}/{contrast}.annot.txt",
             DESEQ2_CONTRAST_DICT)
     output:

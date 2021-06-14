@@ -105,7 +105,7 @@ class SnakemakeExampleDataTest(unittest.TestCase):
                     'gtf' : os.path.join(tmp_data_dir, 'Homo_sapiens.GRCh38.98.chr22.gtf'),
                     'annotation_tsv' : os.path.join(tmp_data_dir, 'Homo_sapiens.GRCh38.98_annotation.tsv')
                 },
-                'trimming_options' : {
+                'trimming' : {
                     'cutadapt_args' : '--nextseq-trim 13 -u 3 -m 20 --trim-n' # Not testing adapter trimming here (these reads are simulated)
                 }
             }

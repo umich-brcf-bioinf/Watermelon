@@ -145,8 +145,8 @@ include: "version_info.smk"
 include: 'rules/align_concat_reads.smk'
 include: 'rules/align_standardize_gz.smk'
 #
-if 'trimming_options' in config:
-    if config['trimming_options'].get('paired_end_mode'):
+if 'trimming' in config:
+    if config['trimming'].get('paired_end_mode'):
         include: 'rules/align_cutadapt_PE.smk'
     else:
         include: 'rules/align_cutadapt_SE.smk'

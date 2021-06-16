@@ -37,14 +37,19 @@ Uses template values for:
 
 
 import argparse
+import copy
 import getpass
 import os
 import ruamel_yaml
 import subprocess
+import sys
 import warnings
 
 import pandas as pd
-from collections import OrderedDict, Mapping
+from collections import OrderedDict
+from collections.abc import Mapping
+
+import rnaseq_snakefile_helper as helper
 
 import pdb # TWS DEBUG
 
@@ -99,7 +104,6 @@ def _set_up_dirs(type, project_id, fmt_str="analysis_{projid}/{resulttype}"):
     elif type == "diffex":
         for resulttype in ["diffex_results", "deliverables", "report"]:
             dirs[resulttype] = fmt_str.format(projid=project_id, resulttype=resulttype)
-
     return dirs
 
 
@@ -191,30 +195,68 @@ def make_config_dict(template_config, args, version):
 
     return config
 
-def validate_fastq_dirs(config_dict, sample_col):
+def validate_fastq_dirs(config_dict, sample_col, fq_col):
     with open(config_dict["samplesheet"], "r") as ssfh:
-        try:
-            samplesheet = pd.read_csv(ssfh, comment="#", dtype="object").set_index(sample_col, drop=True)
-        except KeyError:
+        samplesheet = pd.read_csv(ssfh, comment="#", dtype="object")
+        if not sample_col in samplesheet.columns:
             msg = "The sample sheet must have a column labeled '{}'".format(sample_col)
-            raise _InputValidationError(msg)
-        pdb.set_trace()
+            raise RuntimeError(msg)
+        if not fq_col in samplesheet.columns:
+            msg = "\n\nThe sample sheet must have a column labeled '{}'\n".format(fq_col)
+            raise RuntimeError(msg)
+
+        samples = samplesheet[sample_col]
+        fq_dirs = samplesheet[fq_col]
+        fastq_dict = OrderedDict()
+        for sample, dir in zip(samples, fq_dirs):
+            if os.path.exists(dir):
+                # The helper function has the following validations:
+                # * Fastq file(s) must be present
+                # * Can't mix gz and fastq files (must be all same type)
+                fastq_dict[sample] = helper.get_sample_fastq_paths(dir)
+                # TODO: could easily write this to a file...
+            else:
+                msg = "\n\nDirectory {} does not contain fastq files.\n".format(dir)
+                raise RuntimeError(msg)
+
+
+def validate_genomes(ref_dict, type):
+    # Validate that references are readable
+    # Make a copy of the dict (don't actually want to manipulate it)
+    ref_dict = copy.copy(ref_dict)
+    # Diffex only uses annotation_tsv, not the others
+    if type == "diffex":
+        for k in ["fasta", "gtf", "rsem_star_index"]:
+            ref_dict.pop(k)
+    for k,v in ref_dict.items():
+        cant_read = []
+        if k == "rsem_star_index":
+            v = v + ".chrlist" # Given index prefix, test for chromosome list
+        if not os.access(v, os.R_OK): # Test for read access
+            cant_read.append(v)
+        if cant_read:
+            msg = "\n\nCan't read references:\n{}\n"
+            raise RuntimeError(msg)
 
 
 def write_stuff(config_dict, config_fn, wat_dir=_WATERMELON_ROOT):
     # Make sure we don't overwrite things
     _no_overwrite_check(["Watermelon", config_fn])
-    # Copy Watermelon to project dir
-    source = os.path.join(wat_dir, "")  # Add trailing slash for rsync (syntax important)
-    dest = "Watermelon"
-    subprocess.run( # Exclude .git/ and /envs/built (speed)
-        ["rsync", "-O", "-rlt", "--exclude", ".*", "--exclude", "envs/built", source, dest]
-    )
+    print("Writing config to working dir...")
     # Write the config file
     with open(config_fn, "w") as config_fh:
         ruamel_yaml.round_trip_dump(
             config_dict, config_fh, default_flow_style=False, indent=4
         )
+    # Copy Watermelon to project dir
+    print("Done.\nCopying Watermelon to working dir...")
+    source = os.path.join(wat_dir, "")  # Add trailing slash for rsync (syntax important)
+    dest = "Watermelon"
+    subprocess.run( # Exclude .git/ and /envs/built (speed)
+        ["rsync", "-O", "-rlt", "--exclude", ".*", "--exclude", "envs/built", source, dest]
+    )
+
+    print("Done.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="watermelon_init.py", description = "Produces a config.yaml to use with snakemake. Can produce a config for either alignment/QC or differential expression (see below).")
@@ -228,6 +270,7 @@ if __name__ == "__main__":
     parser.add_argument("--x_genome_references", type=str, default=_DEFAULT_GENOME_REFERENCES, help=argparse.SUPPRESS)
     parser.add_argument("--x_working_dir", type=str, default=os.getcwd(), help=argparse.SUPPRESS)
     parser.add_argument("--x_sample_col", type=str, default="sample", help=argparse.SUPPRESS)
+    parser.add_argument("--x_input_col", type=str, default="input_dir", help=argparse.SUPPRESS)
 
     args = parser.parse_args()
 
@@ -237,19 +280,19 @@ if __name__ == "__main__":
     # Ingest version_info.smk snakefile to get pipeline version
     version = get_pipe_version(os.path.join(_WATERMELON_ROOT, "version_info.smk"))
 
+    # Make the config
     config_dict = make_config_dict(template_cfg_dict, args, version)
 
     # Perform config validations
-    # Validations depend on type of config
-
+    validate_genomes(config_dict["references"], args.type)
+    # Some validations depend on type of config
     if args.type == "align_qc":
-        validate_fastq_dirs(config_dict, args.x_sample_col)
+        validate_fastq_dirs(config_dict, args.x_sample_col, args.x_input_col)
     elif args.type == "diffex":
         foo = "bar"
-    pdb.set_trace() #TWS DEBUG
 
     write_stuff(
         config_dict=config_dict,
-        config_fn="config_{}".format(args.project_id),
+        config_fn="config_{}.yaml".format(args.project_id),
         wat_dir=_WATERMELON_ROOT
     )

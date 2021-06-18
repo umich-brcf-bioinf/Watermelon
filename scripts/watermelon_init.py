@@ -49,7 +49,7 @@ import pandas as pd
 from collections import OrderedDict
 from collections.abc import Mapping
 
-import rnaseq_snakefile_helper as helper
+import scripts.rnaseq_snakefile_helper as helper
 
 import pdb # TWS DEBUG
 

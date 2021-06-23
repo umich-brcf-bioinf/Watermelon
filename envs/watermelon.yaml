@@ -6,6 +6,5 @@ channels:
 dependencies:
   - snakemake=5.31.1
   - pandas>=1.0
-  - conda
   - ruamel_yaml=0.15
-  - watchdog
+  - natsort

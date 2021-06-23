@@ -43,8 +43,12 @@ import warnings
 import pandas as pd
 from collections import OrderedDict
 from collections.abc import Mapping
+from natsort import natsorted
 
-import scripts.rnaseq_snakefile_helper as helper
+try:
+    import scripts.rnaseq_snakefile_helper as helper # works in pytest
+except:
+    import rnaseq_snakefile_helper as helper # works when called as script
 
 import pdb # TWS DEBUG
 
@@ -74,15 +78,27 @@ def _dict_merge(dct, merge_dct):
             dct[k] = merge_dct[k]
 
 
+def _prompt_yes_no(prompt):
+    while True:
+        value = input(prompt).lower().strip()
+        if value not in ['yes', 'y', 'no', 'n']:
+            print("Response must one of: yes, y, no, n")
+            continue
+        else:
+            break
+    return value in ['yes', 'y']
+
+
 def _no_overwrite_check(check_vals):
     exists = []
     for val in check_vals:
         if os.path.exists(val):
             exists.append(val)
     if exists:
-        msg_fmt = "\n\nThe following file(s)/dir(s) exist (will not overwrite). Remove these and try again:\n{}\n"
-        msg = msg_fmt.format(exists)
-        raise RuntimeError(msg)
+        prompt = "The following file(s)/dir(s) exist:\n{}\nOverwrite? (yes/no): ".format(exists)
+        if not _prompt_yes_no(prompt):
+            msg = "\n\nThe following file(s)/dir(s) exist and will not overwrite:\n{}\n".format(exists)
+            raise RuntimeError(msg)
 
 
 def _set_up_dirs(type, project_id, fmt_str="analysis_{projid}/{resulttype}"):
@@ -133,6 +149,33 @@ def _get_analyst_name(analyst_info_csv, user):
         analyst_name = "Analyst"
 
     return analyst_name
+
+
+def _generate_samplesheet(fq_parent_dirs, fname):
+    print("Generating sample sheet {} ...".format(fname))
+    samples_dict = OrderedDict()
+    for parent_dir in fq_parent_dirs:
+        if not os.path.exists(parent_dir):
+            msg = "\n\nInput run directory {} does not exist.\n".format(parent_dir)
+            raise RuntimeError(msg)
+        # list of tuples
+        sample_dirs = [(d.name, os.path.abspath(d)) for d in os.scandir(parent_dir) if d.is_dir()]
+        sample_dirs = natsorted(sample_dirs)
+        if not sample_dirs:
+            msg = "\n\nInput run directoy {} contains no subdirectories.\n".format(parent_dir)
+            raise RuntimeError(msg)
+        # Add these entries to samples_dict
+        for d in sample_dirs:
+            samples_dict[d[0]] = d[1]
+
+    # Making a dataframe to write out to csv
+    samples_df = pd.DataFrame.from_dict(samples_dict, orient='index', columns=['input_dir'])
+    samples_df.index.name = "sample"
+    samples_df.reset_index(inplace=True)
+    # Make sure we don't overwrite the samplesheet
+    _no_overwrite_check([fname])
+    samples_df.to_csv(fname, index=False)
+    print("Done.")
 
 
 def get_pipe_version(vfn):
@@ -189,12 +232,18 @@ def make_config_dict(template_config, args, version):
     # If non-default sample col is given, add it to the config
     if args.x_sample_col != _DEFAULT_SAMPLE_COL:
         config.insert(0, "sample_col", args.x_sample_col)
-    config.insert(0, "samplesheet", os.path.abspath(args.sample_sheet))
+    if args.sample_sheet:
+        config.insert(0, "samplesheet", os.path.abspath(args.sample_sheet))
+    # Auto-generate samplesheet if input run dirs specified
+    elif args.input_run_dirs:
+        ss_fn = "samplesheet.csv"
+        _generate_samplesheet(args.input_run_dirs, ss_fn)
+        config.insert(0, "samplesheet", os.path.abspath(ss_fn))
     config.insert(0, "watermelon_version", version)
     config.insert(0, "email", email)
 
     # Add analyst name to report info
-    analyst_name = _get_analyst_name(args.x_analyst_info)
+    analyst_name = _get_analyst_name(args.x_analyst_info, user)
     if config.get("report_info"):
         config["report_info"]["analyst_name"] = analyst_name
 
@@ -272,8 +321,10 @@ if __name__ == "__main__":
     parser.add_argument("-g", "--genome_build", required=True, help="Reference files for this build are added into the config.")
     parser.add_argument("-o", "--output_prefix", default="analysis_{project_id}", help="Optional output prefix. Defaults to relative path %default%.")
     parser.add_argument("-p", "--project_id", required=True, help="ID used for the project. Can represent project ID, service request ID, etc. Only alphanumeric and underscores allowed. No spaces or special characters.")
-    parser.add_argument("-s", "--sample_sheet", required=True, help="CSV file that contains sample IDs, paths containing samples\" fastq files, and optional columns for phenotype information (required for diffex).")
     parser.add_argument("-t", "--type", default="align_qc", choices=["align_qc", "diffex"], help="Type of config file to produce. Uses the appropriate template, and has the appropriate values.")
+    samples_in = parser.add_mutually_exclusive_group(required=True)
+    samples_in.add_argument("-s", "--sample_sheet", help="CSV file that contains sample IDs, paths containing samples\' fastq files, and optional columns for phenotype information (required for diffex).")
+    samples_in.add_argument("-i", "--input_run_dirs", type=str, nargs="*", help="One or more paths to run dirs. Each run dir should contain samples dirs which should in turn contain one or more fastq.gz files. The sample names will be derived from the sample directories")
     parser.add_argument("--x_analyst_info", type=str, default=_DEFAULT_ANALYST_INFO, help=argparse.SUPPRESS)
     parser.add_argument("--x_alt_template", type=str, default=None, help=argparse.SUPPRESS)
     parser.add_argument("--x_genome_references", type=str, default=_DEFAULT_GENOME_REFERENCES, help=argparse.SUPPRESS)

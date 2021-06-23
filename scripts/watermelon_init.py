@@ -24,13 +24,8 @@ Uses template values for:
 
 # Need to add/test:
 
-# Analyst info check (csv available or not)
-# Error handling if fail loading template
-# Test an invalid key (genome build) in set up refs
-
 # Validations:
 # Fastqs in sample dirs, readable
-# Genome build is valid, files are readable
 
 # Don't think it makes sense to require sample dir name matches samplesheet
 # anymore since the paths are given
@@ -59,13 +54,7 @@ import pdb # TWS DEBUG
 _WATERMELON_ROOT = os.path.realpath(os.path.dirname(os.path.dirname(__file__)))
 _DEFAULT_GENOME_REFERENCES = os.path.join(_WATERMELON_ROOT, "config", "genome_references.yaml")
 _DEFAULT_SAMPLE_COL = "sample"
-
-try:
-    _DEFAULT_ANALYST_INFO = pd.read_csv("/nfs/turbo/umms-brcfpipeline/pipelines/analyst_info.csv", comment="#", index_col="username") # This will be accessible on greatlakes
-except:
-    msg = f"\nCould not read analyst_info csv. Using default placeholder values"
-    warnings.warn(msg)
-    _DEFAULT_ANALYST_INFO = pd.DataFrame() # An empty dataframe used as a simple check below
+_DEFAULT_ANALYST_INFO = "/nfs/turbo/umms-brcfpipeline/pipelines/analyst_info.csv"
 
 
 def _dict_merge(dct, merge_dct):
@@ -122,12 +111,28 @@ def _set_up_refs(grefsfn, gbuild, type):
         our_refs = refs[gbuild]
     except KeyError:
         msg_fmt = "\n\nGenome build {} not found in {}:\n {}\n"
-        raise UsageError(msg_fmt.format(gbuild, grefsfn, refs.keys()))
+        raise RuntimeError(msg_fmt.format(gbuild, grefsfn, refs.keys()))
     # If diffex type, only need annotation TSV. If align_qc, keep it all
     if type == "diffex":
         for ref in ["fasta", "gtf", "rsem_star_index"]:
             our_refs["references"].pop(ref)
     return our_refs
+
+
+def _get_analyst_name(analyst_info_csv, user):
+    try:
+        analyst_info = pd.read_csv(analyst_info_csv, comment="#", index_col="username") # This will be accessible on greatlakes
+        analyst_name = analyst_info.at[user, "name"]
+    except OSError:
+        msg = "\n\nCould not read analyst_info csv. Using default placeholder values.\n"
+        warnings.warn(msg)
+        analyst_name = "Analyst"
+    except KeyError:
+        msg = f"\n\nCouldn't find {user} in {analyst_info_csv}. Using default placeholder values.\n"
+        warnings.warn(msg)
+        analyst_name = "Analyst"
+
+    return analyst_name
 
 
 def get_pipe_version(vfn):
@@ -136,7 +141,7 @@ def get_pipe_version(vfn):
         # and also to ENV_INFO - a singularity info dict (not currently used in init)
         WORKFLOW_BASEDIR = _WATERMELON_ROOT # WORKFLOW_BASEDIR needed in snakefile
         _locals = locals() # capturing locals gives access to WORKFLOW_BASEDIR in snakefile
-        exec(vfh.read(), _locals, globals())
+        exec(vfh.read(), _locals, globals()) # Read in the snakefile
         version = VER_INFO["watermelon"]
         return version
 
@@ -148,9 +153,13 @@ def get_template(args, pipe_root):
     else:
         fname = "template_{}.yaml".format(args.type)
         fpath = os.path.join(pipe_root, "config", fname)
-    with open(fpath, "r") as tfh:
-        template_dict = ruamel_yaml.round_trip_load(tfh)
-        return template_dict
+    try:
+        with open(fpath, "r") as tfh:
+            template_dict = ruamel_yaml.round_trip_load(tfh)
+            return template_dict
+    except:
+        msg = f"\n\nCould not read template config {fpath}."
+        raise RuntimeError(msg)
 
 
 def make_config_dict(template_config, args, version):
@@ -185,39 +194,39 @@ def make_config_dict(template_config, args, version):
     config.insert(0, "email", email)
 
     # Add analyst name to report info
+    analyst_name = _get_analyst_name(args.x_analyst_info)
     if config.get("report_info"):
-        try:
-            config["report_info"]["analyst_name"] = _DEFAULT_ANALYST_INFO.at[user, "name"]
-        except KeyError:
-            # _DEFAULT_ANALYST_INFO may be empty (default file not available)
-            # Or the user is not in that DataFrame
-            config["report_info"]["analyst_name"] = "Analyst"
+        config["report_info"]["analyst_name"] = analyst_name
 
     return config
 
-def validate_fastq_dirs(config_dict, sample_col, fq_col):
-    with open(config_dict["samplesheet"], "r") as ssfh:
-        samplesheet = pd.read_csv(ssfh, comment="#", dtype="object")
-        if not sample_col in samplesheet.columns:
-            msg = "The sample sheet must have a column labeled '{}'".format(sample_col)
-            raise RuntimeError(msg)
-        if not fq_col in samplesheet.columns:
-            msg = "\n\nThe sample sheet must have a column labeled '{}'\n".format(fq_col)
-            raise RuntimeError(msg)
+def validate_fastq_dirs(ssfh, sample_col, fq_col):
+    samplesheet = pd.read_csv(ssfh, comment="#", dtype="object")
+    if not sample_col in samplesheet.columns:
+        msg = "\n\nThe sample sheet must have a column labeled '{}'\n".format(sample_col)
+        raise RuntimeError(msg)
+    if not fq_col in samplesheet.columns:
+        msg = "\n\nThe sample sheet must have a column labeled '{}'\n".format(fq_col)
+        raise RuntimeError(msg)
 
-        samples = samplesheet[sample_col]
-        fq_dirs = samplesheet[fq_col]
-        fastq_dict = OrderedDict()
-        for sample, dir in zip(samples, fq_dirs):
-            if os.path.exists(dir):
-                # The helper function has the following validations:
-                # * Fastq file(s) must be present
-                # * Can't mix gz and fastq files (must be all same type)
-                fastq_dict[sample] = helper.get_sample_fastq_paths(dir)
-                # TODO: could easily write this to a file...
-            else:
-                msg = "\n\nDirectory {} does not contain fastq files.\n".format(dir)
+    samples = samplesheet[sample_col]
+    fq_dirs = samplesheet[fq_col]
+    # fastq_dict = OrderedDict() # If wanted to store this info somewhere
+    for sample, dir in zip(samples, fq_dirs):
+        if os.path.exists(dir):
+            # The helper function has the following validations:
+            # * Fastq file(s) must be present
+            # * Can't mix gz and fastq files (must be all same type)
+            fastqs = helper.get_sample_fastq_paths(dir)
+            if not fastqs:
+                msg = "\n\nNo fastq files found in sample directory {}.\n"
                 raise RuntimeError(msg)
+            # else:
+            #     fastq_dict[sample] = fastqs
+            #     TODO: could easily write this to a file...
+        else:
+            msg = "\n\nSample directory {} cannot be read.\n".format(dir)
+            raise RuntimeError(msg)
 
 
 def validate_genomes(ref_dict, type):
@@ -228,15 +237,15 @@ def validate_genomes(ref_dict, type):
     if type == "diffex":
         for k in ["fasta", "gtf", "rsem_star_index"]:
             ref_dict.pop(k)
+    cant_read = []
     for k,v in ref_dict.items():
-        cant_read = []
         if k == "rsem_star_index":
             v = v + ".chrlist" # Given index prefix, test for chromosome list
         if not os.access(v, os.R_OK): # Test for read access
             cant_read.append(v)
-        if cant_read:
-            msg = "\n\nCan't read references:\n{}\n"
-            raise RuntimeError(msg)
+    if cant_read:
+        msg = "\n\nCan't read references:\n{}\n"
+        raise RuntimeError(msg)
 
 
 def write_stuff(config_dict, config_fn, wat_dir=_WATERMELON_ROOT):
@@ -287,7 +296,8 @@ if __name__ == "__main__":
     validate_genomes(config_dict["references"], args.type)
     # Some validations depend on type of config
     if args.type == "align_qc":
-        validate_fastq_dirs(config_dict, args.x_sample_col, args.x_input_col)
+        with open(config_dict["samplesheet"]) as ssfh:
+            validate_fastq_dirs(ssfh, args.x_sample_col, args.x_input_col)
     elif args.type == "diffex":
         foo = "bar"
 

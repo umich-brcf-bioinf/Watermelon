@@ -22,15 +22,6 @@ Uses template values for:
 * Default report description (if README.txt not available)
 '''
 
-# Need to add/test:
-
-# Validations:
-# Fastqs in sample dirs, readable
-
-# Don't think it makes sense to require sample dir name matches samplesheet
-# anymore since the paths are given
-
-
 import argparse
 import copy
 import getpass
@@ -151,8 +142,7 @@ def _get_analyst_name(analyst_info_csv, user):
     return analyst_name
 
 
-def _generate_samplesheet(fq_parent_dirs, fname):
-    print("Generating sample sheet {} ...".format(fname))
+def generate_samplesheet(fq_parent_dirs):
     samples_dict = OrderedDict()
     for parent_dir in fq_parent_dirs:
         if not os.path.exists(parent_dir):
@@ -162,20 +152,16 @@ def _generate_samplesheet(fq_parent_dirs, fname):
         sample_dirs = [(d.name, os.path.abspath(d)) for d in os.scandir(parent_dir) if d.is_dir()]
         sample_dirs = natsorted(sample_dirs)
         if not sample_dirs:
-            msg = "\n\nInput run directoy {} contains no subdirectories.\n".format(parent_dir)
+            msg = "\n\nInput run directory {} contains no subdirectories.\n".format(parent_dir)
             raise RuntimeError(msg)
         # Add these entries to samples_dict
         for d in sample_dirs:
             samples_dict[d[0]] = d[1]
-
     # Making a dataframe to write out to csv
     samples_df = pd.DataFrame.from_dict(samples_dict, orient='index', columns=['input_dir'])
     samples_df.index.name = "sample"
     samples_df.reset_index(inplace=True)
-    # Make sure we don't overwrite the samplesheet
-    _no_overwrite_check([fname])
-    samples_df.to_csv(fname, index=False)
-    print("Done.")
+    return samples_df
 
 
 def get_pipe_version(vfn):
@@ -232,38 +218,41 @@ def make_config_dict(template_config, args, version):
     # If non-default sample col is given, add it to the config
     if args.x_sample_col != _DEFAULT_SAMPLE_COL:
         config.insert(0, "sample_col", args.x_sample_col)
-    if args.sample_sheet:
-        config.insert(0, "samplesheet", os.path.abspath(args.sample_sheet))
-    # Auto-generate samplesheet if input run dirs specified
-    elif args.input_run_dirs:
-        ss_fn = "samplesheet.csv"
-        _generate_samplesheet(args.input_run_dirs, ss_fn)
-        config.insert(0, "samplesheet", os.path.abspath(ss_fn))
+    # Set samplesheet absolute path, default 'samplesheet.csv' if
+    # it will be auto-generated later
+    if args.input_run_dirs:
+        ssfp = os.path.join(os.getcwd(), "samplesheet.csv")
+    elif args.sample_sheet:
+        ssfp = os.path.abspath(args.sample_sheet)
+    config.insert(0, "samplesheet", ssfp)
     config.insert(0, "watermelon_version", version)
     config.insert(0, "email", email)
 
     # Add analyst name to report info
+    # Update report project_name with args.project_id
     analyst_name = _get_analyst_name(args.x_analyst_info, user)
     if config.get("report_info"):
         config["report_info"]["analyst_name"] = analyst_name
+        config["report_info"]["project_name"] = args.project_id
+
+
 
     return config
 
-def validate_fastq_dirs(ssfh, sample_col, fq_col):
-    samplesheet = pd.read_csv(ssfh, comment="#", dtype="object")
-    if not sample_col in samplesheet.columns:
+def validate_fastq_dirs(ss_df, sample_col, fq_col):
+    if not sample_col in ss_df.columns:
         msg = "\n\nThe sample sheet must have a column labeled '{}'\n".format(sample_col)
         raise RuntimeError(msg)
-    if not fq_col in samplesheet.columns:
+    if not fq_col in ss_df.columns:
         msg = "\n\nThe sample sheet must have a column labeled '{}'\n".format(fq_col)
         raise RuntimeError(msg)
 
-    samples = samplesheet[sample_col]
-    fq_dirs = samplesheet[fq_col]
+    samples = ss_df[sample_col]
+    fq_dirs = ss_df[fq_col]
     # fastq_dict = OrderedDict() # If wanted to store this info somewhere
     for sample, dir in zip(samples, fq_dirs):
         if os.path.exists(dir):
-            # The helper function has the following validations:
+            # The helper function assists/provides the following validations:
             # * Fastq file(s) must be present
             # * Can't mix gz and fastq files (must be all same type)
             fastqs = helper.get_sample_fastq_paths(dir)
@@ -297,15 +286,23 @@ def validate_genomes(ref_dict, type):
         raise RuntimeError(msg)
 
 
-def write_stuff(config_dict, config_fn, wat_dir=_WATERMELON_ROOT):
+def write_stuff(config_dict, config_fn, wat_dir, ss_df=None):
     # Make sure we don't overwrite things
-    _no_overwrite_check(["Watermelon", config_fn])
+    check_list = ["Watermelon", config_fn]
+    if isinstance(ss_df, pd.DataFrame):
+        write_samplesheet = True
+        check_list.append(config_dict["samplesheet"])
+    _no_overwrite_check(check_list)
     print("Writing config to working dir...")
     # Write the config file
     with open(config_fn, "w") as config_fh:
         ruamel_yaml.round_trip_dump(
             config_dict, config_fh, default_flow_style=False, indent=4
         )
+    # Write the auto-generated samplesheet if necessary
+    if write_samplesheet:
+        print("Done.\nWriting auto-generated samplesheet...")
+        ss_df.to_csv(config_dict["samplesheet"])
     # Copy Watermelon to project dir
     print("Done.\nCopying Watermelon to working dir...")
     source = os.path.join(wat_dir, "")  # Add trailing slash for rsync (syntax important)
@@ -343,17 +340,27 @@ if __name__ == "__main__":
     # Make the config
     config_dict = make_config_dict(template_cfg_dict, args, version)
 
+    # Auto-generate samplesheet if input run dirs specified
+    if args.input_run_dirs:
+        samplesheet_df = generate_samplesheet(args.input_run_dirs)
+    else:
+        # Read in the given samplesheet for validation
+        samplesheet_df = pd.read_csv(config_dict["samplesheet"], comment="#", dtype="object")
+
     # Perform config validations
     validate_genomes(config_dict["references"], args.type)
     # Some validations depend on type of config
     if args.type == "align_qc":
-        with open(config_dict["samplesheet"]) as ssfh:
-            validate_fastq_dirs(ssfh, args.x_sample_col, args.x_input_col)
+        validate_fastq_dirs(samplesheet_df, args.x_sample_col, args.x_input_col)
     elif args.type == "diffex":
         foo = "bar"
 
-    write_stuff(
-        config_dict=config_dict,
-        config_fn="config_{}.yaml".format(args.project_id),
-        wat_dir=_WATERMELON_ROOT
-    )
+    # Write the outputs
+    write_kwargs = {
+        "config_dict": config_dict,
+        "config_fn": "config_{}.yaml".format(args.project_id),
+        "wat_dir": _WATERMELON_ROOT
+    }
+    if args.input_run_dirs:
+        write_kwargs["ss_df"] = samplesheet_df
+    write_stuff(**write_kwargs)

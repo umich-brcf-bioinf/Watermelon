@@ -48,6 +48,7 @@ import pdb # TWS DEBUG
 # Find path knowing current location of Watermelon/scripts/watermelon_init.py
 _WATERMELON_ROOT = os.path.realpath(os.path.dirname(os.path.dirname(__file__)))
 _DEFAULT_GENOME_REFERENCES = os.path.join(_WATERMELON_ROOT, "config", "genome_references.yaml")
+_DEFAULT_ACKNOWLEDGEMENT = os.path.join(_WATERMELON_ROOT, "report", "default_acknowledge.txt")
 _DEFAULT_SAMPLE_COL = "sample"
 _DEFAULT_ANALYST_INFO = "/nfs/turbo/umms-brcfpipeline/pipelines/analyst_info.csv"
 
@@ -261,7 +262,15 @@ def make_config_dict(template_config, args, version):
         # Insert sequencing info from file
         with open(args.x_sequencing_info, "r") as fh:
             lines = fh.readlines()
-            config["report_info"]["prep_description"] = "".join(lines)
+            linestring = "".join([l.strip() for l in lines])
+            config["report_info"]["prep_description"] = linestring
+        # Insert acknowledgement text from file
+        with open(args.x_acknowledgement_text, "r") as fh:
+            lines = fh.readlines()
+            linestring = "".join([l.strip() for l in lines])
+            if args.AGC:
+                linesting = re.sub("Bioinformatics", "Advanced Genomics", linestring)
+            config["report_info"]["acknowledgement_text"] = linestring
 
     return config
 
@@ -347,12 +356,14 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--type", default="align_qc", choices=["align_qc", "diffex"], help="Type of config file to produce. Uses the appropriate template, and has the appropriate values.")
     samples_in = parser.add_mutually_exclusive_group(required=True)
     samples_in.add_argument("-s", "--sample_sheet", help="CSV file that contains sample IDs, paths containing samples\' fastq files, and optional columns for phenotype information (required for diffex).")
-    samples_in.add_argument("-i", "--input_run_dirs", type=str, nargs="*", help="One or more paths to run dirs. Each run dir should contain samples dirs which should in turn contain one or more fastq.gz files. The sample names will be derived from the sample directories")
+    samples_in.add_argument("-i", "--input_run_dirs", type=str, nargs="*", help="One or more paths to run dirs. Each run dir should contain samples dirs which should in turn contain one or more fastq.gz files. The sample names will be derived from the sample directories.")
+    parser.add_argument("--AGC", default=False, action="store_true", help="An optional flag which enables configuration options particularly needed by the UMich Advanced Genomics Core.")
     parser.add_argument("--x_analyst_info", type=str, default=_DEFAULT_ANALYST_INFO, help=argparse.SUPPRESS)
     parser.add_argument("--x_alt_template", type=str, default=None, help=argparse.SUPPRESS)
     parser.add_argument("--x_genome_references", type=str, default=_DEFAULT_GENOME_REFERENCES, help=argparse.SUPPRESS)
-    parser.add_argument("--x_working_dir", type=str, default=os.getcwd(), help=argparse.SUPPRESS)
+    parser.add_argument("--x_acknowledgement_text", type=str, default=_DEFAULT_ACKNOWLEDGEMENT, help=argparse.SUPPRESS)
     parser.add_argument("--x_sequencing_info", type=str, default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--x_working_dir", type=str, default=os.getcwd(), help=argparse.SUPPRESS)
     parser.add_argument("--x_sample_col", type=str, default="sample", help=argparse.SUPPRESS)
     parser.add_argument("--x_input_col", type=str, default="input_dir", help=argparse.SUPPRESS)
 

@@ -1,14 +1,7 @@
 report_info: #These strings are used directly in the report
     project_name: "{project_id}" #Don't use spaces in project name. Will fail on cluster
-    prep_description: 'Prior tissue or cell isolation along with generation of total RNA was performed by the researcher. Sequencing was performed by the UM Advanced Genomics Core, with libraries constructed and subsequently subjected to 150 paired end cycles on the NovaSeq-6000 platform (Illumina).'
-    acknowledgement_text:
-        It is important to document use of each Biomedical Research Core Facility by investigators in publications. This facilitates efforts to obtain funding for our Cores and their continued functioning. Please recognize the core’s contribution in the Acknowledgment section of your publications.
-
-
-        “We acknowledge support from the Bioinformatics Core of the University of Michigan Medical School’s Biomedical Research Core Facilities.”
-
-
-        If core staff have added scientific value to your project — made intellectual contributions in design, analysis and interpretation of data and/or manuscript writing, then please consider including them as co-authors in your publications.
+    prep_description: "{x_sequencing_info}" # Brought in by reading in x_sequencing_info file
+    acknowledgement_text: "{x_acknowledgement_text}" # Brought in by reading in x_acknowledgement_text file
     # Boolean value to determine whether to include text regarding follow-up.
     include_follow_up: True
     include_pct_dups: True

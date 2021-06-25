@@ -141,6 +141,23 @@ def _get_analyst_name(analyst_info_csv, user):
 
     return analyst_name
 
+def _find_inf_file(dir_list, fname):
+    potential_readmes = [os.path.join(d, fname) for d in dir_list]
+    readmes = [f for f in potential_readmes if os.path.isfile(f)]
+    if len(readmes) > 1:
+        prompt_fmt = "\nFound multiple info files. Will only use the first one:\n{}\n" \
+            "Yes to continue, No to exit\n"
+        response = _prompt_yes_no(prompt_fmt.format(readmes[0]))
+        if response:
+            return readmes[0]
+        else:
+            msg = "Exiting due to file conflicts.\nNote: you can set a custom sequencing information file with --x_sequencing_info"
+            sys.exit(msg)
+    elif len(readmes) == 1:
+        return readmes[0]
+    else:
+        return None
+
 
 def generate_samplesheet(fq_parent_dirs):
     samples_dict = OrderedDict()
@@ -218,12 +235,19 @@ def make_config_dict(template_config, args, version):
     # If non-default sample col is given, add it to the config
     if args.x_sample_col != _DEFAULT_SAMPLE_COL:
         config.insert(0, "sample_col", args.x_sample_col)
-    # Set samplesheet absolute path, default 'samplesheet.csv' if
-    # it will be auto-generated later
+    # Set samplesheet absolute path based on how inputs were given
+    # Also get sequencing info from a file accordingly
     if args.input_run_dirs:
+        # default 'samplesheet.csv' if it will be auto-generated later
         ssfp = os.path.join(os.getcwd(), "samplesheet.csv")
+        # Sequencing info will be taken from adjacent readme if found
+        if not args.x_sequencing_info:
+            args.x_sequencing_info = _find_inf_file(args.input_run_dirs, "README.txt")
     elif args.sample_sheet:
         ssfp = os.path.abspath(args.sample_sheet)
+    # If this is still not set, sequencing info from default readme
+    if not args.x_sequencing_info:
+        args.x_sequencing_info = os.path.join(_WATERMELON_ROOT, "report", "default_seq_info.txt")
     config.insert(0, "samplesheet", ssfp)
     config.insert(0, "watermelon_version", version)
     config.insert(0, "email", email)
@@ -234,8 +258,10 @@ def make_config_dict(template_config, args, version):
     if config.get("report_info"):
         config["report_info"]["analyst_name"] = analyst_name
         config["report_info"]["project_name"] = args.project_id
-
-
+        # Insert sequencing info from file
+        with open(args.x_sequencing_info, "r") as fh:
+            lines = fh.readlines()
+            config["report_info"]["prep_description"] = "".join(lines)
 
     return config
 
@@ -290,7 +316,7 @@ def write_stuff(config_dict, config_fn, wat_dir, ss_df=None):
     # Make sure we don't overwrite things
     check_list = ["Watermelon", config_fn]
     if isinstance(ss_df, pd.DataFrame):
-        write_samplesheet = True
+        # Add samplesheet to overwrite check list if auto-generated
         check_list.append(config_dict["samplesheet"])
     _no_overwrite_check(check_list)
     print("Writing config to working dir...")
@@ -299,8 +325,8 @@ def write_stuff(config_dict, config_fn, wat_dir, ss_df=None):
         ruamel_yaml.round_trip_dump(
             config_dict, config_fh, default_flow_style=False, indent=4
         )
-    # Write the auto-generated samplesheet if necessary
-    if write_samplesheet:
+    # Write auto-generated samplesheet if present
+    if isinstance(ss_df, pd.DataFrame):
         print("Done.\nWriting auto-generated samplesheet...")
         ss_df.to_csv(config_dict["samplesheet"])
     # Copy Watermelon to project dir
@@ -326,6 +352,7 @@ if __name__ == "__main__":
     parser.add_argument("--x_alt_template", type=str, default=None, help=argparse.SUPPRESS)
     parser.add_argument("--x_genome_references", type=str, default=_DEFAULT_GENOME_REFERENCES, help=argparse.SUPPRESS)
     parser.add_argument("--x_working_dir", type=str, default=os.getcwd(), help=argparse.SUPPRESS)
+    parser.add_argument("--x_sequencing_info", type=str, default=None, help=argparse.SUPPRESS)
     parser.add_argument("--x_sample_col", type=str, default="sample", help=argparse.SUPPRESS)
     parser.add_argument("--x_input_col", type=str, default="input_dir", help=argparse.SUPPRESS)
 
@@ -356,7 +383,7 @@ if __name__ == "__main__":
         foo = "bar"
 
     # Write the outputs
-    write_kwargs = {
+    write_kwargs = { # Using kwargs for optional samplesheet_df if it's to be written
         "config_dict": config_dict,
         "config_fn": "config_{}.yaml".format(args.project_id),
         "wat_dir": _WATERMELON_ROOT

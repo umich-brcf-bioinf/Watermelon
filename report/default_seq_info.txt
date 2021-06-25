@@ -1,0 +1,4 @@
+Prior tissue or cell isolation along with generation of total
+RNA was performed by the researcher. Sequencing was performed by the UM Advanced
+Genomics Core, with libraries constructed and subsequently subjected to 150
+paired end cycles on the NovaSeq-6000 platform (Illumina).

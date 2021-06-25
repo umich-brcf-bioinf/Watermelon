@@ -5,6 +5,7 @@ import os
 import pytest
 import re
 
+import pandas as pd
 from collections import namedtuple
 
 try:
@@ -75,19 +76,18 @@ def test_validate_fastq_dirs():
     content = ["sample_0{},{}/sample_0{}".format(x, fastq_basedir, x) for x in range(1,7)]
     samplesheet_str = "\n".join(header + content)
     samplesheet_file_like = StringIO(samplesheet_str)
+    ss_df = pd.read_csv(samplesheet_file_like)
     # Base case
     watermelon_init.validate_fastq_dirs(
-        ssfh=samplesheet_file_like,
+        ss_df=ss_df,
         sample_col="sample",
         fq_col="input_dir"
     )
     # Test dir without fastq's
-    content[0] = re.sub("/sample_01$", "", content[0])
-    samplesheet_str = "\n".join(header + content)
-    samplesheet_file_like = StringIO(samplesheet_str)
+    ss_df.at[0, "input_dir"] = os.path.dirname(ss_df.at[0, "input_dir"])
     with pytest.raises(RuntimeError, match = "No fastq files found"):
         watermelon_init.validate_fastq_dirs(
-            ssfh=samplesheet_file_like,
+            ss_df=ss_df,
             sample_col="sample",
             fq_col="input_dir"
         )

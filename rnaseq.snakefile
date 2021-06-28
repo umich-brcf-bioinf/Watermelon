@@ -22,13 +22,7 @@ JOB_LOG_DIR = os.path.join(os.getcwd(), "job_logs", "")
 CLUSTER_LOG_DIR = os.path.join(os.getcwd(), "cluster_logs")
 
 #Load in samplesheet
-samplesheet = pd.read_csv(config["samplesheet"], comment='#', dtype='object').set_index("sample", drop=True)
-
-#Add sample info to config
-#sample_phenotype_value_dict = samplesheet.to_dict(orient='index')
-#TWS - for some reason, adding the above dict to the config breaks the Rscript functionality
-#TWS - instead, adding only the sample names
-config['samples'] = list(samplesheet.index)
+SAMPLESHEET = pd.read_csv(config["samplesheet"], comment='#', dtype='object').set_index("sample", drop=True)
 
 # Allow custom capture regex if specified in config
 if config.get('capture_regex'):
@@ -36,6 +30,10 @@ if config.get('capture_regex'):
 else:
     capture_regex = r'.*_R(\d+)[_0-9]*\.fastq.*'
 
+FASTQS_TO_CONCAT = helper.fastqs_to_concat(SAMPLESHEET, capture_regex)
+SAMPLE_BNAMES = helper.sample_bnames_from_filenames(SAMPLESHEET, capture_regex, '{}_R{}')
+
+#import pdb; pdb.set_trace()
 
 # Determine if run in cluster environment
 # If so, make cluster_logs folder if it's missing
@@ -67,9 +65,6 @@ else:
 # Now with the index, get the value
 CONFIGFILE_PATH = sys.argv[cfg_idx]
 
-# Set up the input manager
-INPUT_MANAGER = helper.InputFastqManager(input_dir=INPUT_DIR, capture_regex=capture_regex)
-
 onstart:
     helper.email(email_config=config.get('email', None), subject_prefix='Watermelon started: ')
 onsuccess:
@@ -84,18 +79,18 @@ onerror:
 # Defining targets
 ALIGN_DELIVERABLES = [
     expand(DELIVERABLES_DIR + "trimmed/trimmed_reads/{basename}_trimmed.fastq.gz",
-        basename=INPUT_MANAGER.gather_basenames(config['samples'])),
+        basename=helper.gather_basenames(SAMPLE_BNAMES, SAMPLESHEET.index)),
     expand(DELIVERABLES_DIR + "alignment/aligned_bams/{sample}.genome.{ext}",
-        sample=config["samples"], ext=["bam", "bai"]),
+        sample=SAMPLESHEET.index, ext=["bam", "bai"]),
     expand(DELIVERABLES_DIR + "trimmed/trimmed_reads_fastqc/{basename}_trimmed_fastqc.html",
-         basename=INPUT_MANAGER.gather_basenames(config['samples'])),
+         basename=helper.gather_basenames(SAMPLE_BNAMES, SAMPLESHEET.index)),
     expand(DELIVERABLES_DIR + "counts/gene_{type}.annot.txt",
         type=['FPKM', 'TPM', 'expected_count']),
     DELIVERABLES_DIR + "alignment/alignment_qc.html"
 ]
 RSEM_ALL = [
     expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.{result_type}',
-        sample=config['samples'],
+        sample=SAMPLESHEET.index,
         result_type=['genes.results', 'isoforms.results', 'genome.bam', 'transcript.bam']
     ),
     ALIGNMENT_DIR + "07-qc/alignment_qc.html",
@@ -118,11 +113,11 @@ REPORT_ALL = [
 if config.get('fastq_screen'):
     FASTQ_SCREEN_ALIGNMENT = expand(ALIGNMENT_DIR + "03-fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
         screen_type=['multi_species', 'biotype'],
-        basename=INPUT_MANAGER.gather_basenames(config['samples']))
+        basename=helper.gather_basenames(SAMPLE_BNAMES, SAMPLESHEET.index)),
         # ^ This is useful for the inclusion/exclusion in multiqc rule as necessary
     FASTQ_SCREEN_DELIVERABLES = expand(DELIVERABLES_DIR + "fastq_screen/{screen_type}/{basename}_trimmed_screen.html",
         screen_type=['multi_species', 'biotype'],
-        basename=INPUT_MANAGER.gather_basenames(config['samples']))
+        basename=helper.gather_basenames(SAMPLE_BNAMES, SAMPLESHEET.index))
 else:
     FASTQ_SCREEN_ALIGNMENT = []
     # ^ This is useful for the inclusion/exclusion in multiqc rule as necessary

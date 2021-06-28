@@ -337,7 +337,7 @@ def write_stuff(config_dict, config_fn, wat_dir, ss_df=None):
     # Write auto-generated samplesheet if present
     if isinstance(ss_df, pd.DataFrame):
         print("Done.\nWriting auto-generated samplesheet...")
-        ss_df.to_csv(config_dict["samplesheet"])
+        ss_df.to_csv(config_dict["samplesheet"], index=False)
     # Copy Watermelon to project dir
     print("Done.\nCopying Watermelon to working dir...")
     source = os.path.join(wat_dir, "")  # Add trailing slash for rsync (syntax important)

@@ -6,6 +6,7 @@ The following samples were analyzed:
 ```{r include = FALSE}
     samplesheet_file = config[['samplesheet']]
     samplesheet = read.csv(samplesheet_file)
+    samplesheet$input_dir = NULL
     samples_kable = kable(samplesheet, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
         kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
         scroll_box(width = '100%')

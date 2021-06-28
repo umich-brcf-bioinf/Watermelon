@@ -9,7 +9,7 @@ def get_ref_base():
 rule align_rsem_star:
     input:
         fastq_files = lambda wildcards: expand(ALIGNMENT_DIR + "02-cutadapt/{basename}_trimmed.fastq.gz",
-            basename=INPUT_MANAGER.sample_bnames_dict[wildcards.sample]
+            basename=SAMPLE_BNAMES[wildcards.sample]
         ),
         #This portion determines if a new reference must be created
         genomeParameters = os.path.dirname(get_ref_base()) + '/genomeParameters.txt'

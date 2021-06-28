@@ -1,9 +1,9 @@
 rule align_combine_counts_to_matrices:
     input:
         genes = expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.genes.results',
-                sample=config['samples']),
+            sample=SAMPLESHEET.index),
         isoforms = expand(ALIGNMENT_DIR + '04-rsem_star_align/{sample}.isoforms.results',
-                      sample=config['samples'])
+            sample=SAMPLESHEET.index)
     output:
         gene = ALIGNMENT_DIR + '05-combine_counts/gene_{metric}.txt',
         isoform = ALIGNMENT_DIR + '05-combine_counts/isoform_{metric}.txt'

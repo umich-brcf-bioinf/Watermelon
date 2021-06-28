@@ -95,51 +95,38 @@ class PhenotypeManager(object):
         return sorted(with_replicates)
 
 
+def sample_bnames_from_filenames(samplesheet, capture_regex, bname_fmt):
+    # Uses the samplesheet to get sample names and fastq directories,
+    # then creates a dict with file basenames like {sample}_R{readnum} for each sample in the dict.
+    # Returns:
+    #     bnames_dict: list - dict with samples as keys and list of basenames as values
+    bnames_dict = defaultdict(list)
+    for row in samplesheet.itertuples(index=True, name=None):
+        sample = row[0]
+        fq_list = get_sample_fastq_paths(row[1])
+        captured_groups = set()
+        for file in fq_list:
+            basename = os.path.basename(file)
+            rmatch = re.match(capture_regex, basename)
+            if not rmatch:
+                msg_fmt = 'File {} did not match regular expression {}. Cannot capture grouping information from filename.'
+                raise RuntimeError(msg_fmt.format(basename, capture_regex))
+            else:
+                captured = rmatch.group(1)
+                captured_groups.add(captured)
+        sample_bnames = [bname_fmt.format(sample, group) for group in captured_groups]
+        bnames_dict[sample] = sorted(sample_bnames)
+    return bnames_dict
 
-class InputFastqManager(object):
-    def __init__(self, input_dir, capture_regex):
-        self.input_dir = input_dir
-        self.input_paths_dict = self._get_fastq_paths_dict_from_input_dir()
-        self.fastqs_to_concat_dict = self._fastqs_to_concat_from_filenames(capture_regex=capture_regex)
-        self.sample_bnames_dict = self._sample_bnames_from_filenames(capture_regex=capture_regex, bname_fmt='{}_R{}')
 
-
-    def _sample_bnames_from_filenames(self, capture_regex, bname_fmt):
-        # Uses filenames in input_paths_dict, to get grouping information for a sample's input files,
-        # Then creates a list of file basenames like {sample}_R{readnum} for each sample in the dict.
-        # Arguments:
-        #     capture_regex: string - regular expression used to capture group information
-        #     bname_fmt: string - format with two groups to be filed in e.g. {}_R{}
-        # Returns:
-        #     bnames_dict: list - dict with samples as keys and list of basenames as values
-
-        def inner_work(sample, sample_input_files):
-            captured_groups = set()
-            for file in sample_input_files:
-                basename = os.path.basename(file)
-                rmatch = re.match(capture_regex, basename)
-                if not rmatch:
-                    msg_fmt = 'File {} did not match regular expression {}. Cannot capture grouping information from filename.'
-                    raise RuntimeError(msg_fmt.format(basename, capture_regex))
-                else:
-                    captured = rmatch.group(1)
-                    captured_groups.add(captured)
-            sample_bnames = [bname_fmt.format(sample, group) for group in captured_groups]
-            return sorted(sample_bnames)
-
-        # For every key, pass that key and a value derived from its key to inner_work function
-        # The returned value, along with the given key become the key-value pair in an outer dictionary
-        bnames_dict = {key: inner_work(key, self.input_paths_dict[key]) for key in self.input_paths_dict}
-        return bnames_dict
-
-    def gather_basenames(self, sample_list):
-        '''Gather a list of basenames from sample_bnames_dict, for all samples in sample_list'''
-        basenames = []
-        filtered_dict = _filter_dict_by_keys(self.sample_bnames_dict, sample_list)
-        #Gather basenames from filtered basenames_dict
-        for v in filtered_dict.values():
-            basenames.extend(v)
-        return sorted(basenames)
+def gather_basenames(sample_bnames_dict, sample_list):
+    '''Gather a list of basenames from sample_bnames_dict, for all samples in sample_list'''
+    basenames = []
+    filtered_dict = _filter_dict_by_keys(sample_bnames_dict, sample_list)
+    #Gather basenames from filtered basenames_dict
+    for v in filtered_dict.values():
+        basenames.extend(v)
+    return sorted(basenames)
 
 
 def get_sample_fastq_paths(sample_fastq_dir):
@@ -161,15 +148,18 @@ def get_sample_fastq_paths(sample_fastq_dir):
         return None
 
 
-def fastqs_to_concat_from_filenames(inputs_dict, capture_regex):
-    # Uses filenames in input_paths_dict, to get grouping information for each sample's input files,
-    # and gathers a list of input files to concatenate based on that grouping for each sample in the dict
+def fastqs_to_concat(samplesheet, capture_regex):
+    # Uses the samplesheet to get sample names and fastq directories
+    # Then gets grouping information for each directory of fastq files,
+    # and creates a dict of input files to concatenate based on that grouping
     # Returns:
-    #     cat_fq_dict: Nested dict with sample and group representing top-level and 1st-level keys, repsectively
-
-    def inner_work(sample_input_files):
-        sample_cat_dict = defaultdict(list)
-        for file in sample_input_files:
+    #     cat_fq_dict: Dict with sample and group representing top-level and 1st-level keys, repsectively
+    cat_fq_dict = dict()
+    for row in samplesheet.itertuples(index=True, name=None):
+        grouping_dict = defaultdict(list)
+        sample = row[0]
+        fq_list = get_sample_fastq_paths(row[1])
+        for file in fq_list:
             basename = os.path.basename(file)
             rmatch = re.match(capture_regex, basename)
             if not rmatch:
@@ -177,12 +167,25 @@ def fastqs_to_concat_from_filenames(inputs_dict, capture_regex):
                 raise RuntimeError(msg_fmt.format(basename, capture_regex))
             else:
                 captured = rmatch.group(1)
-                sample_cat_dict[captured].append(file)
-        return sample_cat_dict
-
-    # For every key, pass that key and a value derived from its key to inner_work function
-    # The returned value, along with the given key become the key-value pair in an outer dictionary
-    cat_fq_dict = {key: inner_work(inputs_dict[key]) for key in inputs_dict}
+                grouping_dict[captured].append(file)
+        cat_fq_dict[sample] = grouping_dict
+    #
+    # def inner_work(sample_input_files):
+    #     sample_cat_dict = defaultdict(list)
+    #     for file in sample_input_files:
+    #         basename = os.path.basename(file)
+    #         rmatch = re.match(capture_regex, basename)
+    #         if not rmatch:
+    #             msg_fmt = 'File {} did not match regular expression {}. Cannot capture grouping information from filename.'
+    #             raise RuntimeError(msg_fmt.format(basename, capture_regex))
+    #         else:
+    #             captured = rmatch.group(1)
+    #             sample_cat_dict[captured].append(file)
+    #     return sample_cat_dict
+    #
+    # # For every key, pass that key and a value derived from its key to inner_work function
+    # # The returned value, along with the given key become the key-value pair in an outer dictionary
+    # cat_fq_dict = {key: inner_work(inputs_dict[key]) for key in inputs_dict}
     return cat_fq_dict
 
 

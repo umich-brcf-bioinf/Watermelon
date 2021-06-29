@@ -267,10 +267,14 @@ def make_config_dict(template_config, args, version):
         # Insert acknowledgement text from file
         with open(args.x_acknowledgement_text, "r") as fh:
             lines = fh.readlines()
-            linestring = "".join([l.strip() for l in lines])
+            linestring = "".join(lines) # Preserve newlines to separate text
             if args.AGC:
                 linesting = re.sub("Bioinformatics", "Advanced Genomics", linestring)
             config["report_info"]["acknowledgement_text"] = linestring
+        # Set (other) AGC-specific report details
+        if args.AGC:
+            config_dict["report_info"]["include_follow_up"] = False
+            config_dict["report_info"]["include_pct_dups"] = False
 
     return config
 

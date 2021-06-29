@@ -21,7 +21,7 @@ rule report_align_only:
         report_dir = REPORT_DIR,
         diffex_dir = "",
         add_background = False, # TODO: These could later be moved out to config
-        add_wetlab = False,
+        add_prep_description = True,
         custom_sections = 'results', # Rscript expects a string of comma separated values. All sections: 'methods,results,appendix'
         mqc_plots_dir = ALIGNMENT_DIR + '07-qc/multiqc_plots/png/'
     script:

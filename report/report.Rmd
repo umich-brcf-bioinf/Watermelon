@@ -83,7 +83,7 @@ if(snakemake@rule == 'report_align_diffex'){
 # Flags for showing additional optional sections
 
 show_background_biology = snakemake@params[['add_background']]
-show_methods_wetlab = snakemake@params[['add_wetlab']]
+show_methods_prep = snakemake@params[['add_prep_description']]
 custom_choices = unlist(strsplit(snakemake@params[['custom_sections']], ','))
 
 show_background_samples = TRUE
@@ -147,7 +147,7 @@ Methods
 
 # Methods
 
-```{r methods_wetlab_section, child = 'child_methods_wetlab.Rmd', eval = show_methods_wetlab}
+```{r methods_prep_section, child = 'child_methods_prep.Rmd', eval = show_methods_prep}
 ```
 
 

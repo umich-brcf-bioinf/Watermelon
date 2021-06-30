@@ -40,7 +40,9 @@ CONFIG_SCHEMA_PATH = os.path.join(WATERMELON_CONFIG_DIR, 'config_schema.yaml')
 SAMPLES_KEY = 'samples'
 
 #Load in samplesheet
-samplesheet = pd.read_csv(config["samplesheet"], comment='#', dtype='object').set_index("sample", drop=True)
+samplesheet = pd.read_csv(config["samplesheet"], comment='#', dtype='object') \
+    .drop("input_dir", axis=1, errors="ignore") \
+    .set_index("sample", drop=True)
 
 PHENOTYPES = (list(samplesheet.columns))
 

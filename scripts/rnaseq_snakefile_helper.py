@@ -80,9 +80,10 @@ def init_references(config_references):
 class PhenotypeManager(object):
     '''Interprets a subset of the config to help answer questions around how
     samples map to phenotype labels and values and vice versa.'''
-    def __init__(self,
-                 config={}):
-        self.samplesheet = pd.read_csv(config["samplesheet"], comment='#', dtype='string', keep_default_na=False).set_index("sample", drop=True)
+    def __init__(self, config={}):
+        self.samplesheet = pd.read_csv(config["samplesheet"], comment='#', dtype='string', keep_default_na=False) \
+            .drop("input_dir", axis=1, errors="ignore") \
+            .set_index("sample", drop=True)
         #sample_phenotype_value_dict : {sample : { pheno_label: pheno_value } }
         self.sample_phenotype_value_dict = self.samplesheet.to_dict(orient='index')
 

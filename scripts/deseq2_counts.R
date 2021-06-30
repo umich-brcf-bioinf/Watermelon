@@ -34,6 +34,7 @@ DEFAULT_SAMPLE_COLUMN = 'sample'
 # Get phenotype matrix
 sample.info.file = snakemake@config[['samplesheet']]
 pdata = read.csv(sample.info.file, comment.char = "#", colClasses=c('character'), stringsAsFactors = FALSE)
+pdata$input_dir = NULL
 
 # Import data
 message('Importing count data')

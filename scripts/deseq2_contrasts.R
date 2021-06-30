@@ -40,6 +40,7 @@ register(multicore_param, default=TRUE)
 # Get phenotype matrix
 sample.info.file = snakemake@config[['samplesheet']]
 pdata = read.csv(sample.info.file, comment.char = "#")
+pdata$input_dir = NULL
 
 message(sprintf('Testing %s: %s vs %s', factorName, testName, referenceName))
 

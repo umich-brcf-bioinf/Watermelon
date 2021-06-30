@@ -330,7 +330,7 @@ def write_stuff(config_dict, config_fn, wat_dir, ss_df=None):
     check_list = ["Watermelon", config_fn]
     if isinstance(ss_df, pd.DataFrame):
         # Add samplesheet to overwrite check list if auto-generated
-        check_list.append(config_dict["samplesheet"])
+        check_list.append(os.path.relpath(config_dict["samplesheet"]))
     _no_overwrite_check(check_list)
     print("Writing config to working dir...")
     # Write the config file

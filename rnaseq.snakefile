@@ -13,10 +13,9 @@ WATERMELON_CONFIG_DIR = os.path.join(WORKFLOW_BASEDIR, 'config', '')
 WATERMELON_SCRIPTS_DIR = os.path.join(WORKFLOW_BASEDIR, 'scripts', '')
 # Output directories from config
 _DIRS = config.get("dirs", {})
-INPUT_DIR = os.path.join(_DIRS.get("input", "inputs"), "")
-ALIGNMENT_DIR = os.path.join(_DIRS.get("alignment_output", "alignment_results"), "")
-DELIVERABLES_DIR = os.path.join(_DIRS.get("deliverables_output", "deliverables"), "")
-REPORT_DIR = os.path.join(_DIRS.get("report_output", "report"), "")
+ALIGNMENT_DIR = os.path.join(_DIRS.get("alignment_results", "alignment_results"), "")
+DELIVERABLES_DIR = os.path.join(_DIRS.get("deliverables", "deliverables"), "")
+REPORT_DIR = os.path.join(_DIRS.get("report", "report"), "")
 # Logging directories
 JOB_LOG_DIR = os.path.join(os.getcwd(), "job_logs", "")
 CLUSTER_LOG_DIR = os.path.join(os.getcwd(), "cluster_logs")

@@ -1,5 +1,10 @@
 # Changelog
 
+1.10.1 (06/30/2021)
+-------------------
+- Add support for inclusion of 'input_dir' column in samplesheet (will be used in next major release)
+- Remove deprecated unicode read-mode from scripts
+
 1.10.0 (06/02/2021)
 -------------------
 - Update methods PDF incl. image

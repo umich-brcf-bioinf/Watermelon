@@ -156,15 +156,15 @@ def fastqs_to_concat(samplesheet, capture_regex):
     # Returns:
     #     cat_fq_dict: Dict with sample and group representing top-level and 1st-level keys, repsectively
     cat_fq_dict = dict()
-    for row in samplesheet.itertuples(index=True, name=None):
+    for row in samplesheet.itertuples(name="samplesheet"):
         grouping_dict = defaultdict(list)
-        sample = row[0]
-        fq_list = get_sample_fastq_paths(row[1])
+        sample = row.Index
+        fq_list = get_sample_fastq_paths(getattr(row, "input_dir"))
         for file in fq_list:
             basename = os.path.basename(file)
             rmatch = re.match(capture_regex, basename)
             if not rmatch:
-                msg_fmt = 'File {} did not match regular expression {}. Cannot capture grouping information from filename.'
+                msg_fmt = "File {} did not match regular expression {}. Cannot capture grouping information from filename."
                 raise RuntimeError(msg_fmt.format(basename, capture_regex))
             else:
                 captured = rmatch.group(1)

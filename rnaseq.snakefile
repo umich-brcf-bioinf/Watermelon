@@ -23,7 +23,6 @@ CLUSTER_LOG_DIR = os.path.join(os.getcwd(), "cluster_logs")
 
 #Load in samplesheet
 SAMPLESHEET = pd.read_csv(config["samplesheet"], comment='#', dtype='object') \
-    .drop("input_dir", axis=1, errors="ignore") \
     .set_index("sample", drop=True)
 
 # Allow custom capture regex if specified in config
@@ -34,8 +33,6 @@ else:
 
 FASTQS_TO_CONCAT = helper.fastqs_to_concat(SAMPLESHEET, capture_regex)
 SAMPLE_BNAMES = helper.sample_bnames_from_filenames(SAMPLESHEET, capture_regex, '{}_R{}')
-
-#import pdb; pdb.set_trace()
 
 # Determine if run in cluster environment
 # If so, make cluster_logs folder if it's missing

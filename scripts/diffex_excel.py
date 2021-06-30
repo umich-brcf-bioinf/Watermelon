@@ -144,7 +144,7 @@ def _add_worksheet(workbook, formatter, worksheet_name, input_filepath):
     field_writers = {}
     ncbi_gene_hyperlink = _NcbiGeneHyperlink(formatter, REQUIRED_FIELDS)
     _log('reading {}'.format(input_filepath))
-    with open(input_filepath, 'rU') as input_file:
+    with open(input_filepath, 'r') as input_file:
         header, data = _parse_header_data(input_file)
         _validate_required_fields(header.split(DELIMITER), input_filepath)
         field_names, data, field_writers = ncbi_gene_hyperlink.inject_field(header, data, field_writers, DELIMITER)
@@ -158,7 +158,7 @@ def _add_glossary(workbook, formatter, worksheet_name, input_filepath):
     worksheet = workbook.add_worksheet(worksheet_name)
     field_writers = {}
     _log('adding glossary from {}'.format(input_filepath))
-    with open(input_filepath, 'rU') as input_file:
+    with open(input_filepath, 'r') as input_file:
         header, data = _parse_header_data(input_file)
         field_names = header.split(DELIMITER)
         reader = csv.DictReader(data, fieldnames=field_names, delimiter=DELIMITER)
@@ -171,7 +171,7 @@ def _add_info(workbook, formatter, worksheet_name, input_filepath):
     worksheet = workbook.add_worksheet(worksheet_name)
     field_writers = {}
     _log('adding info from {}'.format(input_filepath))
-    with open(input_filepath, 'rU') as input_file:
+    with open(input_filepath, 'r') as input_file:
         for line_num, line in enumerate(input_file):
             worksheet.write(line_num, 0, line)
 

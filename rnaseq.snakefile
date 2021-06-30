@@ -22,7 +22,9 @@ JOB_LOG_DIR = os.path.join(os.getcwd(), "job_logs", "")
 CLUSTER_LOG_DIR = os.path.join(os.getcwd(), "cluster_logs")
 
 #Load in samplesheet
-SAMPLESHEET = pd.read_csv(config["samplesheet"], comment='#', dtype='object').set_index("sample", drop=True)
+SAMPLESHEET = pd.read_csv(config["samplesheet"], comment='#', dtype='object') \
+    .drop("input_dir", axis=1, errors="ignore") \
+    .set_index("sample", drop=True)
 
 # Allow custom capture regex if specified in config
 if config.get('capture_regex'):

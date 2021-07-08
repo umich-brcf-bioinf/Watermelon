@@ -2,6 +2,7 @@
 # pytest tests/watermelon_init_test2.py
 
 import os
+import os.path
 import pytest
 import re
 
@@ -15,6 +16,68 @@ except ImportError:
 
 import scripts.watermelon_init as watermelon_init
 
+def test_generate_samplesheet_basecase(tmp_path):
+    fq_parent_dir_path = tmp_path / "fq_parent_dir"
+    fq_parent_dir_path.mkdir()
+    (fq_parent_dir_path / "sample1").mkdir()
+    (fq_parent_dir_path / "sample2").mkdir()
+    (fq_parent_dir_path / "sample3").mkdir()
+
+    sample_sheet_df = watermelon_init.generate_samplesheet([fq_parent_dir_path])
+    assert(sample_sheet_df.shape == (3,2))
+    assert(list(sample_sheet_df.columns) == ['sample', 'input_dir'])
+    assert(list(sample_sheet_df['sample']) == ['sample1', 'sample2', 'sample3'])
+    assert(sum(sample_sheet_df['input_dir'].str.contains(str(fq_parent_dir_path))) == 3)
+    assert(list(sample_sheet_df['input_dir'].apply(os.path.basename)) == list(sample_sheet_df['sample']))
+
+def test_generate_samplesheet_usesNaturalSorting(tmp_path):
+    fq_parent_dir_path = tmp_path / "fq_parent_dir"
+    fq_parent_dir_path.mkdir()
+    (fq_parent_dir_path / "sample1").mkdir()
+    (fq_parent_dir_path / "sample10").mkdir()
+    (fq_parent_dir_path / "sample2").mkdir()
+    (fq_parent_dir_path / "sample20").mkdir()
+    (fq_parent_dir_path / "sample3").mkdir()
+    (fq_parent_dir_path / "sample30").mkdir()
+
+    sample_sheet_df = watermelon_init.generate_samplesheet([fq_parent_dir_path])
+    assert(list(sample_sheet_df['sample']) == ['sample1', 'sample2', 'sample3', 'sample10', 'sample20', 'sample30'])
+
+
+def test_generate_samplesheet_missingParentDirRaisesRuntimeError(tmp_path):
+    fq_parent_dir_path = tmp_path / "fq_parent_dir"
+    fq_parent_dir = str(fq_parent_dir_path)
+    with pytest.raises(RuntimeError) as e_info:
+        watermelon_init.generate_samplesheet([fq_parent_dir])
+    assert(fq_parent_dir + " does not exist" in str(e_info.value))
+
+def test_generate_samplesheet_missingOneParentDirRaisesRuntimeError(tmp_path):
+    fq_parent_dir_path1 = tmp_path / "fq_parent_dir1"
+    fq_parent_dir_path1.mkdir()
+    (fq_parent_dir_path1 / "subdir").mkdir()
+    fq_parent_dir_path2 = tmp_path / "fq_parent_dir2"
+    with pytest.raises(RuntimeError) as e_info:
+        watermelon_init.generate_samplesheet([fq_parent_dir_path1, fq_parent_dir_path2])
+    assert(str(fq_parent_dir_path2) + " does not exist" in str(e_info.value))
+
+def test_generate_samplesheet_parentDirMissingSubdirsRaisesRuntimeError(tmp_path):
+    fq_parent_dir_path = tmp_path / "fq_parent_dir"
+    fq_parent_dir_path.mkdir()
+    fq_parent_dir = str(fq_parent_dir_path)
+    with pytest.raises(RuntimeError) as e_info:
+        watermelon_init.generate_samplesheet([fq_parent_dir])
+    assert(fq_parent_dir + " contains no subdirectories" in str(e_info.value))
+
+def test_generate_samplesheet_oneParentDirMissingSubdirsRaisesRuntimeError(tmp_path):
+    fq_parent_dir_path1 = tmp_path / "fq_parent_dir1"
+    fq_parent_dir_path1.mkdir()
+    (fq_parent_dir_path1 / "subdir").mkdir()
+    fq_parent_dir_path2 = tmp_path / "fq_parent_dir2"
+    fq_parent_dir_path2.mkdir()
+
+    with pytest.raises(RuntimeError) as e_info:
+        watermelon_init.generate_samplesheet([fq_parent_dir_path1, fq_parent_dir_path2])
+    assert(str(fq_parent_dir_path2) + " contains no subdirectories" in str(e_info.value))
 
 def test_get_analyst_name():
     # Just to be sure of what we're testing here:

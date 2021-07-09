@@ -26,6 +26,7 @@ import argparse
 import copy
 import getpass
 import os
+import re
 import ruamel_yaml
 import subprocess
 import sys
@@ -245,7 +246,7 @@ def make_config_dict(template_config, args, version):
         if not args.x_sequencing_info:
             args.x_sequencing_info = _find_inf_file(args.input_run_dirs, "README.txt")
     elif args.sample_sheet:
-        ssfp = os.path.abspath(args.sample_sheet)
+        ssfp = os.path.abspath(xargs.sample_sheet)
     # If this is still not set, sequencing info from default readme
     if not args.x_sequencing_info:
         args.x_sequencing_info = os.path.join(_WATERMELON_ROOT, "report", "default_seq_info.txt")

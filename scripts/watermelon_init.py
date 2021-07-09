@@ -274,8 +274,8 @@ def make_config_dict(template_config, args, version):
             config["report_info"]["acknowledgement_text"] = linestring
         # Set (other) AGC-specific report details
         if args.AGC:
-            config_dict["report_info"]["include_follow_up"] = False
-            config_dict["report_info"]["include_pct_dups"] = False
+            config["report_info"]["include_follow_up"] = False
+            config["report_info"]["include_pct_dups"] = False
 
     return config
 

@@ -1,9 +1,9 @@
 rule deseq2_excel:
     input:
-        gene = DIFFEX_DIR + "deseq2/annotated/{model_name}/{contrast}.annot.txt",
+        gene = DIFFEX_DIR + "{model_name}/annotated/{contrast}.annot.txt",
         glossary = WATERMELON_SCRIPTS_DIR + 'deseq2_glossary.txt',
     output:
-        annotated_file = DIFFEX_DIR + "deseq2/excel/{model_name}/{contrast}.xlsx",
+        annotated_file = DIFFEX_DIR + "{model_name}/excel/{contrast}.xlsx",
     log:
         JOB_LOG_DIR + "deseq2_excel_{model_name}_{contrast}.log",
     conda: 'envs/python3_pandas_excel/python3_pandas_excel.yaml'

@@ -1,9 +1,9 @@
 rule deseq2_annotation:
    input:
-       diffex_file= DIFFEX_DIR + "deseq2/gene_lists/{model_name}/{contrast}.txt",
+       diffex_file= DIFFEX_DIR + "{model_name}/gene_lists/{contrast}.txt",
        gene_info = config['references']['annotation_tsv']
    output:
-       DIFFEX_DIR + "deseq2/annotated/{model_name}/{contrast}.annot.txt"
+       DIFFEX_DIR + "{model_name}/annotated/{contrast}.annot.txt"
    params:
         project_name = config['report_info']['project_name'],
         input_idx = 'gene_id',

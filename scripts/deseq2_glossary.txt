@@ -1,16 +1,16 @@
 Column name	Example	Description
-ncbi_gene_link	Xist	Link to NCBI gene details
-gene_symbol	Xist	NCBI Gene Symbol (from Entrez gene_info)
-gene_id	213742	NCBI Gene ID (from Entrez gene_info)
-gene_desc	inactive X specific transcripts	Gene Description (from Entrez gene_info)
+gene_id	ENSG00000000003	ENSEMBL Gene ID
+entrezgene_id	7105	NCBI Gene ID (from Entrezgene)
+external_gene_name	TSPAN6	NCBI Gene Symbol (from biomaRt)
+description	tetraspanin 6	Gene Description (from biomaRt)
 baseMean	1763.488	the average of the normalized count values, divided by the size factors, taken over all samples
 log2FoldChange	-9.248	Effect size estimate. It tells us how much the gene's expression seems to have changed comparing test to control samples.
 lfcSE	0.141	the standard error estimate for the log2 fold change estimate.
 stat	-65.406	Wald statistic for condition vs control
 pvalue	0.002	Wald test p-value for condition vs control. (Note: Excel formats these values with low precision but the exact value is stored.)
 padj	0.004	Benjamini-Hochberg adjusted p-value of the test statistic p-value. (Note: Excel formats these values with low precision but the exact value is stored.)
-Condition	Mutant	
-Control	WildType	
+Condition	Mutant
+Control	WildType
 Call	YES	YES if padj <= pv_threshold AND |linear_fold_change| >= fc_threshold; otherwise NO
 
 For more info, see https://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.pdf

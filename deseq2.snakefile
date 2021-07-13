@@ -128,9 +128,9 @@ else:
 include: 'rules/deseq2_init.smk'
 include: 'rules/deseq2_contrasts.smk'
 include: 'rules/deseq2_plots_by_phenotype.smk'
-include: 'rules/deseq2_volcano_plots.smk'
-include: 'rules/deseq2_annotation.smk'
-include: 'rules/deseq2_excel.smk'
+#include: 'rules/deseq2_volcano_plots.smk'
+#include: 'rules/deseq2_annotation.smk'
+#include: 'rules/deseq2_excel.smk'
 include: 'rules/deseq2_summary.smk'
 #include: 'rules/deliverables_deseq2.smk' #TWS DEBUG
 include: 'rules/report_from_counts.smk'

@@ -108,33 +108,27 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
     return(volcano_plot)
 }
 
-########################################################
-# Set up
-method = snakemake@params[['method']]
+###########################
+# Set up for volcano plots
 
 # Load gene list
-gene_list = read.table(snakemake@input[['gene_list']], quote="", na.strings = ".", sep="\t", header = T, stringsAsFactors = F)
+gene_list = "foo" # Needs to be the annotated table
+#gene_list = data.frame(de_results[[comparison_type]][[comparison]][['gene_list']])
 
 # Volcano plot
 out_pdf = snakemake@output[['volcano_plot_pdf']]
 out_png = snakemake@output[['volcano_plot_png']]
-model_name = snakemake@wildcards[['model_name']]
-fdr_cutoff = as.numeric(snakemake@config[['diffex']][[model_name]][['adjustedPValue']])
-fc_cutoff = log2(as.numeric(snakemake@config[['diffex']][[model_name]][['linear_fold_change']]))
-factor_name = snakemake@config[['diffex']][[model_name]][['factor_name']]
-contrast_name = snakemake@wildcards[['contrast']]
-exp = unlist(str_split(contrast_name, '_v_'))[1]
-con = unlist(str_split(contrast_name, '_v_'))[2]
 
+
+######################
+# Create volcano plot
 message(sprintf('Plotting volcano plot for %s %s', factor_name, contrast_name))
-
-#gene_list = data.frame(de_results[[comparison_type]][[comparison]][['gene_list']])
 
 volcano_plot = plot_volcano(
   de_list = gene_list,
-  method = method,
-  exp_name = exp,
-  con_name = con,
+  method = "deseq2",
+  exp_name = test_name,
+  con_name = reference_name,
   fdr_cutoff = fdr_cutoff,
   logfc_cutoff = fc_cutoff,
   out_filepath_pdf = out_pdf,

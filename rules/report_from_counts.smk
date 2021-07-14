@@ -5,7 +5,7 @@ rule report_from_counts:
         versions = DELIVERABLES_DIR + 'run_info/env_software_versions.yaml',
         diffex_summary = DIFFEX_DIR + 'summary/deseq2_summary.txt',
         diffex_annot = helper.expand_model_contrast_filenames(
-                DIFFEX_DIR + '{model_name}/annotated/{contrast}.annot.txt',
+                DIFFEX_DIR + 'diffex_{model_name}/{contrast}.annot.txt',
                 DESEQ2_CONTRAST_DICT
             ),
         #deseq2_plots_by_phenotype
@@ -23,7 +23,7 @@ rule report_from_counts:
             ),
         #deseq2_volcano_plots
         diffex_volcanoplot_pngs = helper.expand_model_contrast_filenames(\
-            DIFFEX_DIR + 'volcano_plots/{model_name}/VolcanoPlot_{contrast}.png',
+            DIFFEX_DIR + 'volcano_plots_{model_name}/VolcanoPlot_{contrast}.png',
             DESEQ2_CONTRAST_DICT
             )
 

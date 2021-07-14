@@ -10,7 +10,7 @@ rule report_align_diffex:
         multiqc_star = ALIGNMENT_DIR + '07-qc/alignment_qc_data/multiqc_star.txt',
         diffex_summary = DIFFEX_DIR + 'summary/deseq2_summary.txt',
         diffex_annot = helper.expand_model_contrast_filenames(
-                DIFFEX_DIR + '{model_name}/annotated/{contrast}.annot.txt',
+                DIFFEX_DIR + 'diffex_{model_name}/{contrast}.annot.txt',
                 DESEQ2_CONTRAST_DICT
             ),
         #deseq2_plots_by_phenotype
@@ -28,7 +28,7 @@ rule report_align_diffex:
             ),
         #deseq2_comparison_plots
         diffex_volcanoplot_pngs = helper.expand_model_contrast_filenames(\
-            DIFFEX_DIR + '{model_name}/volcano_plots/VolcanoPlot_{contrast}.png',
+            DIFFEX_DIR + 'volcano_plots_{model_name}/VolcanoPlot_{contrast}.png',
             DESEQ2_CONTRAST_DICT
             )
     output:

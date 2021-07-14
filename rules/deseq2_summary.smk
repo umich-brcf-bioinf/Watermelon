@@ -1,7 +1,7 @@
 rule deseq2_summary:
     input:
         input_files = helper.expand_model_contrast_filenames(\
-            DIFFEX_DIR + "{model_name}/annotated/{contrast}.annot.txt",
+            DIFFEX_DIR + "diffex_{model_name}/{contrast}.annot.txt",
             DESEQ2_CONTRAST_DICT)
     output:
         summary_txt = DIFFEX_DIR + "summary/deseq2_summary.txt",

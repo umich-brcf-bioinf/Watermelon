@@ -47,9 +47,17 @@ DESeq2_ALL = [
     DIFFEX_DIR + 'counts/count_data.rda',
     expand(DIFFEX_DIR + 'counts/deseq2_{name}.txt',
         name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
-    #deseq2_contrasts
+    #deseq2 diffex results
     helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + '{model_name}/gene_lists/{contrast}.txt',
+        DIFFEX_DIR + 'diffex_{model_name}/{contrast}.txt',
+        DESEQ2_CONTRAST_DICT),
+    #annotated results
+    helper.expand_model_contrast_filenames(\
+        DIFFEX_DIR + 'diffex_{model_name}/{contrast}.annot.txt',
+        DESEQ2_CONTRAST_DICT),
+    #excel fomatted annotated results
+    helper.expand_model_contrast_filenames(\
+        DIFFEX_DIR + 'diffex_{model_name}/{contrast}.annot.xlsx',
         DESEQ2_CONTRAST_DICT),
     #deseq2_plots_by_phenotype
     expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
@@ -65,18 +73,10 @@ DESeq2_ALL = [
     expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
     #deseq2_volcano_plots
     helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + '{model_name}/volcano_plots/VolcanoPlot_{contrast}.pdf',
+        DIFFEX_DIR + 'volcano_plots_{model_name}/VolcanoPlot_{contrast}.pdf',
         DESEQ2_CONTRAST_DICT),
     helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + '{model_name}/volcano_plots/VolcanoPlot_{contrast}.png',
-        DESEQ2_CONTRAST_DICT),
-    #deseq2_annotation
-    helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + '{model_name}/annotated/{contrast}.annot.txt',
-        DESEQ2_CONTRAST_DICT),
-    #deseq2_excel
-    helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + '{model_name}/excel/{contrast}.xlsx',
+        DIFFEX_DIR + 'volcano_plots_{model_name}/VolcanoPlot_{contrast}.png',
         DESEQ2_CONTRAST_DICT),
     #deseq2_summary
     DIFFEX_DIR + "summary/deseq2_summary.txt",
@@ -88,10 +88,10 @@ DESeq2_DELIVERABLES = [
     expand(DELIVERABLES_DIR + 'counts/deseq2_{name}.txt',
         name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
     helper.expand_model_contrast_filenames(\
-        DELIVERABLES_DIR + '{model_name}/gene_lists/{contrast}.annot.txt',
+        DELIVERABLES_DIR + 'diffex_{model_name}/{contrast}.annot.txt',
         DESEQ2_CONTRAST_DICT),
     helper.expand_model_contrast_filenames(\
-        DELIVERABLES_DIR + "{model_name}/gene_lists/{contrast}.xlsx",
+        DELIVERABLES_DIR + "diffex_{model_name}/{contrast}.annot.xlsx",
         DESEQ2_CONTRAST_DICT),
     expand(DELIVERABLES_DIR + 'plots_labeled_by_pheno/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
             phenotype = PHENOTYPES,
@@ -104,7 +104,7 @@ DESeq2_DELIVERABLES = [
         phenotype = PHENOTYPES,
         plotType = ['BoxPlot_raw', 'BoxPlot_rlog', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
     helper.expand_model_contrast_filenames(\
-            DELIVERABLES_DIR + 'volcano_plots/{model_name}/VolcanoPlot_{contrast}.pdf',
+            DELIVERABLES_DIR + 'volcano_plots_{model_name}/VolcanoPlot_{contrast}.pdf',
             DESEQ2_CONTRAST_DICT),
     DELIVERABLES_DIR + "summary/deseq2_summary.txt",
     DELIVERABLES_DIR + "summary/deseq2_summary.xlsx"

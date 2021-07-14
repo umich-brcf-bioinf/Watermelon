@@ -1,6 +1,6 @@
 rule deseq2_contrasts:
     input:
-        rda = DIFFEX_DIR + 'deseq2_init_{model_name}.rda',
+        rda = DIFFEX_DIR + 'diffex_{model_name}/.deseq2_init_{model_name}.rda',
         gene_info = config['references']['annotation_tsv'],
         glossary = WATERMELON_SCRIPTS_DIR + 'deseq2_glossary.txt',
     output:

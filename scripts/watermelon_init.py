@@ -124,7 +124,7 @@ def _set_up_refs(grefsfn, gbuild, type):
     # If diffex type, only need annotation TSV. If align_qc, keep it all
     if type == "diffex":
         for ref in ["fasta", "gtf", "rsem_star_index"]:
-            our_refs["references"].pop(ref)
+            our_refs["references"].pop(ref, None)
     return our_refs
 
 
@@ -142,23 +142,6 @@ def _get_analyst_name(analyst_info_csv, user):
         analyst_name = "Analyst"
 
     return analyst_name
-
-def _find_inf_file(dir_list, fname):
-    potential_readmes = [os.path.join(d, fname) for d in dir_list]
-    readmes = [f for f in potential_readmes if os.path.isfile(f)]
-    if len(readmes) > 1:
-        prompt_fmt = "\nFound multiple info files. Will only use the first one:\n{}\n" \
-            "Yes to continue, No to exit\n"
-        response = _prompt_yes_no(prompt_fmt.format(readmes[0]))
-        if response:
-            return readmes[0]
-        else:
-            msg = "Exiting due to file conflicts.\nNote: you can set a custom sequencing information file with --sequencing_info"
-            sys.exit(msg)
-    elif len(readmes) == 1:
-        return readmes[0]
-    else:
-        return None
 
 
 def generate_samplesheet(fq_parent_dirs):
@@ -214,8 +197,9 @@ def make_config_dict(template_config, args, version):
     # Due to ruamel_yaml, template_config is an OrderedDict, and has preserved comments
     config = template_config
 
-    # If "Other" or "TestData" genome_build is specified, remove fastq_screen stanza from config
-    if args.genome_build == "Other" or args.genome_build == "TestData":
+    # If "Other" or "TestData" genome_build is specified, or if diffex type,
+    # remove fastq_screen section from config
+    if args.genome_build == "Other" or args.genome_build == "TestData" or args.type == "diffex":
         config.pop("fastq_screen", None)
 
     # Set up some things before adding them
@@ -244,6 +228,11 @@ def make_config_dict(template_config, args, version):
         ssfp = os.path.join(os.getcwd(), "samplesheet.csv")
     elif args.sample_sheet:
         ssfp = os.path.abspath(args.sample_sheet)
+    if args.type == "diffex":
+        if not args.count_matrix:
+            msg = "\n\nCannot create diffex config without count_matrix argument.\n"
+            raise RuntimeError(msg)
+        config.insert(0, "count_matrix", args.count_matrix)
     config.insert(0, "samplesheet", ssfp)
     config.insert(0, "watermelon_version", version)
     config.insert(0, "email", email)
@@ -301,14 +290,11 @@ def validate_fastq_dirs(ss_df, sample_col, fq_col):
             raise RuntimeError(msg)
 
 
-def validate_genomes(ref_dict, type):
+def validate_genomes(ref_dict):
     # Validate that references are readable
     # Make a copy of the dict (don't actually want to manipulate it)
     ref_dict = copy.copy(ref_dict)
-    # Diffex only uses annotation_tsv, not the others
-    if type == "diffex":
-        for k in ["fasta", "gtf", "rsem_star_index"]:
-            ref_dict.pop(k)
+    ref_dict.pop("Other", None) # This is a placeholder and doesn't need validation
     cant_read = []
     for k,v in ref_dict.items():
         if k == "rsem_star_index":
@@ -349,11 +335,12 @@ def write_stuff(config_dict, config_fn, wat_dir, ss_df=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="watermelon_init.py", description = "Produces a config.yaml to use with snakemake. Can produce a config for either alignment/QC or differential expression (see below).")
+    parser.add_argument("-b", "--background_info", type=str, default=os.path.join(_WATERMELON_ROOT, "report", "default_seq_info.txt"), help="A text file containing background information (e.g. sequencing and preparation procedure). This text will be used in the report. Defaults to 'Watermelon/report/default_seq_info.txt'")
+    parser.add_argument("-c", "--count_matrix", type=str, help="Count data used as input for diffex pipeline. Contains a column of gene IDs and additional columns of count data from aligned reads.")
     parser.add_argument("-g", "--genome_build", type=str, required=True, help="Reference files for this build are added into the config.")
     parser.add_argument("-o", "--output_prefix", type=str, default="analysis_{project_id}", help="Optional output prefix. Defaults to relative path 'analysis_{project_id}'")
     parser.add_argument("-p", "--project_id", type=str, required=True, help="ID used for the project. Can represent project ID, service request ID, etc. Only alphanumeric and underscores allowed. No spaces or special characters.")
     parser.add_argument("-t", "--type", type=str, default="align_qc", choices=["align_qc", "diffex"], help="Type of config file to produce. Uses the appropriate template, and has the appropriate values.")
-    parser.add_argument("-S", "--sequencing_info", type=str, default=os.path.join(_WATERMELON_ROOT, "report", "default_seq_info.txt"), help="A text file containing sequencing (and preparation) information. This text will be used in the report. Defaults to 'Watermelon/report/default_seq_info.txt'")
     samples_in = parser.add_mutually_exclusive_group(required=True)
     samples_in.add_argument("-s", "--sample_sheet", type=str, help="CSV file that contains sample IDs, paths containing samples\' fastq files, and optional columns for phenotype information (required for diffex).")
     samples_in.add_argument("-i", "--input_run_dirs", type=str, nargs="*", help="One or more paths to run dirs. Each run dir should contain samples dirs which should in turn contain one or more fastq.gz files. The sample names will be derived from the sample directories.")
@@ -385,7 +372,8 @@ if __name__ == "__main__":
         samplesheet_df = pd.read_csv(config_dict["samplesheet"], comment="#", dtype="object")
 
     # Perform config validations
-    validate_genomes(config_dict["references"], args.type)
+    if not args.genome_build == "Other":
+        validate_genomes(config_dict["references"]) 
     # Some validations depend on type of config
     if args.type == "align_qc":
         validate_fastq_dirs(samplesheet_df, args.x_sample_col, args.x_input_col)

@@ -1,0 +1,32 @@
+diffex:
+    count_min_cutoff: 1 #Filter lowly expressed genes using this cutoff
+    #The following is an example Diffex section. Additional sections can be added
+    #which will produce results in parallel directories
+    #The parent node forms the name of directory for that model, in this case model_treatment.
+    model_treatment:
+        linear_fold_change: 1.5
+        adjustedPValue: 0.05
+        #Several contrasts of the form testVal_v_referenceVal can be listed here.
+        #These contrasts will be pulled from the same DESeqDataset
+        contrasts:
+        -   drug_v_control
+        DESeq2:
+            #The design is used when initializing the dataset. Note that this is design is
+            #currently not used when generating the normalized count tables
+            design: ~ treatment
+            #The factor name is used within the diffex Rscripts. See results notes below
+            factor_name: treatment
+            #The following parameters are directly parsed by R
+            #and used within the call to DESeq2().
+            #The imported DESeqDataset is passed by default and isn't listed here.
+            DESeq2:
+                betaPrior: true
+            #The below parameters are also parsed by R and used to call results() {DESeq2}.
+            #The initialized DESeqDataset is passed by default and isn't listed here.
+            #There are several ways to list the contrast parameter. This way produces results equivalent to
+            #previous Watermelon pipelines. The variables factor_name, test_name, & reference_name are defined
+            #within the Rscript. Using the first contrast as an example this would parse to
+            #list('treatmentdrug', 'treatmentcontrol'), which are the two elements
+            #of resultsNames() relevant for that comparison.
+            results:
+                contrast: list(paste0(factor_name, test_name), paste0(factor_name, reference_name))

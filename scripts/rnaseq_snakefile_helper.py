@@ -170,23 +170,6 @@ def fastqs_to_concat(samplesheet, capture_regex):
                 captured = rmatch.group(1)
                 grouping_dict[captured].append(file)
         cat_fq_dict[sample] = grouping_dict
-    #
-    # def inner_work(sample_input_files):
-    #     sample_cat_dict = defaultdict(list)
-    #     for file in sample_input_files:
-    #         basename = os.path.basename(file)
-    #         rmatch = re.match(capture_regex, basename)
-    #         if not rmatch:
-    #             msg_fmt = 'File {} did not match regular expression {}. Cannot capture grouping information from filename.'
-    #             raise RuntimeError(msg_fmt.format(basename, capture_regex))
-    #         else:
-    #             captured = rmatch.group(1)
-    #             sample_cat_dict[captured].append(file)
-    #     return sample_cat_dict
-    #
-    # # For every key, pass that key and a value derived from its key to inner_work function
-    # # The returned value, along with the given key become the key-value pair in an outer dictionary
-    # cat_fq_dict = {key: inner_work(inputs_dict[key]) for key in inputs_dict}
     return cat_fq_dict
 
 

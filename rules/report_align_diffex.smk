@@ -8,27 +8,27 @@ rule report_align_diffex:
         multiqc_html = DELIVERABLES_DIR + 'alignment/alignment_qc.html',
         multiqc_gen_stats = ALIGNMENT_DIR + '07-qc/alignment_qc_data/multiqc_general_stats.txt',
         multiqc_star = ALIGNMENT_DIR + '07-qc/alignment_qc_data/multiqc_star.txt',
-        diffex_summary = DIFFEX_DIR + 'deseq2/summary/deseq2_summary.txt',
+        diffex_summary = DIFFEX_DIR + 'summary/deseq2_summary.txt',
         diffex_annot = helper.expand_model_contrast_filenames(
-                DIFFEX_DIR + 'deseq2/annotated/{model_name}/{contrast}.annot.txt',
+                DIFFEX_DIR + 'diffex_{model_name}/{contrast}.annot.txt',
                 DESEQ2_CONTRAST_DICT
             ),
         #deseq2_plots_by_phenotype
-        diffex_PCA_pngs = expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/PCAplot_{dim}_top{ngenes}.png',
+        diffex_PCA_pngs = expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/PCAplot_{dim}_top{ngenes}.png',
                 phenotype = PHENOTYPES,
                 dim = ['12','23'],
                 ngenes = ['100','500']
             ),
-        diffex_boxplot_pngs = expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/BoxPlot_{transformation}.png',
+        diffex_boxplot_pngs = expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/BoxPlot_{transformation}.png',
                 phenotype = PHENOTYPES,
                 transformation=['raw', 'rlog']
             ),
-        diffex_heatmap_pngs = expand(DIFFEX_DIR + 'deseq2/plots/by_phenotype/{phenotype}/SampleHeatmap.png',
+        diffex_heatmap_pngs = expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/SampleHeatmap.png',
                 phenotype = PHENOTYPES
             ),
         #deseq2_comparison_plots
         diffex_volcanoplot_pngs = helper.expand_model_contrast_filenames(\
-            DIFFEX_DIR + 'deseq2/plots/comparison_plots/{model_name}/VolcanoPlot_{contrast}.png',
+            DIFFEX_DIR + 'volcano_plots_{model_name}/VolcanoPlot_{contrast}.png',
             DESEQ2_CONTRAST_DICT
             )
     output:

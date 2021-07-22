@@ -26,6 +26,7 @@ import argparse
 import copy
 import getpass
 import os
+import re
 import ruamel_yaml
 import subprocess
 import sys
@@ -152,7 +153,7 @@ def _find_inf_file(dir_list, fname):
         if response:
             return readmes[0]
         else:
-            msg = "Exiting due to file conflicts.\nNote: you can set a custom sequencing information file with --x_sequencing_info"
+            msg = "Exiting due to file conflicts.\nNote: you can set a custom sequencing information file with --sequencing_info"
             sys.exit(msg)
     elif len(readmes) == 1:
         return readmes[0]
@@ -241,14 +242,8 @@ def make_config_dict(template_config, args, version):
     if args.input_run_dirs:
         # default 'samplesheet.csv' if it will be auto-generated later
         ssfp = os.path.join(os.getcwd(), "samplesheet.csv")
-        # Sequencing info will be taken from adjacent readme if found
-        if not args.x_sequencing_info:
-            args.x_sequencing_info = _find_inf_file(args.input_run_dirs, "README.txt")
     elif args.sample_sheet:
         ssfp = os.path.abspath(args.sample_sheet)
-    # If this is still not set, sequencing info from default readme
-    if not args.x_sequencing_info:
-        args.x_sequencing_info = os.path.join(_WATERMELON_ROOT, "report", "default_seq_info.txt")
     config.insert(0, "samplesheet", ssfp)
     config.insert(0, "watermelon_version", version)
     config.insert(0, "email", email)
@@ -260,7 +255,7 @@ def make_config_dict(template_config, args, version):
         config["report_info"]["analyst_name"] = analyst_name
         config["report_info"]["project_name"] = args.project_id
         # Insert sequencing info from file
-        with open(args.x_sequencing_info, "r") as fh:
+        with open(args.sequencing_info, "r") as fh:
             lines = fh.readlines()
             linestring = "".join([l.strip() for l in lines])
             config["report_info"]["prep_description"] = linestring
@@ -273,8 +268,8 @@ def make_config_dict(template_config, args, version):
             config["report_info"]["acknowledgement_text"] = linestring
         # Set (other) AGC-specific report details
         if args.AGC:
-            config_dict["report_info"]["include_follow_up"] = False
-            config_dict["report_info"]["include_pct_dups"] = False
+            config["report_info"]["include_follow_up"] = False
+            config["report_info"]["include_pct_dups"] = False
 
     return config
 
@@ -354,19 +349,19 @@ def write_stuff(config_dict, config_fn, wat_dir, ss_df=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="watermelon_init.py", description = "Produces a config.yaml to use with snakemake. Can produce a config for either alignment/QC or differential expression (see below).")
-    parser.add_argument("-g", "--genome_build", required=True, help="Reference files for this build are added into the config.")
-    parser.add_argument("-o", "--output_prefix", default="analysis_{project_id}", help="Optional output prefix. Defaults to relative path %default%.")
-    parser.add_argument("-p", "--project_id", required=True, help="ID used for the project. Can represent project ID, service request ID, etc. Only alphanumeric and underscores allowed. No spaces or special characters.")
-    parser.add_argument("-t", "--type", default="align_qc", choices=["align_qc", "diffex"], help="Type of config file to produce. Uses the appropriate template, and has the appropriate values.")
+    parser.add_argument("-g", "--genome_build", type=str, required=True, help="Reference files for this build are added into the config.")
+    parser.add_argument("-o", "--output_prefix", type=str, default="analysis_{project_id}", help="Optional output prefix. Defaults to relative path 'analysis_{project_id}'")
+    parser.add_argument("-p", "--project_id", type=str, required=True, help="ID used for the project. Can represent project ID, service request ID, etc. Only alphanumeric and underscores allowed. No spaces or special characters.")
+    parser.add_argument("-t", "--type", type=str, default="align_qc", choices=["align_qc", "diffex"], help="Type of config file to produce. Uses the appropriate template, and has the appropriate values.")
+    parser.add_argument("-S", "--sequencing_info", type=str, default=os.path.join(_WATERMELON_ROOT, "report", "default_seq_info.txt"), help="A text file containing sequencing (and preparation) information. This text will be used in the report. Defaults to 'Watermelon/report/default_seq_info.txt'")
     samples_in = parser.add_mutually_exclusive_group(required=True)
-    samples_in.add_argument("-s", "--sample_sheet", help="CSV file that contains sample IDs, paths containing samples\' fastq files, and optional columns for phenotype information (required for diffex).")
+    samples_in.add_argument("-s", "--sample_sheet", type=str, help="CSV file that contains sample IDs, paths containing samples\' fastq files, and optional columns for phenotype information (required for diffex).")
     samples_in.add_argument("-i", "--input_run_dirs", type=str, nargs="*", help="One or more paths to run dirs. Each run dir should contain samples dirs which should in turn contain one or more fastq.gz files. The sample names will be derived from the sample directories.")
     parser.add_argument("--AGC", default=False, action="store_true", help="An optional flag which enables configuration options particularly needed by the UMich Advanced Genomics Core.")
     parser.add_argument("--x_analyst_info", type=str, default=_DEFAULT_ANALYST_INFO, help=argparse.SUPPRESS)
     parser.add_argument("--x_alt_template", type=str, default=None, help=argparse.SUPPRESS)
     parser.add_argument("--x_genome_references", type=str, default=_DEFAULT_GENOME_REFERENCES, help=argparse.SUPPRESS)
     parser.add_argument("--x_acknowledgement_text", type=str, default=_DEFAULT_ACKNOWLEDGEMENT, help=argparse.SUPPRESS)
-    parser.add_argument("--x_sequencing_info", type=str, default=None, help=argparse.SUPPRESS)
     parser.add_argument("--x_working_dir", type=str, default=os.getcwd(), help=argparse.SUPPRESS)
     parser.add_argument("--x_sample_col", type=str, default="sample", help=argparse.SUPPRESS)
     parser.add_argument("--x_input_col", type=str, default="input_dir", help=argparse.SUPPRESS)

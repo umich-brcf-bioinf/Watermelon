@@ -95,13 +95,13 @@ def _no_overwrite_check(check_vals):
 
 
 def _set_up_dirs(type, project_id, fmt_str="analysis_{projid}/{resulttype}"):
+    type_dirs = {
+        'align_qc': ['alignment_results', 'deliverables', 'report'],
+        'diffex': ['diffex_results', 'deliverables', 'report']
+        }
     dirs = ruamel_yaml.comments.CommentedMap() # Use this instead of an OrderedDict since it prints pretty (no !!omap)
-    if type == "align_qc":
-        for resulttype in ["alignment_results", "deliverables", "report"]:
-            dirs[resulttype] = fmt_str.format(projid=project_id, resulttype=resulttype)
-    elif type == "diffex":
-        for resulttype in ["diffex_results", "deliverables", "report"]:
-            dirs[resulttype] = fmt_str.format(projid=project_id, resulttype=resulttype)
+    for resulttype in type_dirs.get(type, []):
+        dirs[resulttype] = fmt_str.format(projid=project_id, resulttype=resulttype)
     return dirs
 
 

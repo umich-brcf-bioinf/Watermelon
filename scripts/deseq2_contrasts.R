@@ -20,6 +20,17 @@ foo = suppressMessages(lapply(lib.vector, library, character.only=T, warn.confli
 
 ##########
 # Define functions
+
+make_ncbilink = function(id_str){
+  if(is.na(id_str)){
+    return(id_str)
+  } else{
+    url = paste0("https://www.ncbi.nlm.nih.gov/gene/?term=", id_str)
+    return(url)
+  }
+}
+
+
 plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con_name, fdr_cutoff, logfc_cutoff, out_filepath_pdf, out_filepath_png) {
   
   method = match.arg(method)
@@ -166,31 +177,18 @@ res = res[,c('gene_id','baseMean','log2FoldChange','lfcSE','stat','pvalue','padj
 # Add Condition and Control columns
 res$Condition = test_name
 res$Control = reference_name
-#diffexData = as.data.frame(res)
-#diffexData$gene_id = rownames(diff)
-#set rownames to valid column
-#data.table::setDT(diffexData, keep.rownames = TRUE)[] #TWS - Is data.table really useful here at all?
-
-#rename first column
-#colnames(diffexData) = c('gene_id','baseMean','log2FoldChange','lfcSE','stat','pvalue','padj')
-#$Condition = test_name
-#diffexData$Control = reference_name
 
 #make DEG calls and select DEGs
 res$Call = "NO"
 res$Call[which(res$padj <= fdr_cutoff & abs(res$log2FoldChange) >= fc_cutoff)] = 'YES'
 res = res[order(-rank(res$Call), res$pvalue), ]
-#diffexData$Call = rep('NO', nrow(diffexData))
-#diffexData$Call[which(diffexData$padj <= fdr_cutoff & abs(diffexData$log2FoldChange) >= fc_cutoff)] = 'YES'
-#diffexData = diffexData[order(-rank(diffexData$Call), diffexData$pvalue), ]
-
 
 #write to individual tab-delimited txt files
 message('Writing diffex genes')
 write.table(
   x = res,
   file=snakemake@output[['gene_list']],
-  append = FALSE, sep = '\t', na = 'NA', row.names = FALSE, quote = FALSE)
+  append = FALSE, sep = '\t', na = '.', row.names = FALSE, quote = FALSE)
 
 ##################
 # Add annotations
@@ -211,17 +209,33 @@ if(all(annotation_df$gene_id == annotation_df$external_gene_name)){
 annotated_results = merge(as.data.frame(res), annotation_df, by='gene_id', all.x=TRUE, all.y=FALSE, sort=FALSE)
 annotated_results = annotated_results[,c('gene_id', 'entrezgene_id', 'external_gene_name', 'description', 'baseMean','log2FoldChange','lfcSE','stat','pvalue','padj', 'Condition', 'Control', 'Call')]
 
+# Write the annotated gene list - plain text
 message('Writing annotated diffex genes')
 write.table(
   x = annotated_results,
   file=snakemake@output[['annot_results']],
-  append = FALSE, sep = '\t', na = 'NA', row.names = FALSE, quote = FALSE)
+  append = FALSE, sep = '\t', na = '.', row.names = FALSE, quote = FALSE)
 
+# Write the annotated gene list - xlsx
 message('Writing annotated diffex genes xlsx')
-write.xlsx(
-  x = annotated_results, 
-  file = snakemake@output[['annot_results_xlsx']],
-  addWorksheet = snakemake@input[['glossary']])
+# Load glossary for insertion into the workbook
+glossary = read.delim(snakemake@input[['glossary']], stringsAsFactors = FALSE)
+# Create an appropriate xlsx workbook
+diffex_wb = createWorkbook()
+# Add annotated results as worksheet
+addWorksheet(diffex_wb, 'diffex_genes')
+# Make ncbi links from the Entrezgene_ids
+ncbi_links = sapply(annotated_results$entrezgene_id, make_ncbilink)
+annotated_results$ncbi_link = ncbi_links
+names(annotated_results$ncbi_link) = annotated_results$entrezgene_id # This doesn't seem to work as described
+class(annotated_results$ncbi_link) = "hyperlink"
+# Add the annotated results to the diffex_genes worksheet
+writeData(diffex_wb, 'diffex_genes', annotated_results)
+# Add glossary as worksheet
+addWorksheet(diffex_wb, 'glossary')
+writeData(diffex_wb, 'glossary', glossary)
+# Write the workbook to an xlsx file
+saveWorkbook(diffex_wb, snakemake@output[['annot_results_xlsx']], overwrite = TRUE)
 
 ######################
 # Create volcano plot

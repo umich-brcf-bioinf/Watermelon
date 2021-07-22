@@ -244,7 +244,7 @@ def make_config_dict(template_config, args, version):
         config["report_info"]["analyst_name"] = analyst_name
         config["report_info"]["project_name"] = args.project_id
         # Insert sequencing info from file
-        with open(args.sequencing_info, "r") as fh:
+        with open(args.background_info, "r") as fh:
             lines = fh.readlines()
             linestring = "".join([l.strip() for l in lines])
             config["report_info"]["prep_description"] = linestring
@@ -335,7 +335,7 @@ def write_stuff(config_dict, config_fn, wat_dir, ss_df=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="watermelon_init.py", description = "Produces a config.yaml to use with snakemake. Can produce a config for either alignment/QC or differential expression (see below).")
-    parser.add_argument("-b", "--background_info", type=str, default=os.path.join(_WATERMELON_ROOT, "report", "default_seq_info.txt"), help="A text file containing background information (e.g. sequencing and preparation procedure). This text will be used in the report. Defaults to 'Watermelon/report/default_seq_info.txt'")
+    parser.add_argument("-b", "--background_info", type=str, default=os.path.join(_WATERMELON_ROOT, "report", "default_seq_info.txt"), help="A text file containing background information (e.g. sequencing and/or preparation procedure). This text will be used in the report. Defaults to 'Watermelon/report/default_seq_info.txt'")
     parser.add_argument("-c", "--count_matrix", type=str, help="Count data used as input for diffex pipeline. Contains a column of gene IDs and additional columns of count data from aligned reads.")
     parser.add_argument("-g", "--genome_build", type=str, required=True, help="Reference files for this build are added into the config.")
     parser.add_argument("-o", "--output_prefix", type=str, default="analysis_{project_id}", help="Optional output prefix. Defaults to relative path 'analysis_{project_id}'")
@@ -373,7 +373,7 @@ if __name__ == "__main__":
 
     # Perform config validations
     if not args.genome_build == "Other":
-        validate_genomes(config_dict["references"]) 
+        validate_genomes(config_dict["references"])
     # Some validations depend on type of config
     if args.type == "align_qc":
         validate_fastq_dirs(samplesheet_df, args.x_sample_col, args.x_input_col)

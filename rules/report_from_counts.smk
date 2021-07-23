@@ -23,7 +23,7 @@ rule report_from_counts:
             ),
         #deseq2_volcano_plots
         diffex_volcanoplot_pngs = helper.expand_model_contrast_filenames(\
-            DIFFEX_DIR + 'volcano_plots_{model_name}/VolcanoPlot_{contrast}.png',
+            DIFFEX_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.png',
             DESEQ2_CONTRAST_DICT
             )
 

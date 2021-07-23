@@ -7,8 +7,8 @@ rule deseq2_contrasts:
         gene_list = DIFFEX_DIR + 'diffex_{model_name}/{contrast}.txt',
         annot_results = DIFFEX_DIR + "diffex_{model_name}/{contrast}.annot.txt",
         annot_results_xlsx = DIFFEX_DIR + "diffex_{model_name}/{contrast}.annot.xlsx",
-        volcano_plot_pdf = DIFFEX_DIR + 'volcano_plots_{model_name}/VolcanoPlot_{contrast}.pdf',
-        volcano_plot_png = DIFFEX_DIR + 'volcano_plots_{model_name}/VolcanoPlot_{contrast}.png'
+        volcano_plot_pdf = DIFFEX_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.pdf',
+        volcano_plot_png = DIFFEX_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.png'
     log:
         JOB_LOG_DIR + 'deseq2_contrast_{model_name}_{contrast}.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'

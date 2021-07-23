@@ -73,10 +73,10 @@ DESeq2_ALL = [
     expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
     #deseq2_volcano_plots
     helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + 'volcano_plots_{model_name}/VolcanoPlot_{contrast}.pdf',
+        DIFFEX_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.pdf',
         DESEQ2_CONTRAST_DICT),
     helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + 'volcano_plots_{model_name}/VolcanoPlot_{contrast}.png',
+        DIFFEX_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.png',
         DESEQ2_CONTRAST_DICT),
     #deseq2_summary
     DIFFEX_DIR + "summary/deseq2_summary.txt",
@@ -104,15 +104,25 @@ DESeq2_DELIVERABLES = [
         phenotype = PHENOTYPES,
         plotType = ['BoxPlot_raw', 'BoxPlot_rlog', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
     helper.expand_model_contrast_filenames(\
-            DELIVERABLES_DIR + 'volcano_plots_{model_name}/VolcanoPlot_{contrast}.pdf',
+            DELIVERABLES_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.pdf',
             DESEQ2_CONTRAST_DICT),
     DELIVERABLES_DIR + "summary/deseq2_summary.txt",
     DELIVERABLES_DIR + "summary/deseq2_summary.xlsx"
 ]
 
+RUN_INFO_DELIVERABLES = [
+    DELIVERABLES_DIR + "run_info/env_software_versions.yaml",
+    DELIVERABLES_DIR + "run_info/" + os.path.basename(config['samplesheet'])
+]
+
+REPORT_ALL = [
+    REPORT_DIR + 'report_draft.md',
+    REPORT_DIR + 'report_draft.html'
+]
+
 rule all:
     input:
-        DESeq2_ALL
+        DESeq2_ALL + DESeq2_DELIVERABLES + REPORT_ALL
 
 
 # Includes put last - variables used in rules must be defined above
@@ -128,9 +138,7 @@ else:
 include: 'rules/deseq2_init.smk'
 include: 'rules/deseq2_contrasts.smk'
 include: 'rules/deseq2_plots_by_phenotype.smk'
-#include: 'rules/deseq2_volcano_plots.smk'
-#include: 'rules/deseq2_annotation.smk'
-#include: 'rules/deseq2_excel.smk'
 include: 'rules/deseq2_summary.smk'
-#include: 'rules/deliverables_deseq2.smk' #TWS DEBUG
+include: 'rules/deliverables_deseq2.smk' #TWS DEBUG
+include: 'rules/deliverables_run_info.smk'
 include: 'rules/report_from_counts.smk'

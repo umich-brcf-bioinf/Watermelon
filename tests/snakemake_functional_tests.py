@@ -6,6 +6,7 @@ import unittest
 
 from testfixtures import TempDirectory
 from tests import testing_utils #local module
+from scripts import rnaseq_snakefile_helper as helper
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 WATERMELON_BASE_DIR = os.path.abspath(os.path.join(TEST_DIR, '..'))
@@ -90,7 +91,7 @@ class SnakemakeExampleDataTest(unittest.TestCase):
             shutil.copyfile(os.path.join(WATERMELON_BASE_DIR, 'config', 'example_samplesheet.csv'), 'samplesheet.csv')
 
             #Unzip references
-            testing_utils.gunzip_glob(os.path.join(tmp_data_dir, '*.gz'))
+            helper.gunzip_glob(os.path.join(tmp_data_dir, '*.gz'))
 
             config_replacement_vals = {
                 'samplesheet': os.path.join(temp_dir.path, 'samplesheet.csv'),

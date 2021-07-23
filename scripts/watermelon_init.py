@@ -113,9 +113,27 @@ def _set_up_email(projid, user):
     return email
 
 
+def _setup_test_data(datapath):
+    #Unzip the human chr22 example references
+    data_gz_glob = os.path.join(datapath , '*.gz')
+    helper.gunzip_glob(data_gz_glob)
+    #These refs should now exist. If not, it'll be caught during snakemake run w/ init_references
+    refs = {
+        'genome' : 'GRCh38',
+        'references' : {
+            'fasta' : os.path.join(datapath, 'Homo_sapiens.GRCh38.dna_sm.chr22.fa'),
+            'gtf' : os.path.join(datapath, 'Homo_sapiens.GRCh38.98.chr22.gtf'),
+            'annotation_tsv' : os.path.join(datapath, 'Homo_sapiens.GRCh38.98_annotation.tsv')
+        }
+    }
+    return refs
+
+
 def _set_up_refs(grefsfn, gbuild, type):
     with open(grefsfn, "r") as reffh:
         refs = ruamel_yaml.round_trip_load(reffh)
+    if gbuild == "TestData":
+        _set_up_test_data(os.path.join(os.getcwd(), "Watermelon", "data"))
     try:
         our_refs = refs[gbuild]
     except KeyError:
@@ -197,11 +215,6 @@ def make_config_dict(template_config, args, version):
     # Due to ruamel_yaml, template_config is an OrderedDict, and has preserved comments
     config = template_config
 
-    # If "Other" or "TestData" genome_build is specified, or if diffex type,
-    # remove fastq_screen section from config
-    if args.genome_build == "Other" or args.genome_build == "TestData" or args.type == "diffex":
-        config.pop("fastq_screen", None)
-
     # Set up some things before adding them
     refs = _set_up_refs(args.x_genome_references, args.genome_build, args.type)
     dirs = _set_up_dirs(args.type, args.project_id)
@@ -212,6 +225,10 @@ def make_config_dict(template_config, args, version):
     # Inserts top-level keys "genome" & "references" into config
     # Integrates "fastq_screen" ref vals with template vals
     _dict_merge(config, refs)
+    # If "Other" or "TestData" genome_build is specified, or if diffex type config,
+    # remove fastq_screen section from config
+    if args.genome_build == "Other" or args.genome_build == "TestData" or args.type == "diffex":
+        config.pop("fastq_screen", None)
     # desired order: email, watermelon_version, samplesheet, genome, references, dirs, template_config stuff
     # Focus on the 2nd half (working backwards)
     config.insert(0, "dirs", dirs) # Insert dirs on top

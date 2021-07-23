@@ -45,6 +45,21 @@ def _filter_dict_by_keys(dict_in, keep_keys):
     dict_out = {k: dict_in[k] for k in all_keys.intersection(keep_keys)}
     return dict_out
 
+
+def gunzip_file(source_file, dest_file):
+    with gzip.GzipFile(source_file, 'rb') as inF, \
+         open(dest_file, 'wb') as outF:
+        data = inF.read()
+        outF.write(data)
+        os.remove(source_file)
+
+
+def gunzip_glob(source_file_pattern):
+    for source_filename in glob(source_file_pattern):
+        dest_filename = source_filename.rstrip('.gz')
+        gunzip_file(source_filename, dest_filename)
+
+
 def email(email_config, subject_prefix, msg="", attachment=""):
     if not email_config:
         print(subject_prefix, msg)

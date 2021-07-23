@@ -1,25 +1,6 @@
 #!/usr/bin/env python3
 '''
 Produces a config.yaml to use with snakemake
-
-Intakes the following:
-* sample sheet. Contains sample IDs, paths of samples' fastq files, and columns for phenotype information
-* genome build. Name of a set of reference files (e.g. GRCh38)
-* project ID. For BFX this is project name, for AGC this is service request ID. No spaces
-* optional output prefix. Defaults to relative path analysis_projectID/{alignment_results,deliverables,report}
-* config type. align_qc or diffex. Creates a different config depending on this
-
-Determines at runtime:
-* analyst name / email. For AGC, use the organization as the name. For emailing, send to the individual
-* Watermelon version
-* References are readable
-* README.txt is readable. If not, use templated default report description text
-* Input dirs contain fastqs that are readable
-
-Uses template values for:
-* Trimming options
-* Fastq_screen options
-* Default report description (if README.txt not available)
 '''
 
 import argparse
@@ -113,32 +94,30 @@ def _set_up_email(projid, user):
     return email
 
 
-def _setup_test_data(datapath):
-    #Unzip the human chr22 example references
-    data_gz_glob = os.path.join(datapath , '*.gz')
-    helper.gunzip_glob(data_gz_glob)
-    #These refs should now exist. If not, it'll be caught during snakemake run w/ init_references
-    refs = {
-        'genome' : 'GRCh38',
-        'references' : {
-            'fasta' : os.path.join(datapath, 'Homo_sapiens.GRCh38.dna_sm.chr22.fa'),
-            'gtf' : os.path.join(datapath, 'Homo_sapiens.GRCh38.98.chr22.gtf'),
-            'annotation_tsv' : os.path.join(datapath, 'Homo_sapiens.GRCh38.98_annotation.tsv')
-        }
-    }
-    return refs
+
+
 
 
 def _set_up_refs(grefsfn, gbuild, type):
     with open(grefsfn, "r") as reffh:
         refs = ruamel_yaml.round_trip_load(reffh)
+    # TestData doesn't exist yet. It will when Watermelon is copied to cwd
     if gbuild == "TestData":
-        _set_up_test_data(os.path.join(os.getcwd(), "Watermelon", "data"))
-    try:
-        our_refs = refs[gbuild]
-    except KeyError:
-        msg_fmt = "\n\nGenome build {} not found in {}:\n {}\n"
-        raise RuntimeError(msg_fmt.format(gbuild, grefsfn, refs.keys()))
+        datapath = os.path.join(os.getcwd(), "Watermelon", "data")
+        our_refs = {
+            'genome' : 'GRCh38',
+            'references' : {
+                'fasta' : os.path.join(datapath, 'Homo_sapiens.GRCh38.dna_sm.chr22.fa'),
+                'gtf' : os.path.join(datapath, 'Homo_sapiens.GRCh38.98.chr22.gtf'),
+                'annotation_tsv' : os.path.join(datapath, 'Homo_sapiens.GRCh38.98_annotation.tsv')
+            }
+        }
+    else:
+        try:
+            our_refs = refs[gbuild]
+        except KeyError:
+            msg_fmt = "\n\nGenome build {} not found in {}:\n {}\n"
+            raise RuntimeError(msg_fmt.format(gbuild, grefsfn, refs.keys()))
     # If diffex type, only need annotation TSV. If align_qc, keep it all
     if type == "diffex":
         for ref in ["fasta", "gtf", "rsem_star_index"]:
@@ -226,10 +205,11 @@ def make_config_dict(template_config, args, version):
     # Integrates "fastq_screen" ref vals with template vals
     _dict_merge(config, refs)
     # If "Other" or "TestData" genome_build is specified, or if diffex type config,
-    # remove fastq_screen section from config
+    # remove fastq_screen section from template config
     if args.genome_build == "Other" or args.genome_build == "TestData" or args.type == "diffex":
         config.pop("fastq_screen", None)
-    # desired order: email, watermelon_version, samplesheet, genome, references, dirs, template_config stuff
+    # Now add things for the desired order:
+    # email, watermelon_version, samplesheet, genome, references, dirs, template_config stuff
     # Focus on the 2nd half (working backwards)
     config.insert(0, "dirs", dirs) # Insert dirs on top
     config.move_to_end("references", last=False) # This is how to move existing keys to the top
@@ -389,13 +369,11 @@ if __name__ == "__main__":
         samplesheet_df = pd.read_csv(config_dict["samplesheet"], comment="#", dtype="object")
 
     # Perform config validations
-    if not args.genome_build == "Other":
+    if args.genome_build != "Other" and args.genome_build != "TestData":
         validate_genomes(config_dict["references"])
     # Some validations depend on type of config
     if args.type == "align_qc":
         validate_fastq_dirs(samplesheet_df, args.x_sample_col, args.x_input_col)
-    elif args.type == "diffex":
-        foo = "bar"
 
     # Write the outputs
     write_kwargs = { # Using kwargs for optional samplesheet_df if it's to be written
@@ -406,3 +384,8 @@ if __name__ == "__main__":
     if args.input_run_dirs:
         write_kwargs["ss_df"] = samplesheet_df
     write_stuff(**write_kwargs)
+
+    if args.genome_build == "TestData":
+        # These need to be unzipped after watermelon is copied
+        data_gz_glob = os.path.join(os.getcwd(), "Watermelon", "data", "*.gz")
+        helper.gunzip_glob(data_gz_glob)

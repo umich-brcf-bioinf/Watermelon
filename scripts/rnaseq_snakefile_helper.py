@@ -4,6 +4,7 @@
 from collections import defaultdict
 from functools import partial
 import glob
+import gzip
 import os
 import pandas as pd
 import re
@@ -55,7 +56,7 @@ def gunzip_file(source_file, dest_file):
 
 
 def gunzip_glob(source_file_pattern):
-    for source_filename in glob(source_file_pattern):
+    for source_filename in glob.glob(source_file_pattern):
         dest_filename = source_filename.rstrip('.gz')
         gunzip_file(source_filename, dest_filename)
 

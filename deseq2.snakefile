@@ -28,16 +28,38 @@ SAMPLESHEET = pd.read_csv(config["samplesheet"], comment='#', dtype='object') \
 
 PHENOTYPES = (list(SAMPLESHEET.columns))
 
+#Get config file (first need to grab index from argv)
+if '--configfile' in list(sys.argv):
+    cfg_idx = sys.argv.index('--configfile') + 1
+elif '--configfiles' in list(sys.argv): # Cluster environment uses configfiles (plural) under the hood
+    cfg_idx = sys.argv.index('--configfiles') + 1
+else:
+    msg = '--configfile not specified in {}'.format(sys.argv)
+    raise ValueError(msg)
+# Now with the index, get the value
+CONFIGFILE_PATH = sys.argv[cfg_idx]
+
 #function to call config_validator
 def validate_config(config_fp, schema_fp):
     config_validation_exit_code = config_validator.main(config_fp, schema_fp)
     if config_validation_exit_code:
         exit(config_validation_exit_code)
 
-#Perform config validation if dryrun
+# TODO: Perform config validation if dryrun?
 if set(['-n', '--dryrun']).intersection(set(sys.argv)) and not 'skip_validation' in config:
     foo = "bar" #TWS DEBUG
     #validate_config(CONFIGFILE_PATH, CONFIG_SCHEMA_PATH)
+
+
+onstart:
+    helper.email(email_config=config.get('email', None), subject_prefix='Watermelon started: ')
+onsuccess:
+    message = 'config file:\n{}\nlog file:\n{}'.format(CONFIGFILE_PATH, logger.get_logfile())
+    helper.email(email_config=config.get('email', None), subject_prefix='Watermelon completed ok: ', msg=message)
+onerror:
+    message = "Watermelon completed with errors. Full log file attached"
+    attach_str = "-a " + logger.get_logfile() + " --"
+    helper.email(email_config=config.get('email', None), subject_prefix='Watermelon completed with errors: ', msg=message, attachment = attach_str)
 
 
 PHENOTYPE_MANAGER = helper.PhenotypeManager(config)

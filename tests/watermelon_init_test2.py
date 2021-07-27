@@ -13,7 +13,7 @@ try:
 except ImportError:
     from io import StringIO
 
-import scripts.watermelon_init as watermelon_init
+import watermelon_init
 
 
 def test_get_analyst_name():

@@ -18,17 +18,14 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from natsort import natsorted
 
-try:
-    import scripts.rnaseq_snakefile_helper as helper # works in pytest
-except:
-    import rnaseq_snakefile_helper as helper # works when called as script
+import scripts.rnaseq_snakefile_helper as helper # works on CL and in pytest
 
 import pdb # TWS DEBUG
 
 
 # Set default values
-# Find path knowing current location of Watermelon/scripts/watermelon_init.py
-_WATERMELON_ROOT = os.path.realpath(os.path.dirname(os.path.dirname(__file__)))
+# Find path knowing current location of Watermelon/watermelon_init
+_WATERMELON_ROOT = os.path.realpath(os.path.dirname(__file__))
 _DEFAULT_GENOME_REFERENCES = os.path.join(_WATERMELON_ROOT, "config", "genome_references.yaml")
 _DEFAULT_ACKNOWLEDGEMENT = os.path.join(_WATERMELON_ROOT, "report", "default_acknowledge.txt")
 _DEFAULT_SAMPLE_COL = "sample"

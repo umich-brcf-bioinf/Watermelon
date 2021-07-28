@@ -1,0 +1,410 @@
+---
+title: "`r project_name` Project Report"
+author: "`r doc_author`"
+date: "`r Sys.Date()`"
+output:
+        html_document:
+            theme: readable
+            toc: true
+            toc_depth: 4
+            toc_float: true
+            number_sections: true
+            fig_caption: true
+            keep_md: true
+bibliography: references_WAT.bib
+csl: bioinformatics.csl
+---
+
+<!---
+Can change this either in the .md or .Rmd document...
+
+For docx output to get edits, change output field above to:
+        word_document:
+            toc: true
+            toc_depth: 3
+            fig_caption: true
+            keep_md: true
+
+Default HTML output:
+
+        html_document:
+            toc: true
+            toc_depth: 3
+            toc_float: true
+            keep_md: true
+--->
+
+<!--- Allow the page to be wider --->
+<style>
+    body .main-container {
+        max-width: 1200px;
+    }
+</style>
+
+```{r include = FALSE}
+################################################################################
+# Load Libraries
+library(yaml)
+
+
+################################################################################
+# Set things up you'll need downstream
+
+config = snakemake@config
+setwd(project_dir)
+
+# Read the software environment version yaml
+versions = yaml.load_file(snakemake@input[['versions']])
+
+diffex_info = snakemake@params[['diffex_model_info']]
+
+# Depending on snakemake rule, include/exclude sections (diffex, alignment, QC)
+if(snakemake@rule == 'report_align_diffex'){
+    show_appendix_qc = TRUE
+} else if(snakemake@rule == 'report_align_only') {
+    show_appendix_qc = TRUE
+} else if(snakemake@rule == 'report_from_counts') {
+    show_appendix_qc = FALSE
+}
+
+################################################################################
+# Flags for showing additional optional sections
+
+show_background_biology = snakemake@params[['add_background']]
+show_background_samples = snakemake@params[['add_bg_samples']]
+show_methods_prep = snakemake@params[['add_prep_description']]
+show_follow_up = snakemake@config[['report_info']][['include_follow_up']] # note this is in config, others are params
+custom_choices = unlist(strsplit(snakemake@params[['custom_sections']], ','))
+
+if('methods' %in% custom_choices){
+    show_methods_custom = TRUE
+} else {
+    show_methods_custom = FALSE
+}
+if('results' %in% custom_choices){
+    show_results_custom = TRUE
+} else {
+    show_results_custom = FALSE
+}
+if('appendix' %in% custom_choices){
+    show_appendix_custom = TRUE
+} else {
+    show_appendix_custom = FALSE
+}
+
+```
+
+*Contact:*
+
+* `r analyst_name` <`r analyst_email`>
+
+<!---
+Background
+--->
+
+
+# Background
+
+```{r background_biology_section, child = 'child_background_biology.Rmd', eval = show_background_biology}
+```
+
+```{r background_samples_section, child = 'child_background_samples.Rmd', eval = show_background_samples}
+```
+
+<!---
+Methods
+--->
+
+
+# Methods
+
+```{r methods_prep_section, child = 'child_methods_prep.Rmd', eval = show_methods_prep}
+```
+
+## Pipeline
+
+We use Snakemake [@Koster2012] to manage the bioinformatics workflow in a reproducible manner.
+
+## Differential Expression
+
+Data were pre-filtered to remove genes with 0 counts in all samples. Differential gene expression analysis was performed using DESeq2 [@Love2014], using a negative binomial generalized linear model (thresholds: linear fold change >1.5 or <-1.5, Benjamini-Hochberg FDR (Padj) <0.05). Plots were generated using variations of DESeq2 plotting functions and other packages with R version `r versions[['WAT_diffex']][['r-base']]`. Genes were annotated with NCBI Entrez GeneIDs and text descriptions. Functional analysis, including candidate pathways activated or inhibited in comparison(s) and GO-term enrichments [@Mi2019], was performed using iPathway Guide (Advaita) [@ipathwayguide], [@Draghici2007].
+
+```{r methods_custom_section, child = 'child_methods_custom.Rmd', eval = show_methods_custom}
+```
+
+<!---
+Results
+--->
+
+
+# Results
+<!---
+results QC diffex
+--->
+```{r echo = FALSE, results = 'asis', message = FALSE}
+phenotypes = names(snakemake@params[['sample_phenotypes']])
+
+cat('## Boxplots\n\nThe following boxplots show the distribution of gene expression counts in the different samples.\n\n')
+for(factor_cov in phenotypes) {
+  cat(sprintf('\n\n### %s \n\n', factor_cov))
+  # Include 'raw' if desired
+  for(value in c('raw', 'rlog')) {
+    file = sprintf(qc_boxplot_file, diffex_dir, factor_cov, value)
+    if(value == 'rlog'){
+      value = 'rlog normalized' #This is nicer for the caption
+    }
+    cat(sprintf('![**Figure:** Box plot of %s gene expression colored by %s.](%s) \n\n', value, factor_cov, file))
+  }
+}
+```
+
+```{r echo = FALSE, results = 'asis', message = FALSE}
+cat('## Clustering\n\nClustering is a method to visualize the similarity and difference among samples. Unsupervised clustering using complete linkage of the Euclidian distances of the gene expression profiles of pairwise samples is shown below.\n\n')
+for(factor_cov in phenotypes) {
+  cat(sprintf('\n\n### %s \n\n', factor_cov))
+  file = sprintf(qc_heatmap_file, diffex_dir, factor_cov)
+  cat(sprintf('![**Figure:** Unsupervised clustering of %s expression values colored by %s.](%s) \n\n', value, factor_cov, file))
+}
+```
+
+```{r echo = FALSE, results = 'asis', message = FALSE}
+cat('## PCA\n\nPrincipal component analysis (PCA) is another method to visualize the similarity and difference among samples. PCA was applied to the normalized gene expression profiles of the samples.\n\n')
+for(factor_cov in phenotypes) {
+  cat(sprintf('\n\n### %s \n\n', factor_cov))
+  # Include 'raw' if desired
+  for(value in c('top 100', 'top 500')) {
+    val_nospace = sub(" ", "", value)
+    pca_12_png = sprintf(qc_pca_file, diffex_dir, factor_cov, val_nospace)
+    cat(sprintf('![**Figure:** PCA plot (PC1 vs PC2) of %s variable genes colored by %s.](%s) \n\n', value, factor_cov, pca_12_png))
+  }
+}
+```
+
+<!---
+Main results diffex
+--->
+## Differential Expression
+
+The tables below summarize the setup of the differential tests with the name of the comparison, the model, and the threshold values, as well as the samples included in each comparison and the number of differentially expressed genes.
+
+The sections that follow provide more detailed information about the differential tests, including a summary table of the top differential loci (annotated to genomic features if applicable), and a volcano plot for each comparison.
+
+```{r include = FALSE}
+    info = snakemake@params[['diffex_model_info']]
+    names(info) = gsub('_', ' ', names(info)) # Remove _ from model names
+    info_tbl = do.call(rbind, lapply(info, data.frame))
+    info_tbl[,'factor_name'] = NULL # factor_name doesn't need to be put in report, used internally by Rscripts
+    info_tbl = rownames_to_column(info_tbl, var = 'Model Name')
+    colnames(info_tbl) = c('Model Name', 'Model', 'Linear fold-change', 'FDR')
+    info_kable = kable(info_tbl, row.names = TRUE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+      kable_styling(bootstrap_options = c('striped', 'condensed'))
+```
+
+```{r echo = FALSE, results = 'asis', message = FALSE}
+    cat(info_kable)
+```
+
+```{r echo = FALSE, results = 'asis', message = FALSE}
+    comparisons = snakemake@params[['contrasts']]
+    names(comparisons) = gsub('_', ' ', names(info)) # Remove _'s from model names - consistent with info list above
+    sample_phenotypes = snakemake@params[['sample_phenotypes']]
+    phenotypes = names(sample_phenotypes)
+
+    summary_file = sprintf(diffex_summary_file, diffex_dir)
+    summary_df = read.delim(summary_file, row.names = 'comparison', stringsAsFactors = FALSE)
+
+    if(length(comparisons) > 1) {
+      #Summary df has comparisons of form model_name/treatment_v_ctrl. Separate model name from comparison
+      summary_df$model_name = sub("(.*?)/.*", "\\1", rownames(summary_df))
+      summary_df$model_name = as.factor(summary_df$model_name)
+
+      # Split df by model_name (easier retrieval later?)
+      summary_df = split(summary_df, summary_df$model_name)
+
+      names(summary_df) = gsub('_', ' ', names(summary_df)) # make consistent with list
+
+      # remove the model_name from the rownames, so it's just the comparison used as rowname
+      summary_df = lapply(summary_df, function(x) {rownames(x) = sub(".*?/(.*)", "\\1", rownames(x)) ; return(x)})
+    }
+
+    for(model_name in names(comparisons)) {
+        #Get the samples for case and control
+        factor_name = info[[model_name]][['factor_name']]
+        #Function to get case or control samples (concatenated strings)
+        #using the sample phenotype list with the comparison string
+        get_case_ctrl_samples = function(sample_phenotypes, factor, comp_str, case = FALSE, ctrl = FALSE){
+          comp.split = unlist(strsplit(comp_str, "_v_"))
+          case_name = comp.split[1] ; ctrl_name = comp.split[2]
+          if(case == TRUE) {
+            return(paste(sample_phenotypes[[factor]][[case_name]], collapse='<br>')) # Collapse on <br> to create multi-line entries in the table
+          } else if (ctrl == TRUE) {
+            return(paste(sample_phenotypes[[factor]][[ctrl_name]], collapse='<br>'))
+          }
+        }
+
+
+        comps_list = comparisons[[model_name]]
+
+        case_smpls = sapply(X = comps_list, FUN = function(x){
+            return(get_case_ctrl_samples(sample_phenotypes, factor_name, x, case = TRUE))
+        })
+        ctrl_smpls = sapply(X = comps_list, FUN = function(x){
+            return(get_case_ctrl_samples(sample_phenotypes, factor_name, x, ctrl = TRUE))
+        })
+
+        # Get summary count values
+        if(length(comparisons) == 1) { # DF is split if > 1 model available
+          idx.order = match(comps_list, rownames(summary_df)) # Ensure order is consistent with comps_list
+          de_counts = summary_df$count_diff_expressed
+          de_counts = de_counts[idx.order]
+          names(de_counts) = rownames(summary_df) # Makes it easier to pull out later
+        } else {
+          compar_summary = summary_df[[model_name]] # The summary df for that model
+          de_counts = compar_summary$count_diff_expressed
+          idx.order = match(rownames(compar_summary), comps_list) # Ensure order is consistent with comps_list
+          de_counts = de_counts[idx.order]
+          names(de_counts) = rownames(compar_summary) # Makes it easier to pull out later
+        }
+
+
+        comparison_tbl = data.frame(cbind(comps_list, case_smpls, ctrl_smpls, de_counts))
+        message("Not yet colnames(comparison_tbl)")
+        colnames(comparison_tbl) = c('Comparison', 'Case Samples', 'Ctrl Samples', 'Diff. Exp.<br>Count')
+        message("Finished colnames(comparison_tbl)")
+
+        comparison_kable = kable(comparison_tbl, format = 'html', row.names = FALSE, escape = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+          kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
+          scroll_box(width = '100%')
+
+        filter_sig = info[[model_name]][['adjustedPValue']]
+        filter_fc = info[[model_name]][['linear_fold_change']]
+        cat(sprintf('### Comparisons for %s\n\n', model_name))
+        cat(comparison_kable)
+        cat(sprintf('In the volcano plots below, each point is a tested locus. A gene is considered to be differentially expressed if FDR < %s and | linear fold-change | > %s. Points are colored according to the direction of differential expression with the total number of loci indicated in the legend. The vertical lines correspond to the fold-change cutoff. \n\n', filter_sig, filter_fc))
+        for(comparison in comps_list){
+          model_name_for_files = gsub(' ', '_', model_name) # filepaths have underscores instead of spaces
+          volcano_file = sprintf(diffex_volcano_file, diffex_dir, model_name_for_files, comparison)
+          cat(sprintf('![**Figure:** Volcano plot for %s.](%s) \n\n', comparison, volcano_file))
+          annot_file = sprintf(diffex_annot_file, diffex_dir, model_name_for_files, comparison)
+          # "." is used as NA value in the annotated DESeq2 result
+          annot_tbl = read_delim(annot_file, delim="\t", na = c("", ".")) %>%
+              slice_head(n = 200) %>%
+              filter(Call == "YES") %>%
+              dplyr::select(all_of(
+                c('external_gene_name', 'entrezgene_id', 'description', 'log2FoldChange', 'padj')
+              )) %>%
+              mutate(padj = ifelse(padj < 0.001, format(padj, scientific=TRUE, digits=2), round(padj, digits=3))) %>%
+              mutate(description = sub(" \\[Source:.*?\\]", "", description)) %>%
+              rename(Gene = external_gene_name, 'log2 (FC)' = log2FoldChange, 'q-val' = padj) %>%
+              mutate(entrezgene_id = ifelse(is.na(entrezgene_id), NA, cell_spec(
+                  x = entrezgene_id,
+                  format = "html",
+                  link = paste0('https://www.ncbi.nlm.nih.gov/gene/?term=', entrezgene_id)
+              )))
+
+          annot_kable = kable(annot_tbl, "html", digits = 3, escape = FALSE, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+              kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
+              scroll_box(width = '100%', height = '400px')
+          count_de = de_counts[comparison]
+          cat(sprintf('\n\n**Table:** Results for %s \n\n%s differentially expressed genes. View limited to maximum of 200 rows in html report.', comparison, count_de))
+          cat(annot_kable)
+        }
+    }
+```
+
+```{r results_custom_section, child = 'child_results_custom.Rmd', eval = show_results_custom}
+```
+
+
+```{r follow_up, child = 'child_follow_up.Rmd', eval = show_follow_up}
+```
+
+
+# Acknowledgement for Publication
+
+`r acknowledgement_text`
+
+<!---
+Appendices
+-->
+
+# Appendices
+
+## Differential Expression Files
+
+### DESeq2 Counts
+
+These are counts extracted from the DESeq2 object after filtering / normalization.
+
+`counts/deseq2_raw_counts.txt`
+
+raw_counts are the counts used in DESeq2, exactly as they are in the DESeq2 object (after filtering low/nonexpressed genes).
+
+`counts/deseq2_depth_normalized_counts.txt`
+
+These are the counts from above normalized to the sequencing depth by DESeq2.
+
+`counts/deseq2_rlog_normalized_counts.txt`
+
+Same as above, but normalized using the DESeq2's regularized log transformation to normalize.
+
+### Count-Level QC
+
+These use the count data in various plots to illustrate the count-level QC. The plots are color-labeled based on phonotype / characteristic information from the experimental design. The versions with different color labels will each reside in their own folder.
+
+`plots_labeled_by_pheno/{phenotype}/BoxPlot_raw.{pdf,png}`
+
+BoxPlot of count data for each sample in the experiment.
+
+`plots_labeled_by_pheno/{phenotype}/BoxPlot_rlog.{pdf,png}`
+
+Boxplot of count data for each sample after rlog transformation.
+
+`plots_labeled_by_pheno/{phenotype}/Heatmap_TopExp.{pdf,png}`
+
+Heatmaps of count data, with data from up to 500 of the most highly expressed genes. Rows represent genes, columns represent samples.
+
+`plots_labeled_by_pheno/{phenotype}/Heatmap_TopVar.{pdf,png}`
+
+Heatmaps of count data, with data from up to 500 of the most variably expressed genes (across the samples). Rows represent genes, columns represent samples.
+
+`plots_labeled_by_pheno/{phenotype}/PCAplot_{pcs}_top{ngenes}.{pdf,png}`
+
+PCA plots of count data. {pcs} represents the principal components plotted 1 & 2 or 2 & 3. Top {ngenes} represents the number of highly expressed genes used in the PCA.
+
+`plots_labeled_by_pheno/{phenotype}/SampleHeatmap.{pdf,png}`
+
+Heatmaps of the euclidian distance between samples, based on the aggregated count data.
+
+`plots_labeled_by_pheno/{phenotype}/ScreePlot_top{ngenes}.{pdf,png}`
+
+Scree plots of the count data. Top {ngenes} represents the number of highly expressed genes used in the plot.
+
+### DESeq2 Differential Expression Results
+
+`diffex_{model_name}/{comparison}.annot.txt`
+
+Output from DESeq2 differential expression analysis for a particular comparison, in plain tab-separated format, with additional annotations from BiomaRt
+
+`diffex_{model_name}/{comparison}.annot.xlsx`
+
+Output from DESeq2 differential expression analysis for a particular comparison, in xlsx format, with additional annotations from BiomaRt and hyperlinks to NCBI.
+
+`volcano_plots/VolcanoPlot_{comparison}.{pdf,png}`
+
+Volcano plots summarizing differential expression data for a particular comparison.
+
+### DESeq2 Summary
+
+`summary/deseq2_summary.txt`
+
+Summarized information from the different comparisons performed with DESeq2.
+
+`summary/deseq2_summary.xlsx`
+
+An Excel spreadsheet containing the same information as above, with an additional column of entrezgeneID hyperlinks when possible
+
+<!-- ```{r appendix_custom_section, child = 'child_appendix_custom.Rmd', eval = show_appendix_custom} -->
+<!-- ``` -->
+
+# References

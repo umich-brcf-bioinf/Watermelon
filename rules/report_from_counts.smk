@@ -1,7 +1,7 @@
 # A rule to build the report from the R markdown
 rule report_from_counts:
     input:
-        report_rmd = WORKFLOW_BASEDIR + '/report/report.Rmd',
+        report_rmd = WORKFLOW_BASEDIR + '/report/report_diffex.Rmd',
         versions = DELIVERABLES_DIR + 'run_info/env_software_versions.yaml',
         diffex_summary = DIFFEX_DIR + 'summary/deseq2_summary.txt',
         diffex_annot = helper.expand_model_contrast_filenames(
@@ -39,6 +39,7 @@ rule report_from_counts:
         report_dir = REPORT_DIR,
         diffex_dir = DIFFEX_DIR,
         add_background = True, # TODO: These could later be moved out to config
+        add_bg_samples = True,
         add_prep_description = True,
         custom_sections = '', # Rscript expects a string of comma separated values. All sections: 'methods,results,appendix'
         contrasts = DESEQ2_CONTRAST_DICT,

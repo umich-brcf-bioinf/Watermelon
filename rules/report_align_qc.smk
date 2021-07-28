@@ -1,7 +1,7 @@
 # A rule to build the report from the R markdown
-rule report_align_only:
+rule report_align_qc:
     input:
-        report_rmd = WORKFLOW_BASEDIR + '/report/report.Rmd',
+        report_rmd = WORKFLOW_BASEDIR + '/report/report_align_qc.Rmd',
         methods_rmd = WORKFLOW_BASEDIR + '/report/methods_standalone.Rmd',
         methods_fig = WORKFLOW_BASEDIR + '/report/methods_fig.png',
         versions = DELIVERABLES_DIR + 'run_info/env_software_versions.yaml',

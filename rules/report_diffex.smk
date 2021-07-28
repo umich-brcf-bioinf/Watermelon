@@ -1,5 +1,5 @@
 # A rule to build the report from the R markdown
-rule report_from_counts:
+rule report_diffex:
     input:
         report_rmd = WORKFLOW_BASEDIR + '/report/report_diffex.Rmd',
         versions = DELIVERABLES_DIR + 'run_info/env_software_versions.yaml',

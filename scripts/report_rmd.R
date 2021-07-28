@@ -34,7 +34,6 @@ methods_out = file.path(report_dir, 'methods.pdf')
 # }
 
 report_rmd = snakemake@input[['report_rmd']]
-report_rmd = sub("/ccmb/BioinfCore/ActiveProjects", "/nfs/med-bfx-activeprojects", report_rmd)
 
 methods_rmd = snakemake@input[['methods_rmd']]
 methods_fig = snakemake@input[['methods_fig']]

@@ -158,7 +158,7 @@ include: 'rules/align_rsem_star_genome_generate.smk'
 include: 'rules/align_combine_counts_to_matrices.smk'
 include: 'rules/align_annotate_combined_counts.smk'
 #
-include: 'rules/report_align_only.smk'
+include: 'rules/report_align_qc.smk'
 #
 include: 'rules/deliverables_run_info.smk'
 include: 'rules/report_finalize.smk'

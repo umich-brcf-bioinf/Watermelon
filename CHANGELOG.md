@@ -1,5 +1,27 @@
 # Changelog
 
+2.0.0 (07/28/2021)
+------------------
+- Singularity environment version tracking compatible across environment types (custom vs provided)
+- Simplified snakefiles & rules
+    - align_qc.smk is alignment + QC workflow
+    - deseq2.smk is differential expression workflow
+- Overhaul watermelon_init
+    - new command-line options
+    - automatic samplesheet generation
+    - produces config of type 'align_qc' or 'diffex' (instead of a combined config)
+    - option to provide file with sequencing + prep information (to be included in report)
+    - new unit tests with pytest
+- Bugfix: deprecation warning - remove unicode flag from file reads
+- Overhauled differential expression workflow
+    - Has its own snakefile and corresponding config
+    - Consolidated scripts where possible
+    - Re-shaped outputs for more straightforward/navigable deliverables
+    - Refactored reporting for diffex type report (has its own Rmd)
+- align_qc workflow uses its own Rmd for align_qc type report
+- New config templates
+- Added appendix to report outlining differential expression deliverables
+
 1.10.1 (06/30/2021)
 -------------------
 - Add support for inclusion of 'input_dir' column in samplesheet (will be used in next major release)

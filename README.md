@@ -1,7 +1,5 @@
 # Watermelon
 
-[![Build Status](https://travis-ci.com/umich-brcf-bioinf/Watermelon.svg?token=dKagrFefps7qvBArd5yE&branch=master)](https://travis-ci.com/umich-brcf-bioinf/Watermelon)
-
 An RNA-seq pipeline for the UMich Bioinformatics Core
 
 The official repository is located at [https://github.com/umich-brcf-bioinf/Watermelon](https://github.com/umich-brcf-bioinf/Watermelon)

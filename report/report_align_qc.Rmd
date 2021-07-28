@@ -1,0 +1,278 @@
+---
+title: "`r project_name` Project Report"
+author: "`r doc_author`"
+date: "`r Sys.Date()`"
+output:
+        html_document:
+            theme: readable
+            toc: true
+            toc_depth: 4
+            toc_float: true
+            number_sections: true
+            fig_caption: true
+            keep_md: true
+bibliography: references_WAT.bib
+csl: bioinformatics.csl
+---
+
+<!---
+Can change this either in the .md or .Rmd document...
+
+For docx output to get edits, change output field above to:
+        word_document:
+            toc: true
+            toc_depth: 3
+            fig_caption: true
+            keep_md: true
+
+Default HTML output:
+
+        html_document:
+            toc: true
+            toc_depth: 3
+            toc_float: true
+            keep_md: true
+--->
+
+<!--- Allow the page to be wider --->
+<style>
+    body .main-container {
+        max-width: 1200px;
+    }
+</style>
+
+```{r include = FALSE}
+################################################################################
+# Load Libraries
+library(yaml)
+
+
+################################################################################
+# Set things up you'll need downstream
+
+config = snakemake@config
+setwd(project_dir)
+
+# Read the software environment version yaml
+versions = yaml.load_file(snakemake@input[['versions']])
+
+
+    show_methods_qc_sequencing = TRUE
+    include_diffex = FALSE
+    show_results_qc_align = TRUE
+    show_results_qc_diffex = FALSE
+    show_appendix_qc = TRUE
+
+################################################################################
+# Flags for showing additional optional sections
+
+show_background_biology = snakemake@params[['add_background']]
+show_background_samples = snakemake@params[['add_bg_samples']]
+show_methods_prep = snakemake@params[['add_prep_description']]
+show_follow_up = snakemake@config[['report_info']][['include_follow_up']] # note this is in config, others are params
+custom_choices = unlist(strsplit(snakemake@params[['custom_sections']], ','))
+
+
+if('methods' %in% custom_choices){
+    show_methods_custom = TRUE
+} else {
+    show_methods_custom = FALSE
+}
+if('results' %in% custom_choices){
+    show_results_custom = TRUE
+} else {
+    show_results_custom = FALSE
+}
+if('appendix' %in% custom_choices){
+    show_appendix_custom = TRUE
+} else {
+    show_appendix_custom = FALSE
+}
+
+
+```
+
+*Contact:*
+
+* `r analyst_name` <`r analyst_email`>
+
+<!---
+Background
+--->
+
+
+# Background
+
+```{r background_biology_section, child = 'child_background_biology.Rmd', eval = show_background_biology}
+```
+
+```{r background_samples_section, child = 'child_background_samples.Rmd', eval = show_background_samples}
+```
+
+<!---
+Methods
+--->
+
+
+# Methods
+
+```{r methods_prep_section, child = 'child_methods_prep.Rmd', eval = show_methods_prep}
+```
+
+
+## Pipeline
+
+We use Snakemake [@Koster2012] to manage the bioinformatics workflow in a reproducible manner.
+
+## QC and sequence alignment
+
+The reads were trimmed using Cutadapt v`r versions[['cutadapt']][['cutadapt']]` [@Martin2011]. The reads were evaluated with FastQC [@Andrews2010] (v`r versions [['fastqc']][['fastqc']]`) to determine quality of the data. Reads were mapped to the reference genome `r config[['genome']]` (ENSEMBL), using STAR v`r versions[['rsem_star']][['star']]` [@Dobin2013] and assigned count estimates to genes with RSEM v`r versions[['rsem_star']][['rsem']]` [@Li2011]. Alignment options followed ENCODE standards for RNA-seq [@Dobin:STARmanual]. QC metrics from several different steps in the pipeline were aggregated by multiQC v`r versions[['multiqc']][['multiqc']]` [@Ewels2016]. 
+
+```{r methods_custom_section, child = 'child_methods_custom.Rmd', eval = show_methods_custom}
+```
+
+<!---
+Results
+--->
+
+
+# Results
+
+<!---
+Results QC + Alignment
+--->
+
+## QC
+
+A detailed MultiQC report can be found at the following link:
+
+```{r include = FALSE}
+# Setup - copy multiqc html and link to it
+cwd = sub("/ccmb/BioinfCore/ActiveProjects", "/nfs/med-bfx-activeprojects", getwd()) # TODO: when we remove /ccmb/ completely this will no longer be necessary, can just use getwd()
+mqc_curr_path = file.path(project_dir, snakemake@input[['multiqc_html']])
+mqc_copy_path = file.path(project_dir, report_dir, 'multiqc_linked_report.html')
+copystatus = file.copy(mqc_curr_path, mqc_copy_path, overwrite = TRUE)
+
+if(!copystatus){
+  stop("Copying multiqc_linked_report.html to report dir failed.")
+}
+
+multiqc_link = './multiqc_linked_report.html'
+```
+
+### [Alignment Results - MultiQC report](`r multiqc_link`)
+
+### Alignment Results - Summary Statistics
+
+A summary of alignment statistics can be seen in the table below.
+
+
+```{r include = FALSE}
+####
+# Set up summary table
+
+# Determine whether or not to include % duplicates (can be problematic for AGC)
+include_dups = snakemake@config[['report_info']][['include_pct_dups']]
+
+# Read in multiqc tab-separated files
+multiqc_gen_file = file.path(project_dir, snakemake@input[['multiqc_gen_stats']])
+multiqc_star_file = file.path(project_dir, snakemake@input[['multiqc_star']])
+
+multiqc_gen = read.table(multiqc_gen_file, header = TRUE, sep='\t', quote = "", stringsAsFactors = FALSE)
+multiqc_star = read.table(multiqc_star_file, header = TRUE, sep='\t', quote = "", stringsAsFactors = FALSE)
+
+# Subset STAR table to desired properties
+star_keep_cols = c('Sample', 'total_reads', 'uniquely_mapped', 'uniquely_mapped_percent', 'avg_mapped_read_length', 'multimapped', 'multimapped_percent')
+multiqc_star_subset = multiqc_star[,star_keep_cols]
+
+# Subset general table to desired properties (just fastqc aligned percent-dup for now)
+fastqc_aligned_pcdups = grep("^FastQC.*percent_duplicates$", colnames(multiqc_gen), value = TRUE)
+multiqc_gen_subset = multiqc_gen[,c('Sample', fastqc_aligned_pcdups)] #Just grab Sample and aligned dup percentage from general stats
+
+# Function to trim e.g. foo.bar.baz to baz (for simplifying column names)
+trim_to_suffix = function(fullname) {return(sub(".*\\.", "", fullname))} # Trim to final suffix (all else captured by greedy . match)
+
+# Clean column names
+colnames(multiqc_gen_subset) = trim_to_suffix(colnames(multiqc_gen_subset))
+
+# Remove rows with NA (in this case, everything except fastqc_aligned data rows)
+multiqc_gen_subset = multiqc_gen_subset[complete.cases(multiqc_gen_subset),]
+
+# Round the percent duplicate rates to nearest whole number
+multiqc_gen_subset$percent_duplicates = round(multiqc_gen_subset$percent_duplicates, digits = 2)
+
+# Percent duplicates are the only values derived from the general results table
+# Merge the tables together only if dups included
+if(include_dups){
+  # Combine subset of STAR results table with subset of general results table
+  multiqc_report_df = merge(multiqc_star_subset, multiqc_gen_subset, by = 'Sample', all = TRUE)
+} else {
+  multiqc_report_df = multiqc_star_subset
+}
+
+
+# Transform the column names
+colnames(multiqc_report_df) = gsub("_", " ", colnames(multiqc_report_df))
+
+# If more than 16 samples, scroll box needed.
+# Scroll box is only created if height is defined
+if(nrow(multiqc_report_df) > 16) {
+  height.choice = '590px'
+} else { height.choice = NULL }
+
+multiqc_kable = kable(multiqc_report_df, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+  kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
+  scroll_box(width = '100%', height = height.choice)
+
+####
+# Get subset of multiqc plots
+mqc_plots_dir = file.path(project_dir, snakemake@params[['mqc_plots_dir']])
+fig_regex_list = snakemake@config[['report_info']][['mqc_png_regex_list']]
+select_mqc_plots = list()
+for(re in fig_regex_list){
+  this_selection = grep(re, list.files(mqc_plots_dir), value=TRUE, perl=TRUE)
+  select_mqc_plots = c(select_mqc_plots, this_selection)
+}
+```
+
+```{r echo = FALSE, results = 'asis', message = FALSE}
+cat(multiqc_kable)
+
+cat('&nbsp;')
+cat('&nbsp;') #Some newlines to separate the table and figures
+cat('&nbsp;')
+
+for(fig in select_mqc_plots){
+    fig_path = file.path(mqc_plots_dir, fig)
+    cat(sprintf('![**Figure:** Selected MultiQC Figure](%s) \n\n', fig_path))
+}
+```
+
+<!---
+Results - Custom
+-->
+```{r results_custom_section, child = 'child_results_custom.Rmd', eval = show_results_custom}
+```
+
+
+```{r follow_up, child = 'child_follow_up.Rmd', eval = show_follow_up}
+```
+
+
+# Acknowledgement for Publication
+
+`r acknowledgement_text`
+
+<!---
+Appendices
+-->
+
+<!-- # Appendices -->
+
+<!-- ```{r appendix_qc_section, child = 'child_appendix_qc.Rmd', eval = show_appendix_qc} -->
+<!-- ``` -->
+
+<!-- ```{r appendix_custom_section, child = 'child_appendix_custom.Rmd', eval = show_appendix_custom} -->
+<!-- ``` -->
+
+# References

@@ -1,7 +1,7 @@
 # A rule to build the report from the R markdown
-rule report_align_only:
+rule report_align_qc:
     input:
-        report_rmd = WORKFLOW_BASEDIR + '/report/report.Rmd',
+        report_rmd = WORKFLOW_BASEDIR + '/report/report_align_qc.Rmd',
         methods_rmd = WORKFLOW_BASEDIR + '/report/methods_standalone.Rmd',
         methods_fig = WORKFLOW_BASEDIR + '/report/methods_fig.png',
         versions = DELIVERABLES_DIR + 'run_info/env_software_versions.yaml',
@@ -19,9 +19,10 @@ rule report_align_only:
         project_name = config['report_info']['project_name'],
         snakemake_rdata = REPORT_DIR + '.report_draft_snakemake.rda',
         report_dir = REPORT_DIR,
-        diffex_dir = DIFFEX_DIR,
+        diffex_dir = "",
         add_background = False, # TODO: These could later be moved out to config
-        add_wetlab = False,
+        add_bg_samples = True,
+        add_prep_description = True,
         custom_sections = 'results', # Rscript expects a string of comma separated values. All sections: 'methods,results,appendix'
         mqc_plots_dir = ALIGNMENT_DIR + '07-qc/multiqc_plots/png/'
     script:

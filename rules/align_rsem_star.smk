@@ -9,7 +9,7 @@ def get_ref_base():
 rule align_rsem_star:
     input:
         fastq_files = lambda wildcards: expand(ALIGNMENT_DIR + "02-cutadapt/{basename}_trimmed.fastq.gz",
-            basename=INPUT_MANAGER.sample_bnames_dict[wildcards.sample]
+            basename=SAMPLE_BNAMES[wildcards.sample]
         ),
         #This portion determines if a new reference must be created
         genomeParameters = os.path.dirname(get_ref_base()) + '/genomeParameters.txt'
@@ -33,7 +33,7 @@ rule align_rsem_star:
         project_name = config['report_info']['project_name'],
         rsem_ref_base = get_ref_base(),
         outFileNamePrefix = ALIGNMENT_DIR + '04-rsem_star_align/{sample}',
-        paired_end = lambda wildcards, input: '--paired-end' if rnaseq_snakefile_helper.detect_paired_end_bool(input.fastq_files) else ''
+        paired_end = lambda wildcards, input: '--paired-end' if helper.detect_paired_end_bool(input.fastq_files) else ''
     shell: '''(
 STAR_PATH=$(dirname $(which STAR))
 rsem-calculate-expression \

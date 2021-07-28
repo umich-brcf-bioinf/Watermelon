@@ -1,9 +1,9 @@
 rule align_multiqc:
     input:
         align_summary_files = expand(ALIGNMENT_DIR + "04-rsem_star_align/{sample}.log",
-                                     sample=config[SAMPLES_KEY]),
+                                     sample=SAMPLESHEET.index),
         align_fastq_files = expand(ALIGNMENT_DIR + "03-fastqc_reads/{basename}_trimmed_fastqc.html",
-                                   basename=INPUT_MANAGER.gather_basenames(config[SAMPLES_KEY])),
+                                   basename=helper.gather_basenames(SAMPLE_BNAMES, SAMPLESHEET.index)),
         fastq_screen_alignment = FASTQ_SCREEN_ALIGNMENT,
     output:
         ALIGNMENT_DIR + "07-qc/alignment_qc.html",
@@ -16,7 +16,7 @@ rule align_multiqc:
         multiqc_config_filename = WATERMELON_CONFIG_DIR + "multiqc_config.yaml",
     conda: 'envs/multiqc/multiqc.yaml'
     resources: mem_mb=4000
-    singularity: 'docker://umichbfxcore/multiqc'
+    singularity: ENV_INFO['multiqc']['image_str']
     log:
         JOB_LOG_DIR + "align_multiqc.log"
     shell:

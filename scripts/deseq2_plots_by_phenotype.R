@@ -6,7 +6,7 @@ sink(log, type='message')
 save(snakemake, file = snakemake@params[['snakemake_rdata']])
 
 #setwd("/nfs/med-bfx-activeprojects/trsaari/sandbox/20191023_testing_simulated_data/")
-#load("analysis_20191024/diffex_results/deseq2/plots/by_phenotype/.deseq2_plots_by_phenotype_snakemake.rda")
+#load("analysis_20191024/diffex_results/plots_labeled_by_pheno/.deseq2_plots_by_phenotype_snakemake.rda")
 
 #Isolate conda environment: https://github.com/conda-forge/r-base-feedstock/issues/37
 #If we move away from conda in the future, we may want to remove this
@@ -42,8 +42,8 @@ plot_boxplot = function(mat, pdata, factor_name, title, y_label, out_basename = 
             x = '',
             y = y_label) +
         theme_bw() + theme(axis.text.x = element_text(angle = 90))
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf')), plot = box_plot, height = 8, width = 8, dpi = 300)
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), plot = box_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.pdf')), plot = box_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.png')), plot = box_plot, height = 8, width = 8, dpi = 300)
 
     return(box_plot)
 }
@@ -80,7 +80,7 @@ plot_sample_correlation_heatmap = function(mat, pdata, factor_name, out_basename
         number_color = 'black',
         annotation_col = annot_df,
         color = colorRampPalette(RColorBrewer::brewer.pal(9, 'Blues'))(20),
-        filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf'))
+        filename = file.path(plots_dir, factor_name, paste0(out_basename, '.pdf'))
     )
     pheatmap( # png
         mat = dist_mat,
@@ -97,7 +97,7 @@ plot_sample_correlation_heatmap = function(mat, pdata, factor_name, out_basename
         number_color = 'black',
         annotation_col = annot_df,
         color = colorRampPalette(RColorBrewer::brewer.pal(9, 'Blues'))(20),
-        filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png'))
+        filename = file.path(plots_dir, factor_name, paste0(out_basename, '.png'))
     )
 
     return(list(dist_obj = dist_obj, hclust_obj = hclust_obj))
@@ -121,7 +121,7 @@ plot_top_variably_expressed_heatmap = function(mat, pdata, factor_name, top_n = 
     # Calculate the top_n variable genes and put them in decreasing order
     top_var_mat = mat[order(matrixStats::rowVars(mat), decreasing = T), ][1:top_n, ]
 
-    pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf')), height = 20, width = 10)
+    pdf(file = file.path(plots_dir, factor_name, paste0(out_basename, '.pdf')), height = 20, width = 10)
         pheatmap(
             mat = top_var_mat,
             scale= 'row',
@@ -136,7 +136,7 @@ plot_top_variably_expressed_heatmap = function(mat, pdata, factor_name, top_n = 
             color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
         )
     dev.off()
-    png(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), height = 2400, width = 1200)
+    png(file = file.path(plots_dir, factor_name, paste0(out_basename, '.png')), height = 2400, width = 1200)
         pheatmap(
             mat = top_var_mat,
             scale= 'row',
@@ -171,7 +171,7 @@ plot_top_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out
     # Calculate the top_n expressed genes and put them in decreasing order
     top_exp_mat = mat[order(rowMeans(mat), decreasing = T), ][1:top_n, ]
 
-    pdf(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf')), height = 20, width = 10)
+    pdf(file = file.path(plots_dir, factor_name, paste0(out_basename, '.pdf')), height = 20, width = 10)
         pheatmap(
             mat = top_exp_mat,
             scale= 'row',
@@ -186,7 +186,7 @@ plot_top_expressed_heatmap = function(mat, pdata, factor_name, top_n = 1000, out
             color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
         )
     dev.off()
-    png(file = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), height = 2400, width = 1200)
+    png(file = file.path(plots_dir, factor_name, paste0(out_basename, '.png')), height = 2400, width = 1200)
         pheatmap(
             mat = top_exp_mat,
             scale= 'row',
@@ -279,8 +279,8 @@ plot_scree = function(compute_PCA_result, out_basename = 'ScreePlot') {
             y = 'Percent Variance Explained'
         ) +
         theme_bw()
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf')), plot = scree_plot, height = 6, width = 6, dpi = 300)
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), plot = scree_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.pdf')), plot = scree_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.png')), plot = scree_plot, height = 6, width = 6, dpi = 300)
 
     return(scree_plot)
 }
@@ -324,8 +324,8 @@ plot_PCA = function(compute_PCA_result, out_basename = 'PCAplot') {
       message(paste0("Warning - not enough symbols to represent all ", whats.smaller))
     }
 
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.pdf')), plot = pca_plot, height = 6, width = 6, dpi = 300)
-    ggsave(filename = file.path(plots_dir, 'by_phenotype', factor_name, paste0(out_basename, '.png')), plot = pca_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.pdf')), plot = pca_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.png')), plot = pca_plot, height = 6, width = 6, dpi = 300)
 
     return(pca_plot)
 }
@@ -361,7 +361,7 @@ if('bg_data' %in% ls()) {
 } else {
     method = 'deseq2'
 
-    plots_dir = sprintf('%s/deseq2/plots', diffex_dir)
+    plots_dir = sprintf('%s/plots_labeled_by_pheno', diffex_dir)
 
     pdata = data.frame(colData(rld))
     colnames(pdata)[1] = 'sample'

@@ -1,0 +1,12 @@
+cutadapt:
+    image_str: "docker://quay.io/biocontainers/cutadapt:2.3--py37h14c3975_0"
+    ver_str: "2.3"
+fastq_screen:
+    image_str: "docker://quay.io/biocontainers/fastq-screen:0.13.0--pl526_0"
+    ver_str: "0.13.0"
+fastqc:
+    image_str: "docker://biocontainers/fastqc:v0.11.9_cv8"
+    ver_str: "0.11.8"
+multiqc:
+    image_str: "docker://quay.io/biocontainers/multiqc:1.7--py_3"
+    ver_str: "1.7"

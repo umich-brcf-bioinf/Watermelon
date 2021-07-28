@@ -1,0 +1,14 @@
+report_info: #These strings are used directly in the report
+    project_name: "{project_id}" #Don't use spaces in project name. Will fail on cluster
+    prep_description: "{x_sequencing_info}" # Brought in by reading in x_sequencing_info file
+    acknowledgement_text: "{x_acknowledgement_text}" # Brought in by reading in x_acknowledgement_text file
+    # Boolean value to determine whether to include text regarding follow-up.
+    include_follow_up: True
+    include_pct_dups: True
+trimming: #Delete the entire trimming section if no trimming is desired
+    paired_end_mode: True
+    cutadapt_args: --nextseq-trim 13 -u 3 -m 20 --trim-n -a AGATCGGAAGAG -A AGATCGGAAGAG
+fastq_screen: #Delete the entire fastq_screen section if fastq_screen not desired
+    reference_basedir: /nfs/turbo/umms-brcfpipeline/references/fastq_screen
+    aligner: bowtie2
+    subset: 100000

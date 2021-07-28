@@ -442,7 +442,8 @@ fastq_screen:
                          genome_build = 'GRCh38',
                          sample_sheet = 'samplesheet.csv',
                          job_suffix = '_11_01_A',
-                         count_matrix = '')
+                         count_matrix = '',
+                         version_info = {'watermelon': '1.10.0'})
         actual_config = watermelon_init._make_config_dict(template_config,
                                                           genome_references,
                                                           args)
@@ -479,7 +480,8 @@ references:
                          genome_build = 'GRCh38',
                          sample_sheet = 'samplesheet.csv',
                          job_suffix = '_11_01_A',
-                         count_matrix = '')
+                         count_matrix = '',
+                         version_info = {'watermelon': '1.10.0'})
         actual_config = watermelon_init._make_config_dict(template_config,
                                                           genome_references,
                                                           args)

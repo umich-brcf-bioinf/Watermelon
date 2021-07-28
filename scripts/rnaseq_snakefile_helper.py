@@ -1,22 +1,14 @@
 '''Functions that support the RNASeq Snakemake snakefile.
 '''
-from __future__ import print_function, absolute_import, division
 
-from argparse import Namespace
-import collections
 from collections import defaultdict
-import csv
 from functools import partial
 import glob
-import hashlib
-import itertools
+import gzip
 import os
-from os.path import join
-from os.path import isfile
 import pandas as pd
 import re
-import sys
-import yaml
+import subprocess
 import warnings
 
 from snakemake import workflow
@@ -54,28 +46,33 @@ def _filter_dict_by_keys(dict_in, keep_keys):
     dict_out = {k: dict_in[k] for k in all_keys.intersection(keep_keys)}
     return dict_out
 
-def init_references(config_references):
-    def existing_link_target_is_different(link_name, link_path):
-        original_abs_path = os.path.realpath(link_name)
-        new_abs_path = os.path.realpath(link_path)
-        return original_abs_path != new_abs_path
-    if not os.path.exists("references"):
-        os.mkdir("references")
-    os.chdir("references")
-    references = config_references if config_references else {}
-    for link_name, link_path in references.items():
-        if not os.path.exists(link_path):
-            msg_fmt = 'ERROR: specified config reference files/dirs [{}:{}] cannot be read'
-            msg = msg_fmt.format(link_name, link_path)
-            raise ValueError(msg)
-        elif not os.path.exists(link_name):
-            os.symlink(link_path, link_name)
-        elif existing_link_target_is_different(link_name, link_path):
-            os.remove(link_name)
-            os.symlink(link_path, link_name)
-        else:
-            pass #link matches existing link
-    os.chdir("..")
+
+def gunzip_file(source_file, dest_file):
+    with gzip.GzipFile(source_file, 'rb') as inF, \
+         open(dest_file, 'wb') as outF:
+        data = inF.read()
+        outF.write(data)
+        os.remove(source_file)
+
+
+def gunzip_glob(source_file_pattern):
+    for source_filename in glob.glob(source_file_pattern):
+        dest_filename = source_filename.rstrip('.gz')
+        gunzip_file(source_filename, dest_filename)
+
+
+def email(email_config, subject_prefix, msg="", attachment=""):
+    if not email_config:
+        print(subject_prefix, msg)
+    else:
+        command = "echo '{msg}' | mutt -s '{subject_prefix}{subject}' {attachment} {to}".format(
+                to=email_config['to'],
+                subject_prefix=subject_prefix,
+                subject=email_config['subject'],
+                attachment=attachment,
+                msg=msg,
+                )
+        subprocess.run(command, shell=True)
 
 class PhenotypeManager(object):
     '''Interprets a subset of the config to help answer questions around how
@@ -114,115 +111,82 @@ class PhenotypeManager(object):
                 with_replicates.append(label)
         return sorted(with_replicates)
 
-class InputFastqManager(object):
-    def __init__(self, input_dir, capture_regex):
-        self.input_dir = input_dir
-        self.input_paths_dict = self._get_fastq_paths_dict_from_input_dir()
-        self.fastqs_to_concat_dict = self._fastqs_to_concat_from_filenames(capture_regex=capture_regex)
-        self.sample_bnames_dict = self._sample_bnames_from_filenames(capture_regex=capture_regex, bname_fmt='{}_R{}')
 
-
-    def _get_sample_fastq_paths(self, sample_fastq_dir):
-        #Uses file glob to gather list of all .fastq or .fastq.gz files in a sample's fastq dir.
-        #Raises an error if sample has mixed gzipped & plaintext fastqs
-        fastq_glob = os.path.join(sample_fastq_dir, '*.fastq')
-        fastq_gz_glob = os.path.join(sample_fastq_dir, '*.fastq.gz')
-        fastqs = glob.glob(fastq_glob)
-        fastq_gzs = glob.glob(fastq_gz_glob)
-        #Each sample should have only one or the other, plaintext or gz, not mixed
-        if fastqs and fastq_gzs:
-            msg_fmt = "{} contains a mixture of fastq and fastq.gz files. Each sample must have either gzipped or plaintext fastqs, not both."
-            raise RuntimeError(msg_fmt.format(sample_fastq_dir))
-        elif fastqs:
-            return(fastqs)
-        elif fastq_gzs:
-            return(fastq_gzs)
-        else:
-            return None
-
-    def _get_fastq_paths_dict_from_input_dir(self):
-        #Creates a dict of fastq paths {'sample1': ['path/to/sample1_R1.fastq', 'path/to/sample1_R2.fastq']} from samples in input_dir
-        #By calling _get_sample_fastq_paths for each subdir of self.input_dir
-        input_dir = self.input_dir
-        fastq_paths_dict = {}
-        #Get list of subdirs
-        potential_sample_dirs = next(os.walk(input_dir))[1] #https://stackoverflow.com/a/25705093
-        for d in potential_sample_dirs:
-            fqs = self._get_sample_fastq_paths(os.path.join(input_dir, d))
-            if fqs:
-                fastq_paths_dict[d] = sorted(fqs)
+def sample_bnames_from_filenames(samplesheet, capture_regex, bname_fmt):
+    # Uses the samplesheet to get sample names and fastq directories,
+    # then creates a dict with file basenames like {sample}_R{readnum} for each sample in the dict.
+    # Returns:
+    #     bnames_dict: list - dict with samples as keys and list of basenames as values
+    bnames_dict = defaultdict(list)
+    for row in samplesheet.itertuples(index=True, name=None):
+        sample = row[0]
+        fq_list = get_sample_fastq_paths(row[1])
+        captured_groups = set()
+        for file in fq_list:
+            basename = os.path.basename(file)
+            rmatch = re.match(capture_regex, basename)
+            if not rmatch:
+                msg_fmt = 'File {} did not match regular expression {}. Cannot capture grouping information from filename.'
+                raise RuntimeError(msg_fmt.format(basename, capture_regex))
             else:
-                msg = 'Sample directory {} did not contain .fastq or .fastq.gz files. Skipping'.format(
-                    os.path.join(input_dir, d)
-                )
-                warnings.warn(msg)
-        if fastq_paths_dict == {}:
-            msg = 'No .fastq or .fastq.gz files in any subdirectories {} of input directory {}. Exiting'.format(
-                potential_sample_dirs, input_dir
-            )
-            raise RuntimeError(msg)
-        else:
-            return fastq_paths_dict
+                captured = rmatch.group(1)
+                captured_groups.add(captured)
+        sample_bnames = [bname_fmt.format(sample, group) for group in captured_groups]
+        bnames_dict[sample] = sorted(sample_bnames)
+    return bnames_dict
 
-    def _fastqs_to_concat_from_filenames(self, capture_regex):
-        # Uses filenames in input_paths_dict, to get grouping information for each sample's input files,
-        # and gathers a list of input files to concatenate based on that grouping for each sample in the dict
-        # Arguments:
-        #     capture_regex: string - regular expression used to capture group information
-        # Returns:
-        #     cat_fq_dict: Nested dict with sample and group representing top-level and 1st-level keys, repsectively
-        input_files = self.input_paths_dict
 
-        def inner_work(sample_input_files):
-            sample_cat_dict = defaultdict(list)
-            for file in sample_input_files:
-                basename = os.path.basename(file)
-                rmatch = re.match(capture_regex, basename)
-                if not rmatch:
-                    msg_fmt = 'File {} did not match regular expression {}. Cannot capture grouping information from filename.'
-                    raise RuntimeError(msg_fmt.format(basename, capture_regex))
-                else:
-                    captured = rmatch.group(1)
-                    sample_cat_dict[captured].append(file)
-            return sample_cat_dict
+def gather_basenames(sample_bnames_dict, sample_list):
+    '''Gather a list of basenames from sample_bnames_dict, for all samples in sample_list'''
+    basenames = []
+    filtered_dict = _filter_dict_by_keys(sample_bnames_dict, sample_list)
+    #Gather basenames from filtered basenames_dict
+    for v in filtered_dict.values():
+        basenames.extend(v)
+    return sorted(basenames)
 
-        cat_fq_dict = {key: inner_work(self.input_paths_dict[key]) for key in self.input_paths_dict}
-        return cat_fq_dict
 
-    def _sample_bnames_from_filenames(self, capture_regex, bname_fmt):
-        # Uses filenames in input_paths_dict, to get grouping information for a sample's input files,
-        # Then creates a list of file basenames like {sample}_R{readnum} for each sample in the dict.
-        # Arguments:
-        #     capture_regex: string - regular expression used to capture group information
-        #     bname_fmt: string - format with two groups to be filed in e.g. {}_R{}
-        # Returns:
-        #     bnames_dict: list - dict with samples as keys and list of basenames as values
+def get_sample_fastq_paths(sample_fastq_dir):
+    #Uses file glob to gather list of all .fastq or .fastq.gz files in a sample's fastq dir.
+    #Raises an error if sample has mixed gzipped & plaintext fastqs
+    fastq_glob = os.path.join(sample_fastq_dir, '*.fastq')
+    fastq_gz_glob = os.path.join(sample_fastq_dir, '*.fastq.gz')
+    fastqs = glob.glob(fastq_glob)
+    fastq_gzs = glob.glob(fastq_gz_glob)
+    #Each sample should have only one or the other, plaintext or gz, not mixed
+    if fastqs and fastq_gzs:
+        msg_fmt = "{} contains a mixture of fastq and fastq.gz files. Each sample must have either gzipped or plaintext fastqs, not both."
+        raise RuntimeError(msg_fmt.format(sample_fastq_dir))
+    elif fastqs:
+        return(fastqs)
+    elif fastq_gzs:
+        return(fastq_gzs)
+    else:
+        return None
 
-        def inner_work(sample, sample_input_files):
-            captured_groups = set()
-            for file in sample_input_files:
-                basename = os.path.basename(file)
-                rmatch = re.match(capture_regex, basename)
-                if not rmatch:
-                    msg_fmt = 'File {} did not match regular expression {}. Cannot capture grouping information from filename.'
-                    raise RuntimeError(msg_fmt.format(basename, capture_regex))
-                else:
-                    captured = rmatch.group(1)
-                    captured_groups.add(captured)
-            sample_bnames = [bname_fmt.format(sample, group) for group in captured_groups]
-            return sorted(sample_bnames)
 
-        bnames_dict = {key: inner_work(key, self.input_paths_dict[key]) for key in self.input_paths_dict}
-        return bnames_dict
-
-    def gather_basenames(self, sample_list):
-        '''Gather a list of basenames from sample_bnames_dict, for all samples in sample_list'''
-        basenames = []
-        filtered_dict = _filter_dict_by_keys(self.sample_bnames_dict, sample_list)
-        #Gather basenames from filtered basenames_dict
-        for v in filtered_dict.values():
-            basenames.extend(v)
-        return sorted(basenames)
+def fastqs_to_concat(samplesheet, capture_regex):
+    # Uses the samplesheet to get sample names and fastq directories
+    # Then gets grouping information for each directory of fastq files,
+    # and creates a dict of input files to concatenate based on that grouping
+    # Returns:
+    #     cat_fq_dict: Dict with sample and group representing top-level and 1st-level keys, repsectively
+    cat_fq_dict = dict()
+    for row in samplesheet.itertuples(name="samplesheet"):
+        grouping_dict = defaultdict(list)
+        sample = row.Index
+        fq_list = get_sample_fastq_paths(getattr(row, "input_dir"))
+        for file in fq_list:
+            basename = os.path.basename(file)
+            rmatch = re.match(capture_regex, basename)
+            if not rmatch:
+                msg_fmt = "File {} did not match regular expression {}. Cannot capture grouping information from filename."
+                raise RuntimeError(msg_fmt.format(basename, capture_regex))
+            else:
+                captured = rmatch.group(1)
+                grouping_dict[captured].append(file)
+        cat_fq_dict[sample] = grouping_dict
+    return cat_fq_dict
 
 
 def detect_paired_end_bool(fastqs):

@@ -54,7 +54,7 @@ properties:
                 type: string
             subset:
                 type: integer
-    trimming_options:
+    trimming:
         properties:
             base_quality_3prime:
                 type: integer

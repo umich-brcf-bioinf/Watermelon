@@ -13,6 +13,7 @@ import pandas as pd
 
 DEFAULT_ANNOTATION_COLUMN = 'gene_id'
 DEFAULT_ANNOTATION_NULL = '.'
+DEFAULT_TRIM_PREFIX = 'diffex_'
 DEFAULT_TRIM_SUFFIX = '.annot.txt'
 
 def _time_stamp():
@@ -44,7 +45,7 @@ def _count_diffex_pass(diffex_call_column, diffex_call_pass, df):
 def _count_annotated(annotation_column, annotation_null, df):
     return sum(df[annotation_column] != annotation_null)
 
-def _simplify_file_names(file_paths, suffix):
+def _simplify_file_names(file_paths, prefix, suffix):
     simplified_names = {}
     common_prefix = os.path.join(os.path.dirname(os.path.commonprefix(file_paths)), '')
     for path in file_paths:
@@ -53,6 +54,8 @@ def _simplify_file_names(file_paths, suffix):
             name = re.sub(suffix+'$', '', name)
         if common_prefix:
             name = re.sub('^'+common_prefix, '', name)
+        if prefix:
+            name = re.sub('^'+prefix, '', name)
         simplified_names[path] = name
     return simplified_names
 
@@ -89,6 +92,11 @@ def _parse_command_line_args(sys_argv):
         type=str,
         help='optional Excel output filename')
     parser.add_argument(
+        '--trim_prefix',
+        type=str,
+        help='={} Output will remove this string when listing the file names'.format(DEFAULT_TRIM_PREFIX),
+        default=DEFAULT_TRIM_PREFIX)
+    parser.add_argument(
         '--trim_suffix',
         type=str,
         help='={} Output will remove this string when listing the file names'.format(DEFAULT_TRIM_SUFFIX),
@@ -105,7 +113,7 @@ def _parse_command_line_args(sys_argv):
 def main(sys_argv, log=_log):
     args = _parse_command_line_args(sys_argv)
     log('summarizing {} diffex files'.format(len(args.input_files)))
-    names = _simplify_file_names(args.input_files, args.trim_suffix)
+    names = _simplify_file_names(args.input_files, args.trim_prefix, args.trim_suffix)
     all_stats = []
     for input_file in sorted(args.input_files):
         input_df = pd.read_csv(input_file, header=0, sep='\t')

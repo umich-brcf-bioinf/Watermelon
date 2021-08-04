@@ -1,5 +1,12 @@
 # Changelog
 
+2.0.1 (08/04/2021)
+------------------
+- Switch to different fastqc singularity image to avoid rare memory/gc related issues
+- Solution for when groups > 6 & replicates > 6 (insufficient # symbols)
+- #63 Bugfix for diffex report issues in 2.0.0 - fix upstream summary script
+- Clean up and update documentation
+
 2.0.0 (07/28/2021)
 ------------------
 - Singularity environment version tracking compatible across environment types (custom vs provided)

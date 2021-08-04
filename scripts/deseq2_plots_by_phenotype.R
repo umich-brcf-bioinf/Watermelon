@@ -298,8 +298,17 @@ plot_PCA = function(compute_PCA_result, out_basename = 'PCAplot') {
 
     # Plot PCA
     # Use colors for groups or reps, whichever has more numerous levels
-    if(nlevels(groups) > nlevels(replicates)){
-      whats.smaller <- 'replicates'
+    if(nlevels(groups) > 6 && nlevels(replicates) > 6) {
+      message(paste0("Warning - not enough symbols to represent all groups and replicates. Assigning colors to groups and ignoring replicates"))
+      pca_plot = ggplot(pca_df, aes(x = x, y = y, color = groups)) +
+        geom_point(alpha=0.6) +
+        labs(
+          title = sprintf('%s PCA plot', factor_name),
+          subtitle = sprintf('Using top %s variable genes', top_n),
+          x = sprintf('%s: %s%% variance', dims[1], var_explained[1]),
+          y = sprintf('%s: %s%% variance', dims[2], var_explained[2])) +
+        theme_bw()
+    } else if(nlevels(groups) > nlevels(replicates)){
       pca_plot = ggplot(pca_df, aes(x = x, y = y, color = groups)) +
         geom_point(aes_string(shape = 'replicate')) +
         labs(
@@ -309,7 +318,6 @@ plot_PCA = function(compute_PCA_result, out_basename = 'PCAplot') {
           y = sprintf('%s: %s%% variance', dims[2], var_explained[2])) +
         theme_bw()
     } else {
-      whats.smaller <- 'groups'
       pca_plot = ggplot(pca_df, aes(x = x, y = y, color = replicates)) +
         geom_point(aes_string(shape = factor_name)) +
         labs(

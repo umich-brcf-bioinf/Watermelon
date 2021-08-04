@@ -32,12 +32,12 @@ For simplicity when using non-standard organisms, there is a convenience genome 
 Example of using genome build `Other`:
 
     #Run watermelon_init (Note use of genome_build 'Other')
-    watermelon_init --genome_build Other --job_suffix _20190824 --sample_sheet samplesheet.csv /path/to/Run_2250
+    watermelon_init.py --genome_build Other --project_id 20190824 --type align_qc --input_run_dirs /path/to/Run_2250
 
-    #Modify the references in the generated config so that they point to the paths of the acquired/generated reference files
+    # Modify the references in the generated config so that they point to the paths of the acquired/generated reference files
     nano config_20190824.yaml
 
     #Run the pipeline as you normally would
     # Singularity must be available to snakemake, for environment management under the hood
-    module load singularity/3.5.2
-    snakemake --configfile config_20190824.yaml --snakefile Watermelon/rnaseq.snakefile --profile Watermelon/config/profile-greatlakes
+    module load singularity
+    snakemake --configfile config_20190824.yaml --snakefile Watermelon/align_qc.smk --profile Watermelon/config/profile-greatlakes

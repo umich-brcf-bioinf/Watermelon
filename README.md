@@ -144,6 +144,14 @@ Before running watermelon_init, I'll grab the count matrix (excluding annotation
 
     cut -f1,5- analysis_20190821/deliverables/counts/gene_expected_count.annot.txt > counts_ready.txt
 
+Count matrix details:
+- Text file of tab-separated values
+- Row for each gene, matching the IDs of the GTF used in genome_build
+- Column for each sample with count values, with column names matching the samples in the samplesheet
+
+Note:
+It is important that the count matrix only contains the above information. If annotation columns are present (such as description), these must be removed before running the pipeline
+
 Running watermelon_init for `diffex` type:
 
     watermelon_init.py --genome_build TestData --project_id 20190821d --type diffex --sample_sheet samplesheet.csv --count_matrix counts_ready.txt
@@ -159,12 +167,12 @@ After running this, you'll have:
 Now we can run a dry-run similar to above:
 
     # Assuming still in screen session with watermelon conda env activated
-    snakemake --dryrun --printshellcmds --configfile config_20190821d.yaml --snakefile Watermelon/align_diffex.smk
+    snakemake --dryrun --printshellcmds --configfile config_20190821d.yaml --snakefile Watermelon/deseq2.smk
 
 If that works fine, then the pipeline can be run. Example of running this on Great Lakes cluster:
 
     module load singularity
-    snakemake --configfile config_20190821d.yaml --snakefile Watermelon/diffex.smk --profile Watermelon/config/profile-greatlakes
+    snakemake --configfile config_20190821d.yaml --snakefile Watermelon/deseq2.smk --profile Watermelon/config/profile-greatlakes
 
 
 
@@ -173,9 +181,7 @@ If that works fine, then the pipeline can be run. Example of running this on Gre
 * [Report generation](doc/report_generation.md)
 * [Troubleshooting](doc/troubleshooting.md)
 * [Pipeline rulegraph](doc/rulegraph.svg)
-* [Example - UMich AGC data](doc/example_magc_data.md)
-* [Example - Alignment, feature count, & QC Only](doc/example_align_qc_only.md)
-* [Example - Starting from count matrix](doc/example_from_counts.md)
+* [Example - Multiple sequencing runs](doc/example_magc_data.md)
 * [Example - Alternative references](doc/example_alt_refs.md)
 * [Example - Generating an annotation TSV file](doc/generating_annotation_tsv.md)
 * [Snakemake documentation](https://snakemake.readthedocs.io/en/stable/)

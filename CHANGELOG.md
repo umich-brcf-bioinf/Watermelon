@@ -1,5 +1,9 @@
 # Changelog
 
+2.0.2 (08/06/2021)
+------------------
+- #64 Bugfix include report_finalize rule in deseq2.smk
+
 2.0.1 (08/04/2021)
 ------------------
 - Switch to different fastqc singularity image to avoid rare memory/gc related issues

@@ -164,3 +164,4 @@ include: 'rules/deseq2_summary.smk'
 include: 'rules/deliverables_deseq2.smk' #TWS DEBUG
 include: 'rules/deliverables_run_info.smk'
 include: 'rules/report_diffex.smk'
+include: 'rules/report_finalize.smk'

@@ -56,7 +56,7 @@ def test_validate_genomes():
     # Base case - no exceptions should be raised (see the assert False in the except)
     raised = False
     try:
-        watermelon_init.validate_genomes(ref_dict, "align_qc")
+        watermelon_init.validate_genomes(ref_dict)
     except Exception:
         raised = True
     assert(raised == False)
@@ -64,7 +64,7 @@ def test_validate_genomes():
     ref_dict["fasta"] = "foo"
     raised = False
     try:
-        watermelon_init.validate_genomes(ref_dict, "align_qc") # This time it will raise an exception
+        watermelon_init.validate_genomes(ref_dict) # This time it will raise an exception
     except Exception:
         raised = True
     assert(raised == True)

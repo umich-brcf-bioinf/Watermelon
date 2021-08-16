@@ -150,6 +150,7 @@ if 'fastq_screen' in config:
     include: 'rules/align_fastq_screen_multi_species.smk'
 include: 'rules/align_fastqc_trimmed_reads.smk'
 include: 'rules/align_fastqc_align.smk'
+include: 'rules/align_rseqc_read_distribution.smk'
 include: 'rules/align_multiqc.smk'
 include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'

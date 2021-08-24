@@ -121,6 +121,12 @@ else:
     # ^ This is useful for the inclusion/exclusion in multiqc rule as necessary
     FASTQ_SCREEN_DELIVERABLES = []
 
+if config.get('rseqc'):
+    RSEQC_READ_DIST = expand(ALIGNMENT_DIR + "05-rseqc/{sample}_read_distribution.txt", sample=SAMPLESHEET.index)
+else:
+    RSEQC_READ_DIST = []
+    # ^ This is useful for the inclusion/exclusion in multiqc rule as necessary
+
 # Target list - may or may not be populated, see if/else defs above
 ALL = RSEM_ALL + ALIGN_DELIVERABLES + RUN_INFO_DELIVERABLES + FASTQ_SCREEN_DELIVERABLES + REPORT_ALL
 

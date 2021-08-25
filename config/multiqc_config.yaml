@@ -13,6 +13,9 @@ fn_ignore_paths:
 extra_fn_clean_exts:
   - '.genome'
 
+rseqc_sections:
+  - read_distribution
+
 module_order:
   - star:
       path_filters:
@@ -21,7 +24,12 @@ module_order:
       name: 'FastQC'
       path_filters:
         - '*fastqc_reads*'
-  - fastq_screen
+  - rseqc:
+      path_filters:
+        - '*rseqc*'
+
 sp:
   star:
     fn: '*.log'
+  rseqc:
+    fn: '*_read_distribution.txt'

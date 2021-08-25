@@ -4,7 +4,10 @@ import os
 import pandas as pd
 import yaml
 
+from argparse import Namespace
+
 from scripts import rnaseq_snakefile_helper as helper
+from scripts import get_run_stats
 
 # Set up all of the directories
 # Dirs relative to pipeline
@@ -68,10 +71,16 @@ onstart:
 onsuccess:
     message = 'config file:\n{}\nlog file:\n{}'.format(CONFIGFILE_PATH, logger.get_logfile())
     helper.email(email_config=config.get('email', None), subject_prefix='Watermelon completed ok: ', msg=message)
+    # Gather run stats
+    runstats_args = Namespace(infile=logger.get_logfile(), outfile=None)
+    get_run_stats.main(runstats_args) # Do this only when run on cluster?
 onerror:
     message = "Watermelon completed with errors. Full log file attached"
     attach_str = "-a " + logger.get_logfile() + " --"
     helper.email(email_config=config.get('email', None), subject_prefix='Watermelon completed with errors: ', msg=message, attachment = attach_str)
+    # Gather run stats
+    runstats_args = Namespace(infile=logger.get_logfile(), outfile=None)
+    get_run_stats.main(runstats_args) # Do this only when run on cluster?
 
 
 # Defining targets
@@ -121,6 +130,12 @@ else:
     # ^ This is useful for the inclusion/exclusion in multiqc rule as necessary
     FASTQ_SCREEN_DELIVERABLES = []
 
+if config.get('rseqc'):
+    RSEQC_READ_DIST = expand(ALIGNMENT_DIR + "05-rseqc/{sample}_read_distribution.txt", sample=SAMPLESHEET.index)
+else:
+    RSEQC_READ_DIST = []
+    # ^ This is useful for the inclusion/exclusion in multiqc rule as necessary
+
 # Target list - may or may not be populated, see if/else defs above
 ALL = RSEM_ALL + ALIGN_DELIVERABLES + RUN_INFO_DELIVERABLES + FASTQ_SCREEN_DELIVERABLES + REPORT_ALL
 
@@ -150,6 +165,7 @@ if 'fastq_screen' in config:
     include: 'rules/align_fastq_screen_multi_species.smk'
 include: 'rules/align_fastqc_trimmed_reads.smk'
 include: 'rules/align_fastqc_align.smk'
+include: 'rules/align_rseqc_read_distribution.smk'
 include: 'rules/align_multiqc.smk'
 include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'

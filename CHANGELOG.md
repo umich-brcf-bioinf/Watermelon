@@ -1,5 +1,11 @@
 # Changelog
 
+2.1.0 (08/25/2021)
+------------------
+- #65 Optional RSEQC read_distribution metrics (trial)
+- Automatic compute tracking
+- Pre-commit git hook for auto-running tests
+
 2.0.2 (08/06/2021)
 ------------------
 - #64 Bugfix include report_finalize rule in deseq2.smk

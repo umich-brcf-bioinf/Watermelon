@@ -10,3 +10,6 @@ fastqc:
 multiqc:
     image_str: "docker://quay.io/biocontainers/multiqc:1.7--py_3"
     ver_str: "1.7"
+rseqc:
+    image_str: "https://depot.galaxyproject.org/singularity/rseqc:4.0.0--py38h4a8c8d9_1"
+    ver_str: "4.0.0"

@@ -52,8 +52,9 @@ class DiffexSummarizeTest(unittest.TestCase):
 
     def test_simplify_file_names(self):
         file_paths = ['a/b/1.xlsx','a/b/2.xlsx','a/b/3']
+        prefix = None
         suffix = '.xlsx'
-        actual_names = diffex_summary._simplify_file_names(file_paths, suffix)
+        actual_names = diffex_summary._simplify_file_names(file_paths, prefix, suffix)
 
         expected_names = {'a/b/1.xlsx':'1',
                           'a/b/2.xlsx': '2',
@@ -62,8 +63,9 @@ class DiffexSummarizeTest(unittest.TestCase):
 
     def test_simplify_file_names_noSuffix(self):
         file_paths = ['a/b/1.xlsx','a/b/2.xlsx','a/b/3']
+        prefix = None
         suffix = None
-        actual_names = diffex_summary._simplify_file_names(file_paths, suffix)
+        actual_names = diffex_summary._simplify_file_names(file_paths, prefix, suffix)
 
         expected_names = {'a/b/1.xlsx':'1.xlsx',
                           'a/b/2.xlsx': '2.xlsx',
@@ -72,8 +74,9 @@ class DiffexSummarizeTest(unittest.TestCase):
 
     def test_simplify_file_names_noCommonPrefix(self):
         file_paths = ['a/b/1','a/b/2','c/b/1']
+        prefix = None
         suffix = None
-        actual_names = diffex_summary._simplify_file_names(file_paths, suffix)
+        actual_names = diffex_summary._simplify_file_names(file_paths, prefix, suffix)
 
         expected_names = {'a/b/1':'a/b/1',
                           'a/b/2': 'a/b/2',
@@ -82,8 +85,9 @@ class DiffexSummarizeTest(unittest.TestCase):
 
     def test_simplify_file_names_simplePair(self):
         file_paths = ['a/b/1_gene.xlsx','a/b/1_isoform.xlsx']
+        prefix = None
         suffix = None
-        actual_names = diffex_summary._simplify_file_names(file_paths, suffix)
+        actual_names = diffex_summary._simplify_file_names(file_paths, prefix, suffix)
 
         expected_names = {'a/b/1_gene.xlsx':'1_gene.xlsx',
                           'a/b/1_isoform.xlsx':'1_isoform.xlsx'}

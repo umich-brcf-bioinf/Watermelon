@@ -5,11 +5,12 @@ import glob
 import io
 import mock
 import os
+import pandas as pd
+import pytest
 import sys
 import time
 import unittest
 import yaml
-from pandas.errors import ParserError
 
 try:
     from StringIO import StringIO
@@ -97,7 +98,7 @@ class PhenotypeManagerTest(unittest.TestCase):
         test_samplesheet = io.StringIO(lines)
         #Feed it to the PhenotypeManager, pandas should raise ParserError
         config = {'samplesheet' : test_samplesheet}
-        self.assertRaises(ParserError,
+        self.assertRaises(pd.errors.ParserError,
                     rnaseq_snakefile_helper.PhenotypeManager,
                     config)
 
@@ -120,368 +121,124 @@ class PhenotypeManagerTest(unittest.TestCase):
         actual = manager.phenotypes_with_replicates
         self.assertEqual(['B', 'D'], actual)
 
-class InputFastqManagerTest(unittest.TestCase):
-    def setUp(self):
-        self.original_wd = os.getcwd()
-        self.original_stderr = sys.stderr
-        sys.stderr = DevNull()
-
-    def tearDown(self):
-        os.chdir(self.original_wd)
-        sys.stderr = self.original_stderr
-
-    def test_input_paths_dict_fastq(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            sample_1_dir = os.path.join(temp_dir_path, 'sample_1')
-            os.mkdir(sample_1_dir)
-            sample_1_expected = [os.path.join(sample_1_dir, 'sample_1_R1.fastq.gz')]
-            for file in sample_1_expected:
-                temp_dir.write(file, b'foo')
-
-            sample_2_dir = os.path.join(temp_dir_path,'sample_2')
-            os.mkdir(sample_2_dir)
-            sample_2_expected = [os.path.join(sample_2_dir, "sample_2_R{}.fastq.gz".format(x)) for x in [1,2] ]
-            for file in sample_2_expected:
-                temp_dir.write(file, b'foo')
-
-            #sample 3 is not gzipped, other samples are
-            sample_3_dir = os.path.join(temp_dir_path, 'sample_3')
-            os.mkdir(sample_3_dir)
-            sample_3_expected = [os.path.join(sample_3_dir, "sample_3_R{}.fastq".format(x)) for x in [1,2] ]
-            for file in sample_3_expected:
-                temp_dir.write(file, b'foo')
-
-            manager = rnaseq_snakefile_helper.InputFastqManager(input_dir = temp_dir_path, capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*')
-            actual_dict = manager.input_paths_dict
-
-            expected_dict = {
-                'sample_1' : sample_1_expected,
-                'sample_2' : sample_2_expected,
-                'sample_3' : sample_3_expected
-            }
-
-            self.assertEqual(expected_dict, actual_dict)
-
-    def test_input_paths_dict_fastq_warns_sample_no_fastqs(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            sample_1_dir = os.path.join(temp_dir_path, 'sample_1')
-            os.mkdir(sample_1_dir)
-            temp_dir.write(os.path.join(temp_dir_path, 'non_fastq.txt'), b'foo')
-
-            sample_2_dir = os.path.join(temp_dir_path,'sample_2')
-            os.mkdir(sample_2_dir)
-            sample_2_expected = [os.path.join(sample_2_dir, "sample_2_R{}.fastq.gz".format(x)) for x in [1,2] ]
-            for file in sample_2_expected:
-                temp_dir.write(file, b'foo')
-
-            self.assertWarns(Warning, rnaseq_snakefile_helper.InputFastqManager, input_dir=temp_dir_path, capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*')
-
-    def test_input_paths_dict_fastq_errors_no_fastqs_any_sample(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            sample_1_dir = os.path.join(temp_dir_path, 'sample_1')
-            os.mkdir(sample_1_dir)
-            temp_dir.write(os.path.join(temp_dir_path, 'non_fastq.txt'), b'foo')
-
-            self.assertRaises(RuntimeError, rnaseq_snakefile_helper.InputFastqManager, input_dir=temp_dir_path, capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*')
-
-    def test_input_paths_dict_fastq_cant_mix_gz_plaintext(self):
-        with TempDirectory() as temp_dir:
-            temp_dir_path = temp_dir.path
-            sample_1_dir = os.path.join(temp_dir_path, 'sample_1')
-            os.mkdir(sample_1_dir)
-            sample_1_file1 = os.path.join(sample_1_dir, 'sample_1_R1.fastq.gz')
-            sample_1_file2 = os.path.join(sample_1_dir, 'sample_1_R2.fastq')
-            for file in [sample_1_file1, sample_1_file2]:
-                temp_dir.write(file, b'foo')
-
-            self.assertRaises(RuntimeError, rnaseq_snakefile_helper.InputFastqManager, input_dir=temp_dir_path, capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*')
-
-    def test_fastqs_to_concat_dict(self):
-        mock_input_paths_dict = {
-            'sample_1': [
-                '/path/to/sample_1_L001_R1.fastq.gz',
-                '/path/to/sample_1_L002_R1.fastq.gz'
-            ],
-            'sample_2': [
-                '/path/to/sample_2_R1.fastq.gz',
-                '/path/to/sample_2_R2.fastq.gz'
-            ],
-            'sample_3': [
-                '/path/to/sample_3_L001_R1.fastq',
-                '/path/to/sample_3_L002_R1.fastq',
-                '/path/to/sample_3_L001_R2.fastq',
-                '/path/to/sample_3_L002_R2.fastq'
-            ]
-        }
-        def __init__(self, input_dir, capture_regex):
-            self.input_dir = input_dir
-            self.capture_regex = capture_regex
-            self.input_paths_dict = mock_input_paths_dict
-
-            # Specifically testing the _fastqs_to_concat_from_filenames method here
-            self.fastqs_to_concat_dict = self._fastqs_to_concat_from_filenames(capture_regex=r'.*_R(\d+)\.fastq.*')
-
-        expected = {
-            'sample_1': {'1': ['/path/to/sample_1_L001_R1.fastq.gz', '/path/to/sample_1_L002_R1.fastq.gz']},
-            'sample_2': {'1': ['/path/to/sample_2_R1.fastq.gz'], '2': ['/path/to/sample_2_R2.fastq.gz']},
-            'sample_3': {'1': ['/path/to/sample_3_L001_R1.fastq', '/path/to/sample_3_L002_R1.fastq'], '2': ['/path/to/sample_3_L001_R2.fastq', '/path/to/sample_3_L002_R2.fastq']}
-        }
-
-        with mock.patch.object(rnaseq_snakefile_helper.InputFastqManager, '__init__', __init__):
-            manager = rnaseq_snakefile_helper.InputFastqManager(input_dir='foo', capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*')
-            actual = manager.fastqs_to_concat_dict
-            self.assertEqual(expected, actual)
-
-    def test_sample_bnames_dict(self):
-        mock_input_paths_dict = {
-            'sample_1': [
-                '/path/to/sample_1_L001_R1.fastq.gz',
-                '/path/to/sample_1_L002_R1.fastq.gz'
-            ],
-            'sample_2': [
-                '/path/to/sample_2_R1.fastq.gz',
-                '/path/to/sample_2_R2.fastq.gz'
-            ],
-            'sample_3': [
-                '/path/to/sample_3_L001_R1.fastq',
-                '/path/to/sample_3_L002_R1.fastq',
-                '/path/to/sample_3_L001_R2.fastq',
-                '/path/to/sample_3_L002_R2.fastq'
-            ],
-            'sample_4': [
-                '/path/to/foo_blahblah_R1.fastq.gz',
-                '/path/to/foo_barbazbi_R1.fastq.gz',
-                '/path/to/whateverever_R2.fastq.gz',
-                '/path/to/doesntmatter_R2.fastq.gz'
-            ]
-        }
-        def __init__(self, input_dir, capture_regex):
-            self.input_dir = input_dir
-            self.capture_regex = capture_regex
-            self.input_paths_dict = mock_input_paths_dict
-            self.sample_bnames_dict = self._sample_bnames_from_filenames(
-                                            capture_regex=r'.*_R(\d+)\.fastq.*',
-                                            bname_fmt='{}_R{}')
-
-        expected = {
-            'sample_1': ['sample_1_R1'],
-            'sample_2': ['sample_2_R1', 'sample_2_R2'],
-            'sample_3': ['sample_3_R1', 'sample_3_R2'],
-            'sample_4': ['sample_4_R1', 'sample_4_R2']
-        }
-
-        with mock.patch.object(rnaseq_snakefile_helper.InputFastqManager, '__init__', __init__):
-            manager = rnaseq_snakefile_helper.InputFastqManager(input_dir='foo', capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*')
-            actual = manager.sample_bnames_dict
-            self.assertEqual(expected, actual)
+# Use this for some pytests
+def write_foo_file(fname):
+    with open(fname, "w") as fp:
+        fp.write('foo')
 
 
-    def test_gather_basenames(self):
-        mock_sample_bnames_dict = {
-            'sample_1': ['sample_1_R1'],
-            'sample_2': ['sample_2_R1', 'sample_2_R2'],
-            'sample_3': ['sample_3_R1', 'sample_3_R2']
-        }
-        def __init__(self, input_dir, capture_regex):
-            self.input_dir = input_dir
-            self.capture_regex = capture_regex
-            self.sample_bnames_dict = mock_sample_bnames_dict
-
-        expected = ['sample_1_R1', 'sample_2_R1', 'sample_2_R2', 'sample_3_R1', 'sample_3_R2']
-
-        with mock.patch.object(rnaseq_snakefile_helper.InputFastqManager, '__init__', __init__):
-            manager = rnaseq_snakefile_helper.InputFastqManager(input_dir='foo', capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*')
-            sample_list = ['sample_1', 'sample_2', 'sample_3']
-            actual = manager.gather_basenames(sample_list)
-            self.assertEqual(expected, actual)
-
-    def test_gather_basenames_error_if_missing_input(self):
-        mock_sample_bnames_dict = {
-            'sample_1': ['sample_1_R1.fastq.gz']
-        }
-        def __init__(self, input_dir, capture_regex):
-            self.input_dir = input_dir
-            self.capture_regex = capture_regex
-            self.sample_bnames_dict = mock_sample_bnames_dict
-
-        with mock.patch.object(rnaseq_snakefile_helper.InputFastqManager, '__init__', __init__):
-            manager = rnaseq_snakefile_helper.InputFastqManager(input_dir='foo', capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*')
-            sample_list = ['sample_1', 'sample_2', 'sample_3']
-            self.assertRaises(RuntimeError, manager.gather_basenames, sample_list)
+def test_get_sample_fastq_paths_no_fastqs_returns_none(tmp_path):
+    s1_dir = tmp_path / "sample_1"
+    actual = rnaseq_snakefile_helper.get_sample_fastq_paths(s1_dir)
+    assert(actual == None)
 
 
-# FIXME: Revive any of these?
-# class RnaseqSnakefileHelperTest(unittest.TestCase):
-#
-#     def test_get_sample_reads(self):
-#         with TempDirectory() as temp_dir:
-#             temp_dir_path = temp_dir.path
-#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
-#             temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
-#             sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
-#             rnaseq_snakefile_helper._mkdir(sample_1_dir)
-#             temp_dir.write(sample_1_dir + '02_R1.fastq.gz', b'foo')
-#             temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
-#             samples = ['sample_0', 'sample_1']
-#
-#             actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
-#         self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R1_PE', 'R2_PE']},
-#                          actual_sample_reads)
-#
-#     def test_get_sample_reads_onlyConsiderR1R2(self):
-#         with TempDirectory() as temp_dir:
-#             temp_dir_path = temp_dir.path
-#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
-#             temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
-#             temp_dir.write(sample_0_dir + '01_R5.fastq.gz', b'foo')
-#             sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
-#             rnaseq_snakefile_helper._mkdir(sample_1_dir)
-#             temp_dir.write(sample_1_dir + '02_R1.fastq.gz', b'foo')
-#             temp_dir.write(sample_1_dir + '02_R9.fastq.gz', b'foo')
-#             samples = ['sample_0', 'sample_1']
-#
-#             actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
-#         self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R1_SE']},
-#                          actual_sample_reads)
-#
-#     def test_get_sample_reads_okIfR2PresentButR1Missing(self):
-#         with TempDirectory() as temp_dir:
-#             temp_dir_path = temp_dir.path
-#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
-#             temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
-#             sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
-#             rnaseq_snakefile_helper._mkdir(sample_1_dir)
-#             temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
-#             samples = ['sample_0', 'sample_1']
-#
-#             actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
-#         self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R2_SE']},
-#                          actual_sample_reads)
-#
-#     def test_get_sample_reads_considersFastqOrFastqGz(self):
-#         with TempDirectory() as temp_dir:
-#             temp_dir_path = temp_dir.path
-#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
-#             temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
-#             sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
-#             rnaseq_snakefile_helper._mkdir(sample_1_dir)
-#             temp_dir.write(sample_1_dir + '02_R1.fastq', b'foo')
-#             samples = ['sample_0', 'sample_1']
-#
-#             actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
-#         self.assertEqual({'sample_0': ['R1_SE'], 'sample_1': ['R1_SE']},
-#                          actual_sample_reads)
-#
-#     def test_get_sample_reads_missingReads(self):
-#         with TempDirectory() as temp_dir:
-#             temp_dir_path = temp_dir.path
-#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
-#             temp_dir.write(sample_0_dir + '01_RX.fastq.gz', b'foo')
-#             samples = ['sample_0']
-#
-#             actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
-#         self.assertEqual({'sample_0': []},
-#                          actual_sample_reads)
-#
-#     def test_get_sample_reads_ignoresFilesThatDoNotEndWithFastq(self):
-#         with TempDirectory() as temp_dir:
-#             temp_dir_path = temp_dir.path
-#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
-#             temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
-#             temp_dir.write(sample_0_dir + '01_R2.foo', b'foo')
-#             temp_dir.write(sample_0_dir + '01_R2.fasta', b'foo')
-#             temp_dir.write(sample_0_dir + '01_R2', b'foo')
-#             temp_dir.write(sample_0_dir + 'fastq.01_R2', b'foo')
-#             samples = ['sample_0']
-#
-#             actual_sample_reads = rnaseq_snakefile_helper._get_sample_reads(temp_dir_path, samples)
-#         self.assertEqual({'sample_0': ['R1_SE']},
-#                          actual_sample_reads)
-#
-#     def test_flattened_sample_reads(self):
-#         with TempDirectory() as temp_dir:
-#             temp_dir_path = temp_dir.path
-#             sample_0_dir = os.path.join(temp_dir_path, 'sample_0', '')
-#             rnaseq_snakefile_helper._mkdir(sample_0_dir)
-#             temp_dir.write(sample_0_dir + '01_R1.fastq.gz', b'foo')
-#             sample_1_dir = os.path.join(temp_dir_path,'sample_1', '')
-#             rnaseq_snakefile_helper._mkdir(sample_1_dir)
-#             temp_dir.write(sample_1_dir + '02_R1.fastq.gz', b'foo')
-#             temp_dir.write(sample_1_dir + '02_R2.fastq.gz', b'foo')
-#             samples = ['sample_0', 'sample_1']
-#
-#             actual_sample_reads = rnaseq_snakefile_helper.flattened_sample_reads(temp_dir_path, samples)
-#         self.assertEqual([('sample_0', 'R1_SE'), ('sample_1', 'R1_PE'), ('sample_1', 'R2_PE')],
-#                          actual_sample_reads)
-#
-#     def test_expand_sample_read_endedness_all(self):
-#         sample_read_endedness_format = 's={sample}|re={read_endedness}'
-#         all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
-#                                       ('s2', 'R1_SE'),
-#                                       ('s3', 'R1_PE'), ('s3', 'R2_PE')]
-#         actual = rnaseq_snakefile_helper.expand_sample_read_endedness(sample_read_endedness_format,
-#                                                                       all_flattened_sample_reads)
-#         expected = ['s=s1|re=R1_PE', 's=s1|re=R2_PE',
-#                     's=s2|re=R1_SE',
-#                     's=s3|re=R1_PE', 's=s3|re=R2_PE']
-#         self.assertEqual(expected, actual)
-#
-#     def test_expand_sample_read_endedness_singleSample(self):
-#         sample_read_endedness_format = 's={sample}|re={read_endedness}'
-#         all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
-#                                       ('s2', 'R1_SE'),
-#                                       ('s3', 'R1_PE'), ('s3', 'R2_PE')]
-#         actual = rnaseq_snakefile_helper.expand_sample_read_endedness(sample_read_endedness_format,
-#                                                                       all_flattened_sample_reads,
-#                                                                       's3')
-#         expected = ['s=s3|re=R1_PE', 's=s3|re=R2_PE']
-#         self.assertEqual(expected, actual)
-#
-#     def test_expand_sample_read_endedness_none(self):
-#         sample_read_endedness_format = 's={sample}|re={read_endedness}'
-#         all_flattened_sample_reads = []
-#         actual = rnaseq_snakefile_helper.expand_sample_read_endedness(sample_read_endedness_format,
-#                                                                       all_flattened_sample_reads)
-#         self.assertEqual([], actual)
-#
-#     def test_expand_read_stats_if_paired(self):
-#         filename_format = 's={sample}'
-#         all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
-#                                       ('s2', 'R1_SE')]
-#         sample = 's1'
-#         actual = rnaseq_snakefile_helper.expand_read_stats_if_paired(\
-#                 filename_format,
-#                 all_flattened_sample_reads,
-#                 sample)
-#         self.assertEqual(['s=s1'], actual)
-#
-#     def test_expand_read_stats_if_paired_emptyIfSingle(self):
-#         filename_format = 's={sample}'
-#         all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
-#                                       ('s2', 'R1_SE')]
-#         sample = 's2'
-#         actual = rnaseq_snakefile_helper.expand_read_stats_if_paired(\
-#                 filename_format,
-#                 all_flattened_sample_reads,
-#                 sample)
-#         self.assertEqual([], actual)
-#
-#     def test_expand_read_stats_if_paired_emptyIfMissing(self):
-#         filename_format = 's={sample}'
-#         all_flattened_sample_reads = [('s1', 'R1_PE'), ('s1', 'R2_PE'),
-#                                       ('s2', 'R1_SE')]
-#         sample = 's3'
-#         actual = rnaseq_snakefile_helper.expand_read_stats_if_paired(\
-#                 filename_format,
-#                 all_flattened_sample_reads,
-#                 sample)
-#         self.assertEqual([], actual)
+def test_get_sample_fastq_paths_cant_mix_gz_plaintext(tmp_path):
+    # Create the fake inputs
+    s1_dir = tmp_path / "sample_1"
+    s1_dir.mkdir()
+    write_foo_file(str(s1_dir / "sample_1_R1.fastq.gz"))
+    write_foo_file(str(s1_dir / "sample_1_R2.fastq"))
+
+    with pytest.raises(RuntimeError, match="contains a mixture of fastq and fastq.gz files"):
+        rnaseq_snakefile_helper.get_sample_fastq_paths(s1_dir)
+
+
+def test_fastqs_to_concat(tmp_path):
+    # Create the fake inputs
+    s1_dir = tmp_path / "sample_1"
+    s1_dir.mkdir()
+    write_foo_file(str(s1_dir / "sample_1_R1.fastq.gz")) # sample_1 only has R1
+    s2_dir = tmp_path / "sample_2"
+    s2_dir.mkdir()
+    write_foo_file(str(s2_dir / "sample_2_R1.fastq.gz"))
+    write_foo_file(str(s2_dir / "sample_2_R2.fastq.gz"))
+    s3_dir = tmp_path / "sample_3"
+    s3_dir.mkdir()
+    write_foo_file(str(s3_dir / "sample_3_R1_L001.fastq.gz")) # sample_3_R1 has 3 lanes
+    write_foo_file(str(s3_dir / "sample_3_R1_L002.fastq.gz"))
+    write_foo_file(str(s3_dir / "sample_3_R1_L003.fastq.gz"))
+    write_foo_file(str(s3_dir / "sample_3_R2.fastq.gz"))
+
+    sample_sheet_str = """sample,input_dir
+sample_1,{}
+sample_2,{}
+sample_3,{}""".format(s1_dir,s2_dir,s3_dir)
+    sample_sheet_df = pd.read_csv(io.StringIO(sample_sheet_str), comment='#', dtype='object') \
+        .set_index("sample", drop=True)
+
+    expected = {
+        'sample_1': {'1': [str(s1_dir / "sample_1_R1.fastq.gz")]},
+        'sample_2': {'1': [str(s2_dir / "sample_2_R1.fastq.gz")], '2': [str(s2_dir / "sample_2_R2.fastq.gz")]},
+        'sample_3': {'1': [str(s3_dir / "sample_3_R1_L001.fastq.gz"), str(s3_dir / "sample_3_R1_L002.fastq.gz"), str(s3_dir / "sample_3_R1_L003.fastq.gz")], '2': [str(s3_dir / "sample_3_R2.fastq.gz")]}
+    }
+
+    actual = rnaseq_snakefile_helper.fastqs_to_concat(
+        samplesheet=sample_sheet_df,
+        capture_regex=r'.*_R(\d+)[_L0-9]*\.fastq.*',
+        )
+    actual = testing_utils.ddict2dict(actual)
+    assert(expected == actual)
+
+
+def test_sample_bnames_from_filenames(tmp_path):
+    # Create the fake inputs
+    s1_dir = tmp_path / "sample_1"
+    s1_dir.mkdir()
+    write_foo_file(str(s1_dir / "sample_1_R1.fastq.gz")) # sample_1 only has R1
+    s2_dir = tmp_path / "sample_2"
+    s2_dir.mkdir()
+    write_foo_file(str(s2_dir / "sample_2_R1.fastq.gz"))
+    write_foo_file(str(s2_dir / "sample_2_R2.fastq.gz"))
+    s3_dir = tmp_path / "sample_3"
+    s3_dir.mkdir()
+    write_foo_file(str(s3_dir / "sample_3_R1.fastq.gz"))
+    write_foo_file(str(s3_dir / "sample_3_R2.fastq.gz"))
+    s4_dir = tmp_path / "sample_4"
+    s4_dir.mkdir()
+    write_foo_file(str(s4_dir / "sample_4_R1.fastq.gz"))
+    write_foo_file(str(s4_dir / "sample_4_R2.fastq.gz"))
+
+    sample_sheet_str = """sample,input_dir
+sample_1,{}
+sample_2,{}
+sample_3,{}
+sample_4,{}""".format(s1_dir,s2_dir,s3_dir,s4_dir)
+    sample_sheet_df = pd.read_csv(io.StringIO(sample_sheet_str), comment='#', dtype='object') \
+        .set_index("sample", drop=True)
+
+    expected = {
+        'sample_1': ['sample_1_R1'],
+        'sample_2': ['sample_2_R1', 'sample_2_R2'],
+        'sample_3': ['sample_3_R1', 'sample_3_R2'],
+        'sample_4': ['sample_4_R1', 'sample_4_R2']
+    }
+
+    actual = rnaseq_snakefile_helper.sample_bnames_from_filenames(
+        samplesheet=sample_sheet_df,
+        capture_regex=r'.*_R(\d+)[_0-9]*\.fastq.*',
+        bname_fmt='{}_R{}'
+        )
+    assert(expected == actual)
+
+
+def test_gather_basenames():
+    samplename_list = ['sample_1', 'sample_2', 'sample_3']
+    sample_bnames_dict = {
+        'sample_1': ['sample_1_R1'],
+        'sample_2': ['sample_2_R1', 'sample_2_R2'],
+        'sample_3': ['sample_3_R1', 'sample_3_R2']
+    }
+    expected = ['sample_1_R1', 'sample_2_R1', 'sample_2_R2', 'sample_3_R1', 'sample_3_R2']
+
+    actual_bnames = rnaseq_snakefile_helper.gather_basenames(sample_bnames_dict, samplename_list)
+    assert (expected == actual_bnames)
+
+
+def test_gather_basenames_error_if_missing_input():
+    sample_bnames_dict = {
+        'sample_1': ['sample_1_R1.fastq.gz']
+    }
+    samplename_list = ['sample_1', 'sample_2', 'sample_3']
+    with pytest.raises(RuntimeError):
+        rnaseq_snakefile_helper.gather_basenames(sample_bnames_dict, samplename_list)

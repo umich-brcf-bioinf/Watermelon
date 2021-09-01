@@ -31,7 +31,7 @@ SAMPLESHEET = pd.read_csv(config["samplesheet"], comment='#', dtype='object') \
 if config.get('capture_regex'):
     capture_regex = config['capture_regex']
 else:
-    capture_regex = r'.*_R(\d+)[_0-9]*\.fastq.*'
+    capture_regex = r'.*_R(\d+)[_L0-9]*\.fastq.*'
 
 FASTQS_TO_CONCAT = helper.fastqs_to_concat(SAMPLESHEET, capture_regex)
 SAMPLE_BNAMES = helper.sample_bnames_from_filenames(SAMPLESHEET, capture_regex, '{}_R{}')

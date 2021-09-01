@@ -158,9 +158,9 @@ def get_sample_fastq_paths(sample_fastq_dir):
         msg_fmt = "{} contains a mixture of fastq and fastq.gz files. Each sample must have either gzipped or plaintext fastqs, not both."
         raise RuntimeError(msg_fmt.format(sample_fastq_dir))
     elif fastqs:
-        return(fastqs)
+        return(sorted(fastqs))
     elif fastq_gzs:
-        return(fastq_gzs)
+        return(sorted(fastq_gzs))
     else:
         return None
 

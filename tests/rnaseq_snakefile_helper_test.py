@@ -123,8 +123,8 @@ class PhenotypeManagerTest(unittest.TestCase):
 
 # Use this for some pytests
 def write_foo_file(fname):
-    with open(fname, "w") as fp:
-        fp.write('foo')
+    with open(fname, "w") as fh:
+        fh.write('foo')
 
 
 def test_get_sample_fastq_paths_no_fastqs_returns_none(tmp_path):

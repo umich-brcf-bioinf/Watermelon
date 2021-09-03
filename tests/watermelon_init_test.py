@@ -168,14 +168,6 @@ def test_set_up_dirs_UnknownTypeReturnsEmptyDict():
     actual = watermelon_init._set_up_dirs(type='foo', project_id='ABC')
     assert(0 == len(actual))
 
-#
-# def Xtest_make_config_dict_version():
-#     args = Namespace(genome_build=None,
-#                      =temp_dir_path,
-#                      input_runs_dir=watermelon_runs_dir)
-#     actual = watermelon_init.make_config_dict(template_cfg_dict, args, version='42')
-#     assert(actual['version'] == '42')
-
 
 def test_validate_genomes():
     ref_dict = watermelon_init._set_up_refs(watermelon_init._DEFAULT_GENOME_REFERENCES, "GRCh38", "align_qc").get("references")

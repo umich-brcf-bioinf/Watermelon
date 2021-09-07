@@ -4,7 +4,6 @@ import re
 import subprocess
 
 from tests import testing_utils #local module
-from scripts import rnaseq_snakefile_helper as helper
 
 TEST_DIR = os.path.realpath(os.path.dirname(__file__))
 WATERMELON_BASE_DIR = os.path.abspath(os.path.join(TEST_DIR, '..'))
@@ -70,7 +69,7 @@ def test_wminit_snakemake_dryrun_diffex(tmp_path):
     #import pdb; pdb.set_trace()
     sm_command_fmt = "snakemake --snakefile {} --configfile config_test_align_qc.yaml -n {}"
     sm_command = sm_command_fmt.format(
-        os.path.join(WATERMELON_BASE_DIR, 'deseq2.smk'),
+        os.path.join("Watermelon", 'deseq2.smk'),
         REDIRECT_OUTPUT)
     try:
         #return code only available from subprocess.check_output if non-zero (raises CalledProcessError)

@@ -36,7 +36,7 @@ def get_job_stats(jobid):
     return(seff_dict)
 
 def get_job_info(jobid):
-    sacctrun = subprocess.run(["sacct", "-P", "-o", "JobID,JobName,Partition,User,Account,State,ExitCode", "-j", str(jobid)], capture_output=True, check=True)
+    sacctrun = subprocess.run(["sacct", "-P", "-o", "JobID,JobName,Partition,User,Account,State,ExitCode,ReqCPUS,ReqMem,ReqTres", "-j", str(jobid)], capture_output=True, check=True)
     res_raw = sacctrun.stdout.decode('utf-8')
     res_strIO = StringIO(res_raw) # Can load a file-like object into pandas
     res = pd.read_csv(res_strIO, sep = '|')

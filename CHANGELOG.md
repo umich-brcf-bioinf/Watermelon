@@ -1,5 +1,13 @@
 # Changelog
 
+2.1.1 (09/08/2021)
+------------------
+- Revive all unit & functional tests
+- Using git hooks to run all tests locally during dev cycle (greatlakes req for data run)
+- Gather more resource metrics (compute tracking)
+- Potential bugfix for slum_status
+- Yeast genome reference available
+
 2.1.0 (08/25/2021)
 ------------------
 - #65 Optional RSEQC read_distribution metrics (trial)

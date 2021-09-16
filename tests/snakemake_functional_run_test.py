@@ -1,11 +1,7 @@
 import os
 import pandas as pd
 import pytest
-import random
-import re
-import string
 import subprocess
-import unittest
 
 from mock import patch
 from tempfile import TemporaryDirectory
@@ -26,17 +22,9 @@ def assertDataframeEqualEnough(a, b):
     return True
 
 
-def randompath(basepath, str_length=8):
-    letters = string.ascii_lowercase
-    randstr = ''.join(random.choice(letters) for i in range(str_length))
-    tmpstr = "tmp" + randstr
-    return os.path.join(basepath, tmpstr)
-
 @patch("pandas.DataFrame.__eq__", assertDataframeEqualEnough)
 def test_wminit_snakemake_run_align_qc(tmp_path):
     os.chdir(tmp_path)
-    # with TemporaryDirectory(prefix=tmp_path) as temp_dir:
-    #     os.chdir(temp_dir)
 
     wminit_command_fmt = "{} --genome_build TestData --project_id test_align_qc --type align_qc --input_run_dirs {}"
     wminit_command = wminit_command_fmt.format(

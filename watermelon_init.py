@@ -257,6 +257,14 @@ def make_config_dict(template_config, args, version):
 
     return config
 
+
+def validate_count_matrix(counts_fp):
+    counts = pd.read_csv(counts_fp, sep="\t").set_index("gene_id", drop=True)
+    if not all(counts.dtypes == "int64"):
+        msg = "\n\nThe count matrix must only contain columns of numeric count data\n"
+        raise RuntimeError(msg)
+
+
 def validate_fastq_dirs(ss_df, sample_col, fq_col):
     if not sample_col in ss_df.columns:
         msg = "\n\nThe sample sheet must have a column labeled '{}'\n".format(sample_col)
@@ -372,6 +380,8 @@ if __name__ == "__main__":
     # Some validations depend on type of config
     if args.type == "align_qc":
         validate_fastq_dirs(samplesheet_df, args.x_sample_col, args.x_input_col)
+    elif args.type == "diffex":
+        validate_count_matrix(config_dict["count_matrix"])
 
     # Write the outputs
     write_kwargs = { # Using kwargs for optional samplesheet_df if it's to be written

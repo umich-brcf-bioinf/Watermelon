@@ -1,5 +1,12 @@
 # Changelog
 
+2.1.2 (09/22/2021)
+- #67 Bugfix: MultiQC was not including RSeQC results
+- #66 Bugfix: compute tracking script failed when runtime > 1d
+- Functional run test refactored to pytest
+- Improved compute tracking (cost calculated per job)
+- Added count_matrix validation to watermelon_init (ensure only numeric data - no annotations)
+
 2.1.1 (09/08/2021)
 ------------------
 - Revive all unit & functional tests

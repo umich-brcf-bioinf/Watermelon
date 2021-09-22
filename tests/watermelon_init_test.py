@@ -168,6 +168,29 @@ def test_set_up_dirs_UnknownTypeReturnsEmptyDict():
     actual = watermelon_init._set_up_dirs(type='foo', project_id='ABC')
     assert(0 == len(actual))
 
+def test_validate_count_matrix_validMatrix():
+    # Base case - no exceptions should be raised (see the assert False in the except)
+    counts_str = '''gene_id	sample_01	sample_02
+gene_foo	55	0
+gene_bar	22	15
+gene_baz	0	338'''
+    counts_file_like = StringIO(counts_str)
+    raised = False
+    try:
+        watermelon_init.validate_count_matrix(counts_file_like)
+    except Exception as foo:
+        raised = True
+    assert(raised == False)
+
+def test_validate_count_matrix_invalidMatrix():
+    # Invalid case - has non-numeric columns
+    counts_str = '''gene_id	description	sample_01	sample_02
+gene_foo	The amazing foo gene	55	0
+gene_bar	The incredible bar gene	22	15
+gene_baz	The indisputably awesome baz gene	0	338'''
+    counts_file_like = StringIO(counts_str)
+    with pytest.raises(RuntimeError, match="The count matrix must only contain"):
+        watermelon_init.validate_count_matrix(counts_file_like)
 
 def test_validate_genomes():
     ref_dict = watermelon_init._set_up_refs(watermelon_init._DEFAULT_GENOME_REFERENCES, "GRCh38", "align_qc").get("references")

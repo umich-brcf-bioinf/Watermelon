@@ -26,10 +26,9 @@ module_order:
         - '*fastqc_reads*'
   - rseqc:
       path_filters:
-        - '*rseqc*'
+        - '*_read_distribution.txt'
+  - fastq_screen
 
 sp:
   star:
     fn: '*.log'
-  rseqc:
-    fn: '*_read_distribution.txt'

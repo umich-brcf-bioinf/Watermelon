@@ -18,6 +18,17 @@ except ImportError:
 
 import pdb # TWS DEBUG
 
+def get_elapsed_secs(timestr):
+    gt1day = re.match("^([0-9]+)-.*", timestr)
+    if gt1day:
+        days = int(gt1day.group(1))
+        [hours, minutes, seconds] = [int(x) for x in timestr.split(':')]
+        timedelt = datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+    else:
+        [hours, minutes, seconds] = [int(x) for x in timestr.split(':')]
+        timedelt = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    return(timedelt.seconds)
+
 
 def get_job_stats(jobid):
     seffrun = subprocess.run(["seff", str(jobid)], capture_output=True, check=True)
@@ -26,13 +37,15 @@ def get_job_stats(jobid):
     res_stripped = "\n".join([x.strip() for x in res_noparenth.split("\n")])
     seff_dict = yaml.load(res_noparenth, Loader=yaml.SafeLoader)
     if seff_dict.get('CPU Efficiency'):
-        strtest = re.match("([0-9.]+)% of ([0-9:]+) .*", seff_dict['CPU Efficiency'])
+        strtest = re.match("([0-9.]+)% of ([0-9:-]+) .*", seff_dict['CPU Efficiency'])
         seff_dict['CPU Efficiency'] = strtest.group(1)
         seff_dict['Core Time'] = strtest.group(2)
     if seff_dict.get('Memory Efficiency'):
         strtest = re.match("([0-9.]+)% of ([0-9:]+.*)", seff_dict['Memory Efficiency'])
         seff_dict['Memory Efficiency'] = strtest.group(1)
         seff_dict['Memory Total'] = strtest.group(2)
+    if seff_dict.get('Job Wall-clock time'):
+        seff_dict['Elapsed Seconds'] = get_elapsed_secs(seff_dict['Job Wall-clock time'])
     return(seff_dict)
 
 def get_job_info(jobid):
@@ -41,6 +54,9 @@ def get_job_info(jobid):
     res_strIO = StringIO(res_raw) # Can load a file-like object into pandas
     res = pd.read_csv(res_strIO, sep = '|')
     keep = res[res['JobID'] == jobid].set_index('JobID')
+    # Pull "billing" metric from ReqTRES results
+    keep["TRES Billing"] = keep["ReqTRES"].apply(lambda x: int(re.sub("billing=(.*?),.*", "\\1", x)))
+    # Convert to dict
     res_dict = keep.to_dict(orient='records')
     res_dict = res_dict[0] # It's a dict inside of a 1-length list
     return(res_dict)
@@ -54,9 +70,11 @@ def main(args):
                 clust_jobid = match.group(2)
                 stats = get_job_stats(clust_jobid)
                 info = get_job_info(clust_jobid)
-                #pdb.set_trace()
                 jobs[clust_jobid] = stats
                 jobs[clust_jobid].update(info)
+                # Calculate cost
+                cost = {'Cost': jobs[clust_jobid]['TRES Billing'] * jobs[clust_jobid]['Elapsed Seconds'] / 60}
+                jobs[clust_jobid].update(cost)
 
     # Create outfile name
     if not args.outfile:

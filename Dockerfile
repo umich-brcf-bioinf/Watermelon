@@ -9,3 +9,7 @@ RUN conda env create -f /tmp/${env_name}.yaml && conda clean --all -y
 
 ENV PATH /opt/conda/envs/${env_name}/bin:$PATH
 
+RUN apt-get --allow-releaseinfo-change update && \
+    apt-get -y install fonts-noto
+
+RUN fc-cache -fv

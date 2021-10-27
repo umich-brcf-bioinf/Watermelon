@@ -13,7 +13,7 @@ dependencies:
   - r-ggfortify=0.4.8
   - r-ggrepel=0.8.1
   - r-optparse=1.6.4
+  - r-openxlsx=4.1.0
   - r-pheatmap=1.0.12
   - r-plotly=4.9.1
   - r-yaml=2.2.1
-

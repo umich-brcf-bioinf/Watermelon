@@ -7,7 +7,7 @@ rule deseq2_init:
     log:
         JOB_LOG_DIR + 'deseq2_init_{model_name}.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
-    singularity: 'docker://umichbfxcore/wat_diffex:0.1.1'
+    singularity: 'docker://umichbfxcore/wat_diffex:0.2.0'
     resources: cpus=8, mem_mb=8000
     params:
         project_name = config['report_info']['project_name'],

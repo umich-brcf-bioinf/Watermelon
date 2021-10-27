@@ -1,6 +1,11 @@
 # Changelog
 
+2.1.3 (09/27/2021)
+------------------
+- Match rules' image tags for diffex
+
 2.1.2 (09/22/2021)
+------------------
 - #67 Bugfix: MultiQC was not including RSeQC results
 - #66 Bugfix: compute tracking script failed when runtime > 1d
 - Functional run test refactored to pytest

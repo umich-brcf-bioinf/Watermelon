@@ -1,7 +1,7 @@
 It is important to document use of each Biomedical Research Core Facility by investigators in publications. This facilitates efforts to obtain funding for our Cores and their continued functioning. Please recognize the core’s contribution in the Acknowledgment section of your publications.
 
 
-“We acknowledge support from the Bioinformatics Core of the University of Michigan Medical School’s Biomedical Research Core Facilities.”
+“We acknowledge support from the Bioinformatics Core of the University of Michigan Medical School’s Biomedical Research Core Facilities (RRID:SCR_019168).”
 
 
 If core staff have added scientific value to your project — made intellectual contributions in design, analysis and interpretation of data and/or manuscript writing, then please consider including them as co-authors in your publications.

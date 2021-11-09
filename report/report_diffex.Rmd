@@ -261,9 +261,9 @@ The sections that follow provide more detailed information about the differentia
         } else {
           compar_summary = summary_df[[model_name]] # The summary df for that model
           de_counts = compar_summary$count_diff_expressed
-          idx.order = match(rownames(compar_summary), comps_list) # Ensure order is consistent with comps_list
-          de_counts = de_counts[idx.order]
           names(de_counts) = rownames(compar_summary) # Makes it easier to pull out later
+          idx.order = match(comps_list, rownames(compar_summary)) # Ensure order is consistent with comps_list
+          de_counts = de_counts[idx.order]
         }
 
 

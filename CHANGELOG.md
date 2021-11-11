@@ -1,5 +1,10 @@
 # Changelog
 
+2.1.4 (11/11/2021)
+------------------
+- Bugfix: Report # DE genes column sorting inconsistently
+- Add RRID to acknowledgement section
+
 2.1.3 (09/27/2021)
 ------------------
 - Match rules' image tags for diffex

@@ -9,7 +9,7 @@ rule deseq2_summary:
     log:
         JOB_LOG_DIR + "deseq2_summary.log"
     conda: 'envs/python3_pandas_excel/python3_pandas_excel.yaml'
-    singularity: 'docker://umichbfxcore/python3_pandas_excel'
+    container: 'docker://umichbfxcore/python3_pandas_excel:0.1.1'
     params:
         project_name = config['report_info']['project_name'],
         output_dir = DIFFEX_DIR + "summary/"

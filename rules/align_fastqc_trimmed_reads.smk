@@ -6,7 +6,7 @@ rule align_fastqc_trimmed_reads:
     log:
         JOB_LOG_DIR + "align_fastqc_trimmed_reads_{sample}_R{read}.log"
     conda: 'envs/fastqc/fastqc.yaml'
-    singularity: ENV_INFO['fastqc']['image_str']
+    container: ENV_INFO['fastqc']['image_str']
     params:
         project_name = config['report_info']['project_name'],
         fastqc_dir = ALIGNMENT_DIR + "03-fastqc_reads"

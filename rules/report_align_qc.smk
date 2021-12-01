@@ -14,7 +14,7 @@ rule report_align_qc:
         report_html = REPORT_DIR + 'report_draft.html'
     log:
         JOB_LOG_DIR + 'report_align_only.log'
-    singularity: 'docker://umichbfxcore/report:0.1.1'
+    container: 'docker://umichbfxcore/report:0.1.1'
     params:
         project_name = config['report_info']['project_name'],
         snakemake_rdata = REPORT_DIR + '.report_draft_snakemake.rda',

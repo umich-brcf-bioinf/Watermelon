@@ -1,5 +1,10 @@
 # Changelog
 
+2.1.5 (12/03/2021)
+------------------
+- Bugfix: Deprecated warning removed from diffex plotting script
+- Usage of 'singularity:' directive deprecated in favor of 'container:'
+
 2.1.4 (11/11/2021)
 ------------------
 - Bugfix: Report # DE genes column sorting inconsistently

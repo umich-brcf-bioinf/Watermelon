@@ -328,10 +328,6 @@ plot_PCA = function(compute_PCA_result, out_basename = 'PCAplot') {
         theme_bw()
     }
 
-    if(nlevels(groups) > 6 && nlevels(replicates) > 6) {
-      message(paste0("Warning - not enough symbols to represent all ", whats.smaller))
-    }
-
     ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.pdf')), plot = pca_plot, height = 6, width = 6, dpi = 300)
     ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.png')), plot = pca_plot, height = 6, width = 6, dpi = 300)
 

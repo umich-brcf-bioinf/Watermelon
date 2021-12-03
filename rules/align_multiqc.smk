@@ -17,7 +17,7 @@ rule align_multiqc:
         multiqc_config_filename = WATERMELON_CONFIG_DIR + "multiqc_config.yaml",
     conda: 'envs/multiqc/multiqc.yaml'
     resources: mem_mb=4000
-    singularity: ENV_INFO['multiqc']['image_str']
+    container: ENV_INFO['multiqc']['image_str']
     log:
         JOB_LOG_DIR + "align_multiqc.log"
     shell:

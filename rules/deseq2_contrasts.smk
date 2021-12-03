@@ -12,7 +12,7 @@ rule deseq2_contrasts:
     log:
         JOB_LOG_DIR + 'deseq2_contrast_{model_name}_{contrast}.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
-    singularity: 'docker://umichbfxcore/wat_diffex:0.2.0'
+    container: 'docker://umichbfxcore/wat_diffex:0.2.0'
     resources: cpus=8, mem_mb=8000
     params:
         project_name = config['report_info']['project_name'],

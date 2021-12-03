@@ -25,7 +25,7 @@ rule align_rsem_star:
     log:
         JOB_LOG_DIR + 'rsem_star_align_{sample}.log'
     conda: 'envs/rsem_star/rsem_star.yaml'
-    singularity: 'docker://umichbfxcore/rsem_star:0.1.1'
+    container: 'docker://umichbfxcore/rsem_star:0.1.1'
     benchmark:
         ALIGNMENT_DIR + 'benchmarks/rsem_star_align.{sample}.benchmark.txt'
     resources: cpus=12, mem_mb=40000, time_min=720

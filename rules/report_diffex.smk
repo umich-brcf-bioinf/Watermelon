@@ -32,7 +32,7 @@ rule report_diffex:
         report_html = REPORT_DIR + 'report_draft.html'
     log:
         JOB_LOG_DIR + 'report_from_counts.log'
-    singularity: 'docker://umichbfxcore/report:0.1.0'
+    container: 'docker://umichbfxcore/report:0.1.1'
     params:
         project_name = config['report_info']['project_name'],
         snakemake_rdata = REPORT_DIR + '.report_draft_snakemake.rda',

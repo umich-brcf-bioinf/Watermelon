@@ -7,7 +7,7 @@ rule align_rseqc_read_distribution:
         project_name = config['report_info']['project_name'],
         bed_ref = config['references']['coverage_bed']
     resources: time_min=600, mem_mb=4000
-    singularity: ENV_INFO['rseqc']['image_str']
+    container: ENV_INFO['rseqc']['image_str']
     log:
         JOB_LOG_DIR + "align_rseqc_read_distribution_{sample}.log"
     shell:

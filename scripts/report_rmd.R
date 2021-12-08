@@ -56,7 +56,7 @@ diffex_annot_file = '%s/diffex_%s/%s.annot.txt'
 diffex_summary_file = '%s/summary/deseq2_summary.txt'
 diffex_volcano_file = '%s/diffex_%s/volcano_plots/VolcanoPlot_%s.png'
 qc_boxplot_file = '%s/plots_labeled_by_pheno/%s/BoxPlot_%s.png'
-qc_heatmap_file = '%s/plots_labeled_by_pheno/%s/SampleHeatmap.png'
+qc_heatmap_file = '%s/plots_labeled_by_pheno/SampleHeatmap.png'
 qc_pca_file = '%s/plots_labeled_by_pheno/%s/PCAplot_12_%s.png'
 
 ################################################################################

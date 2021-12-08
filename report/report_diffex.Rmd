@@ -160,10 +160,9 @@ for(factor_cov in phenotypes) {
 
 ```{r echo = FALSE, results = 'asis', message = FALSE}
 cat('## Clustering\n\nClustering is a method to visualize the similarity and difference among samples. Unsupervised clustering using complete linkage of the Euclidian distances of the gene expression profiles of pairwise samples is shown below.\n\n')
-for(factor_cov in phenotypes) {
-  cat(sprintf('\n\n### %s \n\n', factor_cov))
-  file = sprintf(qc_heatmap_file, diffex_dir, factor_cov)
-  cat(sprintf('![**Figure:** Unsupervised clustering of %s expression values colored by %s.](%s) \n\n', value, factor_cov, file))
+
+file = sprintf(qc_heatmap_file, diffex_dir)
+cat(sprintf('![**Figure:** Unsupervised clustering of %s expression values colored by %s.](%s) \n\n', value, paste(phenotypes, collapse = ', '), file))
 }
 ```
 
@@ -360,21 +359,21 @@ BoxPlot of count data for each sample in the experiment.
 
 Boxplot of count data for each sample after rlog transformation.
 
-`plots_labeled_by_pheno/{phenotype}/Heatmap_TopExp.{pdf,png}`
+`plots_labeled_by_pheno/Heatmap_TopExp.{pdf,png}`
 
-Heatmaps of count data, with data from up to 500 of the most highly expressed genes. Rows represent genes, columns represent samples.
+Heatmap of count data, with data from up to 500 of the most highly expressed genes. Rows represent genes, columns represent samples.
 
-`plots_labeled_by_pheno/{phenotype}/Heatmap_TopVar.{pdf,png}`
+`plots_labeled_by_pheno/Heatmap_TopVar.{pdf,png}`
 
-Heatmaps of count data, with data from up to 500 of the most variably expressed genes (across the samples). Rows represent genes, columns represent samples.
+Heatmap of count data, with data from up to 500 of the most variably expressed genes (across the samples). Rows represent genes, columns represent samples.
 
 `plots_labeled_by_pheno/{phenotype}/PCAplot_{pcs}_top{ngenes}.{pdf,png}`
 
 PCA plots of count data. {pcs} represents the principal components plotted 1 & 2 or 2 & 3. Top {ngenes} represents the number of highly expressed genes used in the PCA.
 
-`plots_labeled_by_pheno/{phenotype}/SampleHeatmap.{pdf,png}`
+`plots_labeled_by_pheno/SampleHeatmap.{pdf,png}`
 
-Heatmaps of the euclidian distance between samples, based on the aggregated count data.
+Heatmap of the euclidian distance between samples, based on the aggregated count data.
 
 `plots_labeled_by_pheno/{phenotype}/ScreePlot_top{ngenes}.{pdf,png}`
 

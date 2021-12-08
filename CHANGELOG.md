@@ -1,5 +1,9 @@
 # Changelog
 
+2.2.0 (12/08/2021)
+------------------
+- Heatmaps no longer split by phenotype; all phenotypes are included in each heatmap.
+
 2.1.5 (12/03/2021)
 ------------------
 - Bugfix: Deprecated warning removed from diffex plotting script

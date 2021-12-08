@@ -18,9 +18,7 @@ rule report_diffex:
                 phenotype = PHENOTYPES,
                 transformation=['raw', 'rlog']
             ),
-        diffex_heatmap_pngs = expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/SampleHeatmap.png',
-                phenotype = PHENOTYPES
-            ),
+        diffex_heatmap_pngs = expand(DIFFEX_DIR + 'plots_labeled_by_pheno/SampleHeatmap.png'),
         #deseq2_volcano_plots
         diffex_volcanoplot_pngs = helper.expand_model_contrast_filenames(\
             DIFFEX_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.png',

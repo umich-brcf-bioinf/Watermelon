@@ -12,9 +12,6 @@ rule deseq2_plots_by_phenotype:
             ngenes = ['100','500'],
             extension = ['pdf', 'png']),
         expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/BoxPlot_{transformation}.{extension}', phenotype = PHENOTYPES, transformation=['raw', 'rlog'], extension = ['pdf', 'png']),
-        expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/SampleHeatmap.{extension}', phenotype = PHENOTYPES, extension = ['pdf', 'png']),
-        expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/Heatmap_TopVar.{extension}', phenotype = PHENOTYPES, extension = ['pdf', 'png']),
-        expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/Heatmap_TopExp.{extension}', phenotype = PHENOTYPES, extension = ['pdf', 'png'])
     log:
         JOB_LOG_DIR + 'deseq2_plots_by_phenotype.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'

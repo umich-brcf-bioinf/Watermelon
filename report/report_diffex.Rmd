@@ -163,7 +163,6 @@ cat('## Clustering\n\nClustering is a method to visualize the similarity and dif
 
 file = sprintf(qc_heatmap_file, diffex_dir)
 cat(sprintf('![**Figure:** Unsupervised clustering of %s expression values colored by %s.](%s) \n\n', value, paste(phenotypes, collapse = ', '), file))
-}
 ```
 
 ```{r echo = FALSE, results = 'asis', message = FALSE}

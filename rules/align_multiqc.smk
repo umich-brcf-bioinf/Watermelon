@@ -4,7 +4,7 @@ rule align_multiqc:
                                      sample=SAMPLESHEET.index),
         align_fastq_files = expand(ALIGNMENT_DIR + "03-fastqc_reads/{basename}_trimmed_fastqc.html",
                                    basename=helper.gather_basenames(SAMPLE_BNAMES, SAMPLESHEET.index)),
-        read_dist = RSEQC_READ_DIST,
+        ribo_est = RSEQC_RIBO_EST,
         fastq_screen_alignment = FASTQ_SCREEN_ALIGNMENT,
     output:
         ALIGNMENT_DIR + "07-qc/alignment_qc.html",

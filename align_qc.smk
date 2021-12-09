@@ -130,10 +130,10 @@ else:
     # ^ This is useful for the inclusion/exclusion in multiqc rule as necessary
     FASTQ_SCREEN_DELIVERABLES = []
 
-if config.get('rseqc'):
-    RSEQC_READ_DIST = expand(ALIGNMENT_DIR + "05-rseqc/{sample}_read_distribution.txt", sample=SAMPLESHEET.index)
+if "rseqc" in config:
+    RSEQC_RIBO_EST = expand(ALIGNMENT_DIR + "05-rseqc/{sample}_ribo_count.txt", sample=SAMPLESHEET.index)
 else:
-    RSEQC_READ_DIST = []
+    RSEQC_RIBO_EST = []
     # ^ This is useful for the inclusion/exclusion in multiqc rule as necessary
 
 # Target list - may or may not be populated, see if/else defs above
@@ -163,9 +163,10 @@ else:
 if 'fastq_screen' in config:
     include: 'rules/align_fastq_screen_biotype.smk'
     include: 'rules/align_fastq_screen_multi_species.smk'
+if "rseqc" in config:
+    include: 'rules/align_rseqc_estimate_ribo.smk'
 include: 'rules/align_fastqc_trimmed_reads.smk'
 include: 'rules/align_fastqc_align.smk'
-include: 'rules/align_rseqc_read_distribution.smk'
 include: 'rules/align_multiqc.smk'
 include: 'rules/align_deliverables_alignment.smk'
 include: 'rules/align_deliverables_fastq_screen.smk'

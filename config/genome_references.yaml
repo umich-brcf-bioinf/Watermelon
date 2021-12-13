@@ -5,7 +5,7 @@ GRCh38:
     references:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/Homo_sapiens.GRCh38.98.gtf
-        coverage_bed: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/Homo_sapiens.GRCh38.98.bed
+        ribo_bed: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/GRCh38_rRNA_RSeQC_FixedRefs.bed
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/Homo_sapiens.GRCh38.98_annotation.tsv
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh38_exog/index/GRCh38
 GRCh37:
@@ -25,7 +25,7 @@ GRCm38:
     references:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/Mus_musculus.GRCm38.dna_sm.primary_assembly.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/Mus_musculus.GRCm38.98.gtf
-        coverage_bed: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/Mus_musculus.GRCm38.98.bed
+        ribo_bed: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/GRCm38_rRNA_RSeQC_FixedRefs.bed
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/Mus_musculus.GRCm38.98_annotation.tsv
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/GRCm38_exog/index/GRCm38
 NCBIM37:

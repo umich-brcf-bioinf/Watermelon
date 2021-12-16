@@ -15,7 +15,6 @@ GRCh37:
     references:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37_exog/Homo_sapiens.GRCh37.75.dna_sm.primary_assembly.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37_exog/Homo_sapiens.GRCh37.75.gtf
-        coverage_bed: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37_exog/Homo_sapiens.GRCh37.75.bed
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37_exog/Homo_sapiens.GRCh37.75_annotation.tsv
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Homo_sapiens/GRCh37_exog/index/GRCh37
 GRCm38:
@@ -35,7 +34,6 @@ NCBIM37:
     references:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37_exog/Mus_musculus.NCBIM37.67.dna.toplevel.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37_exog/Mus_musculus.NCBIM37.67.gtf
-        coverage_bed: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37_exog/Mus_musculus.NCBIM37.67.bed
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37_exog/Mus_musculus.NCBIM37.67_annotation.tsv
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Mus_musculus/NCBIM37_exog/index/NCBIM37
 Rnor_6.0:
@@ -45,7 +43,6 @@ Rnor_6.0:
     references:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Rattus_norvegicus/Rnor_6.0/Rattus_norvegicus.Rnor_6.0.dna_sm.toplevel.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Rattus_norvegicus/Rnor_6.0/Rattus_norvegicus.Rnor_6.0.98.gtf
-        coverage_bed: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Rattus_norvegicus/Rnor_6.0/Rattus_norvegicus.Rnor_6.0.98.bed
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Rattus_norvegicus/Rnor_6.0/Rattus_norvegicus.Rnor_6.0.98_annotation.tsv
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Rattus_norvegicus/Rnor_6.0/index/Rnor_6.0
 GRCz11:
@@ -55,7 +52,6 @@ GRCz11:
     references:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Danio_rerio/GRCz11/Danio_rerio.GRCz11.dna_sm.primary_assembly.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Danio_rerio/GRCz11/Danio_rerio.GRCz11.98.gtf
-        coverage_bed: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Danio_rerio/GRCz11/Danio_rerio.GRCz11.98.bed
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Danio_rerio/GRCz11/Danio_rerio.GRCz11.98_annotation.tsv
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Danio_rerio/GRCz11/index/GRCz11
 WBcel235:
@@ -65,7 +61,6 @@ WBcel235:
     references:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Caenorhabditis_elegans/WBcel235/Caenorhabditis_elegans.WBcel235.dna_sm.toplevel.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Caenorhabditis_elegans/WBcel235/Caenorhabditis_elegans.WBcel235.98.gtf
-        coverage_bed: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Caenorhabditis_elegans/WBcel235/Caenorhabditis_elegans.WBcel235.98.bed
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Caenorhabditis_elegans/WBcel235/Caenorhabditis_elegans.WBcel235.98_annotation.tsv
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Caenorhabditis_elegans/WBcel235/index/WBcel235
 BDGP6:
@@ -75,7 +70,6 @@ BDGP6:
     references:
         fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Drosophila_melanogaster/BDGP6.22/Drosophila_melanogaster.BDGP6.22.dna_sm.toplevel.fa
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Drosophila_melanogaster/BDGP6.22/Drosophila_melanogaster.BDGP6.22.98.gtf
-        coverage_bed: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Drosophila_melanogaster/BDGP6.22/Drosophila_melanogaster.BDGP6.22.98.bed
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Drosophila_melanogaster/BDGP6.22/Drosophila_melanogaster.BDGP6.22.98_annotation.tsv
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes/Drosophila_melanogaster/BDGP6.22/index/BDGP6
 Other:
@@ -83,5 +77,4 @@ Other:
     references:
         fasta: /path/to/genome.fasta
         gtf: /path/to/genes.gtf
-        coverage_bed: /path/to/coverage.bed
         annotation_tsv: /path/to/genes_annotation.tsv

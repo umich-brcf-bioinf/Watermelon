@@ -41,7 +41,7 @@ def test_wminit_snakemake_run_align_qc(tmp_path):
 
     rm_keys = ["email", "trimming"] # Unnecessary to trim the simulated data
     #Create modified config in this temp dir, using example config and just removing the email key
-    testing_utils.create_modified_config("config_test_align_qc.yaml", "config_test_align_qc.ready", {}, rm_keys)
+    testing_utils.create_modified_config("config_test_align_qc.yaml", "config_test_align_qc.ready", {"rseqc": True}, rm_keys)
     command_fmt = "snakemake --snakefile {} --configfile {} --profile {}"
     # --singularity-args \'-B {}\'
     command = command_fmt.format(
@@ -68,31 +68,3 @@ def test_wminit_snakemake_run_align_qc(tmp_path):
 
     assert(gene_FPKM_expected == gene_FPKM_actual)
     assert(gene_TPM_expected == gene_TPM_actual)
-
-            # # deseq2 counts tables (deliverables)
-            # deseq2_raw_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'deliverables', 'counts', 'deseq2_raw_counts.txt')
-            # deseq2_raw_actual = pd.read_csv(deseq2_raw_actual_path, sep="\t")
-            # deseq2_raw_expected_path = os.path.join(temp_dir.path, 'data', 'expected_results_files', 'deseq2_raw_counts.txt')
-            # deseq2_raw_expected = pd.read_csv(deseq2_raw_expected_path, sep="\t")
-            #
-            # deseq2_rlog_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'deliverables', 'counts', 'deseq2_rlog_normalized_counts.txt')
-            # deseq2_rlog_actual = pd.read_csv(deseq2_rlog_actual_path, sep="\t")
-            # deseq2_rlog_expected_path = os.path.join(temp_dir.path, 'data', 'expected_results_files', 'deseq2_rlog_normalized_counts.txt')
-            # deseq2_rlog_expected = pd.read_csv(deseq2_rlog_expected_path, sep="\t")
-            #
-            # deseq2_depthnorm_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'deliverables', 'counts', 'deseq2_depth_normalized_counts.txt')
-            # deseq2_depthnorm_actual = pd.read_csv(deseq2_depthnorm_actual_path, sep="\t")
-            # deseq2_depthnorm_expected_path = os.path.join(temp_dir.path, 'data', 'expected_results_files', 'deseq2_depth_normalized_counts.txt')
-            # deseq2_depthnorm_expected = pd.read_csv(deseq2_depthnorm_expected_path, sep="\t")
-            #
-            # self.assertEqual(deseq2_raw_expected, deseq2_raw_actual)
-            # self.assertEqual(deseq2_rlog_expected, deseq2_rlog_actual)
-            # self.assertEqual(deseq2_depthnorm_expected, deseq2_depthnorm_actual)
-            #
-            # # gene lists (deliverables, txt)
-            # gene_list_actual_path = os.path.join(temp_dir.path, 'analysis_test', 'deliverables', 'deseq2', 'gene_lists', 'model_treatment', 'drug_v_control.annot.txt')
-            # gene_list_actual = pd.read_csv(gene_list_actual_path, sep="\t")
-            # gene_list_expected_path = os.path.join(temp_dir.path, 'data', 'expected_results_files', 'drug_v_control.annot.txt')
-            # gene_list_expected = pd.read_csv(gene_list_expected_path, sep="\t")
-            #
-            # self.assertEqual(gene_list_expected, gene_list_actual)

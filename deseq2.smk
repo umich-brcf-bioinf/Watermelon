@@ -90,9 +90,8 @@ DESeq2_ALL = [
         phenotype = PHENOTYPES,
         ngenes = ['100','500']),
     expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/BoxPlot_{transformation}.pdf', phenotype = PHENOTYPES, transformation=['raw', 'rlog']),
-    expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/SampleHeatmap.pdf', phenotype = PHENOTYPES),
-    expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/Heatmap_TopVar.pdf', phenotype = PHENOTYPES),
-    expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/Heatmap_TopExp.pdf', phenotype = PHENOTYPES),
+    expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{plot_type}.pdf',
+        plot_type=["SampleHeatmap", "Heatmap_TopVar", "Heatmap_TopExp"]),
     #deseq2_volcano_plots
     helper.expand_model_contrast_filenames(\
         DIFFEX_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.pdf',
@@ -122,9 +121,11 @@ DESeq2_DELIVERABLES = [
     expand(DELIVERABLES_DIR + 'plots_labeled_by_pheno/{phenotype}/ScreePlot_top{ngenes}.pdf',
             phenotype = PHENOTYPES,
             ngenes = ['100','500']),
-    expand(DELIVERABLES_DIR + 'plots_labeled_by_pheno/{phenotype}/{plotType}.pdf',
+    expand(DELIVERABLES_DIR + 'plots_labeled_by_pheno/{phenotype}/{plot_type}.pdf',
         phenotype = PHENOTYPES,
-        plotType = ['BoxPlot_raw', 'BoxPlot_rlog', 'SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
+        plot_type = ['BoxPlot_raw', 'BoxPlot_rlog']),
+    expand(DELIVERABLES_DIR + 'plots_labeled_by_pheno/{plot_type}.pdf',
+        plot_type = ['SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
     helper.expand_model_contrast_filenames(\
             DELIVERABLES_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.pdf',
             DESEQ2_CONTRAST_DICT),
@@ -161,7 +162,7 @@ include: 'rules/deseq2_init.smk'
 include: 'rules/deseq2_contrasts.smk'
 include: 'rules/deseq2_plots_by_phenotype.smk'
 include: 'rules/deseq2_summary.smk'
-include: 'rules/deliverables_deseq2.smk' #TWS DEBUG
+include: 'rules/deliverables_deseq2.smk'
 include: 'rules/deliverables_run_info.smk'
 include: 'rules/report_diffex.smk'
 include: 'rules/report_finalize.smk'

@@ -17,11 +17,9 @@ for(factor_cov in phenotypes) {
 
 ```{r echo = FALSE, results = 'asis', message = FALSE}
 cat('## Clustering\n\nClustering is a method to visualize the similarity and difference among samples. Unsupervised clustering using complete linkage of the Euclidian distances of the gene expression profiles of pairwise samples is shown below.\n\n')
-for(factor_cov in phenotypes) {
-  cat(sprintf('\n\n### %s \n\n', factor_cov))
-  file = sprintf(qc_heatmap_file, diffex_dir, factor_cov)
-  cat(sprintf('![**Figure:** Unsupervised clustering of %s expression values colored by %s.](%s) \n\n', value, factor_cov, file))
-}
+
+file = sprintf(qc_heatmap_file, diffex_dir)
+cat(sprintf('![**Figure:** Unsupervised clustering of %s expression values colored by %s.](%s) \n\n', value, paste(phenotypes, collapse = ', '), file))
 ```
 
 ```{r echo = FALSE, results = 'asis', message = FALSE}

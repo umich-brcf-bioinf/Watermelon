@@ -1,7 +1,7 @@
-import collections
 import gzip
 import os
 import yaml
+from collections.abc import Mapping
 from glob import glob
 
 # https://stackoverflow.com/a/32357112
@@ -9,8 +9,8 @@ def recursive_update(d, u):
     '''recursively update the keys of a dictionary
     d is original dict, u is dict of updated items'''
     for k, v in u.items():
-        if isinstance(d, collections.Mapping):
-            if isinstance(v, collections.Mapping):
+        if isinstance(d, Mapping):
+            if isinstance(v, Mapping):
                 r = recursive_update(d.get(k, {}), v)
                 d[k] = r
             else:

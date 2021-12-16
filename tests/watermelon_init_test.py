@@ -1,11 +1,6 @@
-# cd /nfs/mm-isilon/bioinfcore/ActiveProjects/cgates/Watermelon
-# pytest tests/watermelon_init_test2.py
-
 from argparse import Namespace
 import os
-import os.path
 import pytest
-import re
 
 import pandas as pd
 

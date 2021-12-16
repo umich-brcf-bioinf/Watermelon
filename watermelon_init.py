@@ -107,7 +107,7 @@ def _set_up_refs(grefsfn, gbuild, type):
                 'fasta' : os.path.join(datapath, 'Homo_sapiens.GRCh38.dna_sm.chr22.fa'),
                 'gtf' : os.path.join(datapath, 'Homo_sapiens.GRCh38.98.chr22.gtf'),
                 'annotation_tsv' : os.path.join(datapath, 'Homo_sapiens.GRCh38.98_annotation.tsv'),
-                'coverage_bed' : os.path.join(datapath, 'Homo_sapiens.GRCh38.98.chr22.bed')
+                'ribo_bed' : os.path.join(datapath, 'GRCh38_rRNA_RSeQC_FixedRefs.bed')
             }
         }
     else:

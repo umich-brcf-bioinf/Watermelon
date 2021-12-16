@@ -2,6 +2,9 @@ rule deseq2_plots_by_phenotype:
     input:
         rda = DIFFEX_DIR + 'counts/count_data.rda'
     output:
+        expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{plot_type}.{extension}',
+            plot_type = ['SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp'],
+            extension = ['pdf', 'png']),
         expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/PCAplot_{dim}_top{ngenes}.{extension}',
             phenotype = PHENOTYPES,
             dim = ['12','23'],
@@ -11,10 +14,10 @@ rule deseq2_plots_by_phenotype:
             phenotype = PHENOTYPES,
             ngenes = ['100','500'],
             extension = ['pdf', 'png']),
-        expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/BoxPlot_{transformation}.{extension}', phenotype = PHENOTYPES, transformation=['raw', 'rlog'], extension = ['pdf', 'png']),
-        expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/SampleHeatmap.{extension}', phenotype = PHENOTYPES, extension = ['pdf', 'png']),
-        expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/Heatmap_TopVar.{extension}', phenotype = PHENOTYPES, extension = ['pdf', 'png']),
-        expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/Heatmap_TopExp.{extension}', phenotype = PHENOTYPES, extension = ['pdf', 'png'])
+        expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/BoxPlot_{transformation}.{extension}',
+            phenotype = PHENOTYPES,
+            transformation=['raw', 'rlog'],
+            extension = ['pdf', 'png']),
     log:
         JOB_LOG_DIR + 'deseq2_plots_by_phenotype.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'

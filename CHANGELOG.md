@@ -1,5 +1,12 @@
 # Changelog
 
+2.2.0 (12/16/2021)
+------------------
+- Unified heatmaps - all phenotypes are included in each diffex heatmap
+- RSeQC no longer used for read_distribution (step was being tested by AGC)
+- RSeQC now used for ribosomal content estimation (GRCh38/GRCm38 only. Will be tested by AGC).
+- Additional script and accompanying pytests for parsing ribosomal content estimation
+
 2.1.5 (12/03/2021)
 ------------------
 - Bugfix: Deprecated warning removed from diffex plotting script

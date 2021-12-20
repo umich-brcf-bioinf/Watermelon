@@ -27,6 +27,7 @@ SAMPLESHEET = pd.read_csv(config["samplesheet"], comment='#', dtype='object') \
     .set_index("sample", drop=True)
 
 PHENOTYPES = (list(SAMPLESHEET.columns))
+PHENOTYPE_SAMPLE_LIST = helper.phenotype_sample_list(SAMPLESHEET)
 
 #Get config file (first need to grab index from argv)
 if '--configfile' in list(sys.argv):
@@ -62,7 +63,6 @@ onerror:
     helper.email(email_config=config.get('email', None), subject_prefix='Watermelon completed with errors: ', msg=message, attachment = attach_str)
 
 
-PHENOTYPE_MANAGER = helper.PhenotypeManager(config)
 DIFFEX_MODEL_INFO, DESEQ2_CONTRAST_DICT = helper.diffex_model_info(config['diffex'])
 DESeq2_ALL = [
     #deseq2_counts

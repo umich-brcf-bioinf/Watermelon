@@ -74,42 +74,32 @@ def email(email_config, subject_prefix, msg="", attachment=""):
                 )
         subprocess.run(command, shell=True)
 
-class PhenotypeManager(object):
-    '''Interprets a subset of the config to help answer questions around how
-    samples map to phenotype labels and values and vice versa.'''
-    def __init__(self, config={}):
-        self.samplesheet = pd.read_csv(config["samplesheet"], comment='#', dtype='string', keep_default_na=False) \
-            .drop("input_dir", axis=1, errors="ignore") \
-            .set_index("sample", drop=True)
-        #sample_phenotype_value_dict : {sample : { pheno_label: pheno_value } }
-        self.sample_phenotype_value_dict = self.samplesheet.to_dict(orient='index')
 
-    @property
-    def phenotype_sample_list(self):
-        '''Translates config phenotypes/samples into nested dict of phenotypes.
-        Specifically {phenotype_label : {phenotype_value : [list of samples] } }
-        '''
+def phenotypes_with_replicates(phenotype_sample_list):
+    with_replicates = []
+    for (label, values) in phenotype_sample_list.items():
+        max_sample_count = max([len(samples) for (value, samples) in values.items()])
+        if max_sample_count > 1:
+            with_replicates.append(label)
+    return sorted(with_replicates)
 
-        phenotype_dict = defaultdict(partial(defaultdict, list))
 
-        # {phenotype_label : {sample: phenotype_value } }
-        samplesheet_dict = self.samplesheet.to_dict(orient='dict')
-        for label in samplesheet_dict:
-            for samp in samplesheet_dict[label]:
-                value = samplesheet_dict[label][samp]
-                if value:
-                    phenotype_dict[label][value].append(samp)
-        # {phenotype_label : {phenotype_value : [list of samples] } }
-        return phenotype_dict
+def phenotype_sample_list(samplesheet):
+    '''Translates samplesheet df into nested dict of phenotypes and their samples.
+    Specifically {phenotype_label : {phenotype_value : [list of samples] } }
+    '''
 
-    @property
-    def phenotypes_with_replicates(self):
-        with_replicates = []
-        for (label, values) in self.phenotype_sample_list.items():
-            max_sample_count = max([len(samples) for (value, samples) in values.items()])
-            if max_sample_count > 1:
-                with_replicates.append(label)
-        return sorted(with_replicates)
+    phenotype_dict = defaultdict(partial(defaultdict, list))
+
+    # {phenotype_label : {sample: phenotype_value } }
+    samplesheet_dict = samplesheet.to_dict(orient='dict')
+    for label in samplesheet_dict:
+        for samp in samplesheet_dict[label]:
+            value = samplesheet_dict[label][samp]
+            if value:
+                phenotype_dict[label][value].append(samp)
+    # {phenotype_label : {phenotype_value : [list of samples] } }
+    return phenotype_dict
 
 
 def sample_bnames_from_filenames(samplesheet, capture_regex, bname_fmt):
@@ -204,6 +194,7 @@ def diffex_models(diffex_config):
     model_names = [k for k in diffex_config.keys() if k not in not_factors]
     return(model_names)
 
+
 def diffex_model_info(diffex_config):
     '''Returns two dictionaries: one with contrasts, and one (nested) with linear fold-change and p-val cutoff, for each model.
     Keyed by model name. Former is used to setup targets in snakefile, both used in report.
@@ -224,6 +215,7 @@ def diffex_model_info(diffex_config):
         }
         cont_dict[model] = diffex_config[model]['contrasts']
     return(info_dict, cont_dict)
+
 
 def expand_model_contrast_filenames(model_contrasts_format, contrast_dict):
     paths = []

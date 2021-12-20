@@ -24,7 +24,7 @@ rule deseq2_plots_by_phenotype:
     container: 'docker://umichbfxcore/wat_diffex:0.2.0'
     params:
         project_name = config['report_info']['project_name'],
-        sample_phenotypes = PHENOTYPE_MANAGER.phenotype_sample_list,
+        sample_phenotypes = PHENOTYPE_SAMPLE_LIST,
         diffex_dir = DIFFEX_DIR,
         snakemake_rdata = DIFFEX_DIR + 'plots_labeled_by_pheno/.deseq2_plots_by_phenotype_snakemake.rda' #TWS DEBUG
     script:

@@ -50,6 +50,7 @@ class DevNull(object):
 #        lines = "\n".join(lines)
 #        #Use stringIO to create in-memory stream from lines - this is file-like-object readable by pandas
 #        test_samplesheet = io.StringIO(lines)
+#        self.sample_phenotype_value_dict = self.samplesheet.to_dict(orient='index') #TWS TODO use this instead of PhenotypeManager
 #        #Feed it to the PhenotypeManager
 #        config = {'samplesheet' : test_samplesheet}
 #        manager = rnaseq_snakefile_helper.PhenotypeManager(config)

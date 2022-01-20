@@ -2,7 +2,7 @@ printshellcmds: True
 keep-going: True
 use-singularity: True
 singularity-args: "-B $(pwd) -B /nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
-cluster: sbatch --job-name={params.project_name}_{rule}_{wildcards} --account=cgates1 --partition=standard --nodes=1 --ntasks-per-node={resources.cpus} --mem={resources.mem_mb} --time={resources.time_min} --output=cluster_logs/%x-%j.log --parsable
+cluster: sbatch --job-name={params.project_name}_{rule}_{wildcards} --account=cgates1 --partition=standard --nodes=1 --cpus-per-task={resources.cpus} --mem={resources.mem_mb} --time={resources.time_min} --output=cluster_logs/%x-%j.log --parsable
 cluster-status: Watermelon/scripts/slurm_status.py
 default-resources: [cpus=1, mem_mb=1000, time_min=120]
 latency-wait: 60

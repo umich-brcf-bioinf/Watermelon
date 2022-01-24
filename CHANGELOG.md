@@ -1,5 +1,10 @@
 # Changelog
 
+2.2.1 (01/24/2022)
+------------------
+- Add functionality for additional, second pass of cutadapt trimming - for normalase treated samples
+- Change snakemake/SLURM configuration of CPU usage
+
 2.2.0 (12/16/2021)
 ------------------
 - Unified heatmaps - all phenotypes are included in each diffex heatmap

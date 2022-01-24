@@ -315,7 +315,8 @@ class _ConfigValidator(object):
 
     def _check_samples_excluded_from_contrast(self):
         phenotype_manager = rnaseq_snakefile_helper.PhenotypeManager(self.config)
-        all_samples = set(phenotype_manager.sample_phenotype_value_dict.keys())
+        sample_phenotype_value_dict = SAMPLESHEET.to_dict(orient='index')
+        all_samples = set(sample_phenotype_value_dict.keys())
         contrast_pheno_labels = self.contrast_values.keys()
         phenotype_sample_list = phenotype_manager.phenotype_sample_list
         all_compared_samples = set()

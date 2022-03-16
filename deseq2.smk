@@ -21,9 +21,11 @@ REPORT_DIR = os.path.join(_DIRS.get("report", "report"), "")
 JOB_LOG_DIR = os.path.join(os.getcwd(), "job_logs", "")
 CLUSTER_LOG_DIR = os.path.join(os.getcwd(), "cluster_logs")
 
-#Load in samplesheet
+# Load in samplesheet
+# Drop either input_dir or input_glob if they exist - transition period dir -> glob
 SAMPLESHEET = pd.read_csv(config["samplesheet"], comment='#', dtype='object') \
     .drop("input_dir", axis=1, errors="ignore") \
+    .drop("input_glob", axis=1, errors="ignore") \
     .set_index("sample", drop=True)
 
 PHENOTYPES = (list(SAMPLESHEET.columns))

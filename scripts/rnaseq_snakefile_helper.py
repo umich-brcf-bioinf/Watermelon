@@ -136,22 +136,18 @@ def gather_basenames(sample_bnames_dict, sample_list):
     return sorted(basenames)
 
 
-def get_sample_fastq_paths(sample_fastq_dir):
+def get_sample_fastq_paths(sample_fastq_glob):
     #Uses file glob to gather list of all .fastq or .fastq.gz files in a sample's fastq dir.
-    #Raises an error if sample has mixed gzipped & plaintext fastqs
-    fastq_glob = os.path.join(sample_fastq_dir, '*.fastq')
-    fastq_gz_glob = os.path.join(sample_fastq_dir, '*.fastq.gz')
-    fastqs = glob.glob(fastq_glob)
-    fastq_gzs = glob.glob(fastq_gz_glob)
+    #Raises an error if sample has mixed .fastq.gz and .fastq files
+    fastqs = glob.glob(sample_fastq_glob)
+    ext_gz = set([x.endswith(".gz") for x in fastqs]) # Set from the True/False values in the list
     #Each sample should have only one or the other, plaintext or gz, not mixed
-    if fastqs and fastq_gzs:
+    if len(ext_gz) == 2:
         msg_fmt = "{} contains a mixture of fastq and fastq.gz files. Each sample must have either gzipped or plaintext fastqs, not both."
-        raise RuntimeError(msg_fmt.format(sample_fastq_dir))
-    elif fastqs:
+        raise RuntimeError(msg_fmt.format(sample_fastq_glob))
+    elif len(ext_gz) == 1:
         return(sorted(fastqs))
-    elif fastq_gzs:
-        return(sorted(fastq_gzs))
-    else:
+    elif len(ext_gz) == 0:
         return None
 
 
@@ -165,7 +161,7 @@ def fastqs_to_concat(samplesheet, capture_regex):
     for row in samplesheet.itertuples(name="samplesheet"):
         grouping_dict = defaultdict(list)
         sample = row.Index
-        fq_list = get_sample_fastq_paths(getattr(row, "input_dir"))
+        fq_list = get_sample_fastq_paths(getattr(row, "input_glob"))
         for file in fq_list:
             basename = os.path.basename(file)
             rmatch = re.match(capture_regex, basename)

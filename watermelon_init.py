@@ -14,7 +14,7 @@ import sys
 import warnings
 
 import pandas as pd
-from collections import OrderedDict
+from collections import OrderedDict,defaultdict
 from collections.abc import Mapping
 from natsort import natsorted
 
@@ -30,7 +30,8 @@ _DEFAULT_GENOME_REFERENCES = os.path.join(_WATERMELON_ROOT, "config", "genome_re
 _DEFAULT_ACKNOWLEDGEMENT = os.path.join(_WATERMELON_ROOT, "report", "default_acknowledge.txt")
 _DEFAULT_SAMPLE_COL = "sample"
 _DEFAULT_ANALYST_INFO = "/nfs/turbo/umms-brcfpipeline/pipelines/analyst_info.csv"
-
+_DEFAULT_SAMPLE_FASTQ_REGEX = r"(.*)_R\d+[_L0-9]*\.fastq\.gz" # (.*) is the captured sampleid
+_DEFAULT_AUTOGLOB_EXT = "_*.fastq.gz" # Used for auto-generating samplesheet
 
 def _dict_merge(dct, merge_dct):
     """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
@@ -139,26 +140,29 @@ def _get_analyst_name(analyst_info_csv, user):
     return analyst_name
 
 
-def generate_samplesheet(fq_parent_dirs):
-    samples_dict = OrderedDict()
-    for parent_dir in fq_parent_dirs:
-        if not os.path.exists(parent_dir):
-            msg = "\n\nInput run directory {} does not exist.\n".format(parent_dir)
+def generate_samplesheet(fq_dirs, sample_fq_regex, autoglob_ext):
+    samplesh_dict = OrderedDict()
+    fqfile_dict = defaultdict(list)
+    for dir in fq_dirs:
+        if not os.path.exists(dir):
+            msg = "\n\nInput run directory {} does not exist.\n".format(dir)
             raise RuntimeError(msg)
-        # list of tuples
-        sample_dirs = [(d.name, os.path.abspath(d)) for d in os.scandir(parent_dir) if d.is_dir()]
-        sample_dirs = natsorted(sample_dirs)
-        if not sample_dirs:
-            msg = "\n\nInput run directory {} contains no subdirectories.\n".format(parent_dir)
-            raise RuntimeError(msg)
-        # Add these entries to samples_dict
-        for d in sample_dirs:
-            samples_dict[d[0]] = d[1]
+        # List of tuples
+        filenames = [(d.name, d.path) for d in os.scandir(dir) if d.is_file()]
+        filenames = natsorted(filenames)
+        for tup in filenames:
+            m = re.match(sample_fq_regex, tup[0])
+            if m:
+                sample = m.group(1)
+                fqfile_dict[sample].append(os.path.abspath(tup[1])) # TODO use fqfile_dict more, could do validation of autoglob
+        for k,v in fqfile_dict.items():
+            autoglob = os.path.join(os.path.dirname(v[0]), k + autoglob_ext)
+            samplesh_dict[k] = autoglob
     # Making a dataframe to write out to csv
-    samples_df = pd.DataFrame.from_dict(samples_dict, orient='index', columns=['input_dir'])
-    samples_df.index.name = "sample"
-    samples_df.reset_index(inplace=True)
-    return samples_df
+    samplesh_df = pd.DataFrame.from_dict(samplesh_dict, orient='index', columns=['input_glob'])
+    samplesh_df.index.name = "sample"
+    samplesh_df.reset_index(inplace=True)
+    return samplesh_df
 
 
 def get_pipe_version(vfn):
@@ -265,7 +269,7 @@ def validate_count_matrix(counts_fp):
         raise RuntimeError(msg)
 
 
-def validate_fastq_dirs(ss_df, sample_col, fq_col):
+def validate_fastq_inputs(ss_df, sample_col, fq_col):
     if not sample_col in ss_df.columns:
         msg = "\n\nThe sample sheet must have a column labeled '{}'\n".format(sample_col)
         raise RuntimeError(msg)
@@ -274,23 +278,19 @@ def validate_fastq_dirs(ss_df, sample_col, fq_col):
         raise RuntimeError(msg)
 
     samples = ss_df[sample_col]
-    fq_dirs = ss_df[fq_col]
+    fq_globs = ss_df[fq_col]
     # fastq_dict = OrderedDict() # If wanted to store this info somewhere
-    for sample, dir in zip(samples, fq_dirs):
-        if os.path.exists(dir):
+    for sample, fqglob in zip(samples, fq_globs):
             # The helper function assists/provides the following validations:
             # * Fastq file(s) must be present
             # * Can't mix gz and fastq files (must be all same type)
-            fastqs = helper.get_sample_fastq_paths(dir)
+            fastqs = helper.get_sample_fastq_paths(fqglob)
             if not fastqs:
                 msg = "\n\nNo fastq files found in sample directory {}.\n"
                 raise RuntimeError(msg)
             # else:
             #     fastq_dict[sample] = fastqs
             #     TODO: could easily write this to a file...
-        else:
-            msg = "\n\nSample directory {} cannot be read.\n".format(dir)
-            raise RuntimeError(msg)
 
 
 def validate_genomes(ref_dict):
@@ -351,10 +351,12 @@ if __name__ == "__main__":
     parser.add_argument("--x_analyst_info", type=str, default=_DEFAULT_ANALYST_INFO, help=argparse.SUPPRESS)
     parser.add_argument("--x_alt_template", type=str, default=None, help=argparse.SUPPRESS)
     parser.add_argument("--x_genome_references", type=str, default=_DEFAULT_GENOME_REFERENCES, help=argparse.SUPPRESS)
+    parser.add_argument("--x_sample_fastq_regex", type=str, default=_DEFAULT_SAMPLE_FASTQ_REGEX, help=argparse.SUPPRESS)
+    parser.add_argument("--x_autoglob_ext", type=str, default=_DEFAULT_AUTOGLOB_EXT, help=argparse.SUPPRESS)
     parser.add_argument("--x_acknowledgement_text", type=str, default=_DEFAULT_ACKNOWLEDGEMENT, help=argparse.SUPPRESS)
     parser.add_argument("--x_working_dir", type=str, default=os.getcwd(), help=argparse.SUPPRESS)
     parser.add_argument("--x_sample_col", type=str, default="sample", help=argparse.SUPPRESS)
-    parser.add_argument("--x_input_col", type=str, default="input_dir", help=argparse.SUPPRESS)
+    parser.add_argument("--x_input_col", type=str, default="input_glob", help=argparse.SUPPRESS)
 
     args = parser.parse_args()
 
@@ -369,7 +371,7 @@ if __name__ == "__main__":
 
     # Auto-generate samplesheet if input run dirs specified
     if args.input_run_dirs:
-        samplesheet_df = generate_samplesheet(args.input_run_dirs)
+        samplesheet_df = generate_samplesheet(args.input_run_dirs, args.x_sample_fastq_regex, args.x_autoglob_ext)
     else:
         # Read in the given samplesheet for validation
         samplesheet_df = pd.read_csv(config_dict["samplesheet"], comment="#", dtype="object")
@@ -379,7 +381,7 @@ if __name__ == "__main__":
         validate_genomes(config_dict["references"])
     # Some validations depend on type of config
     if args.type == "align_qc":
-        validate_fastq_dirs(samplesheet_df, args.x_sample_col, args.x_input_col)
+        validate_fastq_inputs(samplesheet_df, args.x_sample_col, args.x_input_col)
     elif args.type == "diffex":
         validate_count_matrix(config_dict["count_matrix"])
 

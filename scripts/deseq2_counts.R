@@ -35,6 +35,7 @@ DEFAULT_SAMPLE_COLUMN = 'sample'
 sample.info.file = snakemake@config[['samplesheet']]
 pdata = read.csv(sample.info.file, comment.char = "#", colClasses=c('character'), stringsAsFactors = FALSE)
 pdata$input_dir = NULL
+pdata$input_glob = NULL # Drop either if they exist - transition from dir to glob
 
 # Import data
 message('Importing count data')

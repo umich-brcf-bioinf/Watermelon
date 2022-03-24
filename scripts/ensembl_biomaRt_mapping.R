@@ -27,7 +27,7 @@ species.mart<- useDataset(opt$dataset, mart=mart)
 currentMarts <- listMarts(host=opt$host)
 thisMart <- currentMarts$version[currentMarts$biomart == opt$mart]
 message(paste0("Using ", thisMart))
-#Ensembl Genes 98
+#Ensembl Genes 105
 
 #Gets attributes using ensembl gene id from biomaRt
 attr.cols <- trimws(unlist(strsplit(opt$attributes, ",")))

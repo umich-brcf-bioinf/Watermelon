@@ -65,24 +65,11 @@ onerror:
     helper.email(email_config=config.get('email', None), subject_prefix='Watermelon completed with errors: ', msg=message, attachment = attach_str)
 
 
-DIFFEX_MODEL_INFO, DESEQ2_CONTRAST_DICT = helper.diffex_model_info(config['diffex'])
 DESeq2_ALL = [
     #deseq2_counts
     DIFFEX_DIR + 'counts/count_data.rda',
     expand(DIFFEX_DIR + 'counts/deseq2_{name}.txt',
         name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
-    #deseq2 diffex results
-    helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + 'diffex_{model_name}/{contrast}.txt',
-        DESEQ2_CONTRAST_DICT),
-    #annotated results
-    helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + 'diffex_{model_name}/{contrast}.annot.txt',
-        DESEQ2_CONTRAST_DICT),
-    #excel fomatted annotated results
-    helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + 'diffex_{model_name}/{contrast}.annot.xlsx',
-        DESEQ2_CONTRAST_DICT),
     #deseq2_plots_by_phenotype
     expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
         phenotype = PHENOTYPES,
@@ -94,45 +81,9 @@ DESeq2_ALL = [
     expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{phenotype}/BoxPlot_{transformation}.pdf', phenotype = PHENOTYPES, transformation=['raw', 'rlog']),
     expand(DIFFEX_DIR + 'plots_labeled_by_pheno/{plot_type}.pdf',
         plot_type=["SampleHeatmap", "Heatmap_TopVar", "Heatmap_TopExp"]),
-    #deseq2_volcano_plots
-    helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.pdf',
-        DESEQ2_CONTRAST_DICT),
-    helper.expand_model_contrast_filenames(\
-        DIFFEX_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.png',
-        DESEQ2_CONTRAST_DICT),
-    #deseq2_summary
-    DIFFEX_DIR + "summary/deseq2_summary.txt",
-    DIFFEX_DIR + "summary/deseq2_summary.xlsx"
-]
-
-DESeq2_DELIVERABLES = [
-    #deseq2 deliverables
-    expand(DELIVERABLES_DIR + 'counts/deseq2_{name}.txt',
-        name=['raw_counts', 'depth_normalized_counts', 'rlog_normalized_counts']),
-    helper.expand_model_contrast_filenames(\
-        DELIVERABLES_DIR + 'diffex_{model_name}/{contrast}.annot.txt',
-        DESEQ2_CONTRAST_DICT),
-    helper.expand_model_contrast_filenames(\
-        DELIVERABLES_DIR + "diffex_{model_name}/{contrast}.annot.xlsx",
-        DESEQ2_CONTRAST_DICT),
-    expand(DELIVERABLES_DIR + 'plots_labeled_by_pheno/{phenotype}/PCAplot_{dim}_top{ngenes}.pdf',
-            phenotype = PHENOTYPES,
-            dim = ['12','23'],
-            ngenes = ['100','500']),
-    expand(DELIVERABLES_DIR + 'plots_labeled_by_pheno/{phenotype}/ScreePlot_top{ngenes}.pdf',
-            phenotype = PHENOTYPES,
-            ngenes = ['100','500']),
-    expand(DELIVERABLES_DIR + 'plots_labeled_by_pheno/{phenotype}/{plot_type}.pdf',
-        phenotype = PHENOTYPES,
-        plot_type = ['BoxPlot_raw', 'BoxPlot_rlog']),
-    expand(DELIVERABLES_DIR + 'plots_labeled_by_pheno/{plot_type}.pdf',
-        plot_type = ['SampleHeatmap', 'Heatmap_TopVar', 'Heatmap_TopExp']),
-    helper.expand_model_contrast_filenames(\
-            DELIVERABLES_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.pdf',
-            DESEQ2_CONTRAST_DICT),
-    DELIVERABLES_DIR + "summary/deseq2_summary.txt",
-    DELIVERABLES_DIR + "summary/deseq2_summary.xlsx"
+    #deseq2_init rda data
+    expand(DIFFEX_DIR + 'diffex_{model_name}/.deseq2_init_{model_name}.rda',
+        model_name=helper.diffex_models(config['diffex']))
 ]
 
 RUN_INFO_DELIVERABLES = [
@@ -140,14 +91,9 @@ RUN_INFO_DELIVERABLES = [
     DELIVERABLES_DIR + "run_info/" + os.path.basename(config['samplesheet'])
 ]
 
-REPORT_ALL = [
-    REPORT_DIR + 'report_draft.md',
-    REPORT_DIR + 'report_draft.html'
-]
-
 rule all:
     input:
-        DESeq2_ALL + DESeq2_DELIVERABLES + REPORT_ALL
+        DESeq2_ALL + RUN_INFO_DELIVERABLES
 
 
 # Includes put last - variables used in rules must be defined above
@@ -157,14 +103,8 @@ include: "version_info.smk"
 
 if config.get('count_matrix'):
     include: 'rules/deseq2_counts_from_matrix.smk'
-else:
-    include: 'rules/deseq2_counts_from_tximport_rsem.smk'
 
 include: 'rules/deseq2_init.smk'
-include: 'rules/deseq2_contrasts.smk'
 include: 'rules/deseq2_plots_by_phenotype.smk'
-include: 'rules/deseq2_summary.smk'
-include: 'rules/deliverables_deseq2.smk'
 include: 'rules/deliverables_run_info.smk'
-include: 'rules/report_diffex.smk'
 include: 'rules/report_finalize.smk'

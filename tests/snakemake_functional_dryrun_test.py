@@ -66,7 +66,6 @@ def test_wminit_snakemake_dryrun_diffex(tmp_path):
     except subprocess.CalledProcessError as e:
         return_code = e.returncode
     assert(return_code == 0)
-    #import pdb; pdb.set_trace()
     sm_command_fmt = "snakemake --snakefile {} --configfile config_test_align_qc.yaml -n {}"
     sm_command = sm_command_fmt.format(
         os.path.join("Watermelon", 'deseq2.smk'),

@@ -129,49 +129,48 @@ def write_foo_file(fname):
 
 
 def test_get_sample_fastq_paths_no_fastqs_returns_none(tmp_path):
-    s1_dir = tmp_path / "sample_1"
-    actual = rnaseq_snakefile_helper.get_sample_fastq_paths(s1_dir)
+    s1_glob = str(tmp_path / "sample_1_*.fastq.gz")
+    actual = rnaseq_snakefile_helper.get_sample_fastq_paths(s1_glob)
     assert(actual == None)
 
 
 def test_get_sample_fastq_paths_cant_mix_gz_plaintext(tmp_path):
     # Create the fake inputs
-    s1_dir = tmp_path / "sample_1"
-    s1_dir.mkdir()
-    write_foo_file(str(s1_dir / "sample_1_R1.fastq.gz"))
-    write_foo_file(str(s1_dir / "sample_1_R2.fastq"))
+    s1_glob = str(tmp_path / "sample_1_*.fastq*")
+    write_foo_file(str(tmp_path / "sample_1_R1.fastq.gz"))
+    write_foo_file(str(tmp_path / "sample_1_R2.fastq"))
 
     with pytest.raises(RuntimeError, match="contains a mixture of fastq and fastq.gz files"):
-        rnaseq_snakefile_helper.get_sample_fastq_paths(s1_dir)
+        rnaseq_snakefile_helper.get_sample_fastq_paths(s1_glob)
 
 
 def test_fastqs_to_concat(tmp_path):
     # Create the fake inputs
-    s1_dir = tmp_path / "sample_1"
-    s1_dir.mkdir()
-    write_foo_file(str(s1_dir / "sample_1_R1.fastq.gz")) # sample_1 only has R1
-    s2_dir = tmp_path / "sample_2"
-    s2_dir.mkdir()
-    write_foo_file(str(s2_dir / "sample_2_R1.fastq.gz"))
-    write_foo_file(str(s2_dir / "sample_2_R2.fastq.gz"))
-    s3_dir = tmp_path / "sample_3"
-    s3_dir.mkdir()
-    write_foo_file(str(s3_dir / "sample_3_R1_L001.fastq.gz")) # sample_3_R1 has 3 lanes
-    write_foo_file(str(s3_dir / "sample_3_R1_L002.fastq.gz"))
-    write_foo_file(str(s3_dir / "sample_3_R1_L003.fastq.gz"))
-    write_foo_file(str(s3_dir / "sample_3_R2.fastq.gz"))
+    s1_glob = tmp_path / "sample_1_*.fastq.gz"
+    #s1_dir.mkdir()
+    write_foo_file(str(tmp_path / "sample_1_R1.fastq.gz")) # sample_1 only has R1
+    s2_glob = tmp_path / "sample_2_*.fastq.gz"
+    #s2_dir.mkdir()
+    write_foo_file(str(tmp_path / "sample_2_R1.fastq.gz"))
+    write_foo_file(str(tmp_path / "sample_2_R2.fastq.gz"))
+    s3_glob = tmp_path / "sample_3_*.fastq.gz"
+    #s3_dir.mkdir()
+    write_foo_file(str(tmp_path / "sample_3_R1_L001.fastq.gz")) # sample_3_R1 has 3 lanes
+    write_foo_file(str(tmp_path / "sample_3_R1_L002.fastq.gz"))
+    write_foo_file(str(tmp_path / "sample_3_R1_L003.fastq.gz"))
+    write_foo_file(str(tmp_path / "sample_3_R2.fastq.gz"))
 
-    sample_sheet_str = """sample,input_dir
+    sample_sheet_str = """sample,input_glob
 sample_1,{}
 sample_2,{}
-sample_3,{}""".format(s1_dir,s2_dir,s3_dir)
+sample_3,{}""".format(s1_glob,s2_glob,s3_glob)
     sample_sheet_df = pd.read_csv(io.StringIO(sample_sheet_str), comment='#', dtype='object') \
         .set_index("sample", drop=True)
 
     expected = {
-        'sample_1': {'1': [str(s1_dir / "sample_1_R1.fastq.gz")]},
-        'sample_2': {'1': [str(s2_dir / "sample_2_R1.fastq.gz")], '2': [str(s2_dir / "sample_2_R2.fastq.gz")]},
-        'sample_3': {'1': [str(s3_dir / "sample_3_R1_L001.fastq.gz"), str(s3_dir / "sample_3_R1_L002.fastq.gz"), str(s3_dir / "sample_3_R1_L003.fastq.gz")], '2': [str(s3_dir / "sample_3_R2.fastq.gz")]}
+        'sample_1': {'1': [str(tmp_path / "sample_1_R1.fastq.gz")]},
+        'sample_2': {'1': [str(tmp_path / "sample_2_R1.fastq.gz")], '2': [str(tmp_path / "sample_2_R2.fastq.gz")]},
+        'sample_3': {'1': [str(tmp_path / "sample_3_R1_L001.fastq.gz"), str(tmp_path / "sample_3_R1_L002.fastq.gz"), str(tmp_path / "sample_3_R1_L003.fastq.gz")], '2': [str(tmp_path / "sample_3_R2.fastq.gz")]}
     }
 
     actual = rnaseq_snakefile_helper.fastqs_to_concat(
@@ -184,27 +183,27 @@ sample_3,{}""".format(s1_dir,s2_dir,s3_dir)
 
 def test_sample_bnames_from_filenames(tmp_path):
     # Create the fake inputs
-    s1_dir = tmp_path / "sample_1"
-    s1_dir.mkdir()
-    write_foo_file(str(s1_dir / "sample_1_R1.fastq.gz")) # sample_1 only has R1
-    s2_dir = tmp_path / "sample_2"
-    s2_dir.mkdir()
-    write_foo_file(str(s2_dir / "sample_2_R1.fastq.gz"))
-    write_foo_file(str(s2_dir / "sample_2_R2.fastq.gz"))
-    s3_dir = tmp_path / "sample_3"
-    s3_dir.mkdir()
-    write_foo_file(str(s3_dir / "sample_3_R1.fastq.gz"))
-    write_foo_file(str(s3_dir / "sample_3_R2.fastq.gz"))
-    s4_dir = tmp_path / "sample_4"
-    s4_dir.mkdir()
-    write_foo_file(str(s4_dir / "sample_4_R1.fastq.gz"))
-    write_foo_file(str(s4_dir / "sample_4_R2.fastq.gz"))
+    s1_glob = tmp_path / "sample_1_*.fastq.gz"
+    #s1_dir.mkdir()
+    write_foo_file(str(tmp_path / "sample_1_R1.fastq.gz")) # sample_1 only has R1
+    s2_glob = tmp_path / "sample_2_*.fastq.gz"
+    #s2_dir.mkdir()
+    write_foo_file(str(tmp_path / "sample_2_R1.fastq.gz"))
+    write_foo_file(str(tmp_path / "sample_2_R2.fastq.gz"))
+    s3_glob = tmp_path / "sample_3_*.fastq.gz"
+    #s3_dir.mkdir()
+    write_foo_file(str(tmp_path / "sample_3_R1.fastq.gz"))
+    write_foo_file(str(tmp_path / "sample_3_R2.fastq.gz"))
+    s4_glob = tmp_path / "sample_4_*.fastq.gz"
+    #s4_dir.mkdir()
+    write_foo_file(str(tmp_path / "sample_4_R1.fastq.gz"))
+    write_foo_file(str(tmp_path / "sample_4_R2.fastq.gz"))
 
-    sample_sheet_str = """sample,input_dir
+    sample_sheet_str = """sample,input_glob
 sample_1,{}
 sample_2,{}
 sample_3,{}
-sample_4,{}""".format(s1_dir,s2_dir,s3_dir,s4_dir)
+sample_4,{}""".format(s1_glob,s2_glob,s3_glob,s4_glob)
     sample_sheet_df = pd.read_csv(io.StringIO(sample_sheet_str), comment='#', dtype='object') \
         .set_index("sample", drop=True)
 

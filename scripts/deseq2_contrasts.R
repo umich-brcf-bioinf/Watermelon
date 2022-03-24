@@ -32,9 +32,9 @@ make_ncbilink = function(id_str){
 
 
 plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con_name, fdr_cutoff, logfc_cutoff, out_filepath_pdf, out_filepath_png) {
-  
+
   method = match.arg(method)
-  
+
   # Determine the correct column names on the basis of deseq2 or ballgown
   if(method == 'deseq2') {
     log2fc = 'log2FoldChange'
@@ -49,45 +49,45 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
     id = 'gene_id'
     de_call = 'diff_exp'
   }
-  
+
   # Add direction column
   de_list$direction = 'NS'
   de_list$direction[de_list[, de_call] == 'YES' & de_list[, log2fc] <= 0] = 'Down'
   de_list$direction[de_list[, de_call] == 'YES' & de_list[, log2fc] > 0] = 'Up'
-  
+
   # Determine direction labels (with number per)
   direction_table = table(de_list$direction)
-  
+
   if('Up' %in% names(direction_table)) {
     up_label = sprintf('Up: %s', direction_table['Up'])
   } else {
     up_label = 'Up: 0'
   }
-  
+
   if('Down' %in% names(direction_table)) {
     down_label = sprintf('Down: %s', direction_table['Down'])
   } else {
     down_label = 'Down: 0'
   }
-  
+
   if('NS' %in% names(direction_table)) {
     ns_label = sprintf('NS: %s', direction_table['NS'])
   } else {
     ns_label = 'NS: 0'
   }
-  
+
   de_list$direction_count = factor(
     de_list$direction,
     levels = c('Up', 'Down', 'NS'),
     labels = c(up_label, down_label, ns_label))
-  
+
   if(all( !( c('Up', 'Downl') %in% names(direction_table) ) )) {
     warning(sprintf('No genes were DE at fdr < %s and |log2fc| > %s. Consider a different threshold.', fdr_cutoff, logfc_cutoff))
   }
-  
+
   # Transform qval to -log10 scale
   de_list$log10qval = -log10(de_list[, padj])
-  
+
   # Add top 10 Up and 10 Down gene labels
   # de_list is assumed to be ordered by Call/diff_exp and then qvalue from deseq2_diffex.R and ballgown_diffex.R
   top = rbind(
@@ -95,7 +95,7 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
     head(subset(de_list, direction == 'Down'), 10))
   top$label = top$external_gene_name
   de_list = merge(x = de_list, y = top[, c(id,'label')], by = id, all.x = TRUE, sort = FALSE)
-  
+
   # Volcano Plot
   volcano_plot = ggplot(de_list, aes_string(x = log2fc, y = 'log10qval', color = 'direction_count', alpha = 0.5)) +
     scale_alpha(guide = 'none') +
@@ -114,7 +114,7 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
   }
   ggsave(filename = out_filepath_pdf, plot = volcano_plot, height = 8, width = 8, dpi = 300)
   ggsave(filename = out_filepath_png, plot = volcano_plot, height = 8, width = 8, dpi = 300)
-  
+
   return(volcano_plot)
 }
 
@@ -142,6 +142,7 @@ register(multicore_param, default=TRUE)
 sample.info.file = snakemake@config[['samplesheet']]
 pdata = read.csv(sample.info.file, comment.char = "#")
 pdata$input_dir = NULL
+pdata$input_glob = NULL # Drop either if they exist - transition from dir to glob
 
 message(sprintf('Testing %s: %s vs %s', factor_name, test_name, reference_name))
 
@@ -253,4 +254,3 @@ volcano_plot = plot_volcano(
   logfc_cutoff = fc_cutoff,
   out_filepath_pdf = out_pdf,
   out_filepath_png = out_png)
-

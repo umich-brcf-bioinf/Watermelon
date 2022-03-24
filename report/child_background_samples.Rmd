@@ -7,6 +7,7 @@ The following samples were analyzed:
     samplesheet_file = config[['samplesheet']]
     samplesheet = read.csv(samplesheet_file)
     samplesheet$input_dir = NULL
+    samplesheet$input_glob = NULL # Drop either if they exist - transition from dir to glob
     samples_kable = kable(samplesheet, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
         kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
         scroll_box(width = '100%')

@@ -1,5 +1,13 @@
 # Changelog
 
+2.3.0 (03/24/2022)
+------------------
+- Adapted to new Illumina software - all FASTQs in one input dir
+- Extended adapter sequence (should prevent trimming false matches from genome)
+- Updated genome references to ENSEMBL 105
+- Additional doc for updating refs
+- Minimal version of DESeq2 workflow - Useful for pulling results in alternative/flexible manner
+
 2.2.1 (01/24/2022)
 ------------------
 - Add functionality for additional, second pass of cutadapt trimming - for normalase treated samples

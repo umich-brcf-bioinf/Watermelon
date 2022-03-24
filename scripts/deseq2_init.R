@@ -25,6 +25,7 @@ deseq2.params = snakemake@config[['diffex']][[model_name]][['DESeq2']][['DESeq2'
 sample.info.file = snakemake@config[['samplesheet']]
 pdata = read.csv(sample.info.file, comment.char = "#")
 pdata$input_dir = NULL
+pdata$input_glob = NULL # Drop either if they exist - transition from dir to glob
 
 # Load count data (imported in previous rule via tximport to variable txi.rsem.gene.results)
 load(snakemake@input[['data_import']])

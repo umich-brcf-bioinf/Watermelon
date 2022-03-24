@@ -1,9 +1,9 @@
 def build_secondpass_cmd(wildcards):
     # Weird .fastq.gz.tmp.gz extension is due to cutadapt required automatic format extension
-    firstpass_fq_R1 = R1 = ALIGNMENT_DIR + "02-cutadapt/{}_R1_trimmed.fastq.gz.tmp.gz".format(wildcards.sample)
-    firstpass_fq_R2 = R2 = ALIGNMENT_DIR + "02-cutadapt/{}_R2_trimmed.fastq.gz.tmp.gz".format(wildcards.sample)
-    secondpass_fq_R1 = R1 = ALIGNMENT_DIR + "02-cutadapt/{}_R1_trimmed.fastq.gz.tmp2.gz".format(wildcards.sample)
-    secondpass_fq_R2 = R2 = ALIGNMENT_DIR + "02-cutadapt/{}_R2_trimmed.fastq.gz.tmp2.gz".format(wildcards.sample)
+    firstpass_fq_R1 = ALIGNMENT_DIR + "02-cutadapt/{}_R1_trimmed.fastq.gz.tmp.gz".format(wildcards.sample)
+    firstpass_fq_R2 = ALIGNMENT_DIR + "02-cutadapt/{}_R2_trimmed.fastq.gz.tmp.gz".format(wildcards.sample)
+    secondpass_fq_R1 = ALIGNMENT_DIR + "02-cutadapt/{}_R1_trimmed.fastq.gz.tmp2.gz".format(wildcards.sample)
+    secondpass_fq_R2 = ALIGNMENT_DIR + "02-cutadapt/{}_R2_trimmed.fastq.gz.tmp2.gz".format(wildcards.sample)
     if not config["trimming"]["secondpass_args"]: # Handle case when present but empty
         return ""
     else:

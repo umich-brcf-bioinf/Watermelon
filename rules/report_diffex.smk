@@ -41,6 +41,7 @@ rule report_diffex:
         add_prep_description = True,
         custom_sections = '', # Rscript expects a string of comma separated values. All sections: 'methods,results,appendix'
         contrasts = DESEQ2_CONTRAST_DICT,
+        phenotypes = PHENOTYPES,
         sample_phenotypes = PHENOTYPE_SAMPLE_LIST,
         diffex_model_info = DIFFEX_MODEL_INFO
     script:

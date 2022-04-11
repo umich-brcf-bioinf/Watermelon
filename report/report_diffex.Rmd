@@ -142,7 +142,7 @@ Results
 results QC diffex
 --->
 ```{r echo = FALSE, results = 'asis', message = FALSE}
-phenotypes = names(snakemake@params[['sample_phenotypes']])
+phenotypes = snakemake@params[['phenotypes']]
 
 cat('## Boxplots\n\nThe following boxplots show the distribution of gene expression counts in the different samples.\n\n')
 for(factor_cov in phenotypes) {
@@ -205,8 +205,9 @@ The sections that follow provide more detailed information about the differentia
 ```{r echo = FALSE, results = 'asis', message = FALSE}
     comparisons = snakemake@params[['contrasts']]
     names(comparisons) = gsub('_', ' ', names(info)) # Remove _'s from model names - consistent with info list above
+    phenotypes = snakemake@params[['phenotypes']]
     sample_phenotypes = snakemake@params[['sample_phenotypes']]
-    phenotypes = names(sample_phenotypes)
+
 
     summary_file = sprintf(diffex_summary_file, diffex_dir)
     summary_df = read.delim(summary_file, row.names = 'comparison', stringsAsFactors = FALSE)

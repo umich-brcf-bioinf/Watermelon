@@ -1,5 +1,6 @@
 GRCh38:
     genome: GRCh38
+    ensembl_version: 105
     fastq_screen:
         species: human
     references:
@@ -10,6 +11,7 @@ GRCh38:
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Homo_sapiens/GRCh38/index/GRCh38
 GRCh37:
     genome: GRCh37
+    ensembl_version: 75
     fastq_screen:
         species: human
     references:
@@ -19,6 +21,7 @@ GRCh37:
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Homo_sapiens/GRCh37/index/GRCh37
 GRCm38:
     genome: GRCm38
+    ensembl_version: 102
     fastq_screen:
         species: mouse
     references:
@@ -29,6 +32,7 @@ GRCm38:
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Mus_musculus/GRCm38/index/GRCm38
 NCBIM37:
     genome: NCBIM37
+    ensembl_version: 67
     fastq_screen:
         species: mouse
     references:
@@ -38,6 +42,7 @@ NCBIM37:
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Mus_musculus/NCBIM37/index/NCBIM37
 Rnor_6.0:
     genome: Rnor_6.0
+    ensembl_version: 104
     fastq_screen:
         species: rat
     references:
@@ -47,6 +52,7 @@ Rnor_6.0:
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Rattus_norvegicus/Rnor_6.0/index/Rnor_6.0
 GRCz11:
     genome: GRCz11
+    ensembl_version: 105
     fastq_screen:
         species: zebrafish
     references:
@@ -56,6 +62,7 @@ GRCz11:
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Danio_rerio/GRCz11/index/GRCz11
 WBcel235:
     genome: WBcel235
+    ensembl_version: 105
     fastq_screen:
         species: celegans
     references:
@@ -65,6 +72,7 @@ WBcel235:
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Caenorhabditis_elegans/WBcel235/index/WBcel235
 BDGP6:
     genome: BDGP6
+    ensembl_version: 105
     fastq_screen:
         species: dmelanogaster
     references:

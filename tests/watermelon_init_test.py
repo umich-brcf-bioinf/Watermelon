@@ -232,7 +232,7 @@ def test_validate_fastq_inputs():
 
 def test_set_up_refs_validKey():
     ref_dict = watermelon_init._set_up_refs(watermelon_init._DEFAULT_GENOME_REFERENCES, "GRCh38", "align_qc")
-    assert(sorted(ref_dict.keys()) == ["fastq_screen", "genome", "references"])
+    assert(sorted(ref_dict.keys()) == ["ensembl_version", "fastq_screen", "genome", "references"])
 
 
 def test_set_up_refs_invalidKey():

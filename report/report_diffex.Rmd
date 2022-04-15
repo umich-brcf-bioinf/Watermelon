@@ -127,7 +127,7 @@ We use Snakemake [@Koster2012] to manage the bioinformatics workflow in a reprod
 
 ## Differential Expression
 
-Data were pre-filtered to remove genes with 0 counts in all samples. Differential gene expression analysis was performed using DESeq2 [@Love2014], using a negative binomial generalized linear model (thresholds: linear fold change >1.5 or <-1.5, Benjamini-Hochberg FDR (Padj) <0.05). Plots were generated using variations of DESeq2 plotting functions and other packages with R version `r versions[['WAT_diffex']][['r-base']]`. Genes were annotated with NCBI Entrez GeneIDs and text descriptions. Functional analysis, including candidate pathways activated or inhibited in comparison(s) and GO-term enrichments [@Mi2019], was performed using iPathway Guide (Advaita) [@ipathwayguide], [@Draghici2007].
+Data were pre-filtered to remove genes with 0 counts in all samples. Differential gene expression analysis was performed using DESeq2 [@Love2014], using a negative binomial generalized linear model (thresholds: linear fold change >1.5 or <-1.5, Benjamini-Hochberg FDR (Padj) <0.05). Plots were generated using variations of DESeq2 plotting functions and other packages with R version `r versions[['WAT_diffex']][['r-base']]`. Annotation data from ENSEMBL `r config[['ensembl_version']]` was used, and genes were additionally annotated with Entrez GeneIDs and text descriptions. Functional analysis, including candidate pathways activated or inhibited in comparison(s) and GO-term enrichments [@Mi2019], was performed using iPathway Guide (Advaita) [@ipathwayguide], [@Draghici2007].
 
 ```{r methods_custom_section, child = 'child_methods_custom.Rmd', eval = show_methods_custom}
 ```

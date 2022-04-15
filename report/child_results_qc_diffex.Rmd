@@ -1,5 +1,5 @@
 ```{r echo = FALSE, results = 'asis', message = FALSE}
-phenotypes = names(snakemake@params[['sample_phenotypes']])
+phenotypes = snakemake@params[['sample_phenotypes']]
 
 cat('## Boxplots\n\nThe following boxplots show the distribution of gene expression counts in the different samples.\n\n')
 for(factor_cov in phenotypes) {

@@ -104,6 +104,7 @@ def _set_up_refs(grefsfn, gbuild, type):
         datapath = os.path.join(os.getcwd(), "Watermelon", "data")
         our_refs = {
             'genome' : 'GRCh38',
+            'ensembl_version' : 98,
             'references' : {
                 'fasta' : os.path.join(datapath, 'Homo_sapiens.GRCh38.dna_sm.chr22.fa'),
                 'gtf' : os.path.join(datapath, 'Homo_sapiens.GRCh38.98.chr22.gtf'),
@@ -215,6 +216,8 @@ def make_config_dict(template_config, args, version):
     # Focus on the 2nd half (working backwards)
     config.insert(0, "dirs", dirs) # Insert dirs on top
     config.move_to_end("references", last=False) # This is how to move existing keys to the top
+    if "ensembl_version" in config:
+        config.move_to_end("ensembl_version", last=False)
     config.move_to_end("genome", last=False)
     # 1st half (working backwards)
     # If non-default sample col is given, add it to the config

@@ -28,7 +28,11 @@ SAMPLESHEET = pd.read_csv(config["samplesheet"], comment='#', dtype='object') \
     .drop("input_glob", axis=1, errors="ignore") \
     .set_index("sample", drop=True)
 
-PHENOTYPES = (list(SAMPLESHEET.columns))
+if 'phenotypes' in config:
+    PHENOTYPES = config['phenotypes']
+else:
+    PHENOTYPES = (list(SAMPLESHEET.columns))
+
 PHENOTYPE_SAMPLE_LIST = helper.phenotype_sample_list(SAMPLESHEET)
 
 #Get config file (first need to grab index from argv)

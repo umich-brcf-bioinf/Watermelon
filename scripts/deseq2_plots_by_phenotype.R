@@ -363,7 +363,7 @@ plot_PCA = function(compute_PCA_result, out_basename = 'PCAplot') {
 ########################################################
 ########################################################
 
-phenotypes = names(snakemake@params[['sample_phenotypes']])
+phenotypes = snakemake@params[['phenotypes']]
 
 diffex_dir = snakemake@params[['diffex_dir']]
 #Remove trailing / if there is one

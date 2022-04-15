@@ -78,18 +78,17 @@ For this example, you will need to provide:
   * e.g. GRCh38
   * Available genomes `GRCh38, GRCh37, GRCm38, NCBIM37, Rnor_6.0, GRCz11, BDGP6, WBcel235`
   * These are ENSEMBL reference IDs. [Table of equivalent UCSC  & ENSEMBL IDs](doc/Equivalence_UCSC_ENSEMBL.md)
-  * There are also the special genome build options `Other` & `TestData`.
-    * The link to alternative reference example below outlines using `Other` for customized references.
+  * There are also the special genome build options `Other` & `TestData`
+    * The link to alternative reference example below outlines using `Other` for customized references
     * The current example uses the `TestData` genome build, which is a human chr22 reference included with this repository.
 * project ID
   * e.g. given `20190821`, a `_20190821` suffix will be applied to config name and analysis results dir
 * config type
   * Either `align_qc` or `diffex`. Will produce a different config file depending on the given type
-* paths to sample directories with fastq files
+* path to at least one sample directory with fastq files
   * e.g. `/path/to/Watermelon/data/sim_reads_human_chr22`
-  * Path given on command line must point to a directory containing subdirectories with names matching samples in samplesheet
-  * Fastq files for a sample will reside in the appropriately named subdirectory
-  * Fastq files must have `_R1.fastq[.gz]` or `_R2.fastq[.gz]` in their filenames
+  * Path given on command line must point to a directory containing fastqs. Watermelon_init will attempt to create a shell glob pattern for each of the samples and place this into the generated samplesheet
+  * Fastq files must have `_R1` or `_R2` in their filenames to distinguish between read 1 and read 2. Good filename endings would be `_R1.fastq.gz` and `_R2.fastq.gz`
 
 
 Here's an example of running waterlemon_init (Note: replace /path/to/Watermelon in the following code block with valid paths)
@@ -184,4 +183,5 @@ If that works fine, then the pipeline can be run. Example of running this on Gre
 * [Example - Alternative references](doc/example_alt_refs.md)
 * [Example - Generating an annotation TSV file](doc/generating_annotation_tsv.md)
 * [Notes - Generating or updating the references](doc/creating_updated_refs.md)
+* [Notes - Git hooks for automated tests](doc/git_hooks_auto_tests.md)
 * [Snakemake documentation](https://snakemake.readthedocs.io/en/stable/)

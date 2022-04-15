@@ -1,5 +1,14 @@
 # Changelog
 
+2.3.1 (04/15/2022)
+------------------
+- ENSEMBL annotation version (currently 105) added to reports
+- Reserve internal use of PHENOTYPE_SAMPLE_LIST (dict) to reporting rule only. Elsewhere PHENOTYPES (list) is used
+- Allow config-specified phenotype list
+- Bugfix for single-end trimming
+- Documentation fixes reflecting changes from 2.3.0
+- Added notes on git hook automated testing system
+
 2.3.0 (03/24/2022)
 ------------------
 - Adapted to new Illumina software - all FASTQs in one input dir

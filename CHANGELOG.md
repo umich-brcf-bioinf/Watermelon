@@ -1,5 +1,10 @@
 # Changelog
 
+2.3.2 (04/20/2022)
+------------------
+- Added rseqc: true by default if AGC flag and appropriate genome (GRCh38/GRCm38) are used
+- Updated AGC slurm account
+
 2.3.1 (04/15/2022)
 ------------------
 - ENSEMBL annotation version (currently 105) added to reports

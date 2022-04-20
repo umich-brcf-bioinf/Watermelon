@@ -259,6 +259,8 @@ def make_config_dict(template_config, args, version):
             config["report_info"]["acknowledgement_text"] = linestring
         # Set (other) AGC-specific report details
         if args.AGC:
+            if config["genome"] in ["GRCh38", "GRCm38"]:
+                config["rseqc"] = True
             config["report_info"]["include_follow_up"] = False
             config["report_info"]["include_pct_dups"] = False
 

@@ -48,6 +48,10 @@ make_heatmap_annots = function(pdata, factors) {
             if(length(factor_levels) > length(color_vector)){
                 msg = paste0('Too many factor levels in column ', factor, ', cannot assign color palette')
                 stop(msg)
+            } else if(length(factor_levels) < length(color_vector)) {
+                # If there are more colors than needed (minimum palette size is 3)
+                # then shrink color vector to appropiate size
+                color_vector = color_vector[1:length(factor_levels)]
             }
             names(color_vector) = factor_levels
 

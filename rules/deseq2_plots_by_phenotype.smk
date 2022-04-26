@@ -21,7 +21,7 @@ rule deseq2_plots_by_phenotype:
     log:
         JOB_LOG_DIR + 'deseq2_plots_by_phenotype.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
-    container: 'docker://umichbfxcore/wat_diffex:0.2.0'
+    container: 'docker://umichbfxcore/wat_diffex:0.3.1'
     params:
         project_name = config['report_info']['project_name'],
         phenotypes = PHENOTYPES,

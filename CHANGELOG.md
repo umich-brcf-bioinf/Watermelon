@@ -1,5 +1,11 @@
 # Changelog
 
+2.3.3 (04/26/2022)
+------------------
+- Bugfix for appearance of NA legend values
+- Rebuilt/updated diffex environment, includes plotting/reporting packages
+- Updated bfx slurm account
+
 2.3.2 (04/20/2022)
 ------------------
 - Added rseqc: true by default if AGC flag and appropriate genome (GRCh38/GRCm38) are used

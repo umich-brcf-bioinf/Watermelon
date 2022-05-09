@@ -30,7 +30,7 @@ _DEFAULT_GENOME_REFERENCES = os.path.join(_WATERMELON_ROOT, "config", "genome_re
 _DEFAULT_ACKNOWLEDGEMENT = os.path.join(_WATERMELON_ROOT, "report", "default_acknowledge.txt")
 _DEFAULT_SAMPLE_COL = "sample"
 _DEFAULT_ANALYST_INFO = "/nfs/turbo/umms-brcfpipeline/pipelines/analyst_info.csv"
-_DEFAULT_SAMPLE_FASTQ_REGEX = r"(.*)_R\d+[_L0-9]*\.fastq\.gz" # (.*) is the captured sampleid
+_DEFAULT_SAMPLE_FASTQ_REGEX = r"(.*?)_[_AGCT-]{0,22}_*S*[0-9]*_*R\d+_*L*[0-9]*\.fastq\.gz" # (.*) is the captured sampleid
 _DEFAULT_AUTOGLOB_EXT = "_*.fastq.gz" # Used for auto-generating samplesheet
 
 def _dict_merge(dct, merge_dct):
@@ -90,10 +90,6 @@ def _set_up_email(projid, user):
         "to": "{}@umich.edu".format(user),
     }
     return email
-
-
-
-
 
 
 def _set_up_refs(grefsfn, gbuild, type):

@@ -1,5 +1,10 @@
 # Changelog
 
+2.3.4 (05/09/2022)
+------------------
+- Adjust default regex to capture sample names without extras
+- More helpful error message when samplesheet & count matrix conflict"
+
 2.3.3 (04/26/2022)
 ------------------
 - Bugfix for appearance of NA legend values

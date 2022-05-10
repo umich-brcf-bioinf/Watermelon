@@ -65,6 +65,5 @@ def test_wminit_snakemake_run_align_qc(tmp_path):
     gene_TPM_actual = pd.read_csv(gene_TPM_actual_path, sep="\t")
     gene_TPM_expected_path = os.path.join(tmp_path, 'Watermelon', 'data', 'expected_results_files', 'gene_TPM.txt')
     gene_TPM_expected = pd.read_csv(gene_TPM_expected_path, sep="\t")
-
     assert(gene_FPKM_expected == gene_FPKM_actual)
     assert(gene_TPM_expected == gene_TPM_actual)

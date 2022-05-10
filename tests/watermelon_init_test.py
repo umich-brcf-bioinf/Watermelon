@@ -14,42 +14,42 @@ import watermelon_init
 def test_generate_samplesheet_Basecase(tmp_path):
     fq_parent_dir_path = tmp_path / "fq_parent_dir"
     fq_parent_dir_path.mkdir()
-    (fq_parent_dir_path / "sample1_R1.fastq.gz").touch()
-    (fq_parent_dir_path / "sample1_R2.fastq.gz").touch()
-    (fq_parent_dir_path / "sample2_R1.fastq.gz").touch()
-    (fq_parent_dir_path / "sample2_R2.fastq.gz").touch()
-    (fq_parent_dir_path / "sample3_R1.fastq.gz").touch()
-    (fq_parent_dir_path / "sample3_R2.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_01_R1.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_01_R2.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_02_R1.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_02_R2.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_03_R1.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_03_R2.fastq.gz").touch()
 
     sample_fq_regex = watermelon_init._DEFAULT_SAMPLE_FASTQ_REGEX
     autoglob_ext = watermelon_init._DEFAULT_AUTOGLOB_EXT
     sample_sheet_df = watermelon_init.generate_samplesheet([fq_parent_dir_path], sample_fq_regex, autoglob_ext)
     assert(sample_sheet_df.shape == (3,2))
     assert(list(sample_sheet_df.columns) == ['sample', 'input_glob'])
-    assert(list(sample_sheet_df['sample']) == ['sample1', 'sample2', 'sample3'])
+    assert(list(sample_sheet_df['sample']) == ['sample_01', 'sample_02', 'sample_03'])
     #assert(sum(sample_sheet_df['input_glob'].str.contains(str(fq_parent_dir_path))) == 3)
     #assert(list(sample_sheet_df['input_glob'].apply(os.path.basename)) == list(sample_sheet_df['sample']))
 
 def test_generate_samplesheet_UsesNaturalSorting(tmp_path):
     fq_parent_dir_path = tmp_path / "fq_parent_dir"
     fq_parent_dir_path.mkdir()
-    (fq_parent_dir_path / "sample1_R1.fastq.gz").touch()
-    (fq_parent_dir_path / "sample1_R2.fastq.gz").touch()
-    (fq_parent_dir_path / "sample10_R1.fastq.gz").touch()
-    (fq_parent_dir_path / "sample10_R2.fastq.gz").touch()
-    (fq_parent_dir_path / "sample2_R1.fastq.gz").touch()
-    (fq_parent_dir_path / "sample2_R2.fastq.gz").touch()
-    (fq_parent_dir_path / "sample20_R1.fastq.gz").touch()
-    (fq_parent_dir_path / "sample20_R2.fastq.gz").touch()
-    (fq_parent_dir_path / "sample3_R1.fastq.gz").touch()
-    (fq_parent_dir_path / "sample3_R2.fastq.gz").touch()
-    (fq_parent_dir_path / "sample30_R1.fastq.gz").touch()
-    (fq_parent_dir_path / "sample30_R2.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_1_R1.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_1_R2.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_10_R1.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_10_R2.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_2_R1.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_2_R2.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_20_R1.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_20_R2.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_3_R1.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_3_R2.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_30_R1.fastq.gz").touch()
+    (fq_parent_dir_path / "sample_30_R2.fastq.gz").touch()
 
     sample_fq_regex = watermelon_init._DEFAULT_SAMPLE_FASTQ_REGEX
     autoglob_ext = watermelon_init._DEFAULT_AUTOGLOB_EXT
     sample_sheet_df = watermelon_init.generate_samplesheet([fq_parent_dir_path], sample_fq_regex, autoglob_ext)
-    assert(list(sample_sheet_df['sample']) == ['sample1', 'sample2', 'sample3', 'sample10', 'sample20', 'sample30'])
+    assert(list(sample_sheet_df['sample']) == ['sample_1', 'sample_2', 'sample_3', 'sample_10', 'sample_20', 'sample_30'])
 
 
 def test_generate_samplesheet_MissingParentDirRaisesRuntimeError(tmp_path):

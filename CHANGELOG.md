@@ -1,5 +1,9 @@
 # Changelog
 
+2.3.5 (05/23/2022)
+------------------
+- Bugfix release for newly introduced regex
+
 2.3.4 (05/09/2022)
 ------------------
 - Adjust default regex to capture sample names without extras

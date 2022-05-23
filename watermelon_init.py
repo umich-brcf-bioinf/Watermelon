@@ -30,7 +30,7 @@ _DEFAULT_GENOME_REFERENCES = os.path.join(_WATERMELON_ROOT, "config", "genome_re
 _DEFAULT_ACKNOWLEDGEMENT = os.path.join(_WATERMELON_ROOT, "report", "default_acknowledge.txt")
 _DEFAULT_SAMPLE_COL = "sample"
 _DEFAULT_ANALYST_INFO = "/nfs/turbo/umms-brcfpipeline/pipelines/analyst_info.csv"
-_DEFAULT_SAMPLE_FASTQ_REGEX = r"(.*?)(_[AGCT-]{6,22})*(_S\d)*_R\d(_L\d)*\.fastq\.gz" # (.*?) is the captured sampleid
+_DEFAULT_SAMPLE_FASTQ_REGEX = r"(.*?)(_[AGCT-]{6,22})*(_S\d+)*_R\d(_L*\d+)*\.fastq\.gz" # (.*?) is the captured sampleid
 _DEFAULT_AUTOGLOB_EXT = "_*.fastq.gz" # Used for auto-generating samplesheet
 
 def _dict_merge(dct, merge_dct):

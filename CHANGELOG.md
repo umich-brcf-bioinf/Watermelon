@@ -1,3 +1,8 @@
+0.4.0 (06/09/2022)
+------------------
+- Added bioconductor-apeglm and r-ashr packages
+- Updated many package versions (incl. R 3.6.3 -> R 4.1.3)
+
 0.3.1 (04/25/2022)
 ------------------
 - Fixed issue with LaTeX pdf output

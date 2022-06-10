@@ -149,8 +149,19 @@ message(sprintf('Testing %s: %s vs %s', factor_name, test_name, reference_name))
 # Load DESeq dataset, generated via deseq2_init into variable dds
 load(snakemake@input[['rda']])
 
-
 results.params = snakemake@config[['diffex']][[model_name]][['DESeq2']][['results']]
+lfcShrink.params = snakemake@config[['diffex']][[model_name]][['DESeq2']][['lfcShrink']]
+use_lfcShrink = FALSE # Default call is to results
+if(is.null(results.params) && is.null(lfcShrink.params)) {
+  stop("Must have config section 'results' or 'lfcShrink' to define results")
+} else if(!is.null(results.params) && !is.null(lfcShrink.params)) {
+  stop("Cannot use both 'results' and 'lfcShrink' to define results. Must choose one.")
+} else if(!is.null(lfcShrink.params)) {
+  # Move lfcShrink.params into results.params variable to avoid code duplication
+  results.params = lfcShrink.params
+  use_lfcShrink = TRUE # Set this true to change the object & fxn call when needed
+}
+
 # Parse the params for results {DESeq2} call, if it can't be converted return it as string
 results.params.parsed = lapply(results.params, function(x) {
   tryCatch(eval(parse(text=x)),
@@ -160,14 +171,23 @@ results.params.parsed = lapply(results.params, function(x) {
   })
 })
 
-# Add dds object to params list
-results.params.parsed[['object']] = dds
 # Set parallel to TRUE
 results.params.parsed[['parallel']] = TRUE
 
 message('Pulling results from DESeq2 object')
-# Grab the results
-res = do.call(results, results.params.parsed)
+if(use_lfcShrink) {
+  # function definition has 'dds' instead of 'object'
+  results.params.parsed[['dds']] = dds
+  # Grab the results with a call to lfcShrink()
+  cat("Using lfcShrink")
+  res = do.call(lfcShrink, results.params.parsed)
+} else {
+  # Add dds object to params list
+  results.params.parsed[['object']] = dds
+  # Grab the results with a call to results()
+  res = do.call(results, results.params.parsed)
+}
+
 
 # Order by adjusted p value
 res = res[order(res$padj),]

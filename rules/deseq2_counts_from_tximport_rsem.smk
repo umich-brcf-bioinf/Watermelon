@@ -13,7 +13,7 @@ rule deseq2_counts_from_tximport_rsem:
     log:
         JOB_LOG_DIR + 'deseq2_counts_from_tximport_rsem.log'
     conda: 'envs/WAT_diffex/WAT_diffex.yaml'
-    container: 'docker://umichbfxcore/wat_diffex:0.3.1'
+    container: 'docker://umichbfxcore/wat_diffex:0.4.0'
     params:
         project_name = config['report_info']['project_name'],
         rsem_dir = ALIGNMENT_DIR + '04-rsem_star_align',

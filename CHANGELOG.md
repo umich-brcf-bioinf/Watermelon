@@ -1,5 +1,11 @@
 # Changelog
 
+2.4.0 (06/10/2022)
+------------------
+- Bugfix - samplesheet input_glob column was order dependent (potential probs when sharing samplesheet bw align_qc & diffex)
+- New WAT_diffex environment 0.4.0 - added apeglm and ashr, many package versions updated
+- Config-specified lfcShrink section can be used in place of results
+
 2.3.5 (05/23/2022)
 ------------------
 - Bugfix release for newly introduced regex
@@ -7,7 +13,7 @@
 2.3.4 (05/09/2022)
 ------------------
 - Adjust default regex to capture sample names without extras
-- More helpful error message when samplesheet & count matrix conflict"
+- More helpful error message when samplesheet & count matrix conflict
 
 2.3.3 (04/26/2022)
 ------------------

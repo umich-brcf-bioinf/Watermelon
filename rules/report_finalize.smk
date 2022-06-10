@@ -8,7 +8,7 @@ rule report_finalize:
         report_deliverable = DELIVERABLES_DIR + 'report/report_final.html'
     log:
         JOB_LOG_DIR + 'report_finalize.log'
-    container: 'docker://umichbfxcore/wat_diffex:0.3.1'
+    container: 'docker://umichbfxcore/wat_diffex:0.4.0'
     params:
         project_name = config['report_info']['project_name'],
         snakemake_rdata = REPORT_DIR + '.report_finalize_snakemake.rda',

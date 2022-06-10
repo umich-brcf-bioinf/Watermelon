@@ -108,9 +108,8 @@ def sample_bnames_from_filenames(samplesheet, capture_regex, bname_fmt):
     # Returns:
     #     bnames_dict: list - dict with samples as keys and list of basenames as values
     bnames_dict = defaultdict(list)
-    for row in samplesheet.itertuples(index=True, name=None):
-        sample = row[0]
-        fq_list = get_sample_fastq_paths(row[1])
+    for sample, row in samplesheet.iterrows():
+        fq_list = get_sample_fastq_paths(row.at['input_glob'])
         captured_groups = set()
         for file in fq_list:
             basename = os.path.basename(file)
@@ -158,10 +157,9 @@ def fastqs_to_concat(samplesheet, capture_regex):
     # Returns:
     #     cat_fq_dict: Dict with sample and group representing top-level and 1st-level keys, repsectively
     cat_fq_dict = dict()
-    for row in samplesheet.itertuples(name="samplesheet"):
+    for sample, row in samplesheet.iterrows():
         grouping_dict = defaultdict(list)
-        sample = row.Index
-        fq_list = get_sample_fastq_paths(getattr(row, "input_glob"))
+        fq_list = get_sample_fastq_paths(row.at["input_glob"])
         for file in fq_list:
             basename = os.path.basename(file)
             rmatch = re.match(capture_regex, basename)

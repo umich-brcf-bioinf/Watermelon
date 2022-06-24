@@ -192,6 +192,8 @@ if(use_lfcShrink) {
 # Order by adjusted p value
 res = res[order(res$padj),]
 
+# If using lfcShrink(), a 'stat' column is not generated. Create an empty one
+if (! 'stat' %in% colnames(res)) {res$stat = '.'}
 # Add gene_id column and move it to first column
 res$gene_id = rownames(res)
 res = res[,c('gene_id','baseMean','log2FoldChange','lfcSE','stat','pvalue','padj')]

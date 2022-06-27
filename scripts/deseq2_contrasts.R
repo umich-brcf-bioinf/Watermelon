@@ -149,6 +149,10 @@ message(sprintf('Testing %s: %s vs %s', factor_name, test_name, reference_name))
 # Load DESeq dataset, generated via deseq2_init into variable dds
 load(snakemake@input[['rda']])
 
+# Print the resultsNames of the dataset, for easier debugging
+message("resultsNames() of dds:")
+message(paste(resultsNames(dds), collapse=" "))
+
 results.params = snakemake@config[['diffex']][[model_name]][['DESeq2']][['results']]
 lfcShrink.params = snakemake@config[['diffex']][[model_name]][['DESeq2']][['lfcShrink']]
 use_lfcShrink = FALSE # Default call is to results
@@ -192,6 +196,8 @@ if(use_lfcShrink) {
 # Order by adjusted p value
 res = res[order(res$padj),]
 
+# If using lfcShrink(), a 'stat' column is not generated. Create an empty one
+if (! 'stat' %in% colnames(res)) {res$stat = '.'}
 # Add gene_id column and move it to first column
 res$gene_id = rownames(res)
 res = res[,c('gene_id','baseMean','log2FoldChange','lfcSE','stat','pvalue','padj')]

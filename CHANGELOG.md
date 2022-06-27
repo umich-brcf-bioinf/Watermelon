@@ -1,5 +1,10 @@
 # Changelog
 
+2.4.1 (06/27/2022)
+------------------
+- Bugfix - Add placeholder 'stat' column when using lfcShrink
+- QOL - Add logging message of resultsNames(dds) to deseq2_contrasts.R to simplify debugging
+
 2.4.0 (06/10/2022)
 ------------------
 - Bugfix - samplesheet input_glob column was order dependent (potential probs when sharing samplesheet bw align_qc & diffex)

@@ -1,23 +1,17 @@
-##########
-# Set up logging and save snakemake S4 object (for debugging or running manually)
-log = file(snakemake@log[[1]], open='wt')
-sink(log)
-sink(log, type='message')
-save(snakemake, file = snakemake@params[['snakemake_rdata']])
-
-#setwd("/nfs/med-bfx-activeprojects/trsaari/sandbox/20191023_testing_simulated_data/")
-#load("analysis_20191024/diffex_results/plots_labeled_by_pheno/.deseq2_plots_by_phenotype_snakemake.rda")
-
-#Isolate conda environment: https://github.com/conda-forge/r-base-feedstock/issues/37
-#If we move away from conda in the future, we may want to remove this
-.libPaths(R.home("library"))
-
 ########################################################
 # Load libraries
-lib.vector = c("DESeq2", "dplyr", "GGally", "ggfortify", "ggplot2",
-    "ggrepel", "pheatmap", "RColorBrewer", "stringr", "tidyr", "yaml")
 
-foo = suppressMessages(lapply(lib.vector, library, character.only=T, warn.conflicts=F, quietly=T))
+library(DESeq2)
+library(dplyr)
+library(GGally)
+library(ggfortify)
+library(ggplot2)
+library(ggrepel)
+library(pheatmap)
+library(RColorBrewer)
+library(stringr)
+library(tidyr)
+library(yaml)
 
 ########################################################
 # Define plotting functions
@@ -92,7 +86,7 @@ plot_sample_correlation_heatmap = function(mat, pdata, factors, out_basename = '
         annotation_col = annot_list[['annot_df']],
         annotation_colors = annot_list[['annot_colors']],
         color = colorRampPalette(RColorBrewer::brewer.pal(9, 'Blues'))(20),
-        filename = file.path(plots_dir, paste0(out_basename, '.pdf'))
+        filename = file.path(PLOTS_DIR, paste0(out_basename, '.pdf'))
     )
     pheatmap( # png
         mat = dist_mat,
@@ -110,7 +104,7 @@ plot_sample_correlation_heatmap = function(mat, pdata, factors, out_basename = '
         annotation_col = annot_list[['annot_df']],
         annotation_colors = annot_list[['annot_colors']],
         color = colorRampPalette(RColorBrewer::brewer.pal(9, 'Blues'))(20),
-        filename = file.path(plots_dir, paste0(out_basename, '.png'))
+        filename = file.path(PLOTS_DIR, paste0(out_basename, '.png'))
     )
 
     return(list(dist_obj = dist_obj, hclust_obj = hclust_obj))
@@ -127,7 +121,7 @@ plot_top_variably_expressed_heatmap = function(mat, pdata, factors, top_n = 1000
     # Calculate the top_n variable genes and put them in decreasing order
     top_var_mat = mat[order(matrixStats::rowVars(mat), decreasing = T), ][1:top_n, ]
 
-    pdf(file = file.path(plots_dir, paste0(out_basename, '.pdf')), height = 20, width = 10)
+    pdf(file = file.path(PLOTS_DIR, paste0(out_basename, '.pdf')), height = 20, width = 10)
         pheatmap(
             mat = top_var_mat,
             scale= 'row',
@@ -143,7 +137,7 @@ plot_top_variably_expressed_heatmap = function(mat, pdata, factors, top_n = 1000
             color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
         )
     dev.off()
-    png(file = file.path(plots_dir, paste0(out_basename, '.png')), height = 2400, width = 1200)
+    png(file = file.path(PLOTS_DIR, paste0(out_basename, '.png')), height = 2400, width = 1200)
         pheatmap(
             mat = top_var_mat,
             scale= 'row',
@@ -172,7 +166,7 @@ plot_top_expressed_heatmap = function(mat, pdata, factors, top_n = 1000, out_bas
     # Calculate the top_n expressed genes and put them in decreasing order
     top_exp_mat = mat[order(rowMeans(mat), decreasing = T), ][1:top_n, ]
 
-    pdf(file = file.path(plots_dir, paste0(out_basename, '.pdf')), height = 20, width = 10)
+    pdf(file = file.path(PLOTS_DIR, paste0(out_basename, '.pdf')), height = 20, width = 10)
         pheatmap(
             mat = top_exp_mat,
             scale= 'row',
@@ -188,7 +182,7 @@ plot_top_expressed_heatmap = function(mat, pdata, factors, top_n = 1000, out_bas
             color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
         )
     dev.off()
-    png(file = file.path(plots_dir, paste0(out_basename, '.png')), height = 2400, width = 1200)
+    png(file = file.path(PLOTS_DIR, paste0(out_basename, '.png')), height = 2400, width = 1200)
         pheatmap(
             mat = top_exp_mat,
             scale= 'row',
@@ -225,8 +219,8 @@ plot_boxplot = function(mat, pdata, factor_name, title, y_label, out_basename = 
             x = '',
             y = y_label) +
         theme_bw() + theme(axis.text.x = element_text(angle = 90))
-    ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.pdf')), plot = box_plot, height = 8, width = 8, dpi = 300)
-    ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.png')), plot = box_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = file.path(PLOTS_DIR, factor_name, paste0(out_basename, '.pdf')), plot = box_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = file.path(PLOTS_DIR, factor_name, paste0(out_basename, '.png')), plot = box_plot, height = 8, width = 8, dpi = 300)
 
     return(box_plot)
 }
@@ -307,8 +301,8 @@ plot_scree = function(compute_PCA_result, out_basename = 'ScreePlot') {
             y = 'Percent Variance Explained'
         ) +
         theme_bw()
-    ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.pdf')), plot = scree_plot, height = 6, width = 6, dpi = 300)
-    ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.png')), plot = scree_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = file.path(PLOTS_DIR, factor_name, paste0(out_basename, '.pdf')), plot = scree_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = file.path(PLOTS_DIR, factor_name, paste0(out_basename, '.png')), plot = scree_plot, height = 6, width = 6, dpi = 300)
 
     return(scree_plot)
 }
@@ -356,100 +350,95 @@ plot_PCA = function(compute_PCA_result, out_basename = 'PCAplot') {
         theme_bw()
     }
 
-    ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.pdf')), plot = pca_plot, height = 6, width = 6, dpi = 300)
-    ggsave(filename = file.path(plots_dir, factor_name, paste0(out_basename, '.png')), plot = pca_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = file.path(PLOTS_DIR, factor_name, paste0(out_basename, '.pdf')), plot = pca_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = file.path(PLOTS_DIR, factor_name, paste0(out_basename, '.png')), plot = pca_plot, height = 6, width = 6, dpi = 300)
 
     return(pca_plot)
 }
 
-
-########################################################
-########################################################
-########################################################
-
-phenotypes = snakemake@params[['phenotypes']]
-
-diffex_dir = snakemake@params[['diffex_dir']]
-#Remove trailing / if there is one
-diffex_dir = sub("/$", "", diffex_dir)
-
-########################################################
-# Load data
-
-load(snakemake@input[['rda']])
-
-if('bg_data' %in% ls()) {
-    method = 'ballgown'
-
-    plots_dir = sprintf('%s/ballgown/plots', diffex_dir)
-
-    pdata = pData(bg_data)
-
-    mat = log2(as.matrix(gene_fpkms[,-1]) + 1)
-    colnames(mat) = gsub('FPKM.','', colnames(mat))
-
-    boxplot_title = 'FPKMs'
-    boxplot_y_lab = 'log2(FPKM)'
-} else {
-    method = 'deseq2'
-
-    plots_dir = sprintf('%s/plots_labeled_by_pheno', diffex_dir)
-
-    pdata = data.frame(colData(rld))
-    colnames(pdata)[1] = 'sample'
-    #These are the strings we want. If sample names are 001, 002, etc, they are carried forward this way
-    pdata$sample = rownames(pdata)
-
-    mat = as.matrix(assay(rld))
-
-    boxplot_title = 'Rlog normalized counts'
-    boxplot_y_lab = 'log2(counts)'
-}
-
-########################################################
-# Plots
-
-########################################################
-# Plots with all phenotypes included
-
-message(sprintf('Plotting sample heatmap for %s', paste(phenotypes, collapse = ', ')))
-log2_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata, factors = phenotypes, out_basename = 'SampleHeatmap')
-
-message(sprintf('Plotting top variably expressed genes heatmap for %s', paste(phenotypes, collapse = ', ')))
-plot_top_variably_expressed_heatmap(mat = mat, pdata = pdata, factors = phenotypes, top_n = 500, out_basename = 'Heatmap_TopVar')
-
-message(sprintf('Plotting top expressed genes heatmap for %s', paste(phenotypes, collapse = ', ')))
-plot_top_expressed_heatmap(mat = mat, pdata = pdata, factors = phenotypes, top_n = 500, out_basename = 'Heatmap_TopExp')
-
-# Plots for each of the phenotypes
-for(phenotype in phenotypes) {
-
-    message(sprintf('Plotting boxplots for %s', phenotype))
-    log2_boxplot = plot_boxplot(mat = mat, pdata = pdata, factor_name = phenotype, title = boxplot_title, y_label = boxplot_y_lab, out_basename = 'BoxPlot_rlog')
-    raw_boxplot = plot_boxplot(mat = log2(raw_counts), pdata = pdata, factor_name = phenotype, title = 'Non-normalized counts', y_label = boxplot_y_lab, out_basename = 'BoxPlot_raw')
-
-    # PCA top 500
-    message(sprintf('Plotting PCA for %s in dim 1 and 2, top 500', phenotype))
-    pca_result_12 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC1','PC2'))
-    log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_basename = 'PCAplot_12_top500')
-
-    message(sprintf('Plotting PCA for %s in dim 2 and 3, top 500', phenotype))
-    pca_result_23 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC2','PC3'))
-    log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_basename = 'PCAplot_23_top500')
-
-    message('Plotting scree, top 500')
-    scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basename = 'ScreePlot_top500')
-
-    # PCA top 100
-    message(sprintf('Plotting PCA for %s in dim 1 and 2, top 100', phenotype))
-    pca_result_12 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c('PC1','PC2'))
-    log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_basename = 'PCAplot_12_top100')
-
-    message(sprintf('Plotting PCA for %s in dim 2 and 3, top 100', phenotype))
-    pca_result_23 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c('PC2','PC3'))
-    log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_basename = 'PCAplot_23_top100')
-
-    message('Plotting scree, top 100')
-    scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basename = 'ScreePlot_top100')
-
+plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con_name, fdr_cutoff, logfc_cutoff, out_filepath_pdf, out_filepath_png) {
+  
+  method = match.arg(method)
+  
+  # Determine the correct column names on the basis of deseq2 or ballgown
+  if(method == 'deseq2') {
+    log2fc = 'log2FoldChange'
+    pval = 'pvalue'
+    padj = 'padj'
+    id = 'gene_id'
+    de_call = 'Call'
+  } else {
+    log2fc = 'log2fc'
+    pval = 'pval'
+    padj = 'qval'
+    id = 'gene_id'
+    de_call = 'diff_exp'
+  }
+  
+  # Add direction column
+  de_list$direction = 'NS'
+  de_list$direction[de_list[, de_call] == 'YES' & de_list[, log2fc] <= 0] = 'Down'
+  de_list$direction[de_list[, de_call] == 'YES' & de_list[, log2fc] > 0] = 'Up'
+  
+  # Determine direction labels (with number per)
+  direction_table = table(de_list$direction)
+  
+  if('Up' %in% names(direction_table)) {
+    up_label = sprintf('Up: %s', direction_table['Up'])
+  } else {
+    up_label = 'Up: 0'
+  }
+  
+  if('Down' %in% names(direction_table)) {
+    down_label = sprintf('Down: %s', direction_table['Down'])
+  } else {
+    down_label = 'Down: 0'
+  }
+  
+  if('NS' %in% names(direction_table)) {
+    ns_label = sprintf('NS: %s', direction_table['NS'])
+  } else {
+    ns_label = 'NS: 0'
+  }
+  
+  de_list$direction_count = factor(
+    de_list$direction,
+    levels = c('Up', 'Down', 'NS'),
+    labels = c(up_label, down_label, ns_label))
+  
+  if(all( !( c('Up', 'Downl') %in% names(direction_table) ) )) {
+    warning(sprintf('No genes were DE at fdr < %s and |log2fc| > %s. Consider a different threshold.', fdr_cutoff, logfc_cutoff))
+  }
+  
+  # Transform qval to -log10 scale
+  de_list$log10qval = -log10(de_list[, padj])
+  
+  # Add top 10 Up and 10 Down gene labels
+  # de_list is assumed to be ordered by Call/diff_exp and then qvalue from deseq2_diffex.R and ballgown_diffex.R
+  top = rbind(
+    head(subset(de_list, direction == 'Up'), 10),
+    head(subset(de_list, direction == 'Down'), 10))
+  top$label = top$external_gene_name
+  de_list = merge(x = de_list, y = top[, c(id,'label')], by = id, all.x = TRUE, sort = FALSE)
+  
+  # Volcano Plot
+  volcano_plot = ggplot(de_list, aes_string(x = log2fc, y = 'log10qval', color = 'direction_count', alpha = 0.5)) +
+    scale_alpha(guide = 'none') +
+    geom_point(size = 1) +
+    scale_color_manual(name = '', values=c('#B31B21', '#1465AC', 'darkgray')) +
+    geom_vline(xintercept = c(0, -1*logfc_cutoff, logfc_cutoff), linetype = c(1, 2, 2), color = c('black', 'black', 'black')) +
+    geom_hline(yintercept = -log10(fdr_cutoff), linetype = 2, color = 'black') +
+    labs(
+      title = sprintf('%s_v_%s', exp_name, con_name),
+      x = 'Log2 fold-change',
+      y = '-Log10 adjusted q-value') +
+    theme_classic()
+  # Add gene symbol labels
+  if(!all(is.na(de_list$label))) {
+    volcano_plot = volcano_plot + ggrepel::geom_label_repel(label = de_list$label, force = 3, segment.alpha = 0.4)
+  }
+  ggsave(filename = out_filepath_pdf, plot = volcano_plot, height = 8, width = 8, dpi = 300)
+  ggsave(filename = out_filepath_png, plot = volcano_plot, height = 8, width = 8, dpi = 300)
+  
+  return(volcano_plot)
 }

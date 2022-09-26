@@ -1,3 +1,7 @@
+0.4.1 (09/23/2022)
+------------------
+- Fixed issues loading libraries within RStudio
+
 0.4.0 (06/09/2022)
 ------------------
 - Added bioconductor-apeglm and r-ashr packages

@@ -367,7 +367,7 @@ for (model_name in model_names) {
     # Write the annotated gene list - xlsx
     message('Writing annotated diffex genes xlsx')
     # Load glossary for insertion into the workbook
-    glossary = read.delim(file.path(SCRIPTS_DIR, "deseq2_glossary.txt", stringsAsFactors = FALSE)
+    glossary = read.delim(file.path(SCRIPTS_DIR, "deseq2_glossary.txt"), stringsAsFactors = FALSE)
     # Create an appropriate xlsx workbook
     diffex_wb = createWorkbook()
     # Add annotated results as worksheet

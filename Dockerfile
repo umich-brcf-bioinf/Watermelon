@@ -11,6 +11,7 @@ RUN mamba env create -f /tmp/${env_name}.yaml && conda clean --all -y
 
 ENV PATH /opt/conda/envs/${env_name}/bin:$PATH
 
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/${env_name}/lib
 
 RUN apt-get --allow-releaseinfo-change update && \
     apt-get install -y texlive-latex-base texlive-latex-recommended texlive-fonts-recommended texlive-generic-extra texlive-plain-generic

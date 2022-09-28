@@ -144,7 +144,7 @@ write.table(x = rld_df, file=OUTPUT_FILES[['rlog']],
 # Plots by Phenotype Section
 
 # Source the plotting functions
-source(file.path(SCRIPTS_DIR, "deseq2_plots_by_phenotype.R"))
+source(file.path(SCRIPTS_DIR, "deseq2_plotting_fxns.R"))
 # Note: PLOTS_DIR must be defined for these functions to work
 
 # Set up variables and data

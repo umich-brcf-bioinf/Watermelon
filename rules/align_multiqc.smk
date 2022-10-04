@@ -8,7 +8,6 @@ rule align_multiqc:
         fastq_screen_alignment = FASTQ_SCREEN_ALIGNMENT,
     output:
         ALIGNMENT_DIR + "07-qc/alignment_qc.html",
-        ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_general_stats.txt",
         ALIGNMENT_DIR + "07-qc/alignment_qc_data/multiqc_star.txt",
     params:
         project_name = config['report_info']['project_name'],

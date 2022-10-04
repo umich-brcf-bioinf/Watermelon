@@ -6,7 +6,6 @@ rule report_align_qc:
         methods_fig = WORKFLOW_BASEDIR + '/report/methods_fig.png',
         versions = DELIVERABLES_DIR + 'run_info/env_software_versions.yaml',
         multiqc_html = DELIVERABLES_DIR + 'alignment/alignment_qc.html',
-        multiqc_gen_stats = ALIGNMENT_DIR + '07-qc/alignment_qc_data/multiqc_general_stats.txt',
         multiqc_star = ALIGNMENT_DIR + '07-qc/alignment_qc_data/multiqc_star.txt'
     output:
         methods_doc = REPORT_DIR + 'methods.pdf',
@@ -24,6 +23,7 @@ rule report_align_qc:
         add_bg_samples = True,
         add_prep_description = True,
         custom_sections = 'results', # Rscript expects a string of comma separated values. All sections: 'methods,results,appendix'
+        multiqc_gen_stats = ALIGNMENT_DIR + '07-qc/alignment_qc_data/multiqc_general_stats.txt',
         mqc_plots_dir = ALIGNMENT_DIR + '07-qc/multiqc_plots/png/'
     script:
         '../scripts/report_rmd.R'

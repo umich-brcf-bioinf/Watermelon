@@ -174,36 +174,31 @@ A summary of alignment statistics can be seen in the table below.
 # Determine whether or not to include % duplicates (can be problematic for AGC)
 include_dups = snakemake@config[['report_info']][['include_pct_dups']]
 
-# Read in multiqc tab-separated files
-multiqc_gen_file = file.path(project_dir, snakemake@input[['multiqc_gen_stats']])
+# Read in multiqc star file
 multiqc_star_file = file.path(project_dir, snakemake@input[['multiqc_star']])
-
-multiqc_gen = read.table(multiqc_gen_file, header = TRUE, sep='\t', quote = "", stringsAsFactors = FALSE)
 multiqc_star = read.table(multiqc_star_file, header = TRUE, sep='\t', quote = "", stringsAsFactors = FALSE)
 
 # Subset STAR table to desired properties
 star_keep_cols = c('Sample', 'total_reads', 'uniquely_mapped', 'uniquely_mapped_percent', 'avg_mapped_read_length', 'multimapped', 'multimapped_percent')
 multiqc_star_subset = multiqc_star[,star_keep_cols]
 
-# Subset general table to desired properties (just fastqc aligned percent-dup for now)
-fastqc_aligned_pcdups = grep("^FastQC.*percent_duplicates$", colnames(multiqc_gen), value = TRUE)
-multiqc_gen_subset = multiqc_gen[,c('Sample', fastqc_aligned_pcdups)] #Just grab Sample and aligned dup percentage from general stats
-
-# Function to trim e.g. foo.bar.baz to baz (for simplifying column names)
-trim_to_suffix = function(fullname) {return(sub(".*\\.", "", fullname))} # Trim to final suffix (all else captured by greedy . match)
-
-# Clean column names
-colnames(multiqc_gen_subset) = trim_to_suffix(colnames(multiqc_gen_subset))
-
-# Remove rows with NA (in this case, everything except fastqc_aligned data rows)
-multiqc_gen_subset = multiqc_gen_subset[complete.cases(multiqc_gen_subset),]
-
-# Round the percent duplicate rates to nearest whole number
-multiqc_gen_subset$percent_duplicates = round(multiqc_gen_subset$percent_duplicates, digits = 2)
-
 # Percent duplicates are the only values derived from the general results table
-# Merge the tables together only if dups included
+# Process the general results table and merge with star table only if dups included
 if(include_dups){
+  # Read in multiqc general file
+  multiqc_gen_file = file.path(project_dir, snakemake@params[['multiqc_gen_stats']])
+  multiqc_gen = read.table(multiqc_gen_file, header = TRUE, sep='\t', quote = "", stringsAsFactors = FALSE)
+  # Subset general table to desired properties (just fastqc aligned percent-dup for now)
+  fastqc_aligned_pcdups = grep("^FastQC.*percent_duplicates$", colnames(multiqc_gen), value = TRUE)
+  multiqc_gen_subset = multiqc_gen[,c('Sample', fastqc_aligned_pcdups)] #Just grab Sample and aligned dup percentage from general stats
+  # Function to trim e.g. foo.bar.baz to baz (for simplifying column names)
+  trim_to_suffix = function(fullname) {return(sub(".*\\.", "", fullname))} # Trim to final suffix (all else captured by greedy . match)
+  # Clean column names
+  colnames(multiqc_gen_subset) = trim_to_suffix(colnames(multiqc_gen_subset))
+  # Remove rows with NA (in this case, everything except fastqc_aligned data rows)
+  multiqc_gen_subset = multiqc_gen_subset[complete.cases(multiqc_gen_subset),]
+  # Round the percent duplicate rates to nearest whole number
+  multiqc_gen_subset$percent_duplicates = round(multiqc_gen_subset$percent_duplicates, digits = 2)
   # Combine subset of STAR results table with subset of general results table
   multiqc_report_df = merge(multiqc_star_subset, multiqc_gen_subset, by = 'Sample', all = TRUE)
 } else {

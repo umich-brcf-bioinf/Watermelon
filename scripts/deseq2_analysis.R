@@ -52,6 +52,7 @@ SAMPLE_COLUMN = 'sample'
 DIFFEX_DIR = config[['dirs']][['diffex_results']]
 PLOTS_DIR = file.path(DIFFEX_DIR, 'plots_labeled_by_pheno')
 COUNTS_DIR = file.path(DIFFEX_DIR, 'counts')
+SUMMARY_DIR = file.path(DIFFEX_DIR, 'summary')
 SCRIPTS_DIR = "Watermelon/scripts" # Expect to use copy of Watermelon in the project's folder
 # Not a comprehensive list - only those that are the same for every project
 OUTPUT_FILES = list('count_data_rda' = file.path(COUNTS_DIR, 'count_data.rda'),
@@ -61,7 +62,8 @@ OUTPUT_FILES = list('count_data_rda' = file.path(COUNTS_DIR, 'count_data.rda'),
 
 # Create needed output directories - Note: more are created below during plotting steps
 dir.create(COUNTS_DIR, recursive=T, mode="775")
-dir.create(PLOTS_DIR, recursive =T, mode="775")
+dir.create(PLOTS_DIR, mode="775")
+dir.create(SUMMARY_DIR, mode="775")
 
 #################
 # Counts Section
@@ -213,6 +215,9 @@ for(phenotype in phenotypes) {
 
 model_names = grep("count_min_cutoff", names(config$diffex), value=TRUE, invert=TRUE)
 
+# Will have rows of model_name, comparison, total_count, count_diff_expressed, count_annotated, percent_annotated
+summary_rows = list()
+
 for (model_name in model_names) {
   # Create directory structure for the results of this model
   dir.create(file.path(DIFFEX_DIR, sprintf("diffex_%s/volcano_plots", model_name)), recursive=TRUE, mode="775")
@@ -356,6 +361,16 @@ for (model_name in model_names) {
     
     annotated_results = merge(as.data.frame(res), annotation_df, by='gene_id', all.x=TRUE, all.y=FALSE, sort=FALSE)
     annotated_results = annotated_results[,c('gene_id', 'entrezgene_id', 'external_gene_name', 'description', 'baseMean','log2FoldChange','lfcSE','stat','pvalue','padj', 'Condition', 'Control', 'Call')]
+
+    # Append row of details for summary DF, which will be written to file at end of analysis script
+    curr_summary_row = list(
+      model_name = sub("^model_", "", model_name),
+      comparison = contrast_name,
+      total_count = nrow(res),
+      count_diff_expressed = sum(annotated_results$Call == 'YES'),
+      count_annotated = sum(!is.na(annotated_results$entrezgene_id))
+    )
+    summary_rows[[length(summary_rows) + 1]] = curr_summary_row
     
     # Write the annotated gene list - plain text
     message('Writing annotated diffex genes')
@@ -407,3 +422,27 @@ for (model_name in model_names) {
   } # End iteration over contrasts for each model
 } # End iteration over models
 
+
+# Write summary files
+summary_df = bind_rows(summary_rows)
+summary_df$percent_annotated = round((summary_df$count_annotated / summary_df$total_count * 100), digits = 2)
+
+message('Writing summary table')
+write.table(
+  x = summary_df,
+  file=file.path(SUMMARY_DIR, "deseq2_summary.txt"),
+  append = FALSE, sep = '\t', na = '.', row.names = FALSE, quote = FALSE)
+
+message('Writing summary xlsx')
+# Load glossary for insertion into the workbook
+glossary = read.delim(file.path(SCRIPTS_DIR, "deseq2_glossary.txt"), stringsAsFactors = FALSE)
+# Create an appropriate xlsx workbook
+summary_wb = createWorkbook()
+addWorksheet(summary_wb, 'Sheet1')
+# Add the annotated results to the diffex_genes worksheet
+writeData(summary_wb, 'Sheet1', summary_df)
+# Write the workbook to an xlsx file
+saveWorkbook(
+  summary_wb,
+  file.path(SUMMARY_DIR, "deseq2_summary.xlsx"),
+  overwrite = TRUE)

@@ -166,11 +166,6 @@ class _ConfigValidator(object):
 
         for validation in self._PARSING_VALIDATIONS:
             collector.check(validation)
-            #TWS - Why is this here (below)? The result is that only
-            #parsing errors/warnings are reported if any of these fail
-            #if not collector.passed:
-            #    return collector
-
         for validation in self._CONTENT_VALIDATIONS:
             collector.check(validation)
         return collector

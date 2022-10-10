@@ -1,4 +1,3 @@
-#TWS - Maybe we can remove this rule entirely - doesn't seem like it has a real purpose
 rule align_fastqc_align:
     input:
         ALIGNMENT_DIR + "04-rsem_star_align/{sample}.genome.bam"

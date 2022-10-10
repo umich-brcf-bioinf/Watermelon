@@ -20,8 +20,6 @@ from natsort import natsorted
 
 import scripts.rnaseq_snakefile_helper as helper # works on CL and in pytest
 
-import pdb # TWS DEBUG
-
 
 # Set default values
 # Find path knowing current location of Watermelon/watermelon_init

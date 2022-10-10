@@ -16,7 +16,6 @@ try:
 except ImportError:
     from io import StringIO
 
-import pdb # TWS DEBUG
 
 def get_elapsed_secs(timestr):
     gt1day = re.match("^([0-9]+)-.*", timestr)

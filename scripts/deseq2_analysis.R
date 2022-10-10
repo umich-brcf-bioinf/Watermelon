@@ -155,12 +155,6 @@ for (p in phenotypes) {
   dir.create(file.path(PLOTS_DIR, p), mode="775")
 }
 
-# TWS: I think this can be discarded. Getting pdata directly from samplesheet
-# pdata = data.frame(colData(rld))
-# colnames(pdata)[1] = 'sample'
-# #These are the strings we want. If sample names are 001, 002, etc, they are carried forward this way
-# pdata$sample = rownames(pdata)
-
 mat = as.matrix(assay(rld))
 
 boxplot_title = 'Rlog normalized counts'

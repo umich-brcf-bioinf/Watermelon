@@ -14,7 +14,7 @@ rule align_standardize_gz:
         project_name = config['report_info']['project_name']
     run:
         #TWS - This assumption will not work if a sample has mixed gzipped / plaintext fastqs!
-        #Addressed via InputFastqManager._get_sample_fastq_paths throwing an error in that case
+        #Addressed via get_sample_fastq_paths throwing an error in that case
         with open(str(input), 'rb') as test_f:
             if binascii.hexlify(test_f.read(2)) == b'1f8b':
                 #Is compressed. Just symlink

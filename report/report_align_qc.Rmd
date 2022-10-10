@@ -56,20 +56,13 @@ setwd(project_dir)
 # Read the software environment version yaml
 versions = yaml.load_file(snakemake@input[['versions']])
 
-
-    show_methods_qc_sequencing = TRUE
-    include_diffex = FALSE
-    show_results_qc_align = TRUE
-    show_results_qc_diffex = FALSE
-    show_appendix_qc = TRUE
-
 ################################################################################
 # Flags for showing additional optional sections
 
 show_background_biology = snakemake@params[['add_background']]
 show_background_samples = snakemake@params[['add_bg_samples']]
 show_methods_prep = snakemake@params[['add_prep_description']]
-show_follow_up = snakemake@config[['report_info']][['include_follow_up']] # note this is in config, others are params
+show_follow_up = config[['report_info']][['include_follow_up']] # note this is in config, others are params
 custom_choices = unlist(strsplit(snakemake@params[['custom_sections']], ','))
 
 
@@ -148,7 +141,6 @@ A detailed MultiQC report can be found at the following link:
 
 ```{r include = FALSE}
 # Setup - copy multiqc html and link to it
-cwd = sub("/ccmb/BioinfCore/ActiveProjects", "/nfs/med-bfx-activeprojects", getwd()) # TODO: when we remove /ccmb/ completely this will no longer be necessary, can just use getwd()
 mqc_curr_path = file.path(project_dir, snakemake@input[['multiqc_html']])
 mqc_copy_path = file.path(project_dir, report_dir, 'multiqc_linked_report.html')
 copystatus = file.copy(mqc_curr_path, mqc_copy_path, overwrite = TRUE)
@@ -257,17 +249,5 @@ Results - Custom
 # Acknowledgement for Publication
 
 `r acknowledgement_text`
-
-<!---
-Appendices
--->
-
-<!-- # Appendices -->
-
-<!-- ```{r appendix_qc_section, child = 'child_appendix_qc.Rmd', eval = show_appendix_qc} -->
-<!-- ``` -->
-
-<!-- ```{r appendix_custom_section, child = 'child_appendix_custom.Rmd', eval = show_appendix_custom} -->
-<!-- ``` -->
 
 # References

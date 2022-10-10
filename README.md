@@ -131,11 +131,12 @@ Similarly, to run the pipeline on the GreatLakes compute cluster:
 
 ## Walkthrough - Differential Expression Example
 
-With a very similar process, we can run the differential expression workflow:
+A differential expression workflow starts out the same, but differs in execution:
 
-1. Use watermelon_init to create a file for the differential expression workflow
+1. Use watermelon_init to create a config file for the differential expression analysis
 2. Inspect the generated config file, modify differential expression details based on experimental design
-3. Run the differential expression snakemake workflow with the newly created config file
+3. Run the deseq2_analysis.R script using the WAT_diffex singularity image, which provides a standardized compute environment
+4. Run the deseq2_report.R script using the same singularity image
 
 When running watermelon_init, as before you'll provide a genome build, a project ID, and a config type. Since it will be the `diffex` type, we will also give it a count matrix and a samplesheet. I will take the same samplesheet that was generated earlier, and add an additional column `treatment` with half of the samples labeled `control` and the other half `drug`. In this example, the config generated will be compatible with the given samples. In a real use-case scenario, the config file should be treated as a template, and edited so that it matches the project plan and dataset that it applies to.
 
@@ -159,20 +160,25 @@ Notes: It will prompt about overwriting Watermelon. In this example, it's incons
 
 After running this, you'll have:
 
-* config_20190821d.yaml : a `diffex` type configuration file for the differential expression workflow. In this example, it needs no modification to work with the differential expression workflow.
+* config_20190821d.yaml : a `diffex` type configuration file for the differential expression workflow. In this example, it needs no modification to work with the differential expression workflow. In a real use-case scenario, you will modify this config file according to the project plan.
 * Watermelon : Directory containing a copy of the pipeline code
 
 
-Now we can run a dry-run similar to above:
+Now we can run the deseq2_analysis.R script. Since we're using a singularity image, we'll first set an environment variable that will define a read-only bind mount for the annotation data.
 
-    # Assuming still in screen session with watermelon conda env activated
-    snakemake --dryrun --printshellcmds --configfile config_20190821d.yaml --snakefile Watermelon/deseq2.smk
+    # Define the read-only bind mount to our reference data
+    export SINGULARITY_BIND="/nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
+    # Run the deseq2_analysis.R script, providing environment with the singularity image
+    singularity exec docker://umichbfxcore/wat_diffex:0.4.1 Rscript Watermelon/scripts/deseq2_analysis.R --configfile config_20190821d.yaml
 
-If that works fine, then the pipeline can be run. Example of running this on Great Lakes cluster:
+If that works fine, then we can move onto the reporting step. If not, it is also possible to use the singularity image with an RStudio session, similar to how it's described on our [single cell analysis environment page](https://github.com/umich-brcf-bioinf/single_cell_env).
 
-    module load singularity
-    snakemake --configfile config_20190821d.yaml --snakefile Watermelon/deseq2.smk --profile Watermelon/config/profile-greatlakes
+To run the reporting step, we'll use the same singularity image in a similar fashion:
 
+    # Make sure $SINGULARITY_BIND environment variable is set as above
+    echo $SINGULARITY_BIND
+    # Run the reporting script
+    singularity exec docker://umichbfxcore/wat_diffex:0.4.1 Rscript Watermelon/scripts/deseq2_report.R --configfile config_20190821d.yaml
 
 
 ## Further Reading

@@ -11,7 +11,7 @@ The following steps describe the process of creating a final report:
 3. With the edited `report_draft.md` saved, generate a finalized report. To do this you'll call snakemake with the specified target `report_finalize`. E.g.:
 
     ```
-    snakemake --configfile config_20190822.yaml --snakefile Watermelon/deseq2.smk \
+    snakemake --configfile config_20190822.yaml --snakefile Watermelon/align_qc.smk \
         --profile Watermelon/config/profile-greatlakes report_finalize
     ```
 

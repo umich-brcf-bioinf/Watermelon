@@ -62,25 +62,8 @@ versions = yaml.load_file(snakemake@input[['versions']])
 show_background_biology = snakemake@params[['add_background']]
 show_background_samples = snakemake@params[['add_bg_samples']]
 show_methods_prep = snakemake@params[['add_prep_description']]
+show_countmatrix_usage = snakemake@params[['add_count_matrix_usage']]
 show_follow_up = config[['report_info']][['include_follow_up']] # note this is in config, others are params
-custom_choices = unlist(strsplit(snakemake@params[['custom_sections']], ','))
-
-
-if('methods' %in% custom_choices){
-    show_methods_custom = TRUE
-} else {
-    show_methods_custom = FALSE
-}
-if('results' %in% custom_choices){
-    show_results_custom = TRUE
-} else {
-    show_results_custom = FALSE
-}
-if('appendix' %in% custom_choices){
-    show_appendix_custom = TRUE
-} else {
-    show_appendix_custom = FALSE
-}
 
 
 ```
@@ -213,6 +196,7 @@ multiqc_kable = kable(multiqc_report_df, row.names = FALSE, format.args = list(b
 
 ####
 # Get subset of multiqc plots
+# TODO: Put this into an optional child module or move exclusively to diffex. Gauge AGC's interest in this functionality to make decision
 mqc_plots_dir = file.path(project_dir, snakemake@params[['mqc_plots_dir']])
 fig_regex_list = snakemake@config[['report_info']][['mqc_png_regex_list']]
 select_mqc_plots = list()
@@ -238,7 +222,7 @@ for(fig in select_mqc_plots){
 <!---
 Results - Custom
 -->
-```{r results_custom_section, child = 'child_results_custom.Rmd', eval = show_results_custom}
+```{r count_matrix_usage, child = 'child_count_matrix_usage.Rmd', eval = show_countmatrix_usage}
 ```
 
 

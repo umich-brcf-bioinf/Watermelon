@@ -18,11 +18,9 @@ rule report_align_qc:
         project_name = config['report_info']['project_name'],
         snakemake_rdata = REPORT_DIR + '.report_draft_snakemake.rda',
         report_dir = REPORT_DIR,
-        diffex_dir = "",
         add_background = False, # TODO: These could later be moved out to config
         add_bg_samples = True,
         add_prep_description = True,
-        custom_sections = 'results', # Rscript expects a string of comma separated values. All sections: 'methods,results,appendix'
         multiqc_gen_stats = ALIGNMENT_DIR + '07-qc/alignment_qc_data/multiqc_general_stats.txt',
         mqc_plots_dir = ALIGNMENT_DIR + '07-qc/multiqc_plots/png/'
     script:

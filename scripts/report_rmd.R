@@ -43,18 +43,9 @@ project_dir = dirname(dirname(dirname(report_rmd)))
 
 # project_dir = getwd() # This is another option to get the project dir. This is where snakemake is called from, should be project dir.
 
-if(grepl("^/", snakemake@params[['diffex_dir']])) { # If it looks like absolute path, use it.
-  diffex_dir = snakemake@params[['diffex_dir']]
-}else { # Otherwise, assume relative path and treat accordingly
-  diffex_dir = file.path(project_dir, snakemake@params[['diffex_dir']])
-}
-
 
 ################################################################################
 
-diffex_annot_file = '%s/diffex_%s/%s.annot.txt'
-diffex_summary_file = '%s/summary/deseq2_summary.txt'
-diffex_volcano_file = '%s/diffex_%s/volcano_plots/VolcanoPlot_%s.png'
 qc_boxplot_file = '%s/plots_labeled_by_pheno/%s/BoxPlot_%s.png'
 qc_heatmap_file = '%s/plots_labeled_by_pheno/SampleHeatmap.png'
 qc_pca_file = '%s/plots_labeled_by_pheno/%s/PCAplot_12_%s.png'

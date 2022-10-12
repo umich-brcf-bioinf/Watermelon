@@ -46,12 +46,6 @@ project_dir = dirname(dirname(dirname(report_rmd)))
 
 ################################################################################
 
-qc_boxplot_file = '%s/plots_labeled_by_pheno/%s/BoxPlot_%s.png'
-qc_heatmap_file = '%s/plots_labeled_by_pheno/SampleHeatmap.png'
-qc_pca_file = '%s/plots_labeled_by_pheno/%s/PCAplot_12_%s.png'
-
-################################################################################
-
 # Render report
 rmarkdown::render(report_rmd, output_format = 'all', output_file = output_prefix, output_dir = report_dir, params = list(project_dir = project_dir))
 

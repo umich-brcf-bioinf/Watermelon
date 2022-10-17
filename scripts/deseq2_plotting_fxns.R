@@ -60,6 +60,26 @@ make_heatmap_annots = function(pdata, factors) {
     return(list(annot_df = annot_df, annot_colors = annot_colors))
 }
 
+# Use the same figure saving code as pheatmap uses under the hood - idea from https://stackoverflow.com/a/43051932/5597209
+save_pheatmap_pdf <- function(x, filename, width=7, height=7) { # Note pdf dimensions are inches by default
+   stopifnot(!missing(x))
+   stopifnot(!missing(filename))
+   pdf(filename, width=width, height=height)
+   grid::grid.newpage()
+   grid::grid.draw(x$gtable)
+   dev.off()
+}
+
+
+save_pheatmap_png <- function(x, filename, width=1000, height=1000) { # Note png dimensions are px py default
+   stopifnot(!missing(x))
+   stopifnot(!missing(filename))
+   png(filename, width=width, height=height)
+   grid::grid.newpage()
+   grid::grid.draw(x$gtable)
+   dev.off()
+}
+
 
 plot_sample_correlation_heatmap = function(mat, pdata, factors, out_basename = 'SampleHeatmap') {
 
@@ -70,7 +90,7 @@ plot_sample_correlation_heatmap = function(mat, pdata, factors, out_basename = '
     hclust_obj = hclust(dist_obj, method = 'complete')
     dist_mat = as.matrix(dist_obj)
 
-    pheatmap( # pdf
+    heatmap_fig = pheatmap(
         mat = dist_mat,
         cluster_rows = TRUE,
         cluster_cols = TRUE,
@@ -85,29 +105,14 @@ plot_sample_correlation_heatmap = function(mat, pdata, factors, out_basename = '
         number_color = 'black',
         annotation_col = annot_list[['annot_df']],
         annotation_colors = annot_list[['annot_colors']],
-        color = colorRampPalette(RColorBrewer::brewer.pal(9, 'Blues'))(20),
-        filename = file.path(PLOTS_DIR, paste0(out_basename, '.pdf'))
-    )
-    pheatmap( # png
-        mat = dist_mat,
-        cluster_rows = TRUE,
-        cluster_cols = TRUE,
-        angle_col = 45,
-        display_numbers = TRUE,
-        cellwidth = 20,
-        cellheight = 20,
-        fontsize = 8,
-        fontsize_row = 6,
-        fontsize_col = 6,
-        fontsize_number = 6,
-        number_color = 'black',
-        annotation_col = annot_list[['annot_df']],
-        annotation_colors = annot_list[['annot_colors']],
-        color = colorRampPalette(RColorBrewer::brewer.pal(9, 'Blues'))(20),
-        filename = file.path(PLOTS_DIR, paste0(out_basename, '.png'))
+        color = colorRampPalette(RColorBrewer::brewer.pal(9, 'Blues'))(20)
     )
 
-    return(list(dist_obj = dist_obj, hclust_obj = hclust_obj))
+    save_pheatmap_pdf(heatmap_fig, file.path(PLOTS_DIR, paste0(out_basename, '.pdf')), height = 20, width = 10)
+
+    save_pheatmap_png(heatmap_fig, file.path(PLOTS_DIR, paste0(out_basename, '.png')), height = 2400, width = 1200)
+
+    return(heatmap_fig)
 }
 
 
@@ -121,38 +126,26 @@ plot_top_variably_expressed_heatmap = function(mat, pdata, factors, top_n = 1000
     # Calculate the top_n variable genes and put them in decreasing order
     top_var_mat = mat[order(matrixStats::rowVars(mat), decreasing = T), ][1:top_n, ]
 
-    pdf(file = file.path(PLOTS_DIR, paste0(out_basename, '.pdf')), height = 20, width = 10)
-        pheatmap(
-            mat = top_var_mat,
-            scale= 'row',
-            cluster_rows = TRUE,
-            cluster_cols = TRUE,
-            show_rownames = FALSE,
-            annotation_col = annot_list[['annot_df']],
-            annotation_colors = annot_list[['annot_colors']],
-            fontsize = 7,
-            fontsize_row = 7,
-            las = 2,
-            main = sprintf('Top %s variably expressed genes', top_n),
-            color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
-        )
-    dev.off()
-    png(file = file.path(PLOTS_DIR, paste0(out_basename, '.png')), height = 2400, width = 1200)
-        pheatmap(
-            mat = top_var_mat,
-            scale= 'row',
-            cluster_rows = TRUE,
-            cluster_cols = TRUE,
-            show_rownames = FALSE,
-            annotation_col = annot_list[['annot_df']],
-            annotation_colors = annot_list[['annot_colors']],
-            fontsize = 7,
-            fontsize_row = 7,
-            las = 2,
-            main = sprintf('Top %s variably expressed genes', top_n),
-            color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
-        )
-    dev.off()
+    heatmap_fig = pheatmap(
+      mat = top_var_mat,
+      scale= 'row',
+      cluster_rows = TRUE,
+      cluster_cols = TRUE,
+      show_rownames = FALSE,
+      annotation_col = annot_list[['annot_df']],
+      annotation_colors = annot_list[['annot_colors']],
+      fontsize = 7,
+      fontsize_row = 7,
+      las = 2,
+      main = sprintf('Top %s variably expressed genes', top_n),
+      color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
+    )
+
+    save_pheatmap_pdf(heatmap_fig, file.path(PLOTS_DIR, paste0(out_basename, '.pdf')), height = 20, width = 10)
+
+    save_pheatmap_png(heatmap_fig, file.path(PLOTS_DIR, paste0(out_basename, '.png')), height = 2400, width = 1200)
+
+    return(heatmap_fig)
 }
 
 
@@ -166,38 +159,26 @@ plot_top_expressed_heatmap = function(mat, pdata, factors, top_n = 1000, out_bas
     # Calculate the top_n expressed genes and put them in decreasing order
     top_exp_mat = mat[order(rowMeans(mat), decreasing = T), ][1:top_n, ]
 
-    pdf(file = file.path(PLOTS_DIR, paste0(out_basename, '.pdf')), height = 20, width = 10)
-        pheatmap(
-            mat = top_exp_mat,
-            scale= 'row',
-            cluster_rows = TRUE,
-            cluster_cols = TRUE,
-            show_rownames = FALSE,
-            annotation_col = annot_list[['annot_df']],
-            annotation_colors = annot_list[['annot_colors']],
-            fontsize = 7,
-            fontsize_row = 7,
-            las = 2,
-            main = sprintf('Top %s expressed genes', top_n),
-            color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
-        )
-    dev.off()
-    png(file = file.path(PLOTS_DIR, paste0(out_basename, '.png')), height = 2400, width = 1200)
-        pheatmap(
-            mat = top_exp_mat,
-            scale= 'row',
-            cluster_rows = TRUE,
-            cluster_cols = TRUE,
-            show_rownames = FALSE,
-            annotation_col = annot_list[['annot_df']],
-            annotation_colors = annot_list[['annot_colors']],
-            fontsize = 7,
-            fontsize_row = 7,
-            las = 2,
-            main = sprintf('Top %s expressed genes', top_n),
-            color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
-        )
-    dev.off()
+    heatmap_fig = pheatmap(
+      mat = top_exp_mat,
+      scale= 'row',
+      cluster_rows = TRUE,
+      cluster_cols = TRUE,
+      show_rownames = FALSE,
+      annotation_col = annot_list[['annot_df']],
+      annotation_colors = annot_list[['annot_colors']],
+      fontsize = 7,
+      fontsize_row = 7,
+      las = 2,
+      main = sprintf('Top %s expressed genes', top_n),
+      color = colorRampPalette(rev(RColorBrewer::brewer.pal(9, 'Blues')))(255)
+    )
+
+    save_pheatmap_pdf(heatmap_fig, file.path(PLOTS_DIR, paste0(out_basename, '.pdf')), height = 20, width = 10)
+    
+    save_pheatmap_png(heatmap_fig, file.path(PLOTS_DIR, paste0(out_basename, '.png')), height = 2400, width = 1200)
+
+    return(heatmap_fig)
 }
 
 plot_boxplot = function(mat, pdata, factor_name, title, y_label, out_basename = 'BoxPlot') {

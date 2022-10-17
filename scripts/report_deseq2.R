@@ -45,7 +45,7 @@ project_dir = opt$project_dir
 rmarkdown::render(opt$markdownfile, output_file = REPORT_OUT_HTML, output_format = 'html_document')
 
 # Copy final report html to deliverables
-report_final_deliverable = file.path(project_dir, DELIVERABLES_DIR)
+report_final_deliverable = file.path(project_dir, DELIVERABLES_DIR, "report_final.html")
 if(file.exists(report_final_deliverable)){
   stop("Final report exists in deliverables folder. Will not overwrite.")
 }

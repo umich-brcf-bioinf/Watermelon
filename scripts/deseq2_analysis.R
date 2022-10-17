@@ -163,44 +163,62 @@ boxplot_y_lab = 'log2(counts)'
 # Plotting
 
 message(sprintf('Plotting sample heatmap for %s', paste(phenotypes, collapse = ', ')))
-log2_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata, factors = phenotypes, out_basename = 'SampleHeatmap')
+sample_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata, factors = phenotypes, out_basename = 'SampleHeatmap')
 
 message(sprintf('Plotting top variably expressed genes heatmap for %s', paste(phenotypes, collapse = ', ')))
-plot_top_variably_expressed_heatmap(mat = mat, pdata = pdata, factors = phenotypes, top_n = 500, out_basename = 'Heatmap_TopVar')
+topVar_heatmap = plot_top_variably_expressed_heatmap(mat = mat, pdata = pdata, factors = phenotypes, top_n = 500, out_basename = 'Heatmap_TopVar')
 
 message(sprintf('Plotting top expressed genes heatmap for %s', paste(phenotypes, collapse = ', ')))
-plot_top_expressed_heatmap(mat = mat, pdata = pdata, factors = phenotypes, top_n = 500, out_basename = 'Heatmap_TopExp')
+topExp_heatmap = plot_top_expressed_heatmap(mat = mat, pdata = pdata, factors = phenotypes, top_n = 500, out_basename = 'Heatmap_TopExp')
 
 # Plots for each of the phenotypes
+rlog_boxplot_list = list()
+raw_boxplot_list = list()
+pca_12_top500_list = list()
+pca_23_top500_list = list()
+pca_12_top100_list = list()
+pca_23_top100_list = list()
+scree_top500_list = list()
+scree_top100_list = list()
+
+
 for(phenotype in phenotypes) {
   
   message(sprintf('Plotting boxplots for %s', phenotype))
   log2_boxplot = plot_boxplot(mat = mat, pdata = pdata, factor_name = phenotype, title = boxplot_title, y_label = boxplot_y_lab, out_basename = 'BoxPlot_rlog')
+  rlog_boxplot_list[[phenotype]] = log2_boxplot # In addition to writing output figure files, add to list of plots
   raw_boxplot = plot_boxplot(mat = log2(raw_counts), pdata = pdata, factor_name = phenotype, title = 'Non-normalized counts', y_label = boxplot_y_lab, out_basename = 'BoxPlot_raw')
+  raw_boxplot_list[[phenotype]] = raw_boxplot # In addition to writing output figure files, add to list of plots
   
   # PCA top 500
   message(sprintf('Plotting PCA for %s in dim 1 and 2, top 500', phenotype))
   pca_result_12 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC1','PC2'))
   log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_basename = 'PCAplot_12_top500')
+  pca_12_top500_list[[phenotype]] = log2_pca_12 # In addition to writing output figure files, add to list of plots
   
   message(sprintf('Plotting PCA for %s in dim 2 and 3, top 500', phenotype))
   pca_result_23 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC2','PC3'))
   log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_basename = 'PCAplot_23_top500')
+  pca_23_top500_list[[phenotype]] = log2_pca_23 # In addition to writing output figure files, add to list of plots
   
   message('Plotting scree, top 500')
   scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basename = 'ScreePlot_top500')
+  scree_top500_list[[phenotype]] = scree_plot # In addition to writing output figure files, add to list of plots
   
   # PCA top 100
   message(sprintf('Plotting PCA for %s in dim 1 and 2, top 100', phenotype))
   pca_result_12 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c('PC1','PC2'))
   log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_basename = 'PCAplot_12_top100')
+  pca_12_top100_list[[phenotype]] = log2_pca_12 # In addition to writing output figure files, add to list of plots
   
   message(sprintf('Plotting PCA for %s in dim 2 and 3, top 100', phenotype))
   pca_result_23 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c('PC2','PC3'))
   log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_basename = 'PCAplot_23_top100')
+  pca_23_top100_list[[phenotype]] = log2_pca_23 # In addition to writing output figure files, add to list of plots
   
   message('Plotting scree, top 100')
   scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basename = 'ScreePlot_top100')
+  scree_top100_list[[phenotype]] = scree_plot # In addition to writing output figure files, add to list of plots
   
 }
 
@@ -211,6 +229,7 @@ model_names = grep("count_min_cutoff", names(config$diffex), value=TRUE, invert=
 
 # Will have rows of model_name, comparison, total_count, count_diff_expressed, count_annotated, percent_annotated
 summary_rows = list()
+volcano_plot_list = list()
 
 for (model_name in model_names) {
   # Create directory structure for the results of this model
@@ -413,6 +432,8 @@ for (model_name in model_names) {
       logfc_cutoff = fc_cutoff,
       out_filepath_pdf = out_pdf,
       out_filepath_png = out_png)
+    # In addition to the pdf and png listed above, also add the plot to a list of volcano plots
+    volcano_plot_list[[paste("model", model_name, contrast_name, sep="_")]] <- volcano_plot # We may want to alter naming based on how it's used in report Rmd
   } # End iteration over contrasts for each model
 } # End iteration over models
 
@@ -440,3 +461,5 @@ saveWorkbook(
   summary_wb,
   file.path(SUMMARY_DIR, "deseq2_summary.xlsx"),
   overwrite = TRUE)
+
+save.image("deseq2.Rdata")

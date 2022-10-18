@@ -462,4 +462,4 @@ saveWorkbook(
   file.path(SUMMARY_DIR, "deseq2_summary.xlsx"),
   overwrite = TRUE)
 
-save.image("deseq2.Rdata")
+save.image(file.path(DIFFEX_DIR, "deseq2_analysis.Rdata"))

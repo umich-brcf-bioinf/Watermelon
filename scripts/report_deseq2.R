@@ -2,6 +2,7 @@
 # Load libraries
 
 library(rmarkdown)
+library(optparse)
 library(tidyverse)
 library(kableExtra)
 library(knitr)
@@ -15,12 +16,19 @@ library(knitr)
 # Setup
 
 option_list = list(
-  make_option(c("-c", "--configfile"), action="store", default=NA, type='character', help="Name of config file"),
-  make_option(c("-m", "--markdownfile"), action="store", default=NA, type='character', help="R Markdown file to knit")
-  make_option(c("-d", "--project_dir"), action="store", default=getwd(), type='character', help="Project directory. Defaults to current working directory")
+  make_option(c("-c", "--configfile"), action="store", default=NA, type='character', help="Name of config file (required)"),
+  make_option(c("-m", "--markdownfile"), action="store", default=NA, type='character', help="R Markdown file to knit (required)"),
+  make_option(c("-d", "--project_dir"), action="store", default=getwd(), type='character', help="Project directory. Defaults to current working directory"),
+  make_option(c("-r", "--rdatafile"), action="store", default=NA, type='character', help="Rdata file containing R objects (from the analysis) to include in the report (required)")
 )
 
 opt = parse_args(OptionParser(option_list=option_list))
+
+for(cli_option in c("configfile", "markdownfile", "rdatafile")){
+  if is.na(opt[[cli_option]]){
+    stop(paste0("Required argument --", cli_option, " is missing. For help, see --help"))
+  }
+}
 
 # Load in the config
 config = yaml.load_file(opt$configfile)
@@ -38,6 +46,9 @@ DELIVERABLES_DIR = config[['dirs']][['deliverables']]
 
 # Set variables for knitting
 project_dir = opt$project_dir
+
+# Load the Rdata from the analysis
+load(opt$rdatafile)
 
 #################
 # Knitting Section

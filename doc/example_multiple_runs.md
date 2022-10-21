@@ -1,301 +1,117 @@
 # Example - Running with multiple sequencing runs from UMich Advanced Genomics Core
 
-The walkthrough in the readme provided an example that should work out-of-the-box, where things were simplified for illustrative purposes. The current example goes a bit further, highlighting a few more details which might be useful when running with multiple sequencing runs.
+The walkthrough in the README provided an example that should work out-of-the-box, where things were simplified for illustrative purposes. The current example goes a bit further, highlighting a few more details which might be useful when running with multiple sequencing runs.
 
 ## Before starting:
 
-Just as in the readme walkthrough, you'll run watermelon_init to set up the project directory. Also like before, the watermelon conda environment must be activated and the path to Watermelon should be in your PATH environment variable in order to run watermelon_init.
+Just as in the readme walkthrough, you'll run watermelon_init to set up the project directory. Also like before, the watermelon conda environment must be activated in order to run watermelon_init, and singularity must be available.
 
 ## Multiple sequencing runs, different biological samples
 
-There are a couple of scenarios worth considering. The first is the simplest - when you want to combine sequencing runs in a workflow, but the samples included in each run are distinct. In this case, you can provide watermelon_init with multiple input_run_dirs, and each sample will be mapped to its appropriate input directory in the samplesheet.
+This first scenario is the simplest - when you want to combine sequencing runs in a workflow, but the samples included in each run are distinct. In this case, you can provide watermelon_init with multiple input_run_dirs, and each sample will be mapped to its appropriate input directory in the samplesheet.
 
-    watermelon_init.py --genome_build GRCh38 --project_id 20190822 --type align_qc --input_run_dirs /path/to/Run_1234 /path/to/Run_1256
+    watermelon_init.py --genome_build GRCh38 --project_id 20190822 --type align_qc --input_run_dirs /path/to/NovaA_1234 /path/to/NovaA_1256
 
-## Same biological samples over multiple sequencing runs
+With this command, watermelon_init will create a samplesheet that looks something like the following:
 
-The next scenario is a bit more involved in setting up. Here we'll have a subset of biological samples that were sequenced across two separate runs. In this case, we want to merge the samples across the runs, so that we can effectively achieve greater sequencing depth by concatenating the samples' fastq files before alignment. I'll illustrate how to handle this scenario.
+    sample,input_glob
+    1111-AB-1,/path/to/NovaA_1234/fastqs_1111-AB/1111-AB-1_*.fastq.gz
+    1111-AB-2,/path/to/NovaA_1234/fastqs_1111-AB/1111-AB-2_*.fastq.gz
+    1111-AB-3,/path/to/NovaA_1234/fastqs_1111-AB/1111-AB-3_*.fastq.gz
+    1111-AB-4,/path/to/NovaA_1234/fastqs_1111-AB/1111-AB-4_*.fastq.gz
+    1111-AB-5,/path/to/NovaA_1234/fastqs_1111-AB/1111-AB-5_*.fastq.gz
+    1111-AB-6,/path/to/NovaA_1234/fastqs_1111-AB/1111-AB-6_*.fastq.gz
+    1111-AB-7,/path/to/NovaA_1234/fastqs_1111-AB/1111-AB-7_*.fastq.gz
+    1111-AB-8,/path/to/NovaA_1234/fastqs_1111-AB/1111-AB-8_*.fastq.gz
+    1111-AB-21,/path/to/NovaA_1256/fastqs_1111-AB/1111-AB-21_*.fastq.gz
+    1111-AB-22,/path/to/NovaA_1256/fastqs_1111-AB/1111-AB-22_*.fastq.gz
+    1111-AB-23,/path/to/NovaA_1256/fastqs_1111-AB/1111-AB-23_*.fastq.gz
+    1111-AB-24,/path/to/NovaA_1256/fastqs_1111-AB/1111-AB-24_*.fastq.gz
+    1111-AB-25,/path/to/NovaA_1256/fastqs_1111-AB/1111-AB-25_*.fastq.gz
+    1111-AB-26,/path/to/NovaA_1256/fastqs_1111-AB/1111-AB-26_*.fastq.gz
+    1111-AB-27,/path/to/NovaA_1256/fastqs_1111-AB/1111-AB-27_*.fastq.gz
+    1111-AB-28,/path/to/NovaA_1256/fastqs_1111-AB/1111-AB-28_*.fastq.gz
 
-Run_1234 contains 4 lanes of paired-end sequencing data for half of the samples, and 2 lanes of paired-end data for the second half.
+In this process, watermelon_init has made some minimal inferences to determine an appropriate shell glob for each sample. In the above example, the samplesheet that was created by watermelon_init should have the right contents so that it can be directly used by the pipeline. When the pipeline runs, these shell globs will expand into the list of fastq files that are used as inputs for a given sample. As noted in the README, the fastq files must contain a `_R1` or `_R2` in their filenames, because while running, the pipeline uses these identifiers to treat the files appropriately. For example, R1s will only be concatenated with R1s, likewise R2s only with R2s, several steps will run in 'paired-end mode' if these are detected, and so forth.
 
-Run 1256 contains an additional 2 lanes of paired-end sequencing data for the second half of samples.
+## Multiple sequencing runs, same biological samples
 
-    contents/structure of Run_1234/
+The next scenario is a just a bit more involved in setting up. Here we'll have a set of identical biological samples that were sequenced across two separate runs. This is sometimes done when more sequencing depth is desired. In this case, we want to merge the samples across the runs, so that we can effectively achieve greater sequencing depth by concatenating the samples' fastq files before alignment. I'll demonstrate how to handle this.
+
+In this scenario, NovaA_3456 contains paired-end sequencing data for several samples, and NovaA_5567 contains a subset of those same samples that were resubmitted for sequencing at a later date.
+
+    contents of NovaA_3456/fastqs_3333-CD/
     ---------------------
-    Run_1234/
-    ├── Sample_358623
-    │   ├── Sample_358623_L001_R1.fastq.gz
-    │   ├── Sample_358623_L001_R2.fastq.gz
-    │   ├── Sample_358623_L002_R1.fastq.gz
-    │   ├── Sample_358623_L002_R2.fastq.gz
-    │   ├── Sample_358623_L003_R1.fastq.gz
-    │   ├── Sample_358623_L003_R2.fastq.gz
-    │   ├── Sample_358623_L004_R1.fastq.gz
-    │   └── Sample_358623_L004_R2.fastq.gz
-    ├── Sample_358624
-    │   ├── Sample_358624_L001_R1.fastq.gz
-    │   ├── Sample_358624_L001_R2.fastq.gz
-    │   ├── Sample_358624_L002_R1.fastq.gz
-    │   ├── Sample_358624_L002_R2.fastq.gz
-    │   ├── Sample_358624_L003_R1.fastq.gz
-    │   ├── Sample_358624_L003_R2.fastq.gz
-    │   ├── Sample_358624_L004_R1.fastq.gz
-    │   └── Sample_358624_L004_R2.fastq.gz
-    ├── Sample_358625
-    │   ├── Sample_358625_L001_R1.fastq.gz
-    │   ├── Sample_358625_L001_R2.fastq.gz
-    │   ├── Sample_358625_L002_R1.fastq.gz
-    │   ├── Sample_358625_L002_R2.fastq.gz
-    │   ├── Sample_358625_L003_R1.fastq.gz
-    │   ├── Sample_358625_L003_R2.fastq.gz
-    │   ├── Sample_358625_L004_R1.fastq.gz
-    │   └── Sample_358625_L004_R2.fastq.gz
-    ├── Sample_358626
-    │   ├── Sample_358626_L001_R1.fastq.gz
-    │   ├── Sample_358626_L001_R2.fastq.gz
-    │   ├── Sample_358626_L002_R1.fastq.gz
-    │   ├── Sample_358626_L002_R2.fastq.gz
-    │   ├── Sample_358626_L003_R1.fastq.gz
-    │   ├── Sample_358626_L003_R2.fastq.gz
-    │   ├── Sample_358626_L004_R1.fastq.gz
-    │   └── Sample_358626_L004_R2.fastq.gz
-    ├── Sample_358627
-    │   ├── Sample_358627_L001_R1.fastq.gz
-    │   ├── Sample_358627_L001_R2.fastq.gz
-    │   ├── Sample_358627_L002_R1.fastq.gz
-    │   ├── Sample_358627_L002_R2.fastq.gz
-    │   ├── Sample_358627_L003_R1.fastq.gz
-    │   ├── Sample_358627_L003_R2.fastq.gz
-    │   ├── Sample_358627_L004_R1.fastq.gz
-    │   └── Sample_358627_L004_R2.fastq.gz
-    ├── Sample_358628
-    │   ├── Sample_358628_L001_R1.fastq.gz
-    │   ├── Sample_358628_L001_R2.fastq.gz
-    │   ├── Sample_358628_L002_R1.fastq.gz
-    │   ├── Sample_358628_L002_R2.fastq.gz
-    │   ├── Sample_358628_L003_R1.fastq.gz
-    │   ├── Sample_358628_L003_R2.fastq.gz
-    │   ├── Sample_358628_L004_R1.fastq.gz
-    │   └── Sample_358628_L004_R2.fastq.gz
-    ├── Sample_358629
-    │   ├── Sample_358629_L003_R1.fastq.gz
-    │   ├── Sample_358629_L003_R2.fastq.gz
-    │   ├── Sample_358629_L004_R1.fastq.gz
-    │   └── Sample_358629_L004_R2.fastq.gz
-    ├── Sample_358630
-    │   ├── Sample_358630_L003_R1.fastq.gz
-    │   ├── Sample_358630_L003_R2.fastq.gz
-    │   ├── Sample_358630_L004_R1.fastq.gz
-    │   └── Sample_358630_L004_R2.fastq.gz
-    ├── Sample_358631
-    │   ├── Sample_358631_L003_R1.fastq.gz
-    │   ├── Sample_358631_L003_R2.fastq.gz
-    │   ├── Sample_358631_L004_R1.fastq.gz
-    │   └── Sample_358631_L004_R2.fastq.gz
-    ├── Sample_358632
-    │   ├── Sample_358632_L003_R1.fastq.gz
-    │   ├── Sample_358632_L003_R2.fastq.gz
-    │   ├── Sample_358632_L004_R1.fastq.gz
-    │   └── Sample_358632_L004_R2.fastq.gz
-    ├── Sample_358633
-    │   ├── Sample_358633_L003_R1.fastq.gz
-    │   ├── Sample_358633_L003_R2.fastq.gz
-    │   ├── Sample_358633_L004_R1.fastq.gz
-    │   └── Sample_358633_L004_R2.fastq.gz
-    └── Sample_358634
-        ├── Sample_358634_L003_R1.fastq.gz
-        ├── Sample_358634_L003_R2.fastq.gz
-        ├── Sample_358634_L004_R1.fastq.gz
-        └── Sample_358634_L004_R2.fastq.gz
+    NovaA_3456/fastqs_3333-CD/
+    ├── 3333-CD-1_CTACGACA-TTGGACTC_S1_R1.fastq.gz
+    ├── 3333-CD-1_CTACGACA-TTGGACTC_S1_R2.fastq.gz
+    ├── 3333-CD-2_GGACTTGG-CGTCTGCG_S2_R1.fastq.gz
+    ├── 3333-CD-2_GGACTTGG-CGTCTGCG_S2_R2.fastq.gz
+    ├── 3333-CD-3_TAAGTGGT-GGCTTAAG_S3_R1.fastq.gz
+    ├── 3333-CD-3_TAAGTGGT-GGCTTAAG_S3_R2.fastq.gz
+    ├── 3333-CD-4_ATATGGAT-TAATACAG_S4_R1.fastq.gz
+    ├── 3333-CD-4_ATATGGAT-TAATACAG_S4_R2.fastq.gz
+    ├── 3333-CD-5_TCTCTACT-GAACCGCG_S5_R1.fastq.gz
+    ├── 3333-CD-5_TCTCTACT-GAACCGCG_S5_R2.fastq.gz
+    ├── 3333-CD-6_CCAAGTCT-TCATCCTT_S6_R1.fastq.gz
+    ├── 3333-CD-6_CCAAGTCT-TCATCCTT_S6_R2.fastq.gz
+    ├── 3333-CD-7_CGGCGTGA-ACAGGCGC_S7_R1.fastq.gz
+    ├── 3333-CD-7_CGGCGTGA-ACAGGCGC_S7_R2.fastq.gz
+    ├── 3333-CD-8_ATGTAAGT-CATAGAGT_S8_R1.fastq.gz
+    └── 3333-CD-8_ATGTAAGT-CATAGAGT_S8_R2.fastq.gz
 
-    12 directories, 72 files
+    contents of NovaA_5567/fastqs_3333-CD/
+    ---------------------
+    NovaA_5567/fastqs_3333-CD/
+    ├── 3333-CD-1_CTACGACA-TTGGACTC_S1_R1.fastq.gz
+    ├── 3333-CD-1_CTACGACA-TTGGACTC_S1_R2.fastq.gz
+    ├── 3333-CD-2_GGACTTGG-CGTCTGCG_S2_R1.fastq.gz
+    ├── 3333-CD-2_GGACTTGG-CGTCTGCG_S2_R2.fastq.gz
+    ├── 3333-CD-3_TAAGTGGT-GGCTTAAG_S3_R1.fastq.gz
+    ├── 3333-CD-3_TAAGTGGT-GGCTTAAG_S3_R2.fastq.gz
+    ├── 3333-CD-4_ATATGGAT-TAATACAG_S4_R1.fastq.gz
+    └── 3333-CD-4_ATATGGAT-TAATACAG_S4_R2.fastq.gz
 
+In a general sense, we can begin by running watermelon_init with multiple `input_run_dirs` as we did in the above scenario. However, there are a couple of things to be mindful of before and after watermelon_init runs, which are the following:
 
-    contents/structure of Run_1256
-    ------------------------------
-    Run_1256/
-    ├── Sample_358629
-    │   ├── Sample_358629_L001_R1.fastq.gz
-    │   ├── Sample_358629_L001_R2.fastq.gz
-    │   ├── Sample_358629_L002_R1.fastq.gz
-    │   └── Sample_358629_L002_R2.fastq.gz
-    ├── Sample_358630
-    │   ├── Sample_358630_L001_R1.fastq.gz
-    │   ├── Sample_358630_L001_R2.fastq.gz
-    │   ├── Sample_358630_L002_R1.fastq.gz
-    │   └── Sample_358630_L002_R2.fastq.gz
-    ├── Sample_358631
-    │   ├── Sample_358631_L001_R1.fastq.gz
-    │   ├── Sample_358631_L001_R2.fastq.gz
-    │   ├── Sample_358631_L002_R1.fastq.gz
-    │   └── Sample_358631_L002_R2.fastq.gz
-    ├── Sample_358632
-    │   ├── Sample_358632_L001_R1.fastq.gz
-    │   ├── Sample_358632_L001_R2.fastq.gz
-    │   ├── Sample_358632_L002_R1.fastq.gz
-    │   └── Sample_358632_L002_R2.fastq.gz
-    ├── Sample_358633
-    │   ├── Sample_358633_L001_R1.fastq.gz
-    │   ├── Sample_358633_L001_R2.fastq.gz
-    │   ├── Sample_358633_L002_R1.fastq.gz
-    │   └── Sample_358633_L002_R2.fastq.gz
-    └── Sample_358634
-        ├── Sample_358634_L001_R1.fastq.gz
-        ├── Sample_358634_L001_R2.fastq.gz
-        ├── Sample_358634_L002_R1.fastq.gz
-        └── Sample_358634_L002_R2.fastq.gz
+* It is imperative that these input directories share a common base path.
+    * A recommendation is to place both in the project directory in parallel
+    * Valid: `/one/path/to/NovaA_3456` & `/one/path/to/NovaA_5567`
+    * Invalid: `/this/path/for/NovaA_3456` & `/another/different/path/to/NovaA_5567`
+* The filenames for the same biological samples must have the same prefix. For example, sample 1 in both runs should start with `3333-CD-1_`
+* After running watermelon_init, we should modify the samplesheet shell globs so that they expand to the proper set of fastq files for each sample
 
-    6 directories, 24 files
-
-
-To achieve the result that we want, we should manually move the desired files from each sample into a single directory, so that these fastq files will be concatenated before alignment.
-
-Here's some code that would work for the above example. Note that it uses the perl-based rename program, not the util-linux one. To create & activate a perl_rename conda environment:
-
-    conda create -n perl_rename -c bioconda rename
-    conda activate perl_rename
-
-With rsync and perl_rename, we can use the following to merge our input run directories. Note that with rsync, we use the '-b' flag to prevent overwriting and a '--suffix' to control the names. This isn't an issue with this example, but this is something to be cognizant of. Also note the trailing slash on the source directory `run_1256/`, it's important to match the syntax shown below for the correct behavior.
-
-    # First merge the directories with rsync.
-    rsync -ab --suffix _run_1256 run_1256/ run_1234
-    # Then do dry-run of rename
-    find run_1234/ -type f -name "*.fastq.gz_run_1256" -exec rename -ne 's#(.*)/(.*)_run_1256$#$1/run_1256_$2#' {} \;
-    # Finally the rename
-    find run_1234/ -type f -name "*.fastq.gz_run_1256" -exec rename -e 's#(.*)/(.*)_run_1256$#$1/run_1256_$2#' {} \;
-
-After this, we would have the following output directory structure:
-
-    Run_1234/
-    ├── Sample_358623
-    │   ├── Sample_358623_L001_R1.fastq.gz
-    │   ├── Sample_358623_L001_R2.fastq.gz
-    │   ├── Sample_358623_L002_R1.fastq.gz
-    │   ├── Sample_358623_L002_R2.fastq.gz
-    │   ├── Sample_358623_L003_R1.fastq.gz
-    │   ├── Sample_358623_L003_R2.fastq.gz
-    │   ├── Sample_358623_L004_R1.fastq.gz
-    │   └── Sample_358623_L004_R2.fastq.gz
-    ├── Sample_358624
-    │   ├── Sample_358624_L001_R1.fastq.gz
-    │   ├── Sample_358624_L001_R2.fastq.gz
-    │   ├── Sample_358624_L002_R1.fastq.gz
-    │   ├── Sample_358624_L002_R2.fastq.gz
-    │   ├── Sample_358624_L003_R1.fastq.gz
-    │   ├── Sample_358624_L003_R2.fastq.gz
-    │   ├── Sample_358624_L004_R1.fastq.gz
-    │   └── Sample_358624_L004_R2.fastq.gz
-    ├── Sample_358625
-    │   ├── Sample_358625_L001_R1.fastq.gz
-    │   ├── Sample_358625_L001_R2.fastq.gz
-    │   ├── Sample_358625_L002_R1.fastq.gz
-    │   ├── Sample_358625_L002_R2.fastq.gz
-    │   ├── Sample_358625_L003_R1.fastq.gz
-    │   ├── Sample_358625_L003_R2.fastq.gz
-    │   ├── Sample_358625_L004_R1.fastq.gz
-    │   └── Sample_358625_L004_R2.fastq.gz
-    ├── Sample_358626
-    │   ├── Sample_358626_L001_R1.fastq.gz
-    │   ├── Sample_358626_L001_R2.fastq.gz
-    │   ├── Sample_358626_L002_R1.fastq.gz
-    │   ├── Sample_358626_L002_R2.fastq.gz
-    │   ├── Sample_358626_L003_R1.fastq.gz
-    │   ├── Sample_358626_L003_R2.fastq.gz
-    │   ├── Sample_358626_L004_R1.fastq.gz
-    │   └── Sample_358626_L004_R2.fastq.gz
-    ├── Sample_358627
-    │   ├── Sample_358627_L001_R1.fastq.gz
-    │   ├── Sample_358627_L001_R2.fastq.gz
-    │   ├── Sample_358627_L002_R1.fastq.gz
-    │   ├── Sample_358627_L002_R2.fastq.gz
-    │   ├── Sample_358627_L003_R1.fastq.gz
-    │   ├── Sample_358627_L003_R2.fastq.gz
-    │   ├── Sample_358627_L004_R1.fastq.gz
-    │   └── Sample_358627_L004_R2.fastq.gz
-    ├── Sample_358628
-    │   ├── Sample_358628_L001_R1.fastq.gz
-    │   ├── Sample_358628_L001_R2.fastq.gz
-    │   ├── Sample_358628_L002_R1.fastq.gz
-    │   ├── Sample_358628_L002_R2.fastq.gz
-    │   ├── Sample_358628_L003_R1.fastq.gz
-    │   ├── Sample_358628_L003_R2.fastq.gz
-    │   ├── Sample_358628_L004_R1.fastq.gz
-    │   └── Sample_358628_L004_R2.fastq.gz
-    ├── Sample_358629
-    │   ├── run_1256_Sample_358629_L001_R1.fastq.gz
-    │   ├── run_1256_Sample_358629_L001_R2.fastq.gz
-    │   ├── run_1256_Sample_358629_L002_R1.fastq.gz
-    │   ├── run_1256_Sample_358629_L002_R2.fastq.gz
-    │   ├── Sample_358629_L003_R1.fastq.gz
-    │   ├── Sample_358629_L003_R2.fastq.gz
-    │   ├── Sample_358629_L004_R1.fastq.gz
-    │   └── Sample_358629_L004_R2.fastq.gz
-    ├── Sample_358630
-    │   ├── run_1256_Sample_358630_L001_R1.fastq.gz
-    │   ├── run_1256_Sample_358630_L001_R2.fastq.gz
-    │   ├── run_1256_Sample_358630_L002_R1.fastq.gz
-    │   ├── run_1256_Sample_358630_L002_R2.fastq.gz
-    │   ├── Sample_358630_L003_R1.fastq.gz
-    │   ├── Sample_358630_L003_R2.fastq.gz
-    │   ├── Sample_358630_L004_R1.fastq.gz
-    │   └── Sample_358630_L004_R2.fastq.gz
-    ├── Sample_358631
-    │   ├── run_1256_Sample_358631_L001_R1.fastq.gz
-    │   ├── run_1256_Sample_358631_L001_R2.fastq.gz
-    │   ├── run_1256_Sample_358631_L002_R1.fastq.gz
-    │   ├── run_1256_Sample_358631_L002_R2.fastq.gz
-    │   ├── Sample_358631_L003_R1.fastq.gz
-    │   ├── Sample_358631_L003_R2.fastq.gz
-    │   ├── Sample_358631_L004_R1.fastq.gz
-    │   └── Sample_358631_L004_R2.fastq.gz
-    ├── Sample_358632
-    │   ├── run_1256_Sample_358632_L001_R1.fastq.gz
-    │   ├── run_1256_Sample_358632_L001_R2.fastq.gz
-    │   ├── run_1256_Sample_358632_L002_R1.fastq.gz
-    │   ├── run_1256_Sample_358632_L002_R2.fastq.gz
-    │   ├── Sample_358632_L003_R1.fastq.gz
-    │   ├── Sample_358632_L003_R2.fastq.gz
-    │   ├── Sample_358632_L004_R1.fastq.gz
-    │   └── Sample_358632_L004_R2.fastq.gz
-    ├── Sample_358633
-    │   ├── run_1256_Sample_358633_L001_R1.fastq.gz
-    │   ├── run_1256_Sample_358633_L001_R2.fastq.gz
-    │   ├── run_1256_Sample_358633_L002_R1.fastq.gz
-    │   ├── run_1256_Sample_358633_L002_R2.fastq.gz
-    │   ├── Sample_358633_L003_R1.fastq.gz
-    │   ├── Sample_358633_L003_R2.fastq.gz
-    │   ├── Sample_358633_L004_R1.fastq.gz
-    │   └── Sample_358633_L004_R2.fastq.gz
-    └── Sample_358634
-        ├── run_1256_Sample_358634_L001_R1.fastq.gz
-        ├── run_1256_Sample_358634_L001_R2.fastq.gz
-        ├── run_1256_Sample_358634_L002_R1.fastq.gz
-        ├── run_1256_Sample_358634_L002_R2.fastq.gz
-        ├── Sample_358634_L003_R1.fastq.gz
-        ├── Sample_358634_L003_R2.fastq.gz
-        ├── Sample_358634_L004_R1.fastq.gz
-        └── Sample_358634_L004_R2.fastq.gz
-
-## Watermelon_init
-After this, we can run watermelon_init, supplying it with the merged input run directory.
+Knowing this, let's run watermelon_init and then continue from there:
 
     #In the project directory, run watermelon_init
-    watermelon_init.py --genome_build GRCh38 --project_id 20190822 --type align_qc --input_run_dirs /path/to/Run_1234
+    watermelon_init.py --genome_build GRCh38 --project_id 20190822 --type align_qc --input_run_dirs NovaA_3456/ NovaA_5567/
 
+This time, watermelon_init will produce a samplesheet that we must modify before we continue:
 
-## Running the pipeline
+    sample,input_glob
+    3333-CD-1,/path/to/project/NovaA_3456/fastqs_3333-CD/3333-CD-1_*.fastq.gz
+    3333-CD-2,/path/to/project/NovaA_3456/fastqs_3333-CD/3333-CD-2_*.fastq.gz
+    3333-CD-3,/path/to/project/NovaA_3456/fastqs_3333-CD/3333-CD-3_*.fastq.gz
+    3333-CD-4,/path/to/project/NovaA_3456/fastqs_3333-CD/3333-CD-4_*.fastq.gz
+    3333-CD-5,/path/to/project/NovaA_3456/fastqs_3333-CD/3333-CD-5_*.fastq.gz
+    3333-CD-6,/path/to/project/NovaA_3456/fastqs_3333-CD/3333-CD-6_*.fastq.gz
+    3333-CD-7,/path/to/project/NovaA_3456/fastqs_3333-CD/3333-CD-7_*.fastq.gz
+    3333-CD-8,/path/to/project/NovaA_3456/fastqs_3333-CD/3333-CD-8_*.fastq.gz
 
-After looking over the config, running the pipeline is the same as in the main example:
+You should notice that these shell globs will not produce our desired set of fastq files when expanded; they only include the fastqs in the first run directory - `NovaA_3456`. However, since we followed the recommendations above, we can modify the shell globs in the samplesheet so that they expand to all of the fastqs that we want:
 
-    # Start a screen session (for persistence over ssh):
-    screen -S watermelon_20190822
-    # Activate the conda environment:
-    conda activate watermelon
+    3333-CD-1,/path/to/project/NovaA_*/fastqs_3333-CD/3333-CD-1_*.fastq.gz
+    3333-CD-2,/path/to/project/NovaA_*/fastqs_3333-CD/3333-CD-2_*.fastq.gz
+    3333-CD-3,/path/to/project/NovaA_*/fastqs_3333-CD/3333-CD-3_*.fastq.gz
+    3333-CD-4,/path/to/project/NovaA_*/fastqs_3333-CD/3333-CD-4_*.fastq.gz
+    3333-CD-5,/path/to/project/NovaA_*/fastqs_3333-CD/3333-CD-5_*.fastq.gz
+    3333-CD-6,/path/to/project/NovaA_*/fastqs_3333-CD/3333-CD-6_*.fastq.gz
+    3333-CD-7,/path/to/project/NovaA_*/fastqs_3333-CD/3333-CD-7_*.fastq.gz
+    3333-CD-8,/path/to/project/NovaA_*/fastqs_3333-CD/3333-CD-8_*.fastq.gz
+
+After making this small change to the samplesheet and verifying that the shell globs expand in the way that we desire, we can continue running the pipeline in the same way we usually do, starting with a dry-run, and then running the pipeline:
+
     # Dry-run to validate the config and check the execution plan:
-    snakemake --dryrun --printshellcmds --configfile config_20190822.yaml --snakefile Watermelon/align_qc.smk
-
-Still in the project directory, now ready to run the pipeline - run on bfx-comp5/6 (notice the profile):
-
-    # Singularity must be available to snakemake, for environment management under the hood
-    module load singularity
+    snakemake --configfile config_20190822.yaml --snakefile Watermelon/align_qc.smk -n -p
+    # Run the pipeline
     snakemake --configfile config_20190822.yaml --snakefile Watermelon/align_qc.smk --profile Watermelon/config/profile-comp5-6

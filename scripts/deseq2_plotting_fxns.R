@@ -200,7 +200,7 @@ plot_top_expressed_heatmap = function(mat, pdata, factors, top_n = 1000, out_bas
     dev.off()
 }
 
-plot_boxplot = function(mat, pdata, factor_name, title, y_label, out_basename = 'BoxPlot') {
+plot_boxplot = function(mat, pdata, factor_name, title, y_label, out_basepath) {
 
     annot_df = data.frame(
         sample = pdata$sample,
@@ -219,8 +219,8 @@ plot_boxplot = function(mat, pdata, factor_name, title, y_label, out_basename = 
             x = '',
             y = y_label) +
         theme_bw() + theme(axis.text.x = element_text(angle = 90))
-    ggsave(filename = file.path(PLOTS_DIR, factor_name, paste0(out_basename, '.pdf')), plot = box_plot, height = 8, width = 8, dpi = 300)
-    ggsave(filename = file.path(PLOTS_DIR, factor_name, paste0(out_basename, '.png')), plot = box_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = paste0(out_basepath, '.pdf'), plot = box_plot, height = 8, width = 8, dpi = 300)
+    ggsave(filename = paste0(out_basepath, '.png'), plot = box_plot, height = 8, width = 8, dpi = 300)
 
     return(box_plot)
 }
@@ -281,7 +281,7 @@ compute_PCA = function(mat, pdata, factor_name, top_n = 500, dims = c('PC1','PC2
 }
 
 
-plot_scree = function(compute_PCA_result, out_basename = 'ScreePlot') {
+plot_scree = function(compute_PCA_result, out_basepath) {
     pca_df = compute_PCA_result[['pca_df']]
     all_var_explained = compute_PCA_result[['all_var_explained']]
     top_n = compute_PCA_result[['top_n']]
@@ -301,14 +301,14 @@ plot_scree = function(compute_PCA_result, out_basename = 'ScreePlot') {
             y = 'Percent Variance Explained'
         ) +
         theme_bw()
-    ggsave(filename = file.path(PLOTS_DIR, factor_name, paste0(out_basename, '.pdf')), plot = scree_plot, height = 6, width = 6, dpi = 300)
-    ggsave(filename = file.path(PLOTS_DIR, factor_name, paste0(out_basename, '.png')), plot = scree_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = paste0(out_basepath, '.pdf')), plot = scree_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = paste0(out_basepath, '.png')), plot = scree_plot, height = 6, width = 6, dpi = 300)
 
     return(scree_plot)
 }
 
 
-plot_PCA = function(compute_PCA_result, out_basename = 'PCAplot') {
+plot_PCA = function(compute_PCA_result, out_basepath) {
 
     pca_df = compute_PCA_result[['pca_df']]
     var_explained = compute_PCA_result[['var_explained']]
@@ -350,13 +350,13 @@ plot_PCA = function(compute_PCA_result, out_basename = 'PCAplot') {
         theme_bw()
     }
 
-    ggsave(filename = file.path(PLOTS_DIR, factor_name, paste0(out_basename, '.pdf')), plot = pca_plot, height = 6, width = 6, dpi = 300)
-    ggsave(filename = file.path(PLOTS_DIR, factor_name, paste0(out_basename, '.png')), plot = pca_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = paste0(out_basepath, '.pdf')), plot = pca_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = paste0(out_basepath, '.png')), plot = pca_plot, height = 6, width = 6, dpi = 300)
 
     return(pca_plot)
 }
 
-plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con_name, fdr_cutoff, logfc_cutoff, out_filepath_pdf, out_filepath_png) {
+plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con_name, fdr_cutoff, logfc_cutoff, out_basepath) {
   
   method = match.arg(method)
   
@@ -437,8 +437,8 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
   if(!all(is.na(de_list$label))) {
     volcano_plot = volcano_plot + ggrepel::geom_label_repel(label = de_list$label, force = 3, segment.alpha = 0.4)
   }
-  ggsave(filename = out_filepath_pdf, plot = volcano_plot, height = 8, width = 8, dpi = 300)
-  ggsave(filename = out_filepath_png, plot = volcano_plot, height = 8, width = 8, dpi = 300)
+  ggsave(filename = paste0(out_basepath, '.pdf'), plot = volcano_plot, height = 8, width = 8, dpi = 300)
+  ggsave(filename = paste0(out_basepath, '.png'), plot = volcano_plot, height = 8, width = 8, dpi = 300)
   
   return(volcano_plot)
 }

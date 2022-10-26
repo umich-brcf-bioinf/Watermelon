@@ -6,6 +6,7 @@ library(data.table)
 library(DESeq2)
 library(openxlsx)
 library(optparse)
+library(reticulate)
 library(tximport)
 library(yaml)
 
@@ -55,13 +56,22 @@ COUNTS_DIR = file.path(DIFFEX_DIR, 'counts')
 SUMMARY_DIR = file.path(DIFFEX_DIR, 'summary')
 SCRIPTS_DIR = "Watermelon/scripts" # Expect to use copy of Watermelon in the project's folder
 
-# Used to create deliverables dataframe
-deliverables_rows = list()
+# In the end, the rows are combined to create deliv_df
+deliv_rows = list()
 # Start with outputs that are same for every project
-deliverables_rows[['count_data_rda']] = list(obj_name = 'count.data.list', file_name = file.path(COUNTS_DIR, 'count_data.rda'), phenotype = NA, model_name = NA, deliverable = TRUE)
-deliverables_rows[['counts_raw']] = list(obj_name = 'counts_raw', file_name = file.path(COUNTS_DIR, 'deseq2_raw_counts.txt'), phenotype = NA, model_name = NA, deliverable = TRUE)
-deliverables_rows[['counts_norm']] = list(obj_name = 'counts_norm', file_name = file.path(COUNTS_DIR, 'deseq2_depth_normalized_counts.txt'), phenotype = NA, model_name = NA, deliverable = TRUE)
-deliverables_rows[['counts_rlog']] = list(obj_name = 'counts_rlog', file_name = file.path(COUNTS_DIR, 'deseq2_rlog_normalized_counts.txt'), phenotype = NA, model_name = NA, deliverable = TRUE)
+deliv_rows[['count_data_rda']] = list(obj_name = 'count.data.list', file_name = file.path(COUNTS_DIR, 'count_data.rda'), deliverable = TRUE)
+deliv_rows[['counts_raw']] = list(obj_name = 'counts_raw', file_name = file.path(COUNTS_DIR, 'deseq2_raw_counts.txt'), deliverable = TRUE)
+deliv_rows[['counts_norm']] = list(obj_name = 'counts_norm', file_name = file.path(COUNTS_DIR, 'deseq2_depth_normalized_counts.txt'), deliverable = TRUE)
+deliv_rows[['counts_rlog']] = list(obj_name = 'counts_rlog', file_name = file.path(COUNTS_DIR, 'deseq2_rlog_normalized_counts.txt'), deliverable = TRUE)
+deliv_rows[['sample_heatmap_pdf']] = list(obj_name = 'sample_heatmap', file_name = file.path(PLOTS_DIR, 'SampleHeatmap.pdf'), deliverable = TRUE)
+deliv_rows[['sample_heatmap_png']] = list(obj_name = 'sample_heatmap', file_name = file.path(PLOTS_DIR, 'SampleHeatmap.png'), deliverable = TRUE)
+deliv_rows[['topVar_heatmap_pdf']] = list(obj_name = 'topVar_heatmap', file_name = file.path(PLOTS_DIR, 'Heatmap_TopVar.pdf'), deliverable = TRUE)
+deliv_rows[['topVar_heatmap_png']] = list(obj_name = 'topVar_heatmap', file_name = file.path(PLOTS_DIR, 'Heatmap_TopVar.png'), deliverable = TRUE)
+deliv_rows[['topExp_heatmap_pdf']] = list(obj_name = 'topExp_heatmap', file_name = file.path(PLOTS_DIR, 'Heatmap_TopExp.pdf'), deliverable = TRUE)
+deliv_rows[['topExp_heatmap_png']] = list(obj_name = 'topExp_heatmap', file_name = file.path(PLOTS_DIR, 'Heatmap_TopExp.png'), deliverable = TRUE)
+deliv_rows[['summary_txt']] = list(obj_name = 'summary_df', file_name = file.path(SUMMARY_DIR, 'deseq2_summary.txt'), deliverable = TRUE)
+deliv_rows[['summary_xlsx']] = list(obj_name = 'summary_df', file_name = file.path(SUMMARY_DIR, 'deseq2_summary.xlsx'), deliverable = TRUE)
+
 
 # Create needed output directories - Note: more are created below during plotting steps
 dir.create(COUNTS_DIR, recursive=T, mode="775")
@@ -122,7 +132,7 @@ if(exists('txi.rsem.gene.results')){
 } else if(exists('counts')){
     count.data.list = c(count.data.list, 'counts')
 }
-save(list = count.data.list, file = deliverables_rows[['count_data_rda']][['file_name']])
+save(list = count.data.list, file = deliv_rows[['count_data_rda']][['file_name']])
 
 
 # Write counts tables
@@ -130,19 +140,19 @@ message('Writing count files')
 raw_counts_df = as.data.frame(counts_raw)
 data.table::setDT(raw_counts_df, keep.rownames = TRUE)[] #set rownames to valid column
 setnames(raw_counts_df, 'rn', 'id')
-write.table(x = raw_counts_df, file = deliverables_rows[['counts_raw']][['file_name']],
+write.table(x = raw_counts_df, file = deliv_rows[['counts_raw']][['file_name']],
     append = FALSE, sep = '\t', col.names = TRUE, row.names = FALSE, quote = FALSE)
 
 norm_counts_df = as.data.frame(norm_counts)
 data.table::setDT(norm_counts_df, keep.rownames = TRUE)[] #set rownames to valid column
 setnames(norm_counts_df, 'rn', 'id')
-write.table(x = norm_counts_df, file = deliverables_rows[['counts_norm']][['file_name']],
+write.table(x = norm_counts_df, file = deliv_rows[['counts_norm']][['file_name']],
     append = FALSE, sep = '\t', col.names = TRUE, row.names = FALSE, quote = FALSE)
 
 rld_df = as.data.frame(assay(counts_rlog))
 data.table::setDT(rld_df, keep.rownames = TRUE)[] #set rownames to valid column
 setnames(rld_df, 'rn', 'id')
-write.table(x = rld_df, file = deliverables_rows[['counts_rlog']][['file_name']],
+write.table(x = rld_df, file = deliv_rows[['counts_rlog']][['file_name']],
     append = FALSE, sep = '\t', col.names = TRUE, row.names = FALSE, quote = FALSE)
 
 #############################
@@ -168,6 +178,7 @@ boxplot_y_lab = 'log2(counts)'
 message(sprintf('Plotting sample heatmap for %s', paste(phenotypes, collapse = ', ')))
 sample_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata, factors = phenotypes, out_basename = 'SampleHeatmap')
 
+
 message(sprintf('Plotting top variably expressed genes heatmap for %s', paste(phenotypes, collapse = ', ')))
 topVar_heatmap = plot_top_variably_expressed_heatmap(mat = mat, pdata = pdata, factors = phenotypes, top_n = 500, out_basename = 'Heatmap_TopVar')
 
@@ -192,15 +203,15 @@ for(phenotype in phenotypes) {
   log2_boxplot = plot_boxplot(mat = mat, pdata = pdata, factor_name = phenotype, title = boxplot_title, y_label = boxplot_y_lab, out_basepath = boxplot_basepath)
   rlog_boxplot_list[[phenotype]] = log2_boxplot # In addition to writing output figure files, add to list of plots
   # Add newly created plots to deliverables
-  deliverables_rows[[paste0('boxplot_rlog_', phenotype, '_pdf')]] = list(obj_name = paste0('rlog_boxplot_list[[\'', phenotype, '\']]'), file_name = paste0(boxplot_basepath, '.pdf'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
-  deliverables_rows[[paste0('boxplot_rlog_', phenotype, '_png')]] = list(obj_name = paste0('rlog_boxplot_list[[\'', phenotype, '\']]'), file_name = paste0(boxplot_basepath, '.png'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
+  deliv_rows[[paste0('boxplot_rlog_', phenotype, '_pdf')]] = list(obj_name = paste0('rlog_boxplot_list[[\'', phenotype, '\']]'), file_name = paste0(boxplot_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
+  deliv_rows[[paste0('boxplot_rlog_', phenotype, '_png')]] = list(obj_name = paste0('rlog_boxplot_list[[\'', phenotype, '\']]'), file_name = paste0(boxplot_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
 
   boxplot_basepath = file.path(PLOTS_DIR, phenotype, 'BoxPlot_raw')
   raw_boxplot = plot_boxplot(mat = log2(counts_raw), pdata = pdata, factor_name = phenotype, title = 'Non-normalized counts', y_label = boxplot_y_lab, out_basepath = boxplot_basepath)
   raw_boxplot_list[[phenotype]] = raw_boxplot # In addition to writing output figure files, add to list of plots
   # Add newly created plots to deliverables
-  deliverables_rows[[paste0('boxplot_raw_', phenotype, '_pdf')]] = list(obj_name = paste0('raw_boxplot_list[[\'', phenotype, '\']]'), file_name = paste0(boxplot_basepath, '.pdf'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
-  deliverables_rows[[paste0('boxplot_raw_', phenotype, '_png')]] = list(obj_name = paste0('raw_boxplot_list[[\'', phenotype, '\']]'), file_name = paste0(boxplot_basepath, '.png'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
+  deliv_rows[[paste0('boxplot_raw_', phenotype, '_pdf')]] = list(obj_name = paste0('raw_boxplot_list[[\'', phenotype, '\']]'), file_name = paste0(boxplot_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
+  deliv_rows[[paste0('boxplot_raw_', phenotype, '_png')]] = list(obj_name = paste0('raw_boxplot_list[[\'', phenotype, '\']]'), file_name = paste0(boxplot_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
   
   # PCA top 500
   message(sprintf('Plotting PCA for %s in dim 1 and 2, top 500', phenotype))
@@ -209,8 +220,8 @@ for(phenotype in phenotypes) {
   log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_basepath = pca_basepath)
   pca_12_top500_list[[phenotype]] = log2_pca_12 # In addition to writing output figure files, add to list of plots
   # Add newly created plots to deliverables
-  deliverables_rows[[paste0('pca_12_top500_', phenotype, '_pdf')]] = list(obj_name = paste0('pca_12_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.pdf'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
-  deliverables_rows[[paste0('pca_12_top500_', phenotype, '_png')]] = list(obj_name = paste0('pca_12_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
+  deliv_rows[[paste0('pca_12_top500_', phenotype, '_pdf')]] = list(obj_name = paste0('pca_12_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
+  deliv_rows[[paste0('pca_12_top500_', phenotype, '_png')]] = list(obj_name = paste0('pca_12_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
   
   message(sprintf('Plotting PCA for %s in dim 2 and 3, top 500', phenotype))
   pca_basepath = file.path(PLOTS_DIR, phenotype, 'PCAplot_23_top500')
@@ -218,16 +229,16 @@ for(phenotype in phenotypes) {
   log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_basepath = pca_basepath)
   pca_23_top500_list[[phenotype]] = log2_pca_23 # In addition to writing output figure files, add to list of plots
   # Add newly created plots to deliverables
-  deliverables_rows[[paste0('pca_23_top500_', phenotype, '_pdf')]] = list(obj_name = paste0('pca_23_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.pdf'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
-  deliverables_rows[[paste0('pca_23_top500_', phenotype, '_png')]] = list(obj_name = paste0('pca_23_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
+  deliv_rows[[paste0('pca_23_top500_', phenotype, '_pdf')]] = list(obj_name = paste0('pca_23_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
+  deliv_rows[[paste0('pca_23_top500_', phenotype, '_png')]] = list(obj_name = paste0('pca_23_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
   
   message('Plotting scree, top 500')
   scree_basepath = file.path(PLOTS_DIR, factor_name, 'ScreePlot_top500')
   scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basepath = scree_basepath)
   scree_top500_list[[phenotype]] = scree_plot # In addition to writing output figure files, add to list of plots
   # Add newly created plots to deliverables
-  deliverables_rows[[paste0('scree_top500_', phenotype, '_pdf')]] = list(obj_name = paste0('scree_top500_list[[\'', phenotype, '\']]'), file_name = paste0(scree_basepath, '.pdf'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
-  deliverables_rows[[paste0('scree_top500_', phenotype, '_png')]] = list(obj_name = paste0('scree_top500_list[[\'', phenotype, '\']]'), file_name = paste0(scree_basepath, '.png'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
+  deliv_rows[[paste0('scree_top500_', phenotype, '_pdf')]] = list(obj_name = paste0('scree_top500_list[[\'', phenotype, '\']]'), file_name = paste0(scree_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
+  deliv_rows[[paste0('scree_top500_', phenotype, '_png')]] = list(obj_name = paste0('scree_top500_list[[\'', phenotype, '\']]'), file_name = paste0(scree_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
   
   # PCA top 100
   message(sprintf('Plotting PCA for %s in dim 1 and 2, top 100', phenotype))
@@ -236,8 +247,8 @@ for(phenotype in phenotypes) {
   log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_basepath = pca_basepath)
   pca_12_top100_list[[phenotype]] = log2_pca_12 # In addition to writing output figure files, add to list of plots
   # Add newly created plots to deliverables
-  deliverables_rows[[paste0('pca_12_top100_', phenotype, '_pdf')]] = list(obj_name = paste0('pca_12_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.pdf'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
-  deliverables_rows[[paste0('pca_12_top100_', phenotype, '_png')]] = list(obj_name = paste0('pca_12_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
+  deliv_rows[[paste0('pca_12_top100_', phenotype, '_pdf')]] = list(obj_name = paste0('pca_12_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
+  deliv_rows[[paste0('pca_12_top100_', phenotype, '_png')]] = list(obj_name = paste0('pca_12_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
   
   message(sprintf('Plotting PCA for %s in dim 2 and 3, top 100', phenotype))
   pca_basepath = file.path(PLOTS_DIR, phenotype, 'PCAplot_23_top100')
@@ -245,16 +256,16 @@ for(phenotype in phenotypes) {
   log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_basepath = pca_basepath)
   pca_23_top100_list[[phenotype]] = log2_pca_23 # In addition to writing output figure files, add to list of plots
   # Add newly created plots to deliverables
-  deliverables_rows[[paste0('pca_23_top100_', phenotype, '_pdf')]] = list(obj_name = paste0('pca_23_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.pdf'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
-  deliverables_rows[[paste0('pca_23_top100_', phenotype, '_png')]] = list(obj_name = paste0('pca_23_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
+  deliv_rows[[paste0('pca_23_top100_', phenotype, '_pdf')]] = list(obj_name = paste0('pca_23_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
+  deliv_rows[[paste0('pca_23_top100_', phenotype, '_png')]] = list(obj_name = paste0('pca_23_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
   
   message('Plotting scree, top 100')
   scree_basepath = file.path(PLOTS_DIR, factor_name, 'ScreePlot_top500')
   scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basename = 'ScreePlot_top100')
   scree_top100_list[[phenotype]] = scree_plot # In addition to writing output figure files, add to list of plots
   # Add newly created plots to deliverables
-  deliverables_rows[[paste0('scree_top100_', phenotype, '_pdf')]] = list(obj_name = paste0('scree_top100_list[[\'', phenotype, '\']]'), file_name = paste0(scree_basepath, '.pdf'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
-  deliverables_rows[[paste0('scree_top100_', phenotype, '_png')]] = list(obj_name = paste0('scree_top100_list[[\'', phenotype, '\']]'), file_name = paste0(scree_basepath, '.png'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
+  deliv_rows[[paste0('scree_top100_', phenotype, '_pdf')]] = list(obj_name = paste0('scree_top100_list[[\'', phenotype, '\']]'), file_name = paste0(scree_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
+  deliv_rows[[paste0('scree_top100_', phenotype, '_png')]] = list(obj_name = paste0('scree_top100_list[[\'', phenotype, '\']]'), file_name = paste0(scree_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
 }
 
 ##################################
@@ -386,10 +397,13 @@ for (model_name in model_names) {
     
     #write to individual tab-delimited txt files
     message('Writing diffex genes')
+    res_basepath = file.path(DIFFEX_DIR, sprintf("diffex_%s/%s", model_name, contrast_name))
     write.table(
       x = res,
-      file=file.path(DIFFEX_DIR, sprintf("diffex_%s/%s.txt", model_name, contrast_name)),
+      file = paste0(res_basepath, ".txt"),
       append = FALSE, sep = '\t', na = '.', row.names = FALSE, quote = FALSE)
+    # Also add to deliverables
+    deliv_rows[[paste("results", model_name, contrast_name, sep="_")]] = list(obj_name = 'res', file_name = paste0(res_basepath, '.txt'), model_name = model_name, contrast_name = contrast_name, deliverable = TRUE)
     
     ##################
     # Add annotations
@@ -424,8 +438,10 @@ for (model_name in model_names) {
     message('Writing annotated diffex genes')
     write.table(
       x = annotated_results,
-      file=file.path(DIFFEX_DIR, sprintf("diffex_%s/%s.annot.txt", model_name, contrast_name)),
+      file = paste0(res_basepath, '.annot.txt'),
       append = FALSE, sep = '\t', na = '.', row.names = FALSE, quote = FALSE)
+    # Also add to deliverables
+    deliv_rows[[paste("results_annot", model_name, contrast_name, sep="_")]] = list(obj_name = 'annotated_results', file_name = paste0(res_basepath, '.annot.txt'), model_name = model_name, contrast_name = contrast_name, deliverable = TRUE)
     
     # Write the annotated gene list - xlsx
     message('Writing annotated diffex genes xlsx')
@@ -448,8 +464,10 @@ for (model_name in model_names) {
     # Write the workbook to an xlsx file
     saveWorkbook(
       diffex_wb,
-      file.path(DIFFEX_DIR, sprintf("diffex_%s/%s.annot.xlsx", model_name, contrast_name)),
+      paste0(res_basepath, '.annot.xlsx'),
       overwrite = TRUE)
+    # Also add to deliverables
+    deliv_rows[[paste("results_xlsx", model_name, contrast_name, sep="_")]] = list(obj_name = 'diffex_wb', file_name = paste0(res_basepath, '.annot.xlsx'), model_name = model_name, contrast_name = contrast_name, deliverable = TRUE)
     
     ######################
     # Create volcano plot
@@ -469,7 +487,8 @@ for (model_name in model_names) {
     volcano_key = paste("model", model_name, contrast_name, sep="_")
     volcano_plot_list[[volcano_key]] <- volcano_plot # We may want to alter naming based on how it's used in report Rmd
     # Add newly created plots to deliverables
-    deliverables_rows[[paste0(volcano_key, '_pdf')]] = list(obj_name = paste0('volcano_plot_list[[\'', volcano_key, '\']]'), file_name = paste0(volcano_basepath, '.pdf'), phenotype = NA, model_name = model_name, deliverable = TRUE)
+    deliv_rows[[paste0(volcano_key, '_pdf')]] = list(obj_name = paste0('volcano_plot_list[[\'', volcano_key, '\']]'), file_name = paste0(volcano_basepath, '.pdf'), model_name = model_name, contrast_name = contrast_name, deliverable = TRUE)
+    deliv_rows[[paste0(volcano_key, '_png')]] = list(obj_name = paste0('volcano_plot_list[[\'', volcano_key, '\']]'), file_name = paste0(volcano_basepath, '.png'), model_name = model_name, contrast_name = contrast_name, deliverable = TRUE)
   } # End iteration over contrasts for each model
 } # End iteration over models
 
@@ -481,7 +500,7 @@ summary_df$percent_annotated = round((summary_df$count_annotated / summary_df$to
 message('Writing summary table')
 write.table(
   x = summary_df,
-  file=file.path(SUMMARY_DIR, "deseq2_summary.txt"),
+  file=deliv_rows[['summary_txt']][['file_name']],
   append = FALSE, sep = '\t', na = '.', row.names = FALSE, quote = FALSE)
 
 message('Writing summary xlsx')
@@ -495,7 +514,20 @@ writeData(summary_wb, 'Sheet1', summary_df)
 # Write the workbook to an xlsx file
 saveWorkbook(
   summary_wb,
-  file.path(SUMMARY_DIR, "deseq2_summary.xlsx"),
+  deliv_rows[['summary_xlsx']][['file_name']],
   overwrite = TRUE)
 
 save.image(file.path(DIFFEX_DIR, "deseq2_analysis.Rdata"))
+
+# #For recreating deliverables_run_info functionality:
+# py_run_string("WORKFLOW_BASEDIR = os.path.abspath('Watermelon')")
+# source_python('Watermelon/version_info.smk')
+# con = file(file.path(DELIVERABLES_DIR, 'run_info', 'env_software_versions.yaml'))
+# writeLines(c(
+#   "#This file contains software version information in the format:",
+#   "#environment:",
+#   "#    software_package:",
+#   "#        software_version"
+# ),con)
+# write_yaml(VER_INFO[c('watermelon', 'WAT_diffex')], con)
+# close(con)

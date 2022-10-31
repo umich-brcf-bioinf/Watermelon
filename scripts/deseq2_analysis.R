@@ -111,7 +111,7 @@ counts_dds = counts_dds[ rowSums(counts(counts_dds)) > threshold, ]
 counts_raw = counts(counts_dds) #raw
 # TWS - need to estimate size factors before normalization can be done
 dds.withSF = estimateSizeFactors(counts_dds)
-counts_norm = counts(dds.withSF, normalized = TRUE) #raw/lib size factors
+norm_counts = counts(dds.withSF, normalized = TRUE) #raw/lib size factors
 # Log normed
 counts_rlog = rlog(counts_dds, blind = FALSE)
 
@@ -222,7 +222,7 @@ for(phenotype in phenotypes) {
   deliverables_rows[[paste0('pca_23_top500_', phenotype, '_png')]] = list(obj_name = paste0('pca_23_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
   
   message('Plotting scree, top 500')
-  scree_basepath = file.path(PLOTS_DIR, factor_name, 'ScreePlot_top500')
+  scree_basepath = file.path(PLOTS_DIR, phenotype, 'ScreePlot_top500')
   scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basepath = scree_basepath)
   scree_top500_list[[phenotype]] = scree_plot # In addition to writing output figure files, add to list of plots
   # Add newly created plots to deliverables
@@ -249,8 +249,8 @@ for(phenotype in phenotypes) {
   deliverables_rows[[paste0('pca_23_top100_', phenotype, '_png')]] = list(obj_name = paste0('pca_23_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, model_name = NA, deliverable = TRUE)
   
   message('Plotting scree, top 100')
-  scree_basepath = file.path(PLOTS_DIR, factor_name, 'ScreePlot_top500')
-  scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basename = 'ScreePlot_top100')
+  scree_basepath = file.path(PLOTS_DIR, phenotype, 'ScreePlot_top500')
+  scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basepath = 'ScreePlot_top100')
   scree_top100_list[[phenotype]] = scree_plot # In addition to writing output figure files, add to list of plots
   # Add newly created plots to deliverables
   deliverables_rows[[paste0('scree_top100_', phenotype, '_pdf')]] = list(obj_name = paste0('scree_top100_list[[\'', phenotype, '\']]'), file_name = paste0(scree_basepath, '.pdf'), phenotype = phenotype, model_name = NA, deliverable = TRUE)

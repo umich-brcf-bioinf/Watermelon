@@ -522,12 +522,15 @@ save.image(file.path(DIFFEX_DIR, "deseq2_analysis.Rdata"))
 # #For recreating deliverables_run_info functionality:
 # py_run_string("WORKFLOW_BASEDIR = os.path.abspath('Watermelon')")
 # source_python('Watermelon/version_info.smk')
-# con = file(file.path(DELIVERABLES_DIR, 'run_info', 'env_software_versions.yaml'))
+# sw_versions = VER_INFO[c('watermelon', 'WAT_diffex')]
+# #TWS FIXME? This is the only thing that goes directly into DELIVERABLES_DIR
+# deliv_rows[['sw_versions']] = list(obj_name = 'sw_versions', file_name = file.path(DELIVERABLES_DIR, 'run_info', 'env_software_versions.yaml'), deliverable = TRUE)
+# con = file(deliv_rows[['sw_versions']][['file_name']])
 # writeLines(c(
 #   "#This file contains software version information in the format:",
 #   "#environment:",
 #   "#    software_package:",
 #   "#        software_version"
 # ),con)
-# write_yaml(VER_INFO[c('watermelon', 'WAT_diffex')], con)
+# write_yaml(sw_versions, con)
 # close(con)

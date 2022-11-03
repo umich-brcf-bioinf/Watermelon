@@ -301,8 +301,8 @@ plot_scree = function(compute_PCA_result, out_basepath) {
             y = 'Percent Variance Explained'
         ) +
         theme_bw()
-    ggsave(filename = paste0(out_basepath, '.pdf')), plot = scree_plot, height = 6, width = 6, dpi = 300)
-    ggsave(filename = paste0(out_basepath, '.png')), plot = scree_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = paste0(out_basepath, '.pdf'), plot = scree_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = paste0(out_basepath, '.png'), plot = scree_plot, height = 6, width = 6, dpi = 300)
 
     return(scree_plot)
 }
@@ -350,8 +350,8 @@ plot_PCA = function(compute_PCA_result, out_basepath) {
         theme_bw()
     }
 
-    ggsave(filename = paste0(out_basepath, '.pdf')), plot = pca_plot, height = 6, width = 6, dpi = 300)
-    ggsave(filename = paste0(out_basepath, '.png')), plot = pca_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = paste0(out_basepath, '.pdf'), plot = pca_plot, height = 6, width = 6, dpi = 300)
+    ggsave(filename = paste0(out_basepath, '.png'), plot = pca_plot, height = 6, width = 6, dpi = 300)
 
     return(pca_plot)
 }

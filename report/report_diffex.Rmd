@@ -42,55 +42,18 @@ Default HTML output:
 </style>
 
 ```{r include = FALSE}
-################################################################################
-# Load Libraries
-library(yaml)
-
 
 ################################################################################
 # Set things up you'll need downstream
 
-config = snakemake@config
-setwd(project_dir)
-
-# Read the software environment version yaml
-versions = yaml.load_file(snakemake@input[['versions']])
-
-diffex_info = snakemake@params[['diffex_model_info']]
-
-# Depending on snakemake rule, include/exclude sections (diffex, alignment, QC)
-if(snakemake@rule == 'report_align_diffex'){
-    show_appendix_qc = TRUE
-} else if(snakemake@rule == 'report_align_only') {
-    show_appendix_qc = TRUE
-} else if(snakemake@rule == 'report_from_counts') {
-    show_appendix_qc = FALSE
-}
+knitr::opts_knit$set(root.dir = project_dir)
 
 ################################################################################
 # Flags for showing additional optional sections
 
-show_background_biology = snakemake@params[['add_background']]
-show_background_samples = snakemake@params[['add_bg_samples']]
-show_methods_prep = snakemake@params[['add_prep_description']]
-show_follow_up = snakemake@config[['report_info']][['include_follow_up']] # note this is in config, others are params
-custom_choices = unlist(strsplit(snakemake@params[['custom_sections']], ','))
-
-if('methods' %in% custom_choices){
-    show_methods_custom = TRUE
-} else {
-    show_methods_custom = FALSE
-}
-if('results' %in% custom_choices){
-    show_results_custom = TRUE
-} else {
-    show_results_custom = FALSE
-}
-if('appendix' %in% custom_choices){
-    show_appendix_custom = TRUE
-} else {
-    show_appendix_custom = FALSE
-}
+show_background_biology = TRUE
+show_background_samples = TRUE
+show_follow_up = config[['report_info']][['include_follow_up']] # note this is in config, others are params
 
 ```
 
@@ -105,10 +68,10 @@ Background
 
 # Background
 
-```{r background_biology_section, child = 'child_background_biology.Rmd', eval = show_background_biology}
+```{r background_biology_section, child = file.path(REPORT_SRC_DIR, 'child_background_biology.Rmd'), eval = show_background_biology}
 ```
 
-```{r background_samples_section, child = 'child_background_samples.Rmd', eval = show_background_samples}
+```{r background_samples_section, child = file.path(REPORT_SRC_DIR, 'child_background_samples.Rmd'), eval = show_background_samples}
 ```
 
 <!---
@@ -118,7 +81,10 @@ Methods
 
 # Methods
 
-```{r methods_prep_section, child = 'child_methods_prep.Rmd', eval = show_methods_prep}
+## Sample preparation & sequencing
+
+```{r echo = FALSE, results = 'asis', message = FALSE}
+    cat(config[['report_info']][['prep_description']])
 ```
 
 ## Pipeline
@@ -127,29 +93,24 @@ We use Snakemake [@Koster2012] to manage the bioinformatics workflow in a reprod
 
 ## Differential Expression
 
-Data were pre-filtered to remove genes with 0 counts in all samples. Differential gene expression analysis was performed using DESeq2 [@Love2014], using a negative binomial generalized linear model (thresholds: linear fold change >1.5 or <-1.5, Benjamini-Hochberg FDR (Padj) <0.05). Plots were generated using variations of DESeq2 plotting functions and other packages with R version `r versions[['WAT_diffex']][['r-base']]`. Annotation data from ENSEMBL `r config[['ensembl_version']]` was used, and genes were additionally annotated with Entrez GeneIDs and text descriptions. Functional analysis, including candidate pathways activated or inhibited in comparison(s) and GO-term enrichments [@Mi2019], was performed using iPathway Guide (Advaita) [@ipathwayguide], [@Draghici2007].
-
-```{r methods_custom_section, child = 'child_methods_custom.Rmd', eval = show_methods_custom}
-```
+Data were pre-filtered to remove genes with 0 counts in all samples. Differential gene expression analysis was performed using DESeq2 [@Love2014], using a negative binomial generalized linear model (thresholds: linear fold change >1.5 or <-1.5, Benjamini-Hochberg FDR (Padj) <0.05). Plots were generated using variations of DESeq2 plotting functions and other packages with R version `r sw_versions[['WAT_diffex']][['r-base']]`. Annotation data from ENSEMBL `r config[['ensembl_version']]` was used, and genes were additionally annotated with Entrez GeneIDs and text descriptions. Functional analysis, including candidate pathways activated or inhibited in comparison(s) and GO-term enrichments [@Mi2019], was performed using iPathway Guide (Advaita) [@ipathwayguide], [@Draghici2007].
 
 <!---
 Results
 --->
-
 
 # Results
 <!---
 results QC diffex
 --->
 ```{r echo = FALSE, results = 'asis', message = FALSE}
-phenotypes = snakemake@params[['phenotypes']]
 
 cat('## Boxplots\n\nThe following boxplots show the distribution of gene expression counts in the different samples.\n\n')
 for(factor_cov in phenotypes) {
   cat(sprintf('\n\n### %s \n\n', factor_cov))
   # Include 'raw' if desired
   for(value in c('raw', 'rlog')) {
-    file = sprintf(qc_boxplot_file, diffex_dir, factor_cov, value)
+    file = normalizePath(sprintf(qc_boxplot_file, DIFFEX_DIR, factor_cov, value))
     if(value == 'rlog'){
       value = 'rlog normalized' #This is nicer for the caption
     }
@@ -161,7 +122,7 @@ for(factor_cov in phenotypes) {
 ```{r echo = FALSE, results = 'asis', message = FALSE}
 cat('## Clustering\n\nClustering is a method to visualize the similarity and difference among samples. Unsupervised clustering using complete linkage of the Euclidian distances of the gene expression profiles of pairwise samples is shown below.\n\n')
 
-file = sprintf(qc_heatmap_file, diffex_dir)
+file = normalizePath(sprintf(qc_heatmap_file, DIFFEX_DIR))
 cat(sprintf('![**Figure:** Unsupervised clustering of %s expression values colored by %s.](%s) \n\n', value, paste(phenotypes, collapse = ', '), file))
 ```
 
@@ -172,7 +133,7 @@ for(factor_cov in phenotypes) {
   # Include 'raw' if desired
   for(value in c('top 100', 'top 500')) {
     val_nospace = sub(" ", "", value)
-    pca_12_png = sprintf(qc_pca_file, diffex_dir, factor_cov, val_nospace)
+    pca_12_png = normalizePath(sprintf(qc_pca_file, DIFFEX_DIR, factor_cov, val_nospace))
     cat(sprintf('![**Figure:** PCA plot (PC1 vs PC2) of %s variable genes colored by %s.](%s) \n\n', value, factor_cov, pca_12_png))
   }
 }
@@ -187,7 +148,7 @@ The tables below summarize the setup of the differential tests with the name of 
 
 The sections that follow provide more detailed information about the differential tests, including a summary table of the top differential loci (annotated to genomic features if applicable), and a volcano plot for each comparison.
 
-```{r include = FALSE}
+```{r include = FALSE, eval=F} # TWS FIXME
     info = snakemake@params[['diffex_model_info']]
     names(info) = gsub('_', ' ', names(info)) # Remove _ from model names
     info_tbl = do.call(rbind, lapply(info, data.frame))
@@ -198,18 +159,18 @@ The sections that follow provide more detailed information about the differentia
       kable_styling(bootstrap_options = c('striped', 'condensed'))
 ```
 
-```{r echo = FALSE, results = 'asis', message = FALSE}
+```{r echo = FALSE, results = 'asis', message = FALSE, eval=F} # TWS FIXME
     cat(info_kable)
 ```
 
-```{r echo = FALSE, results = 'asis', message = FALSE}
+```{r echo = FALSE, results = 'asis', message = FALSE, eval=F} # TWS FIXME
     comparisons = snakemake@params[['contrasts']]
     names(comparisons) = gsub('_', ' ', names(info)) # Remove _'s from model names - consistent with info list above
     phenotypes = snakemake@params[['phenotypes']]
     sample_phenotypes = snakemake@params[['sample_phenotypes']]
 
 
-    summary_file = sprintf(diffex_summary_file, diffex_dir)
+    summary_file = sprintf(diffex_summary_file, DIFFEX_DIR)
     summary_df = read.delim(summary_file, row.names = 'comparison', stringsAsFactors = FALSE)
 
     if(length(comparisons) > 1) {
@@ -282,9 +243,9 @@ The sections that follow provide more detailed information about the differentia
         cat(sprintf('In the volcano plots below, each point is a tested locus. A gene is considered to be differentially expressed if FDR < %s and | linear fold-change | > %s. Points are colored according to the direction of differential expression with the total number of loci indicated in the legend. The vertical lines correspond to the fold-change cutoff. \n\n', filter_sig, filter_fc))
         for(comparison in comps_list){
           model_name_for_files = gsub(' ', '_', model_name) # filepaths have underscores instead of spaces
-          volcano_file = sprintf(diffex_volcano_file, diffex_dir, model_name_for_files, comparison)
+          volcano_file = normalizePath(sprintf(diffex_volcano_file, DIFFEX_DIR, model_name_for_files, comparison))
           cat(sprintf('![**Figure:** Volcano plot for %s.](%s) \n\n', comparison, volcano_file))
-          annot_file = sprintf(diffex_annot_file, diffex_dir, model_name_for_files, comparison)
+          annot_file = normalizePath(sprintf(diffex_annot_file, DIFFEX_DIR, model_name_for_files, comparison))
           # "." is used as NA value in the annotated DESeq2 result
           annot_tbl = read_delim(annot_file, delim="\t", na = c("", ".")) %>%
               slice_head(n = 200) %>%
@@ -311,11 +272,7 @@ The sections that follow provide more detailed information about the differentia
     }
 ```
 
-```{r results_custom_section, child = 'child_results_custom.Rmd', eval = show_results_custom}
-```
-
-
-```{r follow_up, child = 'child_follow_up.Rmd', eval = show_follow_up}
+```{r follow_up, child = file.path(REPORT_SRC_DIR, 'child_follow_up.Rmd'), eval = show_follow_up}
 ```
 
 
@@ -402,8 +359,5 @@ Summarized information from the different comparisons performed with DESeq2.
 `summary/deseq2_summary.xlsx`
 
 An Excel spreadsheet containing the same information as above, with an additional column of entrezgeneID hyperlinks when possible
-
-<!-- ```{r appendix_custom_section, child = 'child_appendix_custom.Rmd', eval = show_appendix_custom} -->
-<!-- ``` -->
 
 # References

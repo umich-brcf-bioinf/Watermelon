@@ -1,15 +1,9 @@
-##########
-# Load libraries
+###################
+# Load universally needed libraries
 
-library(BiocParallel)
-library(data.table)
-library(DESeq2)
-library(openxlsx)
 library(optparse)
 library(reticulate)
-library(tximport)
 library(yaml)
-
 
 ###################
 # Define functions
@@ -32,7 +26,7 @@ make_ncbilink = function(id_str){
   }
 }
 
-##########
+###################
 # Setup
 
 option_list = list(
@@ -58,7 +52,18 @@ if(is.na(opt$configfile)){
 # Load in the config
 config = yaml.load_file(opt$configfile)
 
+WAT_DIR = "Watermelon" # Expect to use copy of Watermelon in the project's folder
+
 if(!opt$no_analysis){
+
+  ###################
+  # Analysis section
+
+  library(BiocParallel)
+  library(data.table)
+  library(DESeq2)
+  library(openxlsx)
+  library(tximport)
 
   # Some hard-coded defaults (almost never change)
   SAMPLE_COLUMN = 'sample'
@@ -66,7 +71,7 @@ if(!opt$no_analysis){
   PLOTS_DIR = file.path(DIFFEX_DIR, 'plots_labeled_by_pheno')
   COUNTS_DIR = file.path(DIFFEX_DIR, 'counts')
   SUMMARY_DIR = file.path(DIFFEX_DIR, 'summary')
-  SCRIPTS_DIR = "Watermelon/scripts" # Expect to use copy of Watermelon in the project's folder
+  SCRIPTS_DIR = file.path(WAT_DIR, 'scripts')
 
   # In the end, the rows are combined to create deliv_df
   deliv_rows = list()
@@ -89,8 +94,8 @@ if(!opt$no_analysis){
   dir.create(PLOTS_DIR, mode="775")
   dir.create(SUMMARY_DIR, mode="775")
 
-  #################
-  # Counts Section
+  ###################
+  # Counts
 
   # Get phenotype matrix
   sample.info.file = config[['samplesheet']]
@@ -166,8 +171,8 @@ if(!opt$no_analysis){
   write.table(x = rld_df, file = deliv_rows[['counts_rlog']][['file_name']],
       append = FALSE, sep = '\t', col.names = TRUE, row.names = FALSE, quote = FALSE)
 
-  #############################
-  # Plots by Phenotype Section
+  #####################
+  # Plots by Phenotype
 
   # Source the plotting functions
   source(file.path(SCRIPTS_DIR, "deseq2_plotting_fxns.R"))
@@ -278,8 +283,8 @@ if(!opt$no_analysis){
     deliv_rows[[paste0('scree_top100_', phenotype, '_png')]] = list(obj_name = paste0('scree_top100_list[[\'', phenotype, '\']]'), file_name = paste0(scree_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
   }
 
-  ##################################
-  # Differential Expression Section
+  ##########################
+  # Differential Expression
 
   model_names = grep("count_min_cutoff", names(config$diffex), value=TRUE, invert=TRUE)
 
@@ -327,7 +332,7 @@ if(!opt$no_analysis){
     # Call to DESeq
     dds = do.call(DESeq, deseq2.params.parsed)
     
-    ####################################################
+    #################################
     # Getting Results for Each Model
 
     factor_name = config[['diffex']][[model_name]][['DESeq2']][['factor_name']]
@@ -530,11 +535,12 @@ if(!opt$no_analysis){
   save.image(file.path(DIFFEX_DIR, "deseq2_analysis.Rdata"))
 }
 
-# #For recreating deliverables_run_info functionality:
-# py_run_string("WORKFLOW_BASEDIR = os.path.abspath('Watermelon')")
-# source_python('Watermelon/version_info.smk')
-# sw_versions = VER_INFO[c('watermelon', 'WAT_diffex')]
-# #TWS FIXME? This is the only thing that goes directly into DELIVERABLES_DIR
+#For recreating deliverables_run_info functionality:
+py_run_string("import os")
+py_run_string("WORKFLOW_BASEDIR = os.path.abspath('Watermelon')")
+source_python('Watermelon/version_info.smk')
+sw_versions = VER_INFO[c('watermelon', 'WAT_diffex')]
+#TWS FIXME? This is the only thing that goes directly into DELIVERABLES_DIR
 # deliv_rows[['sw_versions']] = list(obj_name = 'sw_versions', file_name = file.path(DELIVERABLES_DIR, 'run_info', 'env_software_versions.yaml'), deliverable = TRUE)
 # con = file(deliv_rows[['sw_versions']][['file_name']])
 # writeLines(c(
@@ -547,6 +553,16 @@ if(!opt$no_analysis){
 # close(con)
 
 if(!opt$no_knit){
+
+  ###################
+  # Knitting Section
+
+  library(rmarkdown)
+  library(tidyverse)
+  library(kableExtra)
+  library(knitr)
+  library(yaml)
+
   if(is.na(opt$markdownfile)){stop("Required argument --markdownfile is missing. For help, see --help")}
   if(!is.na(opt$rdatafile)){
     if(!opt$no_analysis) {stop("--rdatafile should only be used with --no_analysis")}
@@ -554,14 +570,50 @@ if(!opt$no_knit){
     load(opt$rdatafile)
   }
 
-  #################
-  # Knitting Section
+  project_name = config[['report_info']][['project_name']]
+  analyst_name = config[['report_info']][['analyst_name']]
+  acknowledgement_text = config[['report_info']][['acknowledgement_text']]
 
-  REPORT_DIR = config[['dirs']][['report']]
-  dir.create(REPORT_DIR, mode = "775")
+  if(analyst_name == "Advanced Genomics Core"){
+      analyst_email = "agc-datateam@umich.edu"
+      doc_author = paste0("UM ", analyst_name)
+  } else {
+      analyst_email = config[['email']][['to']]
+      doc_author = "UM Bioinformatics Core"
+  }
 
-  deliv_rows[['report']] = list(obj_name = 'opt$markdownfile', file_name = file.path(REPORT_DIR, 'report_final.html'), deliverable = TRUE)
+  project_dir = opt$project_dir
 
-  rmarkdown::render(opt$markdownfile, output_file = deliv_rows[['report']][['file_name']], output_format = 'html_document')
+  ################################################################################
+
+  diffex_annot_file = '%s/diffex_%s/%s.annot.txt'
+  diffex_summary_file = '%s/summary/deseq2_summary.txt'
+  diffex_volcano_file = '%s/diffex_%s/volcano_plots/VolcanoPlot_%s.png'
+  qc_boxplot_file = '%s/plots_labeled_by_pheno/%s/BoxPlot_%s.png'
+  qc_heatmap_file = '%s/plots_labeled_by_pheno/SampleHeatmap.png'
+  qc_pca_file = '%s/plots_labeled_by_pheno/%s/PCAplot_12_%s.png'
+
+  ################################################################################
+
+  REPORT_SRC_DIR = file.path(WAT_DIR, 'report')
+  REPORT_OUT_DIR = config[['dirs']][['report']]
+  dir.create(REPORT_OUT_DIR, mode = "775")
+
+  deliv_rows[['report']] = list(obj_name = 'opt$markdownfile', file_name = file.path(REPORT_OUT_DIR, 'report_final.html'), deliverable = TRUE)
+
+  rmarkdown::render(opt$markdownfile, output_dir = REPORT_OUT_DIR, output_file = 'report_final.html', output_format = 'html_document')
+
+  # Copy bioinformatics.csl and references_WAT.bib alongside draft report - simplifies report finalization step if they're colocated
+  bfx.csl = file.path(REPORT_SRC_DIR, 'bioinformatics.csl')
+  refs.wat = file.path(REPORT_SRC_DIR, 'references_WAT.bib')
+
+  copystatus = file.copy(bfx.csl, file.path(project_dir, REPORT_OUT_DIR), overwrite = TRUE)
+  if(!copystatus){
+    stop("Copying bioinformatics.csl to report dir failed.")
+  }
+  copystatus = file.copy(refs.wat, file.path(project_dir, REPORT_OUT_DIR), overwrite = TRUE)
+  if(!copystatus){
+    stop("Copying references_WAT.bib to report dir failed.")
+  }
 
 }

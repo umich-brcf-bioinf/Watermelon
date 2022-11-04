@@ -6,7 +6,7 @@ for(factor_cov in phenotypes) {
   cat(sprintf('\n\n### %s \n\n', factor_cov))
   # Include 'raw' if desired
   for(value in c('raw', 'rlog')) {
-    file = sprintf(qc_boxplot_file, diffex_dir, factor_cov, value)
+    file = sprintf(qc_boxplot_file, DIFFEX_DIR, factor_cov, value)
     if(value == 'rlog'){
       value = 'rlog normalized' #This is nicer for the caption
     }
@@ -18,7 +18,7 @@ for(factor_cov in phenotypes) {
 ```{r echo = FALSE, results = 'asis', message = FALSE}
 cat('## Clustering\n\nClustering is a method to visualize the similarity and difference among samples. Unsupervised clustering using complete linkage of the Euclidian distances of the gene expression profiles of pairwise samples is shown below.\n\n')
 
-file = sprintf(qc_heatmap_file, diffex_dir)
+file = sprintf(qc_heatmap_file, DIFFEX_DIR)
 cat(sprintf('![**Figure:** Unsupervised clustering of %s expression values colored by %s.](%s) \n\n', value, paste(phenotypes, collapse = ', '), file))
 ```
 
@@ -29,7 +29,7 @@ for(factor_cov in phenotypes) {
   # Include 'raw' if desired
   for(value in c('top 100', 'top 500')) {
     val_nospace = sub(" ", "", value)
-    pca_12_png = sprintf(qc_pca_file, diffex_dir, factor_cov, val_nospace)
+    pca_12_png = sprintf(qc_pca_file, DIFFEX_DIR, factor_cov, val_nospace)
     cat(sprintf('![**Figure:** PCA plot (PC1 vs PC2) of %s variable genes colored by %s.](%s) \n\n', value, factor_cov, pca_12_png))
   }
 }

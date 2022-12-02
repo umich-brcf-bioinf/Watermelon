@@ -104,9 +104,6 @@ We use Snakemake [@Koster2012] to manage the bioinformatics workflow in a reprod
 
 The reads were trimmed using Cutadapt v`r versions[['cutadapt']][['cutadapt']]` [@Martin2011]. The reads were evaluated with FastQC [@Andrews2010] (v`r versions [['fastqc']][['fastqc']]`) to determine quality of the data. Reads were mapped to the reference genome `r config[['genome']]` (ENSEMBL `r config[['ensembl_version']]`), using STAR v`r versions[['rsem_star']][['star']]` [@Dobin2013] and assigned count estimates to genes with RSEM v`r versions[['rsem_star']][['rsem']]` [@Li2011]. Alignment options followed ENCODE standards for RNA-seq [@Dobin:STARmanual]. QC metrics from several different steps in the pipeline were aggregated by multiQC v`r versions[['multiqc']][['multiqc']]` [@Ewels2016]. 
 
-```{r methods_custom_section, child = 'child_methods_custom.Rmd', eval = show_methods_custom}
-```
-
 <!---
 Results
 --->

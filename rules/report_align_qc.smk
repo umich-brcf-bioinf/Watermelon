@@ -20,6 +20,7 @@ rule report_align_qc:
         report_dir = REPORT_DIR,
         add_background = False, # TODO: These could later be moved out to config
         add_bg_samples = True,
+        add_count_matrix_usage = True,
         add_prep_description = True,
         multiqc_gen_stats = ALIGNMENT_DIR + '07-qc/alignment_qc_data/multiqc_general_stats.txt',
         mqc_plots_dir = ALIGNMENT_DIR + '07-qc/multiqc_plots/png/'

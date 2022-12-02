@@ -93,6 +93,10 @@ For this example, you will need to provide:
 
 Here's an example of running waterlemon_init (Note: replace /path/to/Watermelon in the following code block with valid paths)
 
+    # Start a screen session (for persistence over ssh):
+    screen -S watermelon_20190821
+    # Activate the conda environment:
+    conda activate watermelon
     # Create a project directory & navigate there
     mkdir ~/watermelon_example_project
     cd ~/watermelon_example_project
@@ -108,10 +112,8 @@ Now is a good time to review the output from watermelon_init. It generates the f
 
 Now you can perform a dry-run, which will validate that the config is compatible with the workflow.
 
-    # Start a screen session (for persistence over ssh):
-    screen -S watermelon_20190821
-    # Activate the conda environment:
-    conda activate watermelon
+    # Singularity must be available to snakemake, for environment management under the hood
+    module load singularity
     # Dry-run to validate the config and check the execution plan:
     snakemake --dryrun --printshellcmds --configfile config_20190821.yaml --snakefile Watermelon/align_qc.smk
 
@@ -119,8 +121,6 @@ You should still be in the project directory, and ready to run the pipeline.
 
 To run on bfx-comp5/6 (notice the profile):
 
-    # Singularity must be available to snakemake, for environment management under the hood
-    module load singularity
     snakemake --configfile config_20190821.yaml --snakefile Watermelon/align_qc.smk --profile Watermelon/config/profile-comp5-6
 
 Similarly, to run the pipeline on the GreatLakes compute cluster:
@@ -136,7 +136,6 @@ A differential expression workflow starts out the same, but differs in execution
 1. Use watermelon_init to create a config file for the differential expression analysis
 2. Inspect the generated config file, modify differential expression details based on experimental design
 3. Run the deseq2_analysis.R script using the WAT_diffex singularity image, which provides a standardized compute environment
-4. Run the deseq2_report.R script using the same singularity image
 
 When running watermelon_init, as before you'll provide a genome build, a project ID, and a config type. Since it will be the `diffex` type, we will also give it a count matrix and a samplesheet. I will take the same samplesheet that was generated earlier, and add an additional column `treatment` with half of the samples labeled `control` and the other half `drug`. In this example, the config generated will be compatible with the given samples. In a real use-case scenario, the config file should be treated as a template, and edited so that it matches the project plan and dataset that it applies to.
 
@@ -169,16 +168,16 @@ Now we can run the deseq2_analysis.R script. Since we're using a singularity ima
     # Define the read-only bind mount to our reference data
     export SINGULARITY_BIND="/nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
     # Run the deseq2_analysis.R script, providing environment with the singularity image
-    singularity exec docker://umichbfxcore/wat_diffex:0.4.1 Rscript Watermelon/scripts/deseq2_analysis.R --configfile config_20190821d.yaml
+    singularity exec docker://umichbfxcore/wat_diffex:0.4.1 Rscript Watermelon/scripts/deseq2_analysis.R --configfile config_20190821d.yaml --markdownfile Watermelon/report/report_diffex.Rmd
 
-If that works fine, then we can move onto the reporting step. If not, it is also possible to use the singularity image with an RStudio session, similar to how it's described on our [single cell analysis environment page](https://github.com/umich-brcf-bioinf/single_cell_env).
+When this runs, by default it will run the DESeq2 analysis and save the outputs, including a `.Rdata` file, and then it will knit a report using these outputs. 
 
-To run the reporting step, we'll use the same singularity image in a similar fashion:
 
-    # Make sure $SINGULARITY_BIND environment variable is set as above
-    echo $SINGULARITY_BIND
-    # Run the reporting script
-    singularity exec docker://umichbfxcore/wat_diffex:0.4.1 Rscript Watermelon/scripts/deseq2_report.R --configfile config_20190821d.yaml
+If it is desired to run just the analysis portion of the script or just the reporting portion of the script, `deseq2_analysis.R` has command line flags to allow this behavior, `--no_knit` and `--no_analysis`, respectively.
+
+
+It is also possible to use the singularity image with an RStudio session, similar to how it's described on our [single cell analysis environment page](https://github.com/umich-brcf-bioinf/single_cell_env), if an interactive session is desired.
+
 
 
 ## Further Reading

@@ -168,7 +168,7 @@ Now we can run the deseq2_analysis.R script. Since we're using a singularity ima
     # Define the read-only bind mount to our reference data
     export SINGULARITY_BIND="/nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
     # Run the deseq2_analysis.R script, providing environment with the singularity image
-    singularity exec docker://umichbfxcore/wat_diffex:0.5.0 Rscript Watermelon/scripts/deseq2_analysis.R --configfile config_20190821d.yaml --markdownfile Watermelon/report/report_diffex.Rmd
+    singularity exec docker://umichbfxcore/wat_diffex:0.5.0 Rscript Watermelon/scripts/deseq2_analysis.R --configfile config_20190821d.yaml --markdownfile Watermelon/report/report_diffex.Rmd 2>&1 | tee deseq2_$(date +%FT%H%M%S).log
 
 When this runs, by default it will run the DESeq2 analysis and save the outputs, including a `.Rdata` file, and then it will knit a report using these outputs. 
 

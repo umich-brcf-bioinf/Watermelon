@@ -264,6 +264,18 @@ writeData(diffex_wb, 'glossary', glossary)
 # Write the workbook to an xlsx file
 saveWorkbook(diffex_wb, snakemake@output[['annot_results_xlsx']], overwrite = TRUE)
 
+# Write diffex summary line to file
+summary_line = paste(
+  sub("^model_", "", model_name),
+  contrast_name,
+  nrow(res),
+  sum(annotated_results$Call == 'YES'),
+  sum(!is.na(annotated_results$entrezgene_id)),
+  sep="\t"
+)
+
+writeLines(summary_line, snakemake@output[['summary_line']])
+
 ######################
 # Create volcano plot
 message(sprintf('Plotting volcano plot for %s %s', factor_name, contrast_name))

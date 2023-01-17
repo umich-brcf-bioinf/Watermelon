@@ -2,8 +2,12 @@
 rule report_diffex:
     input:
         report_rmd = WORKFLOW_BASEDIR + '/report/report_diffex.Rmd',
+        glossary = WATERMELON_SCRIPTS_DIR + 'deseq2_glossary.txt',
         versions = DELIVERABLES_DIR + 'run_info/env_software_versions.yaml',
-        diffex_summary = DIFFEX_DIR + 'summary/deseq2_summary.txt',
+        diffex_summary_lines = helper.expand_model_contrast_filenames(
+                DIFFEX_DIR + ".{model_name}_{contrast}_summary.txt",
+                DESEQ2_CONTRAST_DICT
+            ),
         diffex_annot = helper.expand_model_contrast_filenames(
                 DIFFEX_DIR + 'diffex_{model_name}/{contrast}.annot.txt',
                 DESEQ2_CONTRAST_DICT
@@ -27,7 +31,9 @@ rule report_diffex:
 
     output:
         report_md = REPORT_DIR + 'report_draft.md',
-        report_html = REPORT_DIR + 'report_draft.html'
+        report_html = REPORT_DIR + 'report_draft.html',
+        diffex_summary_txt = DIFFEX_DIR + "summary/deseq2_summary.txt",
+        diffex_summary_xlsx = DIFFEX_DIR + "summary/deseq2_summary.xlsx"
     log:
         JOB_LOG_DIR + 'report_from_counts.log'
     container: 'docker://umichbfxcore/wat_diffex:0.4.0'

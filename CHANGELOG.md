@@ -1,5 +1,9 @@
 # Changelog
 
+2.4.3 (01/17/2022)
+------------------
+- Bugfix for mismatched # DE in each model's summaries in diffex report
+
 2.4.2 (10/04/2022)
 ------------------
 - Bugfix - MultiQC doesn't produce general_stats file with large num samples; AGC doesn't generally use those values, now completely optional if include_pct_dups=True

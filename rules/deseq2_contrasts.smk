@@ -7,6 +7,7 @@ rule deseq2_contrasts:
         gene_list = DIFFEX_DIR + 'diffex_{model_name}/{contrast}.txt',
         annot_results = DIFFEX_DIR + "diffex_{model_name}/{contrast}.annot.txt",
         annot_results_xlsx = DIFFEX_DIR + "diffex_{model_name}/{contrast}.annot.xlsx",
+        summary_line = DIFFEX_DIR + ".{model_name}_{contrast}_summary.txt",
         volcano_plot_pdf = DIFFEX_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.pdf',
         volcano_plot_png = DIFFEX_DIR + 'diffex_{model_name}/volcano_plots/VolcanoPlot_{contrast}.png'
     log:

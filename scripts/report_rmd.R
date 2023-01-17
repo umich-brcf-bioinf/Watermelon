@@ -10,6 +10,7 @@ library(rmarkdown)
 library(tidyverse)
 library(kableExtra)
 library(knitr)
+library(openxlsx)
 
 project_name = snakemake@config[['report_info']][['project_name']]
 analyst_name = snakemake@config[['report_info']][['analyst_name']]
@@ -49,6 +50,12 @@ if(grepl("^/", snakemake@params[['diffex_dir']])) { # If it looks like absolute 
   diffex_dir = file.path(project_dir, snakemake@params[['diffex_dir']])
 }
 
+summary_df = map_dfr(
+  .x=snakemake@input[['diffex_summary_lines']],
+  .f=read.table,
+  col.names=c("model_name", "comparison", "total_count", "count_diff_expressed", "count_annotated")
+)
+summary_df$percent_annotated = round((summary_df$count_annotated / summary_df$total_count * 100), digits = 2)
 
 ################################################################################
 
@@ -67,6 +74,29 @@ rmarkdown::render(report_rmd, output_format = 'all', output_file = output_prefix
 if (!is.null(methods_rmd)){
   # Render standalone methods doc
   rmarkdown::render(methods_rmd, output_format = 'pdf_document', output_file = methods_out, output_dir = report_dir, params = list(methods_fig = methods_fig))
+}
+
+if (snakemake@rule == "report_diffex") { # FIXME: Temporarily necessary until refactor
+  # Write diffex summary to .txt and .xlsx files
+  message('Writing summary txt')
+  write.table(
+    x = summary_df,
+    file = snakemake@output[['diffex_summary_txt']],
+    append = FALSE, sep = '\t', na = '.', row.names = FALSE, quote = FALSE
+  )
+  message('Writing summary xlsx')
+  # Load glossary for insertion into the workbook
+  glossary = read.delim(snakemake@input[['glossary']], stringsAsFactors = FALSE)
+  # Create an appropriate xlsx workbook
+  summary_wb = createWorkbook()
+  addWorksheet(summary_wb, 'Sheet1')
+  # Add the annotated results to the diffex_genes worksheet
+  writeData(summary_wb, 'Sheet1', summary_df)
+  # Write the workbook to an xlsx file
+  saveWorkbook(
+    summary_wb,
+    snakemake@output[['diffex_summary_xlsx']],
+    overwrite = TRUE)
 }
 
 # Copy bioinformatics.csl and references_WAT.bib alongside draft report - simplifies report finalization step if they're colocated

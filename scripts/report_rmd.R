@@ -76,26 +76,28 @@ if (!is.null(methods_rmd)){
   rmarkdown::render(methods_rmd, output_format = 'pdf_document', output_file = methods_out, output_dir = report_dir, params = list(methods_fig = methods_fig))
 }
 
-# Write diffex summary to .txt and .xlsx files
-message('Writing summary txt')
-write.table(
-  x = summary_df,
-  file = snakemake@output[['diffex_summary_txt']],
-  append = FALSE, sep = '\t', na = '.', row.names = FALSE, quote = FALSE
-)
-message('Writing summary xlsx')
-# Load glossary for insertion into the workbook
-glossary = read.delim(snakemake@input[['glossary']], stringsAsFactors = FALSE)
-# Create an appropriate xlsx workbook
-summary_wb = createWorkbook()
-addWorksheet(summary_wb, 'Sheet1')
-# Add the annotated results to the diffex_genes worksheet
-writeData(summary_wb, 'Sheet1', summary_df)
-# Write the workbook to an xlsx file
-saveWorkbook(
-  summary_wb,
-  snakemake@output[['diffex_summary_xlsx']],
-  overwrite = TRUE)
+if (snakemake@rule == "report_diffex") { # FIXME: Temporarily necessary until refactor
+  # Write diffex summary to .txt and .xlsx files
+  message('Writing summary txt')
+  write.table(
+    x = summary_df,
+    file = snakemake@output[['diffex_summary_txt']],
+    append = FALSE, sep = '\t', na = '.', row.names = FALSE, quote = FALSE
+  )
+  message('Writing summary xlsx')
+  # Load glossary for insertion into the workbook
+  glossary = read.delim(snakemake@input[['glossary']], stringsAsFactors = FALSE)
+  # Create an appropriate xlsx workbook
+  summary_wb = createWorkbook()
+  addWorksheet(summary_wb, 'Sheet1')
+  # Add the annotated results to the diffex_genes worksheet
+  writeData(summary_wb, 'Sheet1', summary_df)
+  # Write the workbook to an xlsx file
+  saveWorkbook(
+    summary_wb,
+    snakemake@output[['diffex_summary_xlsx']],
+    overwrite = TRUE)
+}
 
 # Copy bioinformatics.csl and references_WAT.bib alongside draft report - simplifies report finalization step if they're colocated
 bfx.csl = file.path(dirname(report_rmd), 'bioinformatics.csl')

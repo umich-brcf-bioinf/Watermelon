@@ -43,12 +43,12 @@ make_heatmap_annots = function(pdata, factors) {
                 color_vector = RColorBrewer::brewer.pal(length(factor_levels), 'Set1')
             } else if(length(factor_levels) > 9 && length(factor_levels) <= 13){
                 color_vector = RColorBrewer::brewer.pal(length(factor_levels), 'Set3')
-            }
-
-            if(length(factor_levels) > length(color_vector)){
+            } else if(length(factor_levels) > 13){
                 msg = paste0('Too many factor levels in column ', factor, ', cannot assign color palette')
                 stop(msg)
-            } else if(length(factor_levels) < length(color_vector)) {
+            }
+            
+            if(length(factor_levels) < length(color_vector)) {
                 # If there are more colors than needed (minimum palette size is 3)
                 # then shrink color vector to appropiate size
                 color_vector = color_vector[1:length(factor_levels)]

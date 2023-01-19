@@ -43,12 +43,22 @@ make_heatmap_annots = function(pdata, factors) {
                 color_vector = RColorBrewer::brewer.pal(length(factor_levels), 'Set1')
             } else if(length(factor_levels) > 9 && length(factor_levels) <= 13){
                 color_vector = RColorBrewer::brewer.pal(length(factor_levels), 'Set3')
-            }
-
-            if(length(factor_levels) > length(color_vector)){
-                msg = paste0('Too many factor levels in column ', factor, ', cannot assign color palette')
+            } else if(length(factor_levels) > 13 && length(factor_levels) <=20){
+                warning(paste0(
+                    'Too many factor levels in column ', factor,
+                    '. Cannot use RColorBrewer palette. Using custom palette.'
+                ))
+                # 20 distinct colors from https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
+                color_vector = c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+                '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe',
+                '#008080', '#e6beff','#9a6324', '#fffac8', '#800000',
+                '#aaffc3','#808000', '#ffd8b1', '#000075', '#808080')
+            } else {
+                msg = paste0('Too many factor levels in column ',factor,'. Cannot assign color palette.')
                 stop(msg)
-            } else if(length(factor_levels) < length(color_vector)) {
+            }
+            
+            if(length(factor_levels) < length(color_vector)) {
                 # If there are more colors than needed (minimum palette size is 3)
                 # then shrink color vector to appropiate size
                 color_vector = color_vector[1:length(factor_levels)]

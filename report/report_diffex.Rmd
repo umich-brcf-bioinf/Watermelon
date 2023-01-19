@@ -276,7 +276,7 @@ The sections that follow provide more detailed information about the differentia
           annot_kable = kable(annot_tbl, "html", digits = 3, escape = FALSE, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
               kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
               scroll_box(width = '100%', height = '400px')
-          count_de = de_counts[de_counts$comparison == comparison]
+          count_de = de_counts$count_diff_expressed[de_counts$comparison == comparison]
           cat(sprintf('\n\n**Table:** Results for %s \n\n%s differentially expressed genes. View limited to maximum of 200 rows in html report.', comparison, count_de))
           cat(annot_kable)
         }

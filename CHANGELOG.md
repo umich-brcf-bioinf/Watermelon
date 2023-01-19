@@ -1,6 +1,11 @@
 # Changelog
 
-2.4.3 (01/17/2022)
+2.4.4 (01/19/2023)
+------------------
+- Allow up to 20 colors with non-RColorBrewer palette (with warning)
+- Bugfix for reporting issue in 2.4.3
+
+2.4.3 (01/17/2023)
 ------------------
 - Bugfix for mismatched # DE in each model's summaries in diffex report
 

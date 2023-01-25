@@ -1,5 +1,14 @@
 # Changelog
 
+2.4.4 (01/19/2023)
+------------------
+- Allow up to 20 colors with non-RColorBrewer palette (with warning)
+- Bugfix for reporting issue in 2.4.3
+
+2.4.3 (01/17/2023)
+------------------
+- Bugfix for mismatched # DE in each model's summaries in diffex report
+
 2.4.2 (10/04/2022)
 ------------------
 - Bugfix - MultiQC doesn't produce general_stats file with large num samples; AGC doesn't generally use those values, now completely optional if include_pct_dups=True

@@ -31,6 +31,13 @@ _DEFAULT_ANALYST_INFO = "/nfs/turbo/umms-brcfpipeline/pipelines/analyst_info.csv
 _DEFAULT_SAMPLE_FASTQ_REGEX = r"(.*?)(_[AGCT-]{6,22})*(_S\d+)*_R\d(_L*\d+)*\.fastq\.gz" # (.*?) is the captured sampleid
 _DEFAULT_AUTOGLOB_EXT = "_*.fastq.gz" # Used for auto-generating samplesheet
 
+def _warning_on_one_line(message, category, filename, lineno, file=None, line=None):
+    # https://stackoverflow.com/a/26433913/5597209
+    filename = os.path.basename(filename)
+    return '%s:%s: %s: %s\n' % (filename, lineno, category.__name__, message)
+
+warnings.formatwarning = _warning_on_one_line
+
 def _dict_merge(dct, merge_dct):
     """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
     updating only top-level keys, dict_merge recurses down into dicts nested
@@ -157,6 +164,9 @@ def generate_samplesheet(fq_dirs, sample_fq_regex, autoglob_ext):
     samplesh_df = pd.DataFrame.from_dict(samplesh_dict, orient='index', columns=['input_glob'])
     samplesh_df.index.name = "sample"
     samplesh_df.reset_index(inplace=True)
+    if len(samplesh_df) == 1:
+        msg = "Only 1 row in auto-generated samplesheet. Verify samplesheet is correct before using in pipeline."
+        warnings.warn(msg)
     return samplesh_df
 
 

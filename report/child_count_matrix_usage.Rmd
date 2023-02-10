@@ -4,15 +4,27 @@
 
 The count matrix `gene_expected_count.annot.txt` contains the gene counts output from RSEM, with annotations added via biomaRt. Its columns are ENSEMBL gene ID, Entrez gene ID, gene symbol, and description, followed by columns of gene counts for the samples.
 
-The ENSEMBL gene IDs are comprehensive and uniquely identifiable by nature. However, they are not usually as meaningful to researchers as the common gene symbols. One small issue is that in these datasets, gene symbols can be used multiple times for different loci - this is especially apparent with small non-coding RNA species. For downstream analysis, row names cannot be duplicated. A simple way around this is to append sequence numbers to duplicated entries. R has a built-in method for this purpose: `make.unique`. Here are details for loading the count matrix into R and preparing for differential expression analysis.
+The ENSEMBL gene IDs are comprehensive and uniquely identifiable by nature. However, they are not usually as meaningful to researchers as the common gene symbols. One small issue is that in these datasets, gene symbols can be used multiple times for different loci - this is especially apparent with small non-coding RNA species. In other cases, gene symbols are not available (not annotated). For downstream analysis, we must ensure that row names are not duplicated. A couple of simple steps to get around these issues are shown in the following code block. See these details for loading the count matrix into R and preparing for differential expression analysis:
 
 ```{r include = TRUE, echo = TRUE, eval=FALSE }
-# Read in the file. Don't set row names yet, and
-# read in strings as characters instead of factors.
-data <- read.delim("deliverables/counts/gene_expected_count.annot.txt", row.names = NULL, stringsAsFactors = FALSE)
-# Make the gene names unique
-data$external_gene_name <- make.unique(data$external_gene_name)
-# Then we can use the gene symbol as the row names,
+# Read in the file. Don't set row names yet
+# Note if using R < 4.0.0, set stringsAsFactors = FALSE in read.delim
+data <- read.delim("deliverables/counts/gene_expected_count.annot.txt", row.names = NULL)
+# Deal with genes that don't have annotated gene symbols (external_gene_name)
+# Use ENSEMBL ID if gene symbol not available
+data$external_gene_name <- ifelse(
+    data$external_gene_name == ".",
+    data$gene_id,
+    data$external_gene_name
+)
+# Deal with duplicated gene symbols
+# Combine gene symbol with ENSEMBL ID if non-unique
+data$external_gene_name <- ifelse(
+    duplicated(data$external_gene_name),
+    paste(data$external_gene_name, data$gene_id, sep="_"),
+    data$external_gene_name
+)
+# Then we can use the gene symbol column as the row names,
 # and subset the count data for further analysis
 rownames(data) <- data$external_gene_name
 count.data <- data[,5:ncol(data)] # All columns after 4 are count data

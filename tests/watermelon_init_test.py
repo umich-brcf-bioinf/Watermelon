@@ -70,6 +70,23 @@ def test_generate_samplesheet_MissingOneParentDirRaisesRuntimeError(tmp_path):
     with pytest.raises(RuntimeError, match=str(fq_parent_dir_path2) + " does not exist") as e_info:
         watermelon_init.generate_samplesheet([fq_parent_dir_path1, fq_parent_dir_path2], sample_fq_regex, autoglob_ext)
 
+def test_generate_samplesheet_OneRowDFRaisesWarning(tmp_path):
+    fq_parent_dir_path = tmp_path / "fq_parent_dir"
+    fq_parent_dir_path.mkdir()
+    # User-made libraries might all have the same pre-barcode prefix, making them indistinguishable to watermelon_init
+    (fq_parent_dir_path / "ABC-123_AGCTGAAG_S001_R1_001.fastq.gz").touch()
+    (fq_parent_dir_path / "ABC-123_AGCTGAAG_S001_R2_001.fastq.gz").touch()
+    (fq_parent_dir_path / "ABC-123_CCTAGCAC_S002_R1_001.fastq.gz").touch()
+    (fq_parent_dir_path / "ABC-123_CCTAGCAC_S002_R2_001.fastq.gz").touch()
+    (fq_parent_dir_path / "ABC-123_GACTTGAA_S003_R1_001.fastq.gz").touch()
+    (fq_parent_dir_path / "ABC-123_GACTTGAA_S003_R2_001.fastq.gz").touch()
+
+    sample_fq_regex = watermelon_init._DEFAULT_SAMPLE_FASTQ_REGEX
+    autoglob_ext = watermelon_init._DEFAULT_AUTOGLOB_EXT
+    with pytest.warns(UserWarning, match="Only 1 row"):
+        sample_sheet_df = watermelon_init.generate_samplesheet([fq_parent_dir_path], sample_fq_regex, autoglob_ext)
+
+    assert(sample_sheet_df.shape == (1,2))
 
 def test_get_analyst_name():
     # Just to be sure of what we're testing here:

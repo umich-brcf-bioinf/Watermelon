@@ -19,6 +19,16 @@ GRCh37:
         gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Homo_sapiens/GRCh37/Homo_sapiens.GRCh37.75.gtf
         annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Homo_sapiens/GRCh37/Homo_sapiens.GRCh37.75_annotation.tsv
         rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Homo_sapiens/GRCh37/index/GRCh37
+GRCm39:
+    genome: GRCm39
+    ensembl_version: 105
+    fastq_screen:
+        species: human
+    references:
+        fasta: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Mus_musculus/GRCm39/Mus_musculus.GRCm39.dna_sm.toplevel.fa
+        gtf: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Mus_musculus/GRCm39/Mus_musculus.GRCm39.105.gtf
+        annotation_tsv: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Mus_musculus/GRCm39/Mus_musculus.GRCm39.105_annotation.tsv
+        rsem_star_index: /nfs/turbo/umms-brcfpipeline/references/ENSEMBL_genomes_105/Mus_musculus/GRCm39/index/GRCm39
 GRCm38:
     genome: GRCm38
     ensembl_version: 102

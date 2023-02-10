@@ -159,6 +159,9 @@ def generate_samplesheet(fq_dirs, sample_fq_regex, autoglob_ext):
     samplesh_df = pd.DataFrame.from_dict(samplesh_dict, orient='index', columns=['input_glob'])
     samplesh_df.index.name = "sample"
     samplesh_df.reset_index(inplace=True)
+    if len(samplesh_df) == 1:
+        msg = "Only 1 row in auto-generated samplesheet. Verify samplesheet is correct before using in pipeline."
+        warnings.warn(msg)
     return samplesh_df
 
 

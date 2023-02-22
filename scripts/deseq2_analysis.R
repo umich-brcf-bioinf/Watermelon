@@ -35,11 +35,12 @@ option_list = list(
   make_option(c("-d", "--project_dir"), action="store", default=getwd(), type='character', help="Project directory. Defaults to current working directory"),
   make_option(c("-i", "--import_from"), action="store", default='count_matrix', type='character',
               help="Import from count matrix or from rsem via tximport. Options 'count_matrix' or 'tximport'. Default 'count_matrix'"),
-  make_option(c("-m", "--markdownfile"), action="store", default=NA, type='character', help="R Markdown file to knit. Required if knitting."),
+  make_option(c("-m", "--markdownfile"), action="store", default=NA, type='character', help="R Markdown file to knit. Required if knitting or finalizing report."),
   make_option("--no_analysis", action="store_true", default=FALSE, help="Do not run analysis code."),
   make_option("--no_knit", action="store_true", default=FALSE, help="Do not knit report document."),
+  make_option("--report_finalize", action="store_true", default=FALSE, help="Finalize the report (supplied by markdownfile).")
   make_option(c("-r", "--rdatafile"), action="store", default=NA, type='character',
-              help="Rdata file containing R objects (from the analysis) to include in the report. Can only be used when combined with --no_analysis."),
+              help="Rdata file containing R objects (from the analysis) to include in the report. Required for, and can only be used when combining with --no_analysis."),
   make_option(c("-t", "--threads"), action="store", default=8, type='integer', help="Number of threads to use")
 )
 
@@ -49,10 +50,65 @@ if(is.na(opt$configfile)){
   stop("Required argument --configfile is missing. For help, see --help")
 }
 
+if(opt$report_finalize) {
+  if(is.na(opt$markdownfile)) {
+    stop("Required argument --markdownfile is missing. For help, see --help")
+  }
+  if(opt$no_analysis || opt$no_knit) {
+    warning("--report_finalize is always independent of analysis and knitting. Arguments --no_analysis and --no_knit will be ignored")
+  }
+
+  # project_dir = getwd() # This is another option to get the project dir. This is where snakemake is called from, should be project dir. Need more testing in different contexts
+
+  # report_final_path = file.path(project_dir, snakemake@output[['report_final_html']])
+
+  # report_dir = file.path(project_dir, snakemake@params[['report_dir']])
+
+  # Note: If changing output_file must also adjust deliv_rows entry up above
+  rmarkdown::render(opt$markdownfile, output_file = file.path(REPORT_OUT_DIR, 'report_final.html'), output_format = 'html_document')
+
+  # # Copy final report html to deliverables
+  # report_final_deliverable = file.path(project_dir, snakemake@output[['report_deliverable']])
+  # if(file.exists(report_final_deliverable)){
+  #   stop("Final report exists in deliverables folder. Will not overwrite.")
+  # }
+  # copystatus = file.copy(report_final_path, report_final_deliverable, overwrite = FALSE)
+  # if(!copystatus){
+  #   stop("Copying final report to deliverables dir failed.")
+  # }
+
+  # # Copy linked multiqc html to deliverables
+  # mqc_copy_path = file.path(dirname(report_draft_fullpath), 'multiqc_linked_report.html')
+  # if(file.exists(mqc_copy_path)){ # May not exist if report_from_counts was run to produce draft
+  #   copystatus = file.copy(mqc_copy_path, dirname(report_final_deliverable), overwrite = TRUE)
+  #   if(!copystatus){
+  #     stop("Copying multiqc_linked_report.html to deliverables dir failed.")
+  #   }
+  # }
+
+  # methods_pdf = file.path(report_dir, 'methods.pdf')
+  # if(file.exists(methods_pdf)){
+  #   copystatus = file.copy(methods_pdf, dirname(report_final_deliverable), overwrite = TRUE)
+  #   if(!copystatus){
+  #     stop("Copying methods.pdf to deliverables dir failed.")
+  #   }
+  # }
+
+}
+
 # Load in the config
 config = yaml.load_file(opt$configfile)
 
+# Some hard-coded defaults (almost never change)
+SAMPLE_COLUMN = 'sample'
 WAT_DIR = "Watermelon" # Expect to use copy of Watermelon in the project's folder
+DIFFEX_DIR = config[['dirs']][['diffex_results']]
+PLOTS_DIR = file.path(DIFFEX_DIR, 'plots_labeled_by_pheno')
+COUNTS_DIR = file.path(DIFFEX_DIR, 'counts')
+SUMMARY_DIR = file.path(DIFFEX_DIR, 'summary')
+SCRIPTS_DIR = file.path(WAT_DIR, 'scripts')
+REPORT_SRC_DIR = file.path(WAT_DIR, 'report')
+REPORT_OUT_DIR = config[['dirs']][['report']]
 
 if(!opt$no_analysis){
 
@@ -64,14 +120,6 @@ if(!opt$no_analysis){
   library(DESeq2)
   library(openxlsx)
   library(tximport)
-
-  # Some hard-coded defaults (almost never change)
-  SAMPLE_COLUMN = 'sample'
-  DIFFEX_DIR = config[['dirs']][['diffex_results']]
-  PLOTS_DIR = file.path(DIFFEX_DIR, 'plots_labeled_by_pheno')
-  COUNTS_DIR = file.path(DIFFEX_DIR, 'counts')
-  SUMMARY_DIR = file.path(DIFFEX_DIR, 'summary')
-  SCRIPTS_DIR = file.path(WAT_DIR, 'scripts')
 
   # In the end, the rows are combined to create deliv_df
   deliv_rows = list()
@@ -88,6 +136,9 @@ if(!opt$no_analysis){
   deliv_rows[['topExp_heatmap_png']] = list(obj_name = 'topExp_heatmap', file_name = file.path(PLOTS_DIR, 'Heatmap_TopExp.png'), deliverable = TRUE)
   deliv_rows[['summary_txt']] = list(obj_name = 'summary_df', file_name = file.path(SUMMARY_DIR, 'deseq2_summary.txt'), deliverable = TRUE)
   deliv_rows[['summary_xlsx']] = list(obj_name = 'summary_df', file_name = file.path(SUMMARY_DIR, 'deseq2_summary.xlsx'), deliverable = TRUE)
+  deliv_rows[['report_draft_md']] = list(file_name = file.path(REPORT_OUT_DIR, 'report_draft.md'), deliverable = FALSE)
+  deliv_rows[['report_draft_html']] = list(file_name = file.path(REPORT_OUT_DIR, 'report_draft.html'), deliverable = FALSE)
+  deliv_rows[['report_final_html']] = list(file_name = file.path(REPORT_OUT_DIR, 'report_final.html'), deliverable = TRUE)
 
   # Create needed output directories - Note: more are created below during plotting steps
   dir.create(COUNTS_DIR, recursive=T, mode="775")
@@ -563,11 +614,16 @@ if(!opt$no_knit){
   library(knitr)
   library(yaml)
 
-  if(is.na(opt$markdownfile)){stop("Required argument --markdownfile is missing. For help, see --help")}
-  if(!is.na(opt$rdatafile)){
-    if(!opt$no_analysis) {stop("--rdatafile should only be used with --no_analysis")}
-    message(paste0("Loading ", opt$rdatafile, "..."))
-    load(opt$rdatafile)
+  if(is.na(opt$markdownfile)) {stop("Required argument --markdownfile is missing. For help, see --help")}
+  if(opt$no_analysis) {
+    if(is.na(opt$rdatafile)) {
+      stop("Required argument --rdatafile is missing. For help, see --help")
+    } else {
+      message(paste0("Loading ", opt$rdatafile, "..."))
+      load(opt$rdatafile)
+    }
+  } else {
+    if(opt$rdatafile) {stop("--rdatafile should only be used with --no_analysis")}
   }
 
   project_name = config[['report_info']][['project_name']]
@@ -595,13 +651,10 @@ if(!opt$no_knit){
 
   ################################################################################
 
-  REPORT_SRC_DIR = file.path(WAT_DIR, 'report')
-  REPORT_OUT_DIR = config[['dirs']][['report']]
-  dir.create(REPORT_OUT_DIR, mode = "775")
+  if(!dir.exists(REPORT_OUT_DIR) {dir.create(REPORT_OUT_DIR, mode = "775")}
 
-  deliv_rows[['report']] = list(obj_name = 'opt$markdownfile', file_name = file.path(REPORT_OUT_DIR, 'report_final.html'), deliverable = TRUE)
-
-  rmarkdown::render(opt$markdownfile, output_dir = REPORT_OUT_DIR, output_file = 'report_final.html', output_format = 'html_document')
+  output_prefix = fs::path_ext_remove(basename(deliv_rows[['report_draft_md']][['file_name']]))
+  rmarkdown::render(opt$markdownfile, output_dir = REPORT_OUT_DIR, output_format = 'all', output_file = output_prefix)
 
   # Copy bioinformatics.csl and references_WAT.bib alongside draft report - simplifies report finalization step if they're colocated
   bfx.csl = file.path(REPORT_SRC_DIR, 'bioinformatics.csl')

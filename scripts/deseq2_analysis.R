@@ -38,7 +38,7 @@ option_list = list(
   make_option(c("-m", "--markdownfile"), action="store", default=NA, type='character', help="R Markdown file to knit. Required if knitting or finalizing report."),
   make_option("--no_analysis", action="store_true", default=FALSE, help="Do not run analysis code."),
   make_option("--no_knit", action="store_true", default=FALSE, help="Do not knit report document."),
-  make_option("--report_finalize", action="store_true", default=FALSE, help="Finalize the report (supplied by markdownfile).")
+  make_option("--report_finalize", action="store_true", default=FALSE, help="Finalize the report (supplied by markdownfile)."),
   make_option(c("-r", "--rdatafile"), action="store", default=NA, type='character',
               help="Rdata file containing R objects (from the analysis) to include in the report. Required for, and can only be used when combining with --no_analysis."),
   make_option(c("-t", "--threads"), action="store", default=8, type='integer', help="Number of threads to use")
@@ -48,52 +48,6 @@ opt = parse_args(OptionParser(option_list=option_list))
 
 if(is.na(opt$configfile)){
   stop("Required argument --configfile is missing. For help, see --help")
-}
-
-if(opt$report_finalize) {
-  if(is.na(opt$markdownfile)) {
-    stop("Required argument --markdownfile is missing. For help, see --help")
-  }
-  if(opt$no_analysis || opt$no_knit) {
-    warning("--report_finalize is always independent of analysis and knitting. Arguments --no_analysis and --no_knit will be ignored")
-  }
-
-  # project_dir = getwd() # This is another option to get the project dir. This is where snakemake is called from, should be project dir. Need more testing in different contexts
-
-  # report_final_path = file.path(project_dir, snakemake@output[['report_final_html']])
-
-  # report_dir = file.path(project_dir, snakemake@params[['report_dir']])
-
-  # Note: If changing output_file must also adjust deliv_rows entry up above
-  rmarkdown::render(opt$markdownfile, output_file = file.path(REPORT_OUT_DIR, 'report_final.html'), output_format = 'html_document')
-
-  # # Copy final report html to deliverables
-  # report_final_deliverable = file.path(project_dir, snakemake@output[['report_deliverable']])
-  # if(file.exists(report_final_deliverable)){
-  #   stop("Final report exists in deliverables folder. Will not overwrite.")
-  # }
-  # copystatus = file.copy(report_final_path, report_final_deliverable, overwrite = FALSE)
-  # if(!copystatus){
-  #   stop("Copying final report to deliverables dir failed.")
-  # }
-
-  # # Copy linked multiqc html to deliverables
-  # mqc_copy_path = file.path(dirname(report_draft_fullpath), 'multiqc_linked_report.html')
-  # if(file.exists(mqc_copy_path)){ # May not exist if report_from_counts was run to produce draft
-  #   copystatus = file.copy(mqc_copy_path, dirname(report_final_deliverable), overwrite = TRUE)
-  #   if(!copystatus){
-  #     stop("Copying multiqc_linked_report.html to deliverables dir failed.")
-  #   }
-  # }
-
-  # methods_pdf = file.path(report_dir, 'methods.pdf')
-  # if(file.exists(methods_pdf)){
-  #   copystatus = file.copy(methods_pdf, dirname(report_final_deliverable), overwrite = TRUE)
-  #   if(!copystatus){
-  #     stop("Copying methods.pdf to deliverables dir failed.")
-  #   }
-  # }
-
 }
 
 # Load in the config
@@ -109,6 +63,23 @@ SUMMARY_DIR = file.path(DIFFEX_DIR, 'summary')
 SCRIPTS_DIR = file.path(WAT_DIR, 'scripts')
 REPORT_SRC_DIR = file.path(WAT_DIR, 'report')
 REPORT_OUT_DIR = config[['dirs']][['report']]
+
+if(opt$report_finalize) {
+  if(is.na(opt$markdownfile)) {
+    stop("Required argument --markdownfile is missing. For help, see --help")
+  }
+  if(opt$no_analysis || opt$no_knit) {
+    warning("--report_finalize is always independent of analysis and knitting, so both --no_analysis and --no_knit are implied. Arguments --no_analysis and --no_knit will be ignored")
+  }
+  opt$no_analysis = TRUE
+  opt$no_knit = TRUE
+
+  # TWS TODO: Ensure that standalone methods PDF still works for align_qc reporting
+
+  # Note: If changing output_file or output_dir, also adjust deliv_rows entry to match. They aren't synced like analysis files are
+  rmarkdown::render(opt$markdownfile, output_file = 'report_final.html', output_dir = REPORT_OUT_DIR, output_format = 'html_document')
+
+}
 
 if(!opt$no_analysis){
 
@@ -623,7 +594,7 @@ if(!opt$no_knit){
       load(opt$rdatafile)
     }
   } else {
-    if(opt$rdatafile) {stop("--rdatafile should only be used with --no_analysis")}
+    if(!is.na(opt$rdatafile)) {stop("--rdatafile should only be used with --no_analysis")}
   }
 
   project_name = config[['report_info']][['project_name']]
@@ -651,7 +622,7 @@ if(!opt$no_knit){
 
   ################################################################################
 
-  if(!dir.exists(REPORT_OUT_DIR) {dir.create(REPORT_OUT_DIR, mode = "775")}
+  if(!dir.exists(REPORT_OUT_DIR)) {dir.create(REPORT_OUT_DIR, mode = "775")}
 
   output_prefix = fs::path_ext_remove(basename(deliv_rows[['report_draft_md']][['file_name']]))
   rmarkdown::render(opt$markdownfile, output_dir = REPORT_OUT_DIR, output_format = 'all', output_file = output_prefix)

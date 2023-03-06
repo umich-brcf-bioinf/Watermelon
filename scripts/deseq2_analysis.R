@@ -26,6 +26,22 @@ make_ncbilink = function(id_str){
   }
 }
 
+make_diffex_model_contrast_info_dfs = function(diffex_config){
+  not_model_names = c('count_min_cutoff')
+  model_names = names(diffex_config)[! names(diffex_config) %in% not_model_names]
+  info_df_rows = list()
+  for (m in model_names) {
+    info_df_rows[[m]] = list(
+      model = diffex_config[[m]][['DESeq2']][['design']],
+      # factor_name = diffex_config[[m]][['DESeq2']][['factor_name']], # Don't need factor name in report
+      linear_fold_change = diffex_config[[m]][['linear_fold_change']],
+      adjustedPValue = diffex_config[[m]][['adjustedPValue']]
+    )
+  }
+  info_df = bind_rows(info_df_rows)
+  return(info_df)
+}
+
 ###################
 # Setup
 
@@ -109,7 +125,9 @@ if(!opt$no_analysis){
   deliv_rows[['summary_xlsx']] = list(obj_name = 'summary_df', file_name = file.path(SUMMARY_DIR, 'deseq2_summary.xlsx'), deliverable = TRUE)
   deliv_rows[['report_draft_md']] = list(file_name = file.path(REPORT_OUT_DIR, 'report_draft.md'), deliverable = FALSE)
   deliv_rows[['report_draft_html']] = list(file_name = file.path(REPORT_OUT_DIR, 'report_draft.html'), deliverable = FALSE)
+  # Note: If changing the following file_names, must also adjust in report_finalize section. They aren't necessarily synced-up like analysis files are
   deliv_rows[['report_final_html']] = list(file_name = file.path(REPORT_OUT_DIR, 'report_final.html'), deliverable = TRUE)
+  deliv_rows[['sw_versions']] = list(obj_name = 'sw_versions', file_name = file.path(REPORT_OUT_DIR, 'env_software_versions.yaml'), deliverable = TRUE)
 
   # Create needed output directories - Note: more are created below during plotting steps
   dir.create(COUNTS_DIR, recursive=T, mode="775")
@@ -554,25 +572,12 @@ if(!opt$no_analysis){
     deliv_rows[['summary_xlsx']][['file_name']],
     overwrite = TRUE)
 
+  # Create info_df object from diffex section of config, to be later used in report
+  info_df = make_diffex_model_contrast_info_dfs(config[['diffex']])
+
+  # Save all objects from analysis to an Rdata file
   save.image(file.path(DIFFEX_DIR, "deseq2_analysis.Rdata"))
 }
-
-#For recreating deliverables_run_info functionality:
-py_run_string("import os")
-py_run_string("WORKFLOW_BASEDIR = os.path.abspath('Watermelon')")
-source_python('Watermelon/version_info.smk')
-sw_versions = VER_INFO[c('watermelon', 'WAT_diffex')]
-#TWS FIXME? This is the only thing that goes directly into DELIVERABLES_DIR
-# deliv_rows[['sw_versions']] = list(obj_name = 'sw_versions', file_name = file.path(DELIVERABLES_DIR, 'run_info', 'env_software_versions.yaml'), deliverable = TRUE)
-# con = file(deliv_rows[['sw_versions']][['file_name']])
-# writeLines(c(
-#   "#This file contains software version information in the format:",
-#   "#environment:",
-#   "#    software_package:",
-#   "#        software_version"
-# ),con)
-# write_yaml(sw_versions, con)
-# close(con)
 
 if(!opt$no_knit){
 
@@ -597,6 +602,25 @@ if(!opt$no_knit){
     if(!is.na(opt$rdatafile)) {stop("--rdatafile should only be used with --no_analysis")}
   }
 
+  if(!dir.exists(REPORT_OUT_DIR)) {dir.create(REPORT_OUT_DIR, mode = "775")}
+
+  #For recreating deliverables_run_info functionality
+  #Do this before knitting report
+  py_run_string("import os")
+  py_run_string("WORKFLOW_BASEDIR = os.path.abspath('Watermelon')")
+  source_python(file.path(WAT_DIR, 'version_info.smk'))
+  sw_versions = VER_INFO[c('watermelon', 'WAT_diffex')]
+  con = file(deliv_rows[['sw_versions']][['file_name']])
+  writeLines(c(
+    "#This file contains software version information in the format:",
+    "#environment:",
+    "#    software_package:",
+    "#        software_version"
+  ),con)
+  writeLines(yaml::as.yaml(sw_versions), con)
+  close(con)
+
+  #Reporting set-up
   project_name = config[['report_info']][['project_name']]
   analyst_name = config[['report_info']][['analyst_name']]
   acknowledgement_text = config[['report_info']][['acknowledgement_text']]
@@ -621,8 +645,6 @@ if(!opt$no_knit){
   qc_pca_file = '%s/plots_labeled_by_pheno/%s/PCAplot_12_%s.png'
 
   ################################################################################
-
-  if(!dir.exists(REPORT_OUT_DIR)) {dir.create(REPORT_OUT_DIR, mode = "775")}
 
   output_prefix = fs::path_ext_remove(basename(deliv_rows[['report_draft_md']][['file_name']]))
   rmarkdown::render(opt$markdownfile, output_dir = REPORT_OUT_DIR, output_format = 'all', output_file = output_prefix)

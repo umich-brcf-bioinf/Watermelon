@@ -38,7 +38,7 @@ make_diffex_model_contrast_info_dfs = function(diffex_config){
       adjustedPValue = diffex_config[[m]][['adjustedPValue']]
     )
   }
-  info_df = bind_rows(info_df_rows)
+  info_df = bind_rows(info_df_rows, .id = "model_name")
   return(info_df)
 }
 
@@ -160,7 +160,7 @@ if(!opt$no_analysis){
   } else if(opt$import_from == 'count_matrix'){
       message('Using count matrix')
       # Load count data and subset based on samplesheet - Note check.names=F prevents conversion of dashes to dots (e.g. samplename 'Sample_716-AS-1')
-      counts = read.table(config[['count_matrix']], header=TRUE, check.names=FALSE, row.names=1, sep="\t",stringsAsFactors=FALSE)
+      counts = read.table(config[['count_matrix']], header=TRUE, check.names=FALSE, row.names=1, sep="\t")
       samples.list = pdata[,SAMPLE_COLUMN]
       stopifnot("Sample names differ between sample sheet and count matrix"= identical(sort(names(counts)),sort(samples.list)))
       counts = counts[,samples.list]

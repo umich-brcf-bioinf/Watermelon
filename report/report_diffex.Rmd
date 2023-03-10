@@ -151,7 +151,7 @@ The sections that follow provide more detailed information about the differentia
 ```{r include = FALSE}
     info_df$model_name = gsub("_", " ", info_df$model_name)
     colnames(info_df) = c('Model Name', 'Model', 'Linear fold-change', 'FDR')
-    info_kable = kable(info_df, row.names = TRUE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+    info_kable = kable(info_df, format.args = list(big.mark = ',', scientific = FALSE)) %>%
       kable_styling(bootstrap_options = c('striped', 'condensed'))
 ```
 

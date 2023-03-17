@@ -214,6 +214,9 @@ if(!opt$no_analysis){
   #####################
   # Plots by Phenotype
 
+  # Use sample column also as rownames for plotting
+  rownames(pdata) = pdata$sample
+
   # Source the plotting functions
   source(file.path(SCRIPTS_DIR, "deseq2_plotting_fxns.R"))
 

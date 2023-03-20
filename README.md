@@ -168,12 +168,20 @@ Now we can run the deseq2_analysis.R script. Since we're using a singularity ima
     # Define the read-only bind mount to our reference data
     export SINGULARITY_BIND="/nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
     # Run the deseq2_analysis.R script, providing environment with the singularity image
-    singularity exec docker://umichbfxcore/wat_diffex:0.5.0 Rscript Watermelon/scripts/deseq2_analysis.R --configfile config_20190821d.yaml --markdownfile Watermelon/report/report_diffex.Rmd 2>&1 | tee deseq2_$(date +%FT%H%M%S).log
+    singularity exec docker://umichbfxcore/wat_diffex:0.6.0 Rscript Watermelon/scripts/deseq2_analysis.R --configfile config_20190821d.yaml --markdownfile Watermelon/report/report_diffex.Rmd 2>&1 | tee deseq2_$(date +%FT%H%M%S).log
 
 When this runs, by default it will run the DESeq2 analysis and save the outputs, including a `.Rdata` file, and then it will knit a report using these outputs. 
 
 
 If it is desired to run just the analysis portion of the script or just the reporting portion of the script, `deseq2_analysis.R` has command line flags to allow this behavior, `--no_knit` and `--no_analysis`, respectively.
+
+Lastly, we will finalize the report. Inspect `report_draft.html`, and make any desired edits to the `report_draft.md` that you need. We'll knit this `report_draft.md` into our final report.
+
+    # Run the deseq2_analysis.R script again, this time with
+    # our report_draft.md as the --markdownfile
+    # and with the flag --report_finalize
+    #
+    singularity exec docker://umichbfxcore/wat_diffex:0.6.0 Rscript Watermelon/scripts/deseq2_analysis.R --configfile config_20190821d.yaml --markdownfile analysis_20190821d/report/report_draft.md --report_finalize
 
 
 It is also possible to use the singularity image with an RStudio session, similar to how it's described on our [single cell analysis environment page](https://github.com/umich-brcf-bioinf/single_cell_env), if an interactive session is desired.

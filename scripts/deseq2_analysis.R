@@ -578,6 +578,9 @@ if(!opt$no_analysis){
   # Create info_df object from diffex section of config, to be later used in report
   info_df = make_diffex_model_contrast_info_dfs(config[['diffex']])
 
+  # Create deliv_df object from deliv_rows list, to be later used when moving deliverables
+  deliv_df = bind_rows(deliv_rows)
+
   # Save all objects from analysis to an Rdata file
   save.image(file.path(DIFFEX_DIR, "deseq2_analysis.Rdata"))
 }
@@ -664,5 +667,12 @@ if(!opt$no_knit){
   if(!copystatus){
     stop("Copying references_WAT.bib to report dir failed.")
   }
+
+  # Create deliverables_list.txt - something to feed into rsync command
+  deliv_vec = deliv_df %>% filter(deliverable == TRUE) %>% pull(file_name)
+  # Add some /./'s for rsync's dest path creation (re-create everything after /./)
+  deliv_vec = sub("diffex_results/", "diffex_results/./", deliv_vec)
+  deliv_vec = sub("/report", "/./report", deliv_vec)
+  writeLines(deliv_vec, "deliverables_list.txt")
 
 }

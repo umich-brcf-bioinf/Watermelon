@@ -175,7 +175,9 @@ When this runs, by default it will run the DESeq2 analysis and save the outputs,
 
 If it is desired to run just the analysis portion of the script or just the reporting portion of the script, `deseq2_analysis.R` has command line flags to allow this behavior, `--no_knit` and `--no_analysis`, respectively.
 
-Lastly, we will finalize the report. Inspect `report_draft.html`, and make any desired edits to the `report_draft.md` that you need. We'll knit this `report_draft.md` into our final report.
+> Note: It is also possible to use the singularity image with an RStudio session, similar to how it's described on our [single cell analysis environment page](https://github.com/umich-brcf-bioinf/single_cell_env), if an interactive session is desired.
+
+Next we will edit (if desired) and finalize the report. Inspect `report_draft.html`, and make any desired edits to the `report_draft.md` that you need. After you're satisfied with the edits, knit this `report_draft.md` into our final report.
 
     # Run the deseq2_analysis.R script again, this time with
     # our report_draft.md as the --markdownfile
@@ -184,13 +186,21 @@ Lastly, we will finalize the report. Inspect `report_draft.html`, and make any d
     singularity exec docker://umichbfxcore/wat_diffex:0.6.0 Rscript Watermelon/scripts/deseq2_analysis.R --configfile config_20190821d.yaml --markdownfile analysis_20190821d/report/report_draft.md --report_finalize
 
 
-It is also possible to use the singularity image with an RStudio session, similar to how it's described on our [single cell analysis environment page](https://github.com/umich-brcf-bioinf/single_cell_env), if an interactive session is desired.
+Finally, we will move the deliverables into their desired location. Within the DESeq2 analysis script, we've tracked all deliverables and created a file - `deliverables_list.txt` - that can be used directly with `rsync` to transfer results to a desired location.
+
+    rsync --files-from deliverables_list.txt . analysis_20190821d/deliverables
+
+Files can be delivered anywhere - just replace final argument with your destination (no slash!)
+
+    # rsync --files-from deliverables_list.txt . <dest>
+
+> Note: The `deliverables_list.txt` file has `/./` that are inserted into the filepaths by the analysis script when it is written. This is a syntax recognized and used by rsync, where directories are re-created after the `/./` but not before, allowing the desired output structure to be placed anywhere.
 
 
 
 ## Further Reading
 
-* [Report generation](doc/report_generation.md)
+* [Alignment & QC Report generation](doc/report_generation.md)
 * [Troubleshooting](doc/troubleshooting.md)
 * [Example - Multiple sequencing runs](doc/example_multiple_runs.md)
 * [Example - Alternative references](doc/example_alt_refs.md)

@@ -76,6 +76,7 @@ DIFFEX_DIR = config[['dirs']][['diffex_results']]
 PLOTS_DIR = file.path(DIFFEX_DIR, 'plots_labeled_by_pheno')
 COUNTS_DIR = file.path(DIFFEX_DIR, 'counts')
 SUMMARY_DIR = file.path(DIFFEX_DIR, 'summary')
+RUN_INFO_DIR = file.path(DIFFEX_DIR, 'run_info')
 SCRIPTS_DIR = file.path(WAT_DIR, 'scripts')
 REPORT_SRC_DIR = file.path(WAT_DIR, 'report')
 REPORT_OUT_DIR = config[['dirs']][['report']]
@@ -89,8 +90,6 @@ if(opt$report_finalize) {
   }
   opt$no_analysis = TRUE
   opt$no_knit = TRUE
-
-  # TWS TODO: Ensure that standalone methods PDF still works for align_qc reporting
 
   # Note: If changing output_file or output_dir, also adjust deliv_rows entry to match. They aren't synced like analysis files are
   rmarkdown::render(opt$markdownfile, output_file = 'report_final.html', output_dir = REPORT_OUT_DIR, output_format = 'html_document')
@@ -127,11 +126,12 @@ if(!opt$no_analysis){
   deliv_rows[['report_draft_html']] = list(file_name = file.path(REPORT_OUT_DIR, 'report_draft.html'), deliverable = FALSE)
   # Note: If changing the following file_names, must also adjust in report_finalize section. They aren't necessarily synced-up like analysis files are
   deliv_rows[['report_final_html']] = list(file_name = file.path(REPORT_OUT_DIR, 'report_final.html'), deliverable = TRUE)
-  deliv_rows[['sw_versions']] = list(obj_name = 'sw_versions', file_name = file.path(REPORT_OUT_DIR, 'env_software_versions.yaml'), deliverable = TRUE)
+  deliv_rows[['sw_versions']] = list(obj_name = 'sw_versions', file_name = file.path(RUN_INFO_DIR, 'env_software_versions.yaml'), deliverable = TRUE)
 
   # Create needed output directories - Note: more are created below during plotting steps
   dir.create(COUNTS_DIR, recursive=T, mode="775")
   dir.create(PLOTS_DIR, mode="775")
+  dir.create(RUN_INFO_DIR, mode="775")
   dir.create(SUMMARY_DIR, mode="775")
 
   ###################

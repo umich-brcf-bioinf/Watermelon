@@ -72,9 +72,9 @@ def _no_overwrite_check(check_vals):
         if os.path.exists(val):
             exists.append(val)
     if exists:
-        prompt = "The following file(s)/dir(s) exist:\n{}\nOverwrite? (yes/no): ".format(exists)
+        prompt = "The following file(s)/dir(s) exist and will be overwritten:\n{}\nContinue? (yes/no): ".format(exists)
         if not _prompt_yes_no(prompt):
-            msg = "\n\nThe following file(s)/dir(s) exist and will not overwrite:\n{}\n".format(exists)
+            msg = "\n\nYou've chosen not to overwrite. Aborting...\nNote: You can rename these before retrying if you want them preserved."
             raise RuntimeError(msg)
 
 

@@ -51,9 +51,9 @@ knitr::opts_knit$set(root.dir = project_dir)
 ################################################################################
 # Flags for showing additional optional sections
 
-show_background_biology = TRUE
+show_background_biology = TRUE # TODO: These could alternatively be moved out to config
 show_background_samples = TRUE
-show_follow_up = config[['report_info']][['include_follow_up']] # note this is in config, others are params
+show_follow_up = config[['report_info']][['include_follow_up']] # note this is in config, others set above
 
 ```
 

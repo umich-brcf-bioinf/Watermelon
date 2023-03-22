@@ -162,6 +162,18 @@ After running this, you'll have:
 * config_20190821d.yaml : a `diffex` type configuration file for the differential expression workflow. In this example, it needs no modification to work with the differential expression workflow. In a real use-case scenario, you will modify this config file according to the project plan.
 * Watermelon : Directory containing a copy of the pipeline code
 
+For this example we should modify our samplesheet that we auto-generated earlier, so that it matches our example analysis. In a real example, you'd likely have your samplesheet already set up with phenotypes and conditions, and you would then modify the config to match. Here, our example analysis compares two `treatment`s, `control` and `drug`. So let's add a column to our samplesheet with this information. We could remove or exclude the input_glob column, since it's not used in the diffex analysis, but we'll leave it in place now because that's slightly easier.
+
+    sample,input_glob,treatment
+    sample_01,...,control
+    sample_02,...,control
+    sample_03,...,control
+    sample_04,...,control
+    sample_05,...,drug
+    sample_06,...,drug
+    sample_07,...,drug
+    sample_08,...,drug
+
 
 Now we can run the deseq2_analysis.R script. Since we're using a singularity image, we'll first set an environment variable that will define a read-only bind mount for the annotation data.
 
@@ -173,7 +185,7 @@ Now we can run the deseq2_analysis.R script. Since we're using a singularity ima
 When this runs, by default it will run the DESeq2 analysis and save the outputs, including a `.Rdata` file, and then it will knit a report using these outputs. 
 
 
-If it is desired to run just the analysis portion of the script or just the reporting portion of the script, `deseq2_analysis.R` has command line flags to allow this behavior, `--no_knit` and `--no_analysis`, respectively.
+> Note: If it is desired to run just the analysis portion of the script or just the reporting portion of the script, `deseq2_analysis.R` has command line flags to allow this behavior, `--no_knit` and `--no_analysis`, respectively.
 
 > Note: It is also possible to use the singularity image with an RStudio session, similar to how it's described on our [single cell analysis environment page](https://github.com/umich-brcf-bioinf/single_cell_env), if an interactive session is desired.
 

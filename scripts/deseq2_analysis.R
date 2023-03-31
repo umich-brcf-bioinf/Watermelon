@@ -44,23 +44,37 @@ make_diffex_model_contrast_info_dfs = function(diffex_config){
 
 ###################
 # Setup
+if(interactive()){
+  # If running interactively, set opts manually here
+  opt = list()
+  opt$configfile = NA  # Configfile always required. Set this to config file path
+  opt$markdownfile = NA  # Required if knitting or finalizing
+  opt$rdatafile = NA  # Required if knitting and no_analysis == TRUE
+  # Can modify opts below if needed
+  opt$project_dir = getwd()
+  opt$threads = 8
+  opt$import_from = 'count_matrix'
+  opt$no_analysis = FALSE
+  opt$no_knit = FALSE
+  opt$report_finalize = FALSE
+} else {
+  option_list = list(
+    make_option(c("-c", "--configfile"), action="store", default=NA, type='character',
+                help="Name of config file (required)."),
+    make_option(c("-d", "--project_dir"), action="store", default=getwd(), type='character', help="Project directory. Defaults to current working directory"),
+    make_option(c("-i", "--import_from"), action="store", default='count_matrix', type='character',
+                help="Import from count matrix or from rsem via tximport. Options 'count_matrix' or 'tximport'. Default 'count_matrix'"),
+    make_option(c("-m", "--markdownfile"), action="store", default=NA, type='character', help="R Markdown file to knit. Required if knitting or finalizing report."),
+    make_option("--no_analysis", action="store_true", default=FALSE, help="Do not run analysis code."),
+    make_option("--no_knit", action="store_true", default=FALSE, help="Do not knit report document."),
+    make_option("--report_finalize", action="store_true", default=FALSE, help="Finalize the report (supplied by markdownfile)."),
+    make_option(c("-r", "--rdatafile"), action="store", default=NA, type='character',
+                help="Rdata file containing R objects (from the analysis) to include in the report. Required for, and can only be used when combining with --no_analysis."),
+    make_option(c("-t", "--threads"), action="store", default=8, type='integer', help="Number of threads to use")
+  )
 
-option_list = list(
-  make_option(c("-c", "--configfile"), action="store", default=NA, type='character',
-              help="Name of config file (required)."),
-  make_option(c("-d", "--project_dir"), action="store", default=getwd(), type='character', help="Project directory. Defaults to current working directory"),
-  make_option(c("-i", "--import_from"), action="store", default='count_matrix', type='character',
-              help="Import from count matrix or from rsem via tximport. Options 'count_matrix' or 'tximport'. Default 'count_matrix'"),
-  make_option(c("-m", "--markdownfile"), action="store", default=NA, type='character', help="R Markdown file to knit. Required if knitting or finalizing report."),
-  make_option("--no_analysis", action="store_true", default=FALSE, help="Do not run analysis code."),
-  make_option("--no_knit", action="store_true", default=FALSE, help="Do not knit report document."),
-  make_option("--report_finalize", action="store_true", default=FALSE, help="Finalize the report (supplied by markdownfile)."),
-  make_option(c("-r", "--rdatafile"), action="store", default=NA, type='character',
-              help="Rdata file containing R objects (from the analysis) to include in the report. Required for, and can only be used when combining with --no_analysis."),
-  make_option(c("-t", "--threads"), action="store", default=8, type='integer', help="Number of threads to use")
-)
-
-opt = parse_args(OptionParser(option_list=option_list))
+  opt = parse_args(OptionParser(option_list=option_list))
+}
 
 if(is.na(opt$configfile)){
   stop("Required argument --configfile is missing. For help, see --help")
@@ -542,7 +556,7 @@ if(!opt$no_analysis){
         logfc_cutoff = fc_cutoff,
         out_basepath = volcano_basepath)
       # In addition to the pdf and png listed above, also add the plot to a list of volcano plots
-      volcano_key = paste("model", model_name, contrast_name, sep="_")
+      volcano_key = paste("model", model_name, contrast_name, "volcano", sep="_")
       volcano_plot_list[[volcano_key]] <- volcano_plot # We may want to alter naming based on how it's used in report Rmd
       # Add newly created plots to deliverables
       deliv_rows[[paste0(volcano_key, '_pdf')]] = list(obj_name = paste0('volcano_plot_list[[\'', volcano_key, '\']]'), file_name = paste0(volcano_basepath, '.pdf'), model_name = model_name, contrast_name = contrast_name, deliverable = TRUE)
@@ -582,7 +596,9 @@ if(!opt$no_analysis){
   deliv_df = bind_rows(deliv_rows)
 
   # Save all objects from analysis to an Rdata file
-  save.image(file.path(DIFFEX_DIR, "deseq2_analysis.Rdata"))
+  # Exclude `opt` to prevent unintentional override later
+  env_to_save = ls()[ls() != 'opt']
+  save(list=env_to_save, file=file.path(DIFFEX_DIR, "deseq2_analysis.Rdata"))
 }
 
 if(!opt$no_knit){

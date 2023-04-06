@@ -13,7 +13,7 @@ option_list <- list(
               help="ENSEMBL dataset e.g. hsapiens_gene_ensembl"),
   make_option(c("-m", "--mart"), action="store", default="ENSEMBL_MART_ENSEMBL",
               help="Biomart to use [default %default]"),
-  make_option(c("-H", "--host"), action="store", default="www.ensembl.org",
+  make_option(c("-H", "--host"), action="store", default="https://www.ensembl.org",
               help="Biomart host to use [default %default]"),
   make_option(c("-a", "--attributes"), action="store", default="ensembl_gene_id,entrezgene_id,external_gene_name,description",
               help="Comma-separated list of attributes to gather from biomaRt - must be equivalent to defaults - [default %default]")

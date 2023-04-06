@@ -128,6 +128,7 @@ if(!opt$no_analysis){
   deliv_rows[['counts_raw']] = list(obj_name = 'counts_raw', file_name = file.path(COUNTS_DIR, 'deseq2_raw_counts.txt'), deliverable = TRUE)
   deliv_rows[['counts_norm']] = list(obj_name = 'counts_norm', file_name = file.path(COUNTS_DIR, 'deseq2_depth_normalized_counts.txt'), deliverable = TRUE)
   deliv_rows[['counts_rlog']] = list(obj_name = 'counts_rlog', file_name = file.path(COUNTS_DIR, 'deseq2_rlog_normalized_counts.txt'), deliverable = TRUE)
+  deliv_rows[['counts_rlog_annot']] = list(obj_name = 'counts_rlog_annot', file_name = file.path(COUNTS_DIR, 'deseq2_rlog_normalized_counts.annot.txt'), deliverable = TRUE)
   deliv_rows[['sample_heatmap_pdf']] = list(obj_name = 'sample_heatmap', file_name = file.path(PLOTS_DIR, 'SampleHeatmap.pdf'), deliverable = TRUE)
   deliv_rows[['sample_heatmap_png']] = list(obj_name = 'sample_heatmap', file_name = file.path(PLOTS_DIR, 'SampleHeatmap.png'), deliverable = TRUE)
   deliv_rows[['topVar_heatmap_pdf']] = list(obj_name = 'topVar_heatmap', file_name = file.path(PLOTS_DIR, 'Heatmap_TopVar.pdf'), deliverable = TRUE)
@@ -183,6 +184,22 @@ if(!opt$no_analysis){
       counts_dds = DESeqDataSetFromMatrix(countData = counts, colData = pdata, design = ~ 1)
   }
 
+  # Define annotation_df - used for annotating rlog counts and each deseq2 comparison later
+  annotation_tsv = config[['references']][['annotation_tsv']]
+  annotation_df = read.delim(annotation_tsv, stringsAsFactors = FALSE)
+  #The mapping table should not have duplicate values in the index
+  #The onus is on whoever creates the mapping table to do it correctly
+  #There are instances of biomaRt queries returning multiple results
+  #These are cases where a query ID matches equally well to multiple
+  #items from another database, so biomaRt returns them all. Current solution
+  #is to have the conflicting attributes separated by commas
+
+  # Remove redundant external_gene_name column if it's identical to gene_id
+  # TODO: Can probably remove this if sticking with ENSEMBL's GTFs
+  if(all(annotation_df$gene_id == annotation_df$external_gene_name)){
+    annotation_df$external_gene_name = NULL
+  }
+
   # Filter lowly expressed genes
   threshold = config[['diffex']][['count_min_cutoff']]
   counts_dds = counts_dds[ rowSums(counts(counts_dds)) > threshold, ]
@@ -223,6 +240,10 @@ if(!opt$no_analysis){
   data.table::setDT(rld_df, keep.rownames = TRUE)[] #set rownames to valid column
   setnames(rld_df, 'rn', 'id')
   write.table(x = rld_df, file = deliv_rows[['counts_rlog']][['file_name']],
+      append = FALSE, sep = '\t', col.names = TRUE, row.names = FALSE, quote = FALSE)
+
+  rld_annot_df = merge(annotation_df, rld_df, by.x='gene_id', by.y='id', all.x=FALSE, all.y=TRUE, sort=TRUE)
+  write.table(x = rld_annot_df, file = deliv_rows[['counts_rlog_annot']][['file_name']],
       append = FALSE, sep = '\t', col.names = TRUE, row.names = FALSE, quote = FALSE)
 
   #####################
@@ -479,19 +500,6 @@ if(!opt$no_analysis){
       
       ##################
       # Add annotations
-      annotation_tsv = config[['references']][['annotation_tsv']]
-      annotation_df = read.delim(annotation_tsv, stringsAsFactors = FALSE)
-      #The mapping table should not have duplicate values in the index
-      #The onus is on whoever creates the mapping table to do it correctly
-      #There are instances of biomaRt queries returning multiple results
-      #These are cases where a query ID matches equally well to multiple
-      #items from another database, so biomaRt returns them all. Current solution
-      #is to have the conflicting attributes separated by commas
-      
-      #Remove redundant external_gene_name column if it's identical to gene_id
-      if(all(annotation_df$gene_id == annotation_df$external_gene_name)){
-        annotation_df$external_gene_name = NULL
-      }
       
       annotated_results = merge(as.data.frame(res), annotation_df, by='gene_id', all.x=TRUE, all.y=FALSE, sort=FALSE)
       annotated_results = annotated_results[,c('gene_id', 'entrezgene_id', 'external_gene_name', 'description', 'baseMean','log2FoldChange','lfcSE','stat','pvalue','padj', 'Condition', 'Control', 'Call')]

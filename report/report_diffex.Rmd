@@ -269,6 +269,10 @@ These are the counts from above normalized to the sequencing depth by DESeq2.
 
 Same as above, but normalized using the DESeq2's regularized log transformation to normalize.
 
+`counts/deseq2_rlog_normalized_counts.annot.txt`
+
+Rlog normalized counts as described above, with additional annotation columns
+
 ### Count-Level QC
 
 These use the count data in various plots to illustrate the count-level QC. The plots are color-labeled based on phonotype / characteristic information from the experimental design. The versions with different color labels will each reside in their own folder.

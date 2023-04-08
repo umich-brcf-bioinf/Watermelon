@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:4.7.12
+FROM continuumio/miniconda3:4.12.0
 
 ARG env_name
 
@@ -14,7 +14,7 @@ ENV PATH /opt/conda/envs/${env_name}/bin:$PATH
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/${env_name}/lib
 
 RUN apt-get --allow-releaseinfo-change update && \
-    apt-get install -y texlive-latex-base texlive-latex-recommended texlive-fonts-recommended texlive-generic-extra texlive-plain-generic
+    apt-get install -y texlive-latex-base texlive-latex-recommended texlive-fonts-recommended texlive-plain-generic
 
 # Add RStudio to environment, to simplify the experience of interactive / manual interventions
 RUN apt-get update && \

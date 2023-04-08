@@ -1,4 +1,17 @@
 # Changelog
+2.5.0 (04/07/2023)
+------------------
+- Differential expression with DESeq2 no longer depends on snakemake
+  - `scripts/deseq2_analysis.R` handles analysis, reporting, report finalization, and setting up deliverables
+  - Command line switches control behavior of Rscript
+  - Use `singularity exec ...` to run the Rscript in a reproducible manner
+  - `diffex_summary.py` has been removed - same functionality via the Rscript
+- New README diffex section describing usage
+- Updated wat_diffex environment `0.6.0`
+- Large scale code cleanup
+- Added annotated rlog deliverable `analysis_foo/deliverables/counts/deseq2_rlog_normalized_counts.annot.txt`
+- Updated ENSEMBL references to v109
+
 
 2.4.4 (01/19/2023)
 ------------------

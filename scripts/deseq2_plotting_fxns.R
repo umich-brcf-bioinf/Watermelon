@@ -445,7 +445,7 @@ plot_volcano = function(de_list, method = c('ballgown', 'deseq2'), exp_name, con
     theme_classic()
   # Add gene symbol labels
   if(!all(is.na(de_list$label))) {
-    volcano_plot = volcano_plot + ggrepel::geom_label_repel(label = de_list$label, force = 3, segment.alpha = 0.4)
+    volcano_plot = volcano_plot + ggrepel::geom_label_repel(label = de_list$label, force = 3, segment.alpha = 0.4, show.legend=FALSE)
   }
   ggsave(filename = paste0(out_basepath, '.pdf'), plot = volcano_plot, height = 8, width = 8, dpi = 300)
   ggsave(filename = paste0(out_basepath, '.png'), plot = volcano_plot, height = 8, width = 8, dpi = 300)

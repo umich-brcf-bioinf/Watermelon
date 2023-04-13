@@ -1,6 +1,9 @@
 cutadapt:
     image_str: "docker://quay.io/biocontainers/cutadapt:2.3--py37h14c3975_0"
     ver_str: "2.3"
+deeptools:
+    image_str: "docker://quay.io/biocontainers/deeptools:3.5.1--pyhdfd78af_1"
+    ver_str: "3.5.1"
 fastq_screen:
     image_str: "docker://quay.io/biocontainers/fastq-screen:0.13.0--pl526_0"
     ver_str: "0.13.0"

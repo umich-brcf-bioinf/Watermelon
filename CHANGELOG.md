@@ -1,4 +1,10 @@
 # Changelog
+
+2.5.1 (04/13/2023)
+------------------
+- Fix for 'a' in volcano plot legend
+- Added (non-standard) rule/mechanism for bigwig generation
+
 2.5.0 (04/07/2023)
 ------------------
 - Differential expression with DESeq2 no longer depends on snakemake
@@ -11,7 +17,6 @@
 - Large scale code cleanup
 - Added annotated rlog deliverable `analysis_foo/deliverables/counts/deseq2_rlog_normalized_counts.annot.txt`
 - Updated ENSEMBL references to v109
-
 
 2.4.4 (01/19/2023)
 ------------------

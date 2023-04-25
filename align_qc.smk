@@ -131,10 +131,11 @@ else:
     FASTQ_SCREEN_DELIVERABLES = []
 
 if "rseqc" in config:
-    RSEQC_RIBO_EST = expand(ALIGNMENT_DIR + "05-rseqc/{sample}_ribo_count.txt", sample=SAMPLESHEET.index)
+    RSEQC_RIBO_DF = [ ALIGNMENT_DIR + "05-rseqc/ribo_pct_summary.txt" ]
+    RSEQC_RIBO_DELIVERABLE = [ DELIVERABLES_DIR + "alignment/ribo_pct_summary.txt" ]
 else:
-    RSEQC_RIBO_EST = []
-    # ^ This is useful for the inclusion/exclusion in multiqc rule as necessary
+    RSEQC_RIBO_DF = []
+    RSEQC_RIBO_DELIVERABLE = []
 
 if "include_bigwigs" in config and config['include_bigwigs'] == True:
     BW_ALL = expand(ALIGNMENT_DIR + "05-bamcoverage/{sample}.genome.bw", sample=SAMPLESHEET.index)
@@ -143,7 +144,7 @@ else:
 
 
 # Target list - may or may not be populated, see if/else defs above
-ALL = RSEM_ALL + ALIGN_DELIVERABLES + RUN_INFO_DELIVERABLES + FASTQ_SCREEN_DELIVERABLES + BW_ALL + REPORT_ALL
+ALL = RSEM_ALL + ALIGN_DELIVERABLES + RUN_INFO_DELIVERABLES + FASTQ_SCREEN_DELIVERABLES + RSEQC_RIBO_DELIVERABLE + BW_ALL + REPORT_ALL
 
 
 rule all:
@@ -171,6 +172,7 @@ if 'fastq_screen' in config:
     include: 'rules/align_fastq_screen_multi_species.smk'
 if "rseqc" in config:
     include: 'rules/align_rseqc_estimate_ribo.smk'
+    include: 'rules/align_rseqc_ribo_df.smk'
 if "include_bigwigs" in config:
     include: 'rules/align_bamCoverage.smk'
 include: 'rules/align_fastqc_trimmed_reads.smk'

@@ -177,7 +177,7 @@ if(!opt$no_analysis){
       # Load count data and subset based on samplesheet - Note check.names=F prevents conversion of dashes to dots (e.g. samplename 'Sample_716-AS-1')
       counts = read.table(config[['count_matrix']], header=TRUE, check.names=FALSE, row.names=1, sep="\t")
       samples.list = pdata[,SAMPLE_COLUMN]
-      stopifnot("Sample names differ between sample sheet and count matrix"= identical(sort(names(counts)),sort(samples.list)))
+      stopifnot("All samples in the sample sheet must be present in the count matrix"= all(samples.list %in% names(counts)))
       counts = counts[,samples.list]
       # Create DESeqDataSet from matrix
       # Note use of no design (i.e. = ~ 1) here since we only care about counts. For diffex, will need to use actual design

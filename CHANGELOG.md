@@ -1,5 +1,16 @@
 # Changelog
 
+2.6.0 (04/28/2023)
+------------------
+- Added ribosomal percentage DF to deliverables
+- Allow samples in count matrix that are not in samplesheet, but not vice versa
+  - Enables excluding samples from the analysis by removing them from the samplesheet
+- Added functionality to allow specifying a subset of the samples during differential expression
+  - E.g. `subset: treatment::drug` will subset counts and pdata, after plotting and before differential expression testing, to samples with value of `drug` in `treatment` column of the samplesheet
+  - Can specify subset on a per-model basis
+  - Default is non-subsetting. Not setting a `subset:`, setting it to a blank string, or using `subset: all` all perform this same default behavior.
+  - Subsetted count tables are output for analysts' sake and thus aren't deliverables by default
+
 2.5.1 (04/13/2023)
 ------------------
 - Fix for 'a' in volcano plot legend

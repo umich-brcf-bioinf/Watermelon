@@ -154,8 +154,8 @@ if(!opt$no_analysis){
 
   # Get phenotype matrix
   sample.info.file = config[['samplesheet']]
-  pdata = read.csv(sample.info.file, comment.char = "#", colClasses=c('character'), stringsAsFactors = FALSE)
-  pdata$input_glob = NULL # Drop if exists - used for align_qc but not useful in diffex
+  pdata_full = read.csv(sample.info.file, comment.char = "#", colClasses=c('character'), stringsAsFactors = FALSE)
+  pdata_full$input_glob = NULL # Drop if exists - used for align_qc but not useful in diffex
 
   # Import data
   message('Importing count data')
@@ -163,25 +163,25 @@ if(!opt$no_analysis){
       message('Using tximport on rsem data')
       rsem_dir = config[['rsem_dir']]
       gene.files.list = named.filepaths.from.dir(rsem_dir, ".genes.results")
-      # tximport will have the correct order only if the files list matches pdata
-      gene.files.list = gene.files.list[order(match(names(gene.files.list), pdata[[SAMPLE_COLUMN]]), na.last = NA)]
+      # tximport will have the correct order only if the files list matches pdata_full
+      gene.files.list = gene.files.list[order(match(names(gene.files.list), pdata_full[[SAMPLE_COLUMN]]), na.last = NA)]
       txi.rsem.gene.results = tximport(gene.files.list, type = "rsem", txIn = F, txOut = F)
       #Some genes have length zero (what does this even mean?), causing issues with creating DESeqDataSet
       #Mike Love recommends changing these from 0 to 1; https://support.bioconductor.org/p/84304/#84368
       txi.rsem.gene.results$length[txi.rsem.gene.results$length == 0] = 1
       # Create DESeqDataSet from tximport object
       # Note use of no design (i.e. = ~ 1) here since we only care about counts. For diffex, will need to use actual design
-      counts_dds = DESeqDataSetFromTximport(txi = txi.rsem.gene.results, colData = pdata, design = ~ 1)
+      counts_dds = DESeqDataSetFromTximport(txi = txi.rsem.gene.results, colData = pdata_full, design = ~ 1)
   } else if(opt$import_from == 'count_matrix'){
       message('Using count matrix')
       # Load count data and subset based on samplesheet - Note check.names=F prevents conversion of dashes to dots (e.g. samplename 'Sample_716-AS-1')
-      counts = read.table(config[['count_matrix']], header=TRUE, check.names=FALSE, row.names=1, sep="\t")
-      samples.list = pdata[,SAMPLE_COLUMN]
-      stopifnot("All samples in the sample sheet must be present in the count matrix"= all(samples.list %in% names(counts)))
-      counts = counts[,samples.list]
+      counts_full = read.table(config[['count_matrix']], header=TRUE, check.names=FALSE, row.names=1, sep="\t")
+      samples.list = pdata_full[[SAMPLE_COLUMN]]
+      stopifnot("All samples in the sample sheet must be present in the count matrix"= all(samples.list %in% names(counts_full)))
+      counts_full = counts_full[,samples.list]
       # Create DESeqDataSet from matrix
       # Note use of no design (i.e. = ~ 1) here since we only care about counts. For diffex, will need to use actual design
-      counts_dds = DESeqDataSetFromMatrix(countData = counts, colData = pdata, design = ~ 1)
+      counts_dds = DESeqDataSetFromMatrix(countData = counts_full, colData = pdata_full, design = ~ 1)
   }
 
   # Define annotation_df - used for annotating rlog counts and each deseq2 comparison later
@@ -216,8 +216,8 @@ if(!opt$no_analysis){
   count.data.list = c('counts_raw', 'counts_norm', 'counts_rlog')
   if(exists('txi.rsem.gene.results')){
       count.data.list = c(count.data.list, 'txi.rsem.gene.results')
-  } else if(exists('counts')){
-      count.data.list = c(count.data.list, 'counts')
+  } else if(exists('counts_full')){
+      count.data.list = c(count.data.list, 'counts_full')
   }
   save(list = count.data.list, file = deliv_rows[['count_data_rda']][['file_name']])
 
@@ -250,13 +250,13 @@ if(!opt$no_analysis){
   # Plots by Phenotype
 
   # Use sample column also as rownames for plotting
-  rownames(pdata) = pdata$sample
+  rownames(pdata_full) = pdata_full$sample
 
   # Source the plotting functions
   source(file.path(SCRIPTS_DIR, "deseq2_plotting_fxns.R"))
 
   # Set up variables and data
-  phenotypes = colnames(pdata)[grep(SAMPLE_COLUMN, colnames(pdata), invert=TRUE)] # Everything colname from samplesheet except SAMPLE_COLUMN
+  phenotypes = colnames(pdata_full)[grep(SAMPLE_COLUMN, colnames(pdata_full), invert=TRUE)] # Everything colname from samplesheet except SAMPLE_COLUMN
   for (p in phenotypes) {
     dir.create(file.path(PLOTS_DIR, p), mode="775")
   }
@@ -269,14 +269,14 @@ if(!opt$no_analysis){
   # Plotting
 
   message(sprintf('Plotting sample heatmap for %s', paste(phenotypes, collapse = ', ')))
-  sample_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata, factors = phenotypes, out_basename = 'SampleHeatmap')
+  sample_heatmap = plot_sample_correlation_heatmap(mat = mat, pdata = pdata_full, factors = phenotypes, out_basename = 'SampleHeatmap')
 
 
   message(sprintf('Plotting top variably expressed genes heatmap for %s', paste(phenotypes, collapse = ', ')))
-  topVar_heatmap = plot_top_variably_expressed_heatmap(mat = mat, pdata = pdata, factors = phenotypes, top_n = 500, out_basename = 'Heatmap_TopVar')
+  topVar_heatmap = plot_top_variably_expressed_heatmap(mat = mat, pdata = pdata_full, factors = phenotypes, top_n = 500, out_basename = 'Heatmap_TopVar')
 
   message(sprintf('Plotting top expressed genes heatmap for %s', paste(phenotypes, collapse = ', ')))
-  topExp_heatmap = plot_top_expressed_heatmap(mat = mat, pdata = pdata, factors = phenotypes, top_n = 500, out_basename = 'Heatmap_TopExp')
+  topExp_heatmap = plot_top_expressed_heatmap(mat = mat, pdata = pdata_full, factors = phenotypes, top_n = 500, out_basename = 'Heatmap_TopExp')
 
   # Plots for each of the phenotypes
   rlog_boxplot_list = list()
@@ -293,14 +293,14 @@ if(!opt$no_analysis){
     
     message(sprintf('Plotting boxplots for %s', phenotype))
     boxplot_basepath = file.path(PLOTS_DIR, phenotype, 'BoxPlot_rlog')
-    log2_boxplot = plot_boxplot(mat = mat, pdata = pdata, factor_name = phenotype, title = boxplot_title, y_label = boxplot_y_lab, out_basepath = boxplot_basepath)
+    log2_boxplot = plot_boxplot(mat = mat, pdata = pdata_full, factor_name = phenotype, title = boxplot_title, y_label = boxplot_y_lab, out_basepath = boxplot_basepath)
     rlog_boxplot_list[[phenotype]] = log2_boxplot # In addition to writing output figure files, add to list of plots
     # Add newly created plots to deliverables
     deliv_rows[[paste0('boxplot_rlog_', phenotype, '_pdf')]] = list(obj_name = paste0('rlog_boxplot_list[[\'', phenotype, '\']]'), file_name = paste0(boxplot_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
     deliv_rows[[paste0('boxplot_rlog_', phenotype, '_png')]] = list(obj_name = paste0('rlog_boxplot_list[[\'', phenotype, '\']]'), file_name = paste0(boxplot_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
 
     boxplot_basepath = file.path(PLOTS_DIR, phenotype, 'BoxPlot_raw')
-    raw_boxplot = plot_boxplot(mat = log2(counts_raw), pdata = pdata, factor_name = phenotype, title = 'Non-normalized counts', y_label = boxplot_y_lab, out_basepath = boxplot_basepath)
+    raw_boxplot = plot_boxplot(mat = log2(counts_raw), pdata = pdata_full, factor_name = phenotype, title = 'Non-normalized counts', y_label = boxplot_y_lab, out_basepath = boxplot_basepath)
     raw_boxplot_list[[phenotype]] = raw_boxplot # In addition to writing output figure files, add to list of plots
     # Add newly created plots to deliverables
     deliv_rows[[paste0('boxplot_raw_', phenotype, '_pdf')]] = list(obj_name = paste0('raw_boxplot_list[[\'', phenotype, '\']]'), file_name = paste0(boxplot_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
@@ -309,7 +309,7 @@ if(!opt$no_analysis){
     # PCA top 500
     message(sprintf('Plotting PCA for %s in dim 1 and 2, top 500', phenotype))
     pca_basepath = file.path(PLOTS_DIR, phenotype, 'PCAplot_12_top500')
-    pca_result_12 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC1','PC2'))
+    pca_result_12 = compute_PCA(mat = mat, pdata = pdata_full, factor_name = phenotype, top_n = 500, dims = c('PC1','PC2'))
     log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_basepath = pca_basepath)
     pca_12_top500_list[[phenotype]] = log2_pca_12 # In addition to writing output figure files, add to list of plots
     # Add newly created plots to deliverables
@@ -318,7 +318,7 @@ if(!opt$no_analysis){
     
     message(sprintf('Plotting PCA for %s in dim 2 and 3, top 500', phenotype))
     pca_basepath = file.path(PLOTS_DIR, phenotype, 'PCAplot_23_top500')
-    pca_result_23 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 500, dims = c('PC2','PC3'))
+    pca_result_23 = compute_PCA(mat = mat, pdata = pdata_full, factor_name = phenotype, top_n = 500, dims = c('PC2','PC3'))
     log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_basepath = pca_basepath)
     pca_23_top500_list[[phenotype]] = log2_pca_23 # In addition to writing output figure files, add to list of plots
     # Add newly created plots to deliverables
@@ -336,7 +336,7 @@ if(!opt$no_analysis){
     # PCA top 100
     message(sprintf('Plotting PCA for %s in dim 1 and 2, top 100', phenotype))
     pca_basepath = file.path(PLOTS_DIR, phenotype, 'PCAplot_12_top100')
-    pca_result_12 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c('PC1','PC2'))
+    pca_result_12 = compute_PCA(mat = mat, pdata = pdata_full, factor_name = phenotype, top_n = 100, dims = c('PC1','PC2'))
     log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_basepath = pca_basepath)
     pca_12_top100_list[[phenotype]] = log2_pca_12 # In addition to writing output figure files, add to list of plots
     # Add newly created plots to deliverables
@@ -345,7 +345,7 @@ if(!opt$no_analysis){
     
     message(sprintf('Plotting PCA for %s in dim 2 and 3, top 100', phenotype))
     pca_basepath = file.path(PLOTS_DIR, phenotype, 'PCAplot_23_top100')
-    pca_result_23 = compute_PCA(mat = mat, pdata = pdata, factor_name = phenotype, top_n = 100, dims = c('PC2','PC3'))
+    pca_result_23 = compute_PCA(mat = mat, pdata = pdata_full, factor_name = phenotype, top_n = 100, dims = c('PC2','PC3'))
     log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_basepath = pca_basepath)
     pca_23_top100_list[[phenotype]] = log2_pca_23 # In addition to writing output figure files, add to list of plots
     # Add newly created plots to deliverables
@@ -369,6 +369,7 @@ if(!opt$no_analysis){
   # Will have rows of model_name, comparison, total_count, count_diff_expressed, count_annotated, percent_annotated
   summary_rows = list()
   volcano_plot_list = list()
+  pdata_subset_list = list()
 
   for (model_name in model_names) {
     # Create directory structure for the results of this model
@@ -377,6 +378,22 @@ if(!opt$no_analysis){
     # DESeq2 Initialization for Each Model
     design = config[['diffex']][[model_name]][['DESeq2']][['design']]
     deseq2.params = config[['diffex']][[model_name]][['DESeq2']][['DESeq2']]
+    feature_subset = config[['diffex']][[model_name]][['subset']]
+    if (!is.null(feature_subset) && feature_subset != "" && feature_subset != "all") {
+      feature_subset_split = unlist(strsplit(feature_subset, '::'))
+      feature_label = feature_subset_split[1]
+      feature_value = feature_subset_split[2]
+      pdata_keeprows = which(pdata_full[[feature_label]] == feature_value)
+      pdata = pdata_full[pdata_keeprows,]
+      pdata_subset_list[[model_name]] = pdata
+      counts = counts_full[,as.character(pdata$sample)]
+      subset_key = paste0('counts_raw_subset_', model_name)
+      deliv_rows[[subset_key]] = list(obj_name = paste0('pdata_subset_list[[\'', model_name, '\']]'), file_name = file.path(COUNTS_DIR, paste0('deseq2_raw_counts_subset_', model_name, '.txt')), model_name = model_name, deliverable = FALSE)
+      write.table(counts,file=deliv_rows[[subset_key]][['file_name']], sep = '\t', col.names = TRUE, row.names = FALSE, quote = FALSE)
+    } else {
+      pdata = pdata_full
+      counts = counts_full
+    }
     
     # Create DESeqDataSet and filter lowly expressed genes
     message('Initializing DESeq2 result')

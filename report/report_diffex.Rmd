@@ -180,14 +180,20 @@ The sections that follow provide more detailed information about the differentia
         #Get the samples for case and control
         factor_name = config[['diffex']][[model_name]][['DESeq2']][['factor_name']]
 
+        if(!is.null(pdata_subset_list[[model_name]])){
+          pdata_case_ctrl = pdata_subset_list[[model_name]]
+        } else{
+          pdata_case_ctrl = pdata_full
+        }
+
         model_match_str = sub("model_", "", model_name)
         comps_list = unname(unlist(summary_df[summary_df$model_name == model_match_str, 'comparison']))
 
         case_smpls = sapply(X = comps_list, FUN = function(x){
-            return(get_case_ctrl_samples(pdata, factor_name, x, selection = 'case'))
+            return(get_case_ctrl_samples(pdata_case_ctrl, factor_name, x, selection = 'case'))
         })
         ctrl_smpls = sapply(X = comps_list, FUN = function(x){
-            return(get_case_ctrl_samples(pdata, factor_name, x, selection = 'ctrl'))
+            return(get_case_ctrl_samples(pdata_case_ctrl, factor_name, x, selection = 'ctrl'))
         })
 
         case_ctrl_df = data.frame(cbind(comps_list, case_smpls, ctrl_smpls))

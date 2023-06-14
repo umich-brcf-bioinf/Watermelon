@@ -1,9 +1,0 @@
-printshellcmds: True
-keep-going: True
-use-conda: True
-conda-prefix: /nfs/med-bfx-common/pipelines/Watermelon/Watermelon-seedless/envs/built/
-cluster-config: Watermelon/config/greatlakes_config_UMBFX.yaml
-cluster: sbatch --job-name={cluster.name} --account={cluster.account} --partition={cluster.partition} --nodes={cluster.nodes} --ntasks-per-node={cluster.ntask} --mem={cluster.memory} --time={cluster.time} --output=%x-%j.log --parsable
-jobs: 144
-cluster-status: Watermelon/scripts/slurm_status.py
-latency-wait: 60

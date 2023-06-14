@@ -1,6 +1,6 @@
 printshellcmds: True
 keep-going: True
 use-singularity: True
-singularity-args: "-B $(pwd) -B /nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
+singularity-args: "--cleanenv -B $(pwd) -B /nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
 cores: 20
 resources: memoryInGb=64

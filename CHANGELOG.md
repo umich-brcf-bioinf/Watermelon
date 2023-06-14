@@ -1,5 +1,10 @@
 # Changelog
 
+2.6.1 (06/14/2023)
+------------------
+- Bugfix: avoids issues with ARC-TS alias inside container by setting singularity argument --cleanenv in the profiles
+- Removes old non-working conda profiles
+
 2.6.0 (04/28/2023)
 ------------------
 - Added ribosomal percentage DF to deliverables

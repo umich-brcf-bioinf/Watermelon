@@ -44,7 +44,15 @@ def get_job_stats(jobid):
         seff_dict['Memory Efficiency'] = strtest.group(1)
         seff_dict['Memory Total'] = strtest.group(2)
     if seff_dict.get('Job Wall-clock time'):
-        seff_dict['Elapsed Seconds'] = get_elapsed_secs(seff_dict['Job Wall-clock time'])
+        ## TWS TODO: Follow up after gathering usage data for better handling in the future
+        try:
+            seff_dict['Elapsed Seconds'] = get_elapsed_secs(seff_dict['Job Wall-clock time'])
+        except TypeError as e:
+            problem_field = seff_dict['Job Wall-clock time']
+            print(f"Problem field: {problem_field}")
+            print(f"Problem field type: {type(problem_field)}")
+            raise e
+
     return(seff_dict)
 
 def get_job_info(jobid):

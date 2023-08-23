@@ -25,7 +25,7 @@ diffex:
             #The following parameters are directly parsed by R
             #and used within the call to DESeq2().
             #The imported DESeqDataset is passed by default and isn't listed here.
-            DESeq2:
+            DESeq:
                 betaPrior: true
             #The below parameters are also parsed by R and used to call results() {DESeq2}.
             #The initialized DESeqDataset is passed by default and isn't listed here.

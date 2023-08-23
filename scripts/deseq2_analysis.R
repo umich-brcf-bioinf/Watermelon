@@ -282,9 +282,13 @@ if(!opt$no_analysis){
   rlog_boxplot_list = list()
   raw_boxplot_list = list()
   pca_12_top500_list = list()
+  pca_12_top500_labeled_list = list()
   pca_23_top500_list = list()
+  pca_23_top500_labeled_list = list()
   pca_12_top100_list = list()
+  pca_12_top100_labeled_list = list()
   pca_23_top100_list = list()
+  pca_23_top100_labeled_list = list()
   scree_top500_list = list()
   scree_top100_list = list()
 
@@ -311,19 +315,26 @@ if(!opt$no_analysis){
     pca_basepath = file.path(PLOTS_DIR, phenotype, 'PCAplot_12_top500')
     pca_result_12 = compute_PCA(mat = mat, pdata = pdata_full, factor_name = phenotype, top_n = 500, dims = c('PC1','PC2'))
     log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_basepath = pca_basepath)
+    log2_pca_12_lab = plot_PCA(compute_PCA_result = pca_result_12, out_basepath = paste0(pca_basepath, '_labeled'), label_samples = TRUE)
     pca_12_top500_list[[phenotype]] = log2_pca_12 # In addition to writing output figure files, add to list of plots
+    pca_12_top500_labeled_list[[phenotype]] = log2_pca_12_lab # In addition to writing output figure files, add to list of plots
     # Add newly created plots to deliverables
     deliv_rows[[paste0('pca_12_top500_', phenotype, '_pdf')]] = list(obj_name = paste0('pca_12_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
     deliv_rows[[paste0('pca_12_top500_', phenotype, '_png')]] = list(obj_name = paste0('pca_12_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
-    
+    deliv_rows[[paste0('pca_12_top500_', phenotype, '_labeled_pdf')]] = list(obj_name = paste0('pca_12_top500_labeled_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '_labeled.pdf'), phenotype = phenotype, deliverable = FALSE)
+    deliv_rows[[paste0('pca_12_top500_', phenotype, '_labeled_png')]] = list(obj_name = paste0('pca_12_top500_labeled_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '_labeled.png'), phenotype = phenotype, deliverable = FALSE)
     message(sprintf('Plotting PCA for %s in dim 2 and 3, top 500', phenotype))
     pca_basepath = file.path(PLOTS_DIR, phenotype, 'PCAplot_23_top500')
     pca_result_23 = compute_PCA(mat = mat, pdata = pdata_full, factor_name = phenotype, top_n = 500, dims = c('PC2','PC3'))
     log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_basepath = pca_basepath)
+    log2_pca_23_lab = plot_PCA(compute_PCA_result = pca_result_23, out_basepath = paste0(pca_basepath, 'labeled'), label_samples = TRUE)
     pca_23_top500_list[[phenotype]] = log2_pca_23 # In addition to writing output figure files, add to list of plots
+    pca_23_top500_labeled_list[[phenotype]] = log2_pca_23_lab # In addition to writing output figure files, add to list of plots
     # Add newly created plots to deliverables
     deliv_rows[[paste0('pca_23_top500_', phenotype, '_pdf')]] = list(obj_name = paste0('pca_23_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
     deliv_rows[[paste0('pca_23_top500_', phenotype, '_png')]] = list(obj_name = paste0('pca_23_top500_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
+    deliv_rows[[paste0('pca_23_top500_', phenotype, '_labeled_pdf')]] = list(obj_name = paste0('pca_23_top500_labeled_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '_labeled.pdf'), phenotype = phenotype, deliverable = FALSE)
+    deliv_rows[[paste0('pca_23_top500_', phenotype, '_labeled_png')]] = list(obj_name = paste0('pca_23_top500_labeled_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '_labeled.png'), phenotype = phenotype, deliverable = FALSE)
     
     message(sprintf('Plotting scree for %s, top 500', phenotype))
     scree_basepath = file.path(PLOTS_DIR, phenotype, 'ScreePlot_top500')
@@ -338,20 +349,28 @@ if(!opt$no_analysis){
     pca_basepath = file.path(PLOTS_DIR, phenotype, 'PCAplot_12_top100')
     pca_result_12 = compute_PCA(mat = mat, pdata = pdata_full, factor_name = phenotype, top_n = 100, dims = c('PC1','PC2'))
     log2_pca_12 = plot_PCA(compute_PCA_result = pca_result_12, out_basepath = pca_basepath)
+    log2_pca_12_lab = plot_PCA(compute_PCA_result = pca_result_12, out_basepath = paste0(pca_basepath, '_labeled'), label_samples = TRUE)
     pca_12_top100_list[[phenotype]] = log2_pca_12 # In addition to writing output figure files, add to list of plots
+    pca_12_top100_labeled_list[[phenotype]] = log2_pca_12_lab # In addition to writing output figure files, add to list of plots
     # Add newly created plots to deliverables
     deliv_rows[[paste0('pca_12_top100_', phenotype, '_pdf')]] = list(obj_name = paste0('pca_12_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
     deliv_rows[[paste0('pca_12_top100_', phenotype, '_png')]] = list(obj_name = paste0('pca_12_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
+    deliv_rows[[paste0('pca_12_top100_', phenotype, '_labeled_pdf')]] = list(obj_name = paste0('pca_12_top100_labeled_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '_labeled.pdf'), phenotype = phenotype, deliverable = FALSE)
+    deliv_rows[[paste0('pca_12_top100_', phenotype, '_labeled_png')]] = list(obj_name = paste0('pca_12_top100_labeled_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '_labeled.png'), phenotype = phenotype, deliverable = FALSE)
     
     message(sprintf('Plotting PCA for %s in dim 2 and 3, top 100', phenotype))
     pca_basepath = file.path(PLOTS_DIR, phenotype, 'PCAplot_23_top100')
     pca_result_23 = compute_PCA(mat = mat, pdata = pdata_full, factor_name = phenotype, top_n = 100, dims = c('PC2','PC3'))
     log2_pca_23 = plot_PCA(compute_PCA_result = pca_result_23, out_basepath = pca_basepath)
+    log2_pca_23_lab = plot_PCA(compute_PCA_result = pca_result_23, out_basepath = paste0(pca_basepath, '_labeled'), label_samples = TRUE)
     pca_23_top100_list[[phenotype]] = log2_pca_23 # In addition to writing output figure files, add to list of plots
+    pca_23_top100_labeled_list[[phenotype]] = log2_pca_23_lab # In addition to writing output figure files, add to list of plots
     # Add newly created plots to deliverables
     deliv_rows[[paste0('pca_23_top100_', phenotype, '_pdf')]] = list(obj_name = paste0('pca_23_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.pdf'), phenotype = phenotype, deliverable = TRUE)
     deliv_rows[[paste0('pca_23_top100_', phenotype, '_png')]] = list(obj_name = paste0('pca_23_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '.png'), phenotype = phenotype, deliverable = TRUE)
-    
+    deliv_rows[[paste0('pca_23_top100_', phenotype, '_labeled_pdf')]] = list(obj_name = paste0('pca_23_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '_labeled.pdf'), phenotype = phenotype, deliverable = FALSE)
+    deliv_rows[[paste0('pca_23_top100_', phenotype, '_labeled_png')]] = list(obj_name = paste0('pca_23_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '_labeled.png'), phenotype = phenotype, deliverable = FALSE)
+
     message(sprintf('Plotting scree for %s, top 100', phenotype))
     scree_basepath = file.path(PLOTS_DIR, phenotype, 'ScreePlot_top500')
     scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basepath = scree_basepath)
@@ -377,7 +396,7 @@ if(!opt$no_analysis){
     #######################################
     # DESeq2 Initialization for Each Model
     design = config[['diffex']][[model_name]][['DESeq2']][['design']]
-    deseq2.params = config[['diffex']][[model_name]][['DESeq2']][['DESeq2']]
+    deseq.params = config[['diffex']][[model_name]][['DESeq2']][['DESeq']]
     feature_subset = config[['diffex']][[model_name]][['subset']]
     if (!is.null(feature_subset) && feature_subset != "" && feature_subset != "all") {
       feature_subset_split = unlist(strsplit(feature_subset, '::'))
@@ -408,7 +427,7 @@ if(!opt$no_analysis){
     dds = dds[ rowSums(counts(dds)) > threshold, ]
     
     # Parse the params for DESeq call, if it can't be converted return it as string
-    deseq2.params.parsed = lapply(deseq2.params, function(x) {
+    deseq.params.parsed = lapply(deseq.params, function(x) {
       tryCatch(eval(parse(text=x)),
               error=function(e){
                 message(paste0("DESeq2 config parameter '", x, "' not parsable to known R type. Leaving as string"))
@@ -416,16 +435,16 @@ if(!opt$no_analysis){
               })
     })
     # Add dds object to params list
-    deseq2.params.parsed[['object']] = dds
+    deseq.params.parsed[['object']] = dds
     # Set parallel to TRUE
-    deseq2.params.parsed[['parallel']] = TRUE
+    deseq.params.parsed[['parallel']] = TRUE
     
     # Set up multithreading
     multicore_param = MulticoreParam(workers = opt$threads)
     register(multicore_param, default=TRUE)
     
     # Call to DESeq
-    dds = do.call(DESeq, deseq2.params.parsed)
+    dds = do.call(DESeq, deseq.params.parsed)
     
     #################################
     # Getting Results for Each Model
@@ -448,13 +467,16 @@ if(!opt$no_analysis){
       message("resultsNames() of dds:")
       message(paste(resultsNames(dds), collapse=" "))
       
+      deseq_config_keys = names(config[['diffex']][[model_name]][['DESeq2']])
       results.params = config[['diffex']][[model_name]][['DESeq2']][['results']]
       lfcShrink.params = config[['diffex']][[model_name]][['DESeq2']][['lfcShrink']]
       use_lfcShrink = FALSE # Default call is to results
-      if(is.null(results.params) && is.null(lfcShrink.params)) {
-        stop("Must have config section 'results' or 'lfcShrink' to define results")
-      } else if(!is.null(results.params) && !is.null(lfcShrink.params)) {
+      if(!is.null(results.params) && !is.null(lfcShrink.params)) {
         stop("Cannot use both 'results' and 'lfcShrink' to define results. Must choose one.")
+      } else if( !('results' %in% deseq_config_keys) && is.null(lfcShrink.params)) {
+        # ^ Allow results to be stated but empty (to use default args). On the other hand, lfsShrink can't be run with no args,
+        # so missing or empty lfcShrink are treated the same
+        stop("Must have config section 'results' or 'lfcShrink' to define results")
       } else if(!is.null(lfcShrink.params)) {
         # Move lfcShrink.params into results.params variable to avoid code duplication
         results.params = lfcShrink.params

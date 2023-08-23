@@ -447,25 +447,27 @@ if(!opt$no_analysis){
     dds = do.call(DESeq, deseq.params.parsed)
     
     #################################
-    # Getting Results for Each Model
-
+    # Setup Getting Results for Each Model
+    fdr_cutoff = as.numeric(config[['diffex']][[model_name]][['adjustedPValue']])
+    fc_cutoff = log2(as.numeric(config[['diffex']][[model_name]][['linear_fold_change']]))
     factor_name = config[['diffex']][[model_name]][['DESeq2']][['factor_name']]
+
+    # Print the resultsNames of the dataset, for easier debugging
+    message("resultsNames() of dds:")
+    message(paste(resultsNames(dds), collapse=" "))
     
+    # If contrasts is empty, instead of iterating over a set of contrasts, we'll have some different behavior triggered by
+    # a contrast name of 'results' instead of 'foo_v_bar'. This will be used in this analysis script and while knitting the report
+    if(length(config[['diffex']][[model_name]][['contrasts']]) == 0) {
+      config[['diffex']][[model_name]][['contrasts']] = 'results'
+    }
     for (contrast_name in config[['diffex']][[model_name]][['contrasts']]) {
-      base_filename = contrast_name #Assign base filename using contrast name
-      cont_split = unlist(strsplit(contrast_name, "_v_"))
-      #Define the test and reference name from this
-      test_name = cont_split[1] ; reference_name = cont_split[2]
-      
-      # Establish cutoffs
-      fdr_cutoff = as.numeric(config[['diffex']][[model_name]][['adjustedPValue']])
-      fc_cutoff = log2(as.numeric(config[['diffex']][[model_name]][['linear_fold_change']]))
-      
-      message(sprintf('Testing %s: %s vs %s', factor_name, test_name, reference_name))
-      
-      # Print the resultsNames of the dataset, for easier debugging
-      message("resultsNames() of dds:")
-      message(paste(resultsNames(dds), collapse=" "))
+      if(contrast_name != "results") {
+        cont_split = unlist(strsplit(contrast_name, "_v_"))
+        #Define the test and reference name from this
+        test_name = cont_split[1] ; reference_name = cont_split[2]
+        message(sprintf('Testing %s: %s vs %s', factor_name, test_name, reference_name))
+      }
       
       deseq_config_keys = names(config[['diffex']][[model_name]][['DESeq2']])
       results.params = config[['diffex']][[model_name]][['DESeq2']][['results']]
@@ -518,9 +520,11 @@ if(!opt$no_analysis){
       # Add gene_id column and move it to first column
       res$gene_id = rownames(res)
       res = res[,c('gene_id','baseMean','log2FoldChange','lfcSE','stat','pvalue','padj')]
-      # Add Condition and Control columns
-      res$Condition = test_name
-      res$Control = reference_name
+      if(contrast_name != 'results'){
+        # Add Condition and Control columns
+        res$Condition = test_name
+        res$Control = reference_name
+      }
       
       #make DEG calls and select DEGs
       res$Call = "NO"
@@ -541,8 +545,11 @@ if(!opt$no_analysis){
       # Add annotations
       
       annotated_results = merge(as.data.frame(res), annotation_df, by='gene_id', all.x=TRUE, all.y=FALSE, sort=FALSE)
-      annotated_results = annotated_results[,c('gene_id', 'entrezgene_id', 'external_gene_name', 'description', 'baseMean','log2FoldChange','lfcSE','stat','pvalue','padj', 'Condition', 'Control', 'Call')]
-
+      if(contrast_name == 'results'){
+        annotated_results = annotated_results[,c('gene_id', 'entrezgene_id', 'external_gene_name', 'description', 'baseMean','log2FoldChange','lfcSE','stat','pvalue','padj', 'Call')]
+      } else {
+        annotated_results = annotated_results[,c('gene_id', 'entrezgene_id', 'external_gene_name', 'description', 'baseMean','log2FoldChange','lfcSE','stat','pvalue','padj', 'Condition', 'Control', 'Call')]
+      }
       # Append row of details for summary DF, which will be written to file at end of analysis script
       curr_summary_row = list(
         model_name = sub("^model_", "", model_name),
@@ -588,26 +595,28 @@ if(!opt$no_analysis){
       # Also add to deliverables
       deliv_rows[[paste("results_xlsx", model_name, contrast_name, sep="_")]] = list(obj_name = 'diffex_wb', file_name = paste0(res_basepath, '.annot.xlsx'), model_name = model_name, contrast_name = contrast_name, deliverable = TRUE)
       
-      ######################
-      # Create volcano plot
-      message(sprintf('Plotting volcano plot for %s %s', factor_name, contrast_name))
-      
-      volcano_basepath = file.path(DIFFEX_DIR, sprintf("diffex_%s/volcano_plots/VolcanoPlot_%s", model_name, contrast_name))
-      
-      volcano_plot = plot_volcano(
-        de_list = annotated_results,
-        method = "deseq2",
-        exp_name = test_name,
-        con_name = reference_name,
-        fdr_cutoff = fdr_cutoff,
-        logfc_cutoff = fc_cutoff,
-        out_basepath = volcano_basepath)
-      # In addition to the pdf and png listed above, also add the plot to a list of volcano plots
-      volcano_key = paste("model", model_name, contrast_name, "volcano", sep="_")
-      volcano_plot_list[[volcano_key]] <- volcano_plot # We may want to alter naming based on how it's used in report Rmd
-      # Add newly created plots to deliverables
-      deliv_rows[[paste0(volcano_key, '_pdf')]] = list(obj_name = paste0('volcano_plot_list[[\'', volcano_key, '\']]'), file_name = paste0(volcano_basepath, '.pdf'), model_name = model_name, contrast_name = contrast_name, deliverable = TRUE)
-      deliv_rows[[paste0(volcano_key, '_png')]] = list(obj_name = paste0('volcano_plot_list[[\'', volcano_key, '\']]'), file_name = paste0(volcano_basepath, '.png'), model_name = model_name, contrast_name = contrast_name, deliverable = TRUE)
+      if(contrast_name != 'results'){
+        ######################
+        # Create volcano plot
+        message(sprintf('Plotting volcano plot for %s %s', factor_name, contrast_name))
+        
+        volcano_basepath = file.path(DIFFEX_DIR, sprintf("diffex_%s/volcano_plots/VolcanoPlot_%s", model_name, contrast_name))
+        
+        volcano_plot = plot_volcano(
+          de_list = annotated_results,
+          method = "deseq2",
+          exp_name = test_name,
+          con_name = reference_name,
+          fdr_cutoff = fdr_cutoff,
+          logfc_cutoff = fc_cutoff,
+          out_basepath = volcano_basepath)
+        # In addition to the pdf and png listed above, also add the plot to a list of volcano plots
+        volcano_key = paste("model", model_name, contrast_name, "volcano", sep="_")
+        volcano_plot_list[[volcano_key]] <- volcano_plot # We may want to alter naming based on how it's used in report Rmd
+        # Add newly created plots to deliverables
+        deliv_rows[[paste0(volcano_key, '_pdf')]] = list(obj_name = paste0('volcano_plot_list[[\'', volcano_key, '\']]'), file_name = paste0(volcano_basepath, '.pdf'), model_name = model_name, contrast_name = contrast_name, deliverable = TRUE)
+        deliv_rows[[paste0(volcano_key, '_png')]] = list(obj_name = paste0('volcano_plot_list[[\'', volcano_key, '\']]'), file_name = paste0(volcano_basepath, '.png'), model_name = model_name, contrast_name = contrast_name, deliverable = TRUE)
+      }
     } # End iteration over contrasts for each model
   } # End iteration over models
 

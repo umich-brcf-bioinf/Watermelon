@@ -202,7 +202,7 @@ Finally, we will move the deliverables into their desired location. Within the D
 
     rsync --files-from deliverables_list.txt . analysis_20190821d/deliverables
 
-Files can be delivered anywhere - just replace final argument with your destination (no slash!)
+Files can be delivered anywhere - just replace final argument with your destination (no trailing slash!)
 
     # rsync --files-from deliverables_list.txt . <dest>
 

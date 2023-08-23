@@ -189,33 +189,38 @@ The sections that follow provide more detailed information about the differentia
         model_match_str = sub("model_", "", model_name)
         comps_list = unname(unlist(summary_df[summary_df$model_name == model_match_str, 'comparison']))
 
-        case_smpls = sapply(X = comps_list, FUN = function(x){
-            return(get_case_ctrl_samples(pdata_case_ctrl, factor_name, x, selection = 'case'))
-        })
-        ctrl_smpls = sapply(X = comps_list, FUN = function(x){
-            return(get_case_ctrl_samples(pdata_case_ctrl, factor_name, x, selection = 'ctrl'))
-        })
-
-        case_ctrl_df = data.frame(cbind(comps_list, case_smpls, ctrl_smpls))
-
         de_counts = summary_df[summary_df$model_name == model_match_str, c("comparison", "count_diff_expressed")]
 
-        comparison_tbl = merge(case_ctrl_df, de_counts, by.x="comps_list", by.y="comparison")
+        # If comps_list is a single value 'results', this indicates there are no comparisons, so no comparison table nor volcanoplot
+        if(comps_list != 'results'){
+          case_smpls = sapply(X = comps_list, FUN = function(x){
+              return(get_case_ctrl_samples(pdata_case_ctrl, factor_name, x, selection = 'case'))
+          })
+          ctrl_smpls = sapply(X = comps_list, FUN = function(x){
+              return(get_case_ctrl_samples(pdata_case_ctrl, factor_name, x, selection = 'ctrl'))
+          })
 
-        colnames(comparison_tbl) = c('Comparison', 'Case Samples', 'Ctrl Samples', 'Diff. Exp.<br>Count')
+          case_ctrl_df = data.frame(cbind(comps_list, case_smpls, ctrl_smpls))
 
-        comparison_kable = kable(comparison_tbl, format = 'html', row.names = FALSE, escape = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
-          kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
-          scroll_box(width = '100%')
+          comparison_tbl = merge(case_ctrl_df, de_counts, by.x="comps_list", by.y="comparison")
 
-        filter_sig = config[['diffex']][[model_name]][['adjustedPValue']]
-        filter_fc = config[['diffex']][[model_name]][['linear_fold_change']]
-        cat(sprintf('### Comparisons for %s\n\n', gsub('_', ' ', model_name)))
-        cat(comparison_kable)
-        cat(sprintf('In the volcano plots below, each point is a tested locus. A gene is considered to be differentially expressed if FDR < %s and | linear fold-change | > %s. Points are colored according to the direction of differential expression with the total number of loci indicated in the legend. The vertical lines correspond to the fold-change cutoff. \n\n', filter_sig, filter_fc))
-        for(comparison in comps_list){
-          volcano_file = normalizePath(sprintf(diffex_volcano_file, DIFFEX_DIR, model_name, comparison))
-          cat(sprintf('![**Figure:** Volcano plot for %s.](%s) \n\n', comparison, volcano_file))
+          colnames(comparison_tbl) = c('Comparison', 'Case Samples', 'Ctrl Samples', 'Diff. Exp.<br>Count')
+
+          comparison_kable = kable(comparison_tbl, format = 'html', row.names = FALSE, escape = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
+            kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
+            scroll_box(width = '100%')
+
+          filter_sig = config[['diffex']][[model_name]][['adjustedPValue']]
+          filter_fc = config[['diffex']][[model_name]][['linear_fold_change']]
+          cat(sprintf('### Comparisons for %s\n\n', gsub('_', ' ', model_name)))
+          cat(comparison_kable)
+          cat(sprintf('In the volcano plots below, each point is a tested locus. A gene is considered to be differentially expressed if FDR < %s and | linear fold-change | > %s. Points are colored according to the direction of differential expression with the total number of loci indicated in the legend. The vertical lines correspond to the fold-change cutoff. \n\n', filter_sig, filter_fc))
+          for(comparison in comps_list){
+            volcano_file = normalizePath(sprintf(diffex_volcano_file, DIFFEX_DIR, model_name, comparison))
+            cat(sprintf('![**Figure:** Volcano plot for %s.](%s) \n\n', comparison, volcano_file))
+          }
+        }
+        for(comparison in comps_list) {
           annot_file = normalizePath(sprintf(diffex_annot_file, DIFFEX_DIR, model_name, comparison))
           # "." is used as NA value in the annotated DESeq2 result
           annot_tbl = read_delim(annot_file, delim="\t", na = c("", ".")) %>%
@@ -237,7 +242,11 @@ The sections that follow provide more detailed information about the differentia
               kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
               scroll_box(width = '100%', height = '400px')
           count_de = de_counts$count_diff_expressed[de_counts$comparison == comparison]
-          cat(sprintf('\n\n**Table:** Results for %s \n\n%s differentially expressed genes. View limited to maximum of 200 rows in html report.', comparison, count_de))
+          if(comparison == 'results'){
+            cat(sprintf('\n\n**Table:** Results\n\n%s differentially expressed genes. View limited to maximum of 200 rows in html report.', count_de))
+          } else {
+            cat(sprintf('\n\n**Table:** Results for %s \n\n%s differentially expressed genes. View limited to maximum of 200 rows in html report.', comparison, count_de))
+          }
           cat(annot_kable)
         }
     }

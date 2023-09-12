@@ -31,12 +31,15 @@ make_diffex_model_contrast_info_dfs = function(diffex_config){
   model_names = names(diffex_config)[! names(diffex_config) %in% not_model_names]
   info_df_rows = list()
   for (m in model_names) {
-    info_df_rows[[m]] = list(
-      model = diffex_config[[m]][['DESeq2']][['design']],
-      # factor_name = diffex_config[[m]][['DESeq2']][['factor_name']], # Don't need factor name in report
-      linear_fold_change = diffex_config[[m]][['linear_fold_change']],
-      adjustedPValue = diffex_config[[m]][['adjustedPValue']]
+    curr_info_row = list(
+        model = diffex_config[[m]][['DESeq2']][['design']],
+        linear_fold_change = diffex_config[[m]][['linear_fold_change']],
+        adjustedPValue = diffex_config[[m]][['adjustedPValue']]
     )
+    if(is.null(curr_info_row[['linear_fold_change']])) {
+      curr_info_row[['linear_fold_change']] = NULL  # Looks weird but that's R for you. This removes its slot from list if it's NULL
+    }
+    info_df_rows[[m]] = curr_info_row
   }
   info_df = bind_rows(info_df_rows, .id = "model_name")
   return(info_df)
@@ -449,7 +452,13 @@ if(!opt$no_analysis){
     #################################
     # Setup Getting Results for Each Model
     fdr_cutoff = as.numeric(config[['diffex']][[model_name]][['adjustedPValue']])
-    fc_cutoff = log2(as.numeric(config[['diffex']][[model_name]][['linear_fold_change']]))
+    fc_cutoff_linear = config[['diffex']][[model_name]][['linear_fold_change']]
+    if(!is.null(fc_cutoff_linear)) {
+      fc_cutoff = log2(as.numeric(fc_cutoff_linear))
+    } else {
+      fc_cutoff = NULL  # If linear_fold_change not set, use NULL here and that triggers diff behavior below
+    }
+
     factor_name = config[['diffex']][[model_name]][['DESeq2']][['factor_name']]
 
     # Print the resultsNames of the dataset, for easier debugging
@@ -528,7 +537,12 @@ if(!opt$no_analysis){
       
       #make DEG calls and select DEGs
       res$Call = "NO"
-      res$Call[which(res$padj <= fdr_cutoff & abs(res$log2FoldChange) >= fc_cutoff)] = 'YES'
+      if(!is.null(fc_cutoff)) {
+        res$Call[which(res$padj <= fdr_cutoff & abs(res$log2FoldChange) >= fc_cutoff)] = 'YES'
+      } else {  # If fc_cutoff is NULL, call DE without considering fold change
+        res$Call[which(res$padj <= fdr_cutoff)] = 'YES'
+      }
+
       res = res[order(-rank(res$Call), res$pvalue), ]
       
       #write to individual tab-delimited txt files

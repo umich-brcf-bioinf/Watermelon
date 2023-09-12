@@ -150,7 +150,8 @@ The sections that follow provide more detailed information about the differentia
 
 ```{r include = FALSE}
     info_df$model_name = gsub("_", " ", info_df$model_name)
-    colnames(info_df) = c('Model Name', 'Model', 'Linear fold-change', 'FDR')
+    colname_key = c(model_name='Model Name', model='Model', linear_fold_change='Linear fold-change', adjustedPValue='FDR')
+    colnames(info_df) = colname_key[colnames(info_df)]  # Rename the columns that are present, according to the key above
     info_kable = kable(info_df, format.args = list(big.mark = ',', scientific = FALSE)) %>%
       kable_styling(bootstrap_options = c('striped', 'condensed'))
 ```
@@ -191,6 +192,9 @@ The sections that follow provide more detailed information about the differentia
 
         de_counts = summary_df[summary_df$model_name == model_match_str, c("comparison", "count_diff_expressed")]
 
+        filter_sig = config[['diffex']][[model_name]][['adjustedPValue']]
+        filter_fc = config[['diffex']][[model_name]][['linear_fold_change']]
+
         # If comps_list is a single value 'results', this indicates there are no comparisons, so no comparison table nor volcanoplot
         if(comps_list != 'results'){
           case_smpls = sapply(X = comps_list, FUN = function(x){
@@ -210,8 +214,6 @@ The sections that follow provide more detailed information about the differentia
             kable_styling(bootstrap_options = c('striped', 'condensed')) %>%
             scroll_box(width = '100%')
 
-          filter_sig = config[['diffex']][[model_name]][['adjustedPValue']]
-          filter_fc = config[['diffex']][[model_name]][['linear_fold_change']]
           cat(sprintf('### Comparisons for %s\n\n', gsub('_', ' ', model_name)))
           cat(comparison_kable)
           cat(sprintf('In the volcano plots below, each point is a tested locus. A gene is considered to be differentially expressed if FDR < %s and | linear fold-change | > %s. Points are colored according to the direction of differential expression with the total number of loci indicated in the legend. The vertical lines correspond to the fold-change cutoff. \n\n', filter_sig, filter_fc))
@@ -220,23 +222,28 @@ The sections that follow provide more detailed information about the differentia
             cat(sprintf('![**Figure:** Volcano plot for %s.](%s) \n\n', comparison, volcano_file))
           }
         }
+        if(is.null(filter_fc)){
+          cols_to_display = c('external_gene_name', 'entrezgene_id', 'description', 'padj')
+        } else {
+          cols_to_display = c('external_gene_name', 'entrezgene_id', 'description', 'log2FoldChange', 'padj')
+        }
         for(comparison in comps_list) {
           annot_file = normalizePath(sprintf(diffex_annot_file, DIFFEX_DIR, model_name, comparison))
           # "." is used as NA value in the annotated DESeq2 result
           annot_tbl = read_delim(annot_file, delim="\t", na = c("", ".")) %>%
               slice_head(n = 200) %>%
               filter(Call == "YES") %>%
-              dplyr::select(all_of(
-                c('external_gene_name', 'entrezgene_id', 'description', 'log2FoldChange', 'padj')
-              )) %>%
+              dplyr::select(all_of(cols_to_display)) %>%
               mutate(padj = ifelse(padj < 0.001, format(padj, scientific=TRUE, digits=2), round(padj, digits=3))) %>%
               mutate(description = sub(" \\[Source:.*?\\]", "", description)) %>%
-              rename(Gene = external_gene_name, 'log2 (FC)' = log2FoldChange, 'q-val' = padj) %>%
               mutate(entrezgene_id = ifelse(is.na(entrezgene_id), NA, cell_spec(
                   x = entrezgene_id,
                   format = "html",
                   link = paste0('https://www.ncbi.nlm.nih.gov/gene/?term=', entrezgene_id)
               )))
+
+          cols_rename_key = c(external_gene_name='Gene', entrezgene_id='entrezgene_id', description='description', log2FoldChange='log2 (FC)', padj='q-val')
+          colnames(annot_tbl) = cols_rename_key[colnames(annot_tbl)]  # Rename the columns that are present, according to the key above
 
           annot_kable = kable(annot_tbl, "html", digits = 3, escape = FALSE, row.names = FALSE, format.args = list(big.mark = ',', scientific = FALSE)) %>%
               kable_styling(bootstrap_options = c('striped', 'condensed')) %>%

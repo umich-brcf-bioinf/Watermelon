@@ -453,10 +453,10 @@ if(!opt$no_analysis){
     # Setup Getting Results for Each Model
     fdr_cutoff = as.numeric(config[['diffex']][[model_name]][['adjustedPValue']])
     fc_cutoff_linear = config[['diffex']][[model_name]][['linear_fold_change']]
-    if(!is.null(fc_cutoff_linear)) {
-      fc_cutoff = log2(as.numeric(fc_cutoff_linear))
-    } else {
+    if(is.null(fc_cutoff_linear)) {
       fc_cutoff = NULL  # If linear_fold_change not set, use NULL here and that triggers diff behavior below
+    } else {
+      fc_cutoff = log2(as.numeric(fc_cutoff_linear))
     }
 
     factor_name = config[['diffex']][[model_name]][['DESeq2']][['factor_name']]
@@ -537,10 +537,11 @@ if(!opt$no_analysis){
       
       #make DEG calls and select DEGs
       res$Call = "NO"
-      if(!is.null(fc_cutoff)) {
+      if(is.null(fc_cutoff)) {
+        res$Call[which(res$padj <= fdr_cutoff)] = 'YES'  # If fc_cutoff is NULL, call DE without considering fold change
+        res$log2FoldChange = NULL  # Also remove log2FoldChange column from results
+      } else {
         res$Call[which(res$padj <= fdr_cutoff & abs(res$log2FoldChange) >= fc_cutoff)] = 'YES'
-      } else {  # If fc_cutoff is NULL, call DE without considering fold change
-        res$Call[which(res$padj <= fdr_cutoff)] = 'YES'
       }
 
       res = res[order(-rank(res$Call), res$pvalue), ]
@@ -559,11 +560,16 @@ if(!opt$no_analysis){
       # Add annotations
       
       annotated_results = merge(as.data.frame(res), annotation_df, by='gene_id', all.x=TRUE, all.y=FALSE, sort=FALSE)
+      keep_colnames = c('gene_id', 'entrezgene_id', 'external_gene_name', 'description', 'baseMean','log2FoldChange','lfcSE','stat','pvalue','padj', 'Condition', 'Control', 'Call')
       if(contrast_name == 'results'){
-        annotated_results = annotated_results[,c('gene_id', 'entrezgene_id', 'external_gene_name', 'description', 'baseMean','log2FoldChange','lfcSE','stat','pvalue','padj', 'Call')]
-      } else {
-        annotated_results = annotated_results[,c('gene_id', 'entrezgene_id', 'external_gene_name', 'description', 'baseMean','log2FoldChange','lfcSE','stat','pvalue','padj', 'Condition', 'Control', 'Call')]
+        keep_colnames = keep_colnames[! keep_colnames %in% c('Condition', 'Control')]  # Remove Condition and Control columns
       }
+      if(is.null(fc_cutoff)){
+        keep_colnames = keep_colnames[keep_colnames != 'log2FoldChange']  # Remove log2FoldChange column
+      }
+
+      annotated_results = annotated_results[, keep_colnames]
+
       # Append row of details for summary DF, which will be written to file at end of analysis script
       curr_summary_row = list(
         model_name = sub("^model_", "", model_name),

@@ -459,6 +459,17 @@ if(!opt$no_analysis){
       fc_cutoff = log2(as.numeric(fc_cutoff_linear))
     }
 
+    # Can specify a list of factor::level pairs to set reference level in dds object
+    set_ref_levels = config[['diffex']][[model_name]][['set_ref_levels']]
+    if(!is.null(set_ref_levels)) {
+      for(lvl_set in set_ref_levels) {
+        set_parts = strsplit(lvl_set, '::')[[1]]
+        set_factor = set_parts[[1]]
+        set_level = set_parts[[2]]
+        dds[[set_factor]] = relevel(dds[[set_factor]], ref = set_level)
+      }
+    }
+
     factor_name = config[['diffex']][[model_name]][['DESeq2']][['factor_name']]
 
     # Print the resultsNames of the dataset, for easier debugging

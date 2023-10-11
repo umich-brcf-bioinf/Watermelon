@@ -395,7 +395,11 @@ if(!opt$no_analysis){
 
   for (model_name in model_names) {
     # Create directory structure for the results of this model
-    dir.create(file.path(DIFFEX_DIR, sprintf("diffex_%s/volcano_plots", model_name)), recursive=TRUE, mode="775")
+    if(length(config[['diffex']][[model_name]][['contrasts']]) == 0) {
+      dir.create(file.path(DIFFEX_DIR, sprintf("diffex_%s", model_name)), mode="775")  # If contrasts not specified, don't create volcano plot dir
+    } else {
+      dir.create(file.path(DIFFEX_DIR, sprintf("diffex_%s/volcano_plots", model_name)), recursive=TRUE, mode="775")
+    }
     #######################################
     # DESeq2 Initialization for Each Model
     design = config[['diffex']][[model_name]][['DESeq2']][['design']]

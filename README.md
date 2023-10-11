@@ -217,6 +217,7 @@ Files can be delivered anywhere - just replace final argument with your destinat
 * [Example - Multiple sequencing runs](doc/example_multiple_runs.md)
 * [Example - Alternative references](doc/example_alt_refs.md)
 * [Example - Generating an annotation TSV file](doc/generating_annotation_tsv.md)
+* [Example - Advanced options for differential expression analysis](doc/example_advanced_diffex_options.md)
 * [Notes - Generating or updating the references](doc/creating_updated_refs.md)
 * [Notes - Git hooks for automated tests](doc/git_hooks_auto_tests.md)
 * [Snakemake documentation](https://snakemake.readthedocs.io/en/stable/)

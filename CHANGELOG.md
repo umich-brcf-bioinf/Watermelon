@@ -1,5 +1,18 @@
 # Changelog
 
+2.7.0 (10/11/2023)
+------------------
+- Added labeled PCA plots as additional output - not set as deliverable but could be used and included by analysts if desired
+- Improvements for LRT and other similar types of setups
+  - Possible to run DESeq2::results() to be run with default args by including in config but leaving it blank.
+  - Possible to exclude linear_fold_change parameter to call DE genes solely by Q-val
+  - Option for non-contrast-centric results extraction by leaving `contrasts` blank
+    - Also suppresses volcano plot creation
+    - Configurable setting of reference levels to accommodate these approaches
+- Updated documentation describing the alternative DE analysis options
+- Report generation code also updated to accommodate advanced DE options
+- Quick-change backup genome references for when turbo is down
+
 2.6.1 (06/14/2023)
 ------------------
 - Bugfix: avoids issues with ARC-TS alias inside container by setting singularity argument --cleanenv in the profiles

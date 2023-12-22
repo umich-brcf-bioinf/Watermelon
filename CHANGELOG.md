@@ -1,5 +1,14 @@
 # Changelog
 
+2.7.1 (12/22/2023)
+------------------
+- Add error checking around key change DESeq2 -> DESeq
+- Update diffex template comments to clarify function calls
+- Add warning to diffex if code and config versions differ
+- Exclude Watermelon's data dir when copying repo for AGC
+- Increase RAM for cutadapt rules
+- Add singularity prefix to all profiles
+
 2.7.0 (10/11/2023)
 ------------------
 - Added labeled PCA plots as additional output - not set as deliverable but could be used and included by analysts if desired

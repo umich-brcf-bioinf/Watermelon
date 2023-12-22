@@ -98,6 +98,14 @@ SCRIPTS_DIR = file.path(WAT_DIR, 'scripts')
 REPORT_SRC_DIR = file.path(WAT_DIR, 'report')
 REPORT_OUT_DIR = config[['dirs']][['report']]
 
+# Watermelon version check against config
+ver_str = grep("^_PIPE_VER", readLines(file.path(WAT_DIR, 'version_info.smk')), value=TRUE)
+wat_ver_actual = sub(".*?([0-9\\.]+).*", "\\1", ver_str)
+wat_ver_config = config[['watermelon_version']]
+if(wat_ver_actual != wat_ver_config) {
+  warning(sprintf("Watermelon version %s differs from config value %s", wat_ver_actual, wat_ver_config))
+}
+
 if(opt$report_finalize) {
   if(is.na(opt$markdownfile)) {
     stop("Required argument --markdownfile is missing. For help, see --help")
@@ -386,6 +394,7 @@ if(!opt$no_analysis){
   ##########################
   # Differential Expression
 
+  options(warn=1)
   model_names = grep("count_min_cutoff", names(config$diffex), value=TRUE, invert=TRUE)
 
   # Will have rows of model_name, comparison, total_count, count_diff_expressed, count_annotated, percent_annotated
@@ -404,6 +413,12 @@ if(!opt$no_analysis){
     # DESeq2 Initialization for Each Model
     design = config[['diffex']][[model_name]][['DESeq2']][['design']]
     deseq.params = config[['diffex']][[model_name]][['DESeq2']][['DESeq']]
+    if(is.null(deseq.params)){
+      warning("DESeq parameters are empty")
+      if(!is.null(config[['diffex']][[model_name]][['DESeq2']][['DESeq2']])){
+        stop("Incorrect key 'DESeq2' used to provide DESeq2::DESeq() parameters. Check config and Watermelon version compatibility.")
+      }
+    }
     feature_subset = config[['diffex']][[model_name]][['subset']]
     if (!is.null(feature_subset) && feature_subset != "" && feature_subset != "all") {
       feature_subset_split = unlist(strsplit(feature_subset, '::'))

@@ -23,16 +23,16 @@ diffex:
             #The factor name is used within the diffex Rscripts. See results notes below
             factor_name: treatment
             #The following parameters are directly parsed by R
-            #and used within the call to DESeq2().
+            #and used within the call to DESeq2::DESeq().
             #The imported DESeqDataset is passed by default and isn't listed here.
             DESeq:
                 betaPrior: true
-            #The below parameters are also parsed by R and used to call results() {DESeq2}.
+            #The below parameters are also parsed by R and used to call DESeq2::results().
             #The initialized DESeqDataset is passed by default and isn't listed here.
             #There are several ways to list the contrast parameter. This way produces results equivalent to
             #previous Watermelon pipelines. The variables factor_name, test_name, & reference_name are defined
             #within the Rscript. Using the first contrast as an example this would parse to
             #list('treatmentdrug', 'treatmentcontrol'), which are the two elements
-            #of resultsNames() relevant for that comparison.
+            #of DESeq2::resultsNames() relevant for that comparison.
             results:
                 contrast: list(paste0(factor_name, test_name), paste0(factor_name, reference_name))

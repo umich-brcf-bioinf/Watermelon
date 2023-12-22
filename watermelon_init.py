@@ -339,9 +339,10 @@ def write_stuff(config_dict, config_fn, wat_dir, ss_df=None):
     print("Done.\nCopying Watermelon to working dir...")
     source = os.path.join(wat_dir, "")  # Add trailing slash for rsync (syntax important)
     dest = "Watermelon"
-    subprocess.run( # Exclude .git/ and /envs/built (speed)
-        ["rsync", "-O", "-rlt", "--exclude", ".*", "--exclude", "envs/built", source, dest]
-    )
+    rsync_list = ["rsync", "-O", "-rlt", "--exclude", ".*", "--exclude", "envs/built", source, dest]  # Exclude .git/ and /envs/built (speed)
+    if args.AGC and args.genome_build != 'TestData':  # AGC does not want test data taking up their space
+        rsync_list[3:3] = ["--exclude", "data/"]  # Use slice assignment to place addt'l exclude list before index 3
+    subprocess.run(rsync_list)
 
     print("Done.")
 

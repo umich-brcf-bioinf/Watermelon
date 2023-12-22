@@ -39,8 +39,8 @@ Methods
 --->
 
 A) The reads were trimmed using Cutadapt v`r versions[['cutadapt']][['cutadapt']]` [@Martin2011].
-B) FastQC v`r versions [['fastqc']][['fastqc']]` was used to ensure the quality of data [@Andrews2010].
-C) Fastq Screen v`r versions[['fastq_screen']][['fastq-screen']]` was used to screen for various types of contamination [@Wingett2018].
+B) FastQC v`r versions[['fastqc']][['fastqc']]` was used to ensure the quality of data [@Andrews2010].
+C) Fastq Screen v`r versions[['fastq_screen']][['fastq_screen']]` was used to screen for various types of contamination [@Wingett2018].
 D) Reads were mapped to the reference genome `r config[['genome']]` (ENSEMBL), using STAR v`r versions[['rsem_star']][['star']]` [@Dobin2013] and assigned count estimates to genes with RSEM v`r versions[['rsem_star']][['rsem']]` [@Li2011]. Alignment options followed ENCODE standards for RNA-seq.
 E) Multiqc v`r versions[['multiqc']][['multiqc']]` compiled the results from several of these tools and provided a detailed and comprehensive quality control report [@Ewels2016]. 
 

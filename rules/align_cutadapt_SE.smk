@@ -25,7 +25,7 @@ rule align_cutadapt_SE:
     log:
         JOB_LOG_DIR + "align_cutadapt_SE_{sample}_R{read}.log"
     conda: 'envs/cutadapt/cutadapt.yaml'
-    resources: time_min=300, cpus=8
+    resources: time_min=300, cpus=8, mem_mb=4000
     container: ENV_INFO['cutadapt']['image_str']
     shell:
         '''(cutadapt --cores {resources.cpus} \

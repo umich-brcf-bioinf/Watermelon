@@ -6,6 +6,6 @@ singularity-prefix: /nfs/turbo/umms-brcfpipeline/snakemake_singularity
 cluster: sbatch --job-name={rule}_{wildcards} --account=agc_project99 --partition=standard --nodes=1 --ntasks-per-node={resources.cpus} --mem={resources.mem_mb} --time={resources.time_min} --output=cluster_logs/%x-%j.log --parsable
 cluster-status: Watermelon/scripts/slurm_status.py
 default-resources: [cpus=1, mem_mb=1000, time_min=180]
-latency-wait: 60
+latency-wait: 300
 jobs: 144
 config: skip_validation=True

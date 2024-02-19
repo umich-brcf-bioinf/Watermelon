@@ -3,8 +3,8 @@ keep-going: True
 use-singularity: True
 singularity-args: "--cleanenv -B $(pwd) -B /nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
 singularity-prefix: /nfs/turbo/umms-brcfpipeline/snakemake_singularity
-cluster: sbatch --job-name={params.project_name}_{rule}_{wildcards} --account=bfx_project99 --partition=standard --nodes=1 --cpus-per-task={resources.cpus} --mem={resources.mem_mb} --time={resources.time_min} --output=cluster_logs/%x-%j.log --parsable
+cluster: sbatch --job-name={params.project_name}_{rule}_{wildcards} --account=brcf_bfx_project --partition=brcf_bfx_project --nodes=1 --cpus-per-task={resources.cpus} --mem={resources.mem_mb} --time={resources.time_min} --output=cluster_logs/%x-%j.log --parsable
 cluster-status: Watermelon/scripts/slurm_status.py
 default-resources: [cpus=1, mem_mb=1000, time_min=120]
 latency-wait: 300
-jobs: 144
+jobs: 36

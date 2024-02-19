@@ -45,12 +45,12 @@ rsem-calculate-expression \
     -p {resources.cpus} \
     {input.fastq_files} \
     {params.rsem_ref_base} \
-    {params.outFileNamePrefix}
+    {params.outFileNamePrefix} &&
 samtools sort -@ {resources.cpus} \
     -o {params.outFileNamePrefix}.genome.bam \
-    {params.outFileNamePrefix}.STAR.genome.bam
+    {params.outFileNamePrefix}.STAR.genome.bam &&
 samtools index -@ {resources.cpus} \
     {params.outFileNamePrefix}.genome.bam \
-    {params.outFileNamePrefix}.genome.bai
+    {params.outFileNamePrefix}.genome.bai &&
 rm {params.outFileNamePrefix}.STAR.genome.bam
 )2>&1 | tee {log}'''

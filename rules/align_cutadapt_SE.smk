@@ -31,7 +31,7 @@ rule align_cutadapt_SE:
         '''(cutadapt --cores {resources.cpus} \
 {params.cutadapt_args} \
 -o {output}.tmp.gz \
-{input.raw_fastq} {params.secondpass_cmd}
+{input.raw_fastq} {params.secondpass_cmd} &&
 if [[ -f {output.R1}.tmp2.gz ]]
     then mv {output.R1}.tmp2.gz {output.R1} &&
     rm {output.R1}.tmp.gz &&

@@ -37,7 +37,7 @@ rule align_cutadapt_PE:
         '''(cutadapt --cores {resources.cpus} {params.cutadapt_args} \
 -o {output.R1}.tmp.gz \
 -p {output.R2}.tmp.gz \
-{input.raw_fastq_R1} {input.raw_fastq_R2} {params.secondpass_cmd}
+{input.raw_fastq_R1} {input.raw_fastq_R2} {params.secondpass_cmd} &&
 if [[ -f {output.R1}.tmp2.gz ]]
     then mv {output.R1}.tmp2.gz {output.R1} &&
     mv {output.R2}.tmp2.gz {output.R2} &&

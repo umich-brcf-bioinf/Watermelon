@@ -16,6 +16,6 @@ rule align_rseqc_estimate_ribo:
     log:
         JOB_LOG_DIR + "align_rseqc_estimate_ribo_{sample}.log"
     shell:
-        '''(split_bam.py -i {input.genome_bam} -r {params.bed_ref} -o {params.out_prefix} > {output.counts}
+        '''(split_bam.py -i {input.genome_bam} -r {params.bed_ref} -o {params.out_prefix} > {output.counts} &&
 {WATERMELON_SCRIPTS_DIR}split_bam_percentage.py -i {output.counts} -l "Ribosomal" "Non-ribosomal" "QCFail/Unmapped" -n {wildcards.sample} > {output.percentages}
 ) 2>&1 | tee {log} '''

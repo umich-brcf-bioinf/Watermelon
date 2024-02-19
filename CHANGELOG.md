@@ -1,5 +1,14 @@
 # Changelog
 
+2.7.2 (02/19/2024)
+------------------
+- Proof of concept (pre-rollout) reporting of adapter kit type via AGC
+- Using new wat_diffex environment - most software packages updated
+- Bugfix - scree plot top100 and top500 are written properly
+- Increased deliverables mem resources
+- Increased latency-wait time to 5min
+- Prevent problems with edge cases - all multiline statements within subshells are linked with &&
+
 2.7.1 (12/22/2023)
 ------------------
 - Add error checking around key change DESeq2 -> DESeq

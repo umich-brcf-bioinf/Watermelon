@@ -3,7 +3,7 @@ import glob
 import os
 import yaml
 
-_PIPE_VER = '2.7.1'
+_PIPE_VER = '2.7.2'
 
 def _transform_conda_dict(env_dict):
     new_dict = {}

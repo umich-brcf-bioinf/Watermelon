@@ -383,7 +383,7 @@ if(!opt$no_analysis){
     deliv_rows[[paste0('pca_23_top100_', phenotype, '_labeled_png')]] = list(obj_name = paste0('pca_23_top100_list[[\'', phenotype, '\']]'), file_name = paste0(pca_basepath, '_labeled.png'), phenotype = phenotype, deliverable = FALSE)
 
     message(sprintf('Plotting scree for %s, top 100', phenotype))
-    scree_basepath = file.path(PLOTS_DIR, phenotype, 'ScreePlot_top500')
+    scree_basepath = file.path(PLOTS_DIR, phenotype, 'ScreePlot_top100')
     scree_plot = plot_scree(compute_PCA_result = pca_result_12, out_basepath = scree_basepath)
     scree_top100_list[[phenotype]] = scree_plot # In addition to writing output figure files, add to list of plots
     # Add newly created plots to deliverables

@@ -180,7 +180,7 @@ Now we can run the deseq2_analysis.R script. Since we're using a singularity ima
     # Define the read-only bind mount to our reference data
     export SINGULARITY_BIND="/nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
     # Run the deseq2_analysis.R script, providing environment with the singularity image
-    singularity exec docker://umichbfxcore/wat_diffex:0.6.0 Rscript Watermelon/scripts/deseq2_analysis.R --configfile config_20190821d.yaml --markdownfile Watermelon/report/report_diffex.Rmd 2>&1 | tee deseq2_$(date +%FT%H%M%S).log
+    singularity exec docker://umichbfxcore/wat_diffex:0.7.0 Rscript Watermelon/scripts/deseq2_analysis.R --threads 8 --configfile config_20190821d.yaml --markdownfile Watermelon/report/report_diffex.Rmd 2>&1 | tee deseq2_$(date +%FT%H%M%S).log
 
 When this runs, by default it will run the DESeq2 analysis and save the outputs, including a `.Rdata` file, and then it will knit a report using these outputs. 
 
@@ -195,7 +195,7 @@ Next we will edit (if desired) and finalize the report. Inspect `report_draft.ht
     # our report_draft.md as the --markdownfile
     # and with the flag --report_finalize
     #
-    singularity exec docker://umichbfxcore/wat_diffex:0.6.0 Rscript Watermelon/scripts/deseq2_analysis.R --configfile config_20190821d.yaml --markdownfile analysis_20190821d/report/report_draft.md --report_finalize
+    singularity exec docker://umichbfxcore/wat_diffex:0.7.0 Rscript Watermelon/scripts/deseq2_analysis.R --configfile config_20190821d.yaml --markdownfile analysis_20190821d/report/report_draft.md --report_finalize
 
 
 Finally, we will move the deliverables into their desired location. Within the DESeq2 analysis script, we've tracked all deliverables and created a file - `deliverables_list.txt` - that can be used directly with `rsync` to transfer results to a desired location.

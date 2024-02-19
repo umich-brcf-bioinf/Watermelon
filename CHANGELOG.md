@@ -1,3 +1,10 @@
+0.7.0 (02/07/2023)
+------------------
+- Updated base image 4.12.0 -> 23.10.0-1 (different versioning scheme)
+- Updated most packages in conda env
+- Added R packages DEGreport and PCAtools
+- Updated Rstudio
+
 0.6.0 (01/31/2023)
 ------------------
 - Updated base image 4.7.12 -> 4.12.0

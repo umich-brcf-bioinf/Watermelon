@@ -1,5 +1,12 @@
 ## Sample preparation & sequencing
 
 ```{r echo = FALSE, results = 'asis', message = FALSE}
+    if(!is.null(snakemake@config[['report_info']][['adapter_kit_type']])){
+        kit_type = snakemake@config[['report_info']][['adapter_kit_type']]
+        adapt_r1 = snakemake@config[['report_info']][['adapter_r1']]
+        adapt_r2 = snakemake@config[['report_info']][['adapter_r2']]
+        msg = sprintf('A %s-based kit was used during library preparation. The adapter sequences for this kit are R1: %s and R2: %s.\n\n', kit_type, adapt_r1, adapt_r2)
+        cat(msg)
+    }
     cat(snakemake@config[['report_info']][['prep_description']])
 ```

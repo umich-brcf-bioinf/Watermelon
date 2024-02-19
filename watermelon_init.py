@@ -10,7 +10,6 @@ import os
 import re
 import ruamel_yaml
 import subprocess
-import sys
 import warnings
 
 import pandas as pd
@@ -30,6 +29,11 @@ _DEFAULT_SAMPLE_COL = "sample"
 _DEFAULT_ANALYST_INFO = "/nfs/turbo/umms-brcfpipeline/pipelines/analyst_info.csv"
 _DEFAULT_SAMPLE_FASTQ_REGEX = r"(.*?)(_[AGCT-]{6,22})*(_S\d+)*_R\d(_L*\d+)*\.fastq\.gz" # (.*?) is the captured sampleid
 _DEFAULT_AUTOGLOB_EXT = "_*.fastq.gz" # Used for auto-generating samplesheet
+_KIT_TYPE_MAPPING = {
+        'TruSeq': {'adapter_r1': 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCA', 'adapter_r2': 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT'}  #,
+        # 'Nextera': {'adapter_r1': 'CTGTCTCTTATACACATCT', 'adapter_r2': 'CTGTCTCTTATACACATCT'},
+        # 'TSO': {'adapter_r1': 'AAAAAAAA', 'adapter_r2': 'CCCATGTACTCTGCGTTGATACCACTGCTT'}
+    }
 
 def _warning_on_one_line(message, category, filename, lineno, file=None, line=None):
     # https://stackoverflow.com/a/26433913/5597209
@@ -224,6 +228,20 @@ def make_config_dict(template_config, args, version):
         config.move_to_end("ensembl_version", last=False)
     config.move_to_end("genome", last=False)
     # 1st half (working backwards)
+    # Fill in the cutadapt_args template string with adapters based on kit
+    if config.get('trimming') and config['trimming'].get('cutadapt_args'):
+        if args.kit_type:
+            try:
+                adapter_mapping = _KIT_TYPE_MAPPING[args.kit_type]  # adapter_mapping is dict with keys,vals to fill in template string
+            except KeyError:
+                msg = f"Kit type {args.kit_type} specified but adapter info not available. Kit type not implemented"
+                raise RuntimeError(msg)
+            # The config value is a template string like '... -a {adapter_r1} -A {adapter_r2} ...'
+            config['trimming']['cutadapt_args'] = config['trimming']['cutadapt_args'].format(**adapter_mapping)
+        else:
+            # Use TruSeq adapters by default, if no kit_type given
+            adapter_mapping = _KIT_TYPE_MAPPING['TruSeq']
+            config['trimming']['cutadapt_args'] = config['trimming']['cutadapt_args'].format(**adapter_mapping)
     # If non-default sample col is given, add it to the config
     if args.x_sample_col != _DEFAULT_SAMPLE_COL:
         config.insert(0, "sample_col", args.x_sample_col)
@@ -263,6 +281,19 @@ def make_config_dict(template_config, args, version):
             config["report_info"]["acknowledgement_text"] = linestring
         # Set (other) AGC-specific report details
         if args.AGC:
+            if args.kit_type:
+                config["report_info"]["adapter_kit_type"] = args.kit_type
+                try:
+                    config["report_info"]["adapter_r1"] = _KIT_TYPE_MAPPING[args.kit_type]["adapter_r1"]
+                    config["report_info"]["adapter_r2"] = _KIT_TYPE_MAPPING[args.kit_type]["adapter_r2"]
+                except KeyError:
+                    msg = f"Kit type {args.kit_type} specified but adapter info not available. Kit type not implemented"
+                    raise RuntimeError(msg)
+            # TWS TODO: When this rolls out, enable this warning msg
+            # else:
+            #     msg = ("--kit-type argument was not given, so no adapter information will be placed into report_info config section. "
+            #            "Default TruSeq adapters were assumed for cutadapt trimming parameters.")
+            #     warnings.warn(msg)
             if config["genome"] in ["GRCh38", "GRCm38"]:
                 config["rseqc"] = True
             config["report_info"]["include_follow_up"] = False
@@ -351,6 +382,8 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--background_info", type=str, default=os.path.join(_WATERMELON_ROOT, "report", "default_seq_info.txt"), help="A text file containing background information (e.g. sequencing and/or preparation procedure). This text will be used in the report. Defaults to 'Watermelon/report/default_seq_info.txt'")
     parser.add_argument("-c", "--count_matrix", type=str, help="Count data used as input for diffex pipeline. Contains a column of gene IDs and additional columns of count data from aligned reads.")
     parser.add_argument("-g", "--genome_build", type=str, required=True, help="Reference files for this build are added into the config.")
+    parser.add_argument("-k", "--kit-type", type=str, choices=[''], help=argparse.SUPPRESS)  # TWS TODO: Replace this placeholder upon rollout
+    # parser.add_argument("-k", "--kit-type", type=str, choices=_KIT_TYPE_MAPPING.keys(), help="The kit type used during library preparation. This is used to fill in adapter sequences for trimming, and is also included in the report. Only used for align_qc config creation.")
     parser.add_argument("-o", "--output_prefix", type=str, default="analysis_{project_id}", help="Optional output prefix. Defaults to relative path 'analysis_{project_id}'")
     parser.add_argument("-p", "--project_id", type=str, required=True, help="ID used for the project. Can represent project ID, service request ID, etc. Only alphanumeric and underscores allowed. No spaces or special characters.")
     parser.add_argument("-t", "--type", type=str, default="align_qc", choices=["align_qc", "diffex"], help="Type of config file to produce. Uses the appropriate template, and has the appropriate values.")

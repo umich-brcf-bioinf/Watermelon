@@ -14,6 +14,7 @@ rule align_combine_counts_to_matrices:
         genes_input_path = ALIGNMENT_DIR + '04-rsem_star_align/*.genes.results',
         isoforms_input_path = ALIGNMENT_DIR + '04-rsem_star_align/*.isoforms.results',
         metric = '{metric}'
+    resources: mem_mb=4000
     shell:'''(
 python {WATERMELON_SCRIPTS_DIR}combine.py --input_path '{params.genes_input_path}' \
 --output_file {output.gene} \

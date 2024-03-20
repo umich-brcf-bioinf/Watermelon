@@ -8,6 +8,7 @@ rule align_annotate_combined_counts:
         project_name = config['report_info']['project_name'],
         input_idx = 'gene_id',
         mapping_idx = 'gene_id'
+    resources: mem_mb=4000
     shell:
         "python {WATERMELON_SCRIPTS_DIR}/annotate.py "
              "-m {input.gene_info} "

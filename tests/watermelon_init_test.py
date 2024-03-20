@@ -131,7 +131,7 @@ def test_get_template_ExplicitAlternateTemplateRaisesIfMissing(tmp_path):
     yaml_filepath = tmp_path / 'template.yaml'
 
     args = Namespace(x_alt_template=yaml_filepath)
-    with pytest.warns(None), pytest.raises(RuntimeError, match='Could not read'):
+    with pytest.warns(), pytest.raises(RuntimeError, match='Could not read'):
         watermelon_init.get_template(
             args=args,
             pipe_root=watermelon_init._WATERMELON_ROOT

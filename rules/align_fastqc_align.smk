@@ -8,8 +8,7 @@ rule align_fastqc_align:
         fastqc_dir =  ALIGNMENT_DIR + "05-fastqc_align"
     log:
         JOB_LOG_DIR + "align_fastqc_align_{sample}.log"
-    conda: 'envs/fastqc/fastqc.yaml'
     container: ENV_INFO['fastqc']['image_str']
-    resources: time_min=240, cpus=2 # fastqc is not multithreaded, but Java spawns way too many processes, so this keeps Snakemake from overruning the process limit.
+    resources: runtime=240, cpus_per_task=2 # fastqc is not multithreaded, but Java spawns way too many processes, so this keeps Snakemake from overruning the process limit.
     shell:
         'fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log} '

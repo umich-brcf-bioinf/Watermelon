@@ -24,11 +24,10 @@ rule align_rsem_star:
 
     log:
         JOB_LOG_DIR + 'rsem_star_align_{sample}.log'
-    conda: 'envs/rsem_star/rsem_star.yaml'
     container: 'docker://umichbfxcore/rsem_star:0.1.1'
     benchmark:
         ALIGNMENT_DIR + 'benchmarks/rsem_star_align.{sample}.benchmark.txt'
-    resources: cpus=12, mem_mb=40000, time_min=720
+    resources: cpus_per_task=12, mem_mb=40000, runtime=720
     params:
         project_name = config['report_info']['project_name'],
         rsem_ref_base = get_ref_base(),
@@ -42,14 +41,14 @@ rsem-calculate-expression \
     --star-path $STAR_PATH \
     --star-gzipped-read-file \
     --star-output-genome-bam \
-    -p {resources.cpus} \
+    -p {resources.cpus_per_task} \
     {input.fastq_files} \
     {params.rsem_ref_base} \
     {params.outFileNamePrefix} &&
-samtools sort -@ {resources.cpus} \
+samtools sort -@ {resources.cpus_per_task} \
     -o {params.outFileNamePrefix}.genome.bam \
     {params.outFileNamePrefix}.STAR.genome.bam &&
-samtools index -@ {resources.cpus} \
+samtools index -@ {resources.cpus_per_task} \
     {params.outFileNamePrefix}.genome.bam \
     {params.outFileNamePrefix}.genome.bai &&
 rm {params.outFileNamePrefix}.STAR.genome.bam

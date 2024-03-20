@@ -1,23 +1,14 @@
 #pylint: disable=too-many-public-methods, invalid-name, no-self-use
 from __future__ import print_function, absolute_import, division
 
-import glob
-import io
-import mock
 import os
 import pandas as pd
 import pytest
-import sys
-import time
-import unittest
-import yaml
 
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
-
-from testfixtures.tempdirectory import TempDirectory
 
 from scripts import rnaseq_snakefile_helper # local module that we're testing
 from tests import testing_utils # local module
@@ -74,7 +65,7 @@ def test_fastqs_to_concat(tmp_path):
 sample_1,{}
 sample_2,{}
 sample_3,{}""".format(s1_glob,s2_glob,s3_glob)
-    sample_sheet_df = pd.read_csv(io.StringIO(sample_sheet_str), comment='#', dtype='object') \
+    sample_sheet_df = pd.read_csv(StringIO(sample_sheet_str), comment='#', dtype='object') \
         .set_index("sample", drop=True)
 
     expected = {
@@ -114,7 +105,7 @@ sample_1,{}
 sample_2,{}
 sample_3,{}
 sample_4,{}""".format(s1_glob,s2_glob,s3_glob,s4_glob)
-    sample_sheet_df = pd.read_csv(io.StringIO(sample_sheet_str), comment='#', dtype='object') \
+    sample_sheet_df = pd.read_csv(StringIO(sample_sheet_str), comment='#', dtype='object') \
         .set_index("sample", drop=True)
 
     expected = {

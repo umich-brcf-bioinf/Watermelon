@@ -12,11 +12,10 @@ rule align_rsem_star_genome_generate:
                 ),
     log:
         JOB_LOG_DIR + 'rsem_star_genome_generate.log'
-    conda: 'envs/rsem_star/rsem_star.yaml'
     container: 'docker://umichbfxcore/rsem_star:0.1.1'
     benchmark:
         join(ALIGNMENT_DIR, 'benchmarks', 'rsem_star_genome_generate.benchmark.txt')
-    resources: cpus=12, mem_mb=50000, time_min=360
+    resources: cpus_per_task=12, mem_mb=50000, runtime=360
     params:
         project_name = config['report_info']['project_name'],
         rsem_ref_base = join(\
@@ -31,7 +30,7 @@ rsem-prepare-reference \
     --gtf {input.gtf} \
     --star \
     --star-path $STAR_PATH \
-    -p {resources.cpus} \
+    -p {resources.cpus_per_task} \
     {input.fasta} \
     {params.rsem_ref_base}
 ) 2>&1 | tee {log}'''

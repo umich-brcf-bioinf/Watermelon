@@ -11,7 +11,7 @@ rule align_rseqc_estimate_ribo:
         project_name = config['report_info']['project_name'],
         bed_ref = config['references']['ribo_bed'],
         out_prefix = ALIGNMENT_DIR + "05-rseqc/{sample}_ribo_content"
-    resources: time_min=600, mem_mb=4000
+    resources: runtime=600, mem_mb=4000
     container: ENV_INFO['rseqc']['image_str']
     log:
         JOB_LOG_DIR + "align_rseqc_estimate_ribo_{sample}.log"

@@ -8,7 +8,7 @@ import copy
 import getpass
 import os
 import re
-import ruamel_yaml
+import ruamel.yaml
 import subprocess
 import warnings
 
@@ -87,7 +87,7 @@ def _set_up_dirs(type, project_id, fmt_str="analysis_{projid}/{resulttype}"):
         'align_qc': ['alignment_results', 'deliverables', 'report'],
         'diffex': ['diffex_results', 'deliverables', 'report']
         }
-    dirs = ruamel_yaml.comments.CommentedMap() # Use this instead of an OrderedDict since it prints pretty (no !!omap)
+    dirs = ruamel.yaml.comments.CommentedMap() # Use this instead of an OrderedDict since it prints pretty (no !!omap)
     for resulttype in type_dirs.get(type, []):
         dirs[resulttype] = fmt_str.format(projid=project_id, resulttype=resulttype)
     return dirs
@@ -103,7 +103,8 @@ def _set_up_email(projid, user):
 
 def _set_up_refs(grefsfn, gbuild, type):
     with open(grefsfn, "r") as reffh:
-        refs = ruamel_yaml.round_trip_load(reffh)
+        refs_yaml = ruamel.yaml.YAML()
+        refs = refs_yaml.load(reffh)
     # TestData doesn't exist yet. It will when Watermelon is copied to cwd
     if gbuild == "TestData":
         datapath = os.path.join(os.getcwd(), "Watermelon", "data")
@@ -194,7 +195,8 @@ def get_template(args, pipe_root):
         fpath = os.path.join(pipe_root, "config", fname)
     try:
         with open(fpath, "r") as tfh:
-            template_dict = ruamel_yaml.round_trip_load(tfh)
+            template_yaml = ruamel.yaml.YAML()
+            template_dict = template_yaml.load(tfh)
             return template_dict
     except:
         msg = f"\n\nCould not read template config {fpath}."
@@ -202,7 +204,7 @@ def get_template(args, pipe_root):
 
 
 def make_config_dict(template_config, args, version):
-    # Due to ruamel_yaml, template_config is an OrderedDict, and has preserved comments
+    # Due to ruamel.yaml, template_config is an OrderedDict, and has preserved comments
     config = template_config
 
     # Set up some things before adding them
@@ -359,9 +361,10 @@ def write_stuff(config_dict, config_fn, wat_dir, ss_df=None):
     print("Writing config to working dir...")
     # Write the config file
     with open(config_fn, "w") as config_fh:
-        ruamel_yaml.round_trip_dump(
-            config_dict, config_fh, default_flow_style=False, indent=4
-        )
+        config_yaml = ruamel.yaml.YAML()
+        config_yaml.default_flow_style=False
+        config_yaml.indent=4
+        config_yaml.dump(config_dict, config_fh)
     # Write auto-generated samplesheet if present
     if isinstance(ss_df, pd.DataFrame):
         print("Done.\nWriting auto-generated samplesheet...")

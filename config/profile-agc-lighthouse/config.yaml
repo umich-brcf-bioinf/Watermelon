@@ -4,6 +4,6 @@ use-singularity: True
 singularity-args: "--cleanenv -B $(pwd) -B /nfs/turbo/umms-brcfpipeline/references:/nfs/turbo/umms-brcfpipeline/references:ro"
 singularity-prefix: /nfs/turbo/umms-brcfpipeline/snakemake_singularity
 slurm: True
-default-resources: [slurm_account=bfx_project99, slurm_partition=standard, nodes=1, cpus_per_task=1, mem_mb=2000, runtime=120]
+default-resources: [slurm_account=brcf_agc_project, slurm_partition=brcf_agc_project, nodes=1, cpus_per_task=1, mem_mb=2000, runtime=180]
 latency-wait: 300
-jobs: 144
+jobs: 36

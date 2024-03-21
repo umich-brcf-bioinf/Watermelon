@@ -1,5 +1,12 @@
 # Changelog
 
+2.8.0 (03/21/2024)
+------------------
+- Updates for Snakemake 7
+- Kit name and adapter type reporting
+- Increase resource limits for annotation and deliverables rules
+- New watermelon conda environment
+
 2.7.2 (02/19/2024)
 ------------------
 - Proof of concept (pre-rollout) reporting of adapter kit type via AGC

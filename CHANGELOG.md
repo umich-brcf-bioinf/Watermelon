@@ -1,5 +1,10 @@
 # Changelog
 
+2.8.1 (04/03/2024)
+------------------
+- Add warning for large input FASTQ sizes
+- Use new test profile with reduced resources for running functional tests
+
 2.8.0 (03/21/2024)
 ------------------
 - Updates for Snakemake 7

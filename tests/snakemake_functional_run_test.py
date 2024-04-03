@@ -47,7 +47,7 @@ def test_wminit_snakemake_run_align_qc(tmp_path):
     command = command_fmt.format(
         os.path.join("Watermelon", 'align_qc.smk'),
         "config_test_align_qc.ready",
-        os.path.join("Watermelon", "config", "profile-bfx-greatlakes")
+        os.path.join("Watermelon", "config", "profile-test")
     )
 
     return_code = subprocess.call(command, shell=True)

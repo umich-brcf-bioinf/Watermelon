@@ -235,7 +235,8 @@ def test_validate_fastq_inputs():
     watermelon_init.validate_fastq_inputs(
         ss_df=ss_df,
         sample_col="sample",
-        fq_col="input_glob"
+        fq_col="input_glob",
+        fq_max_size_threshold=5.5
     )
     # Test broken glob
     ss_df.at[0, "input_glob"] = "samplefoo.xyz"
@@ -243,7 +244,8 @@ def test_validate_fastq_inputs():
         watermelon_init.validate_fastq_inputs(
             ss_df=ss_df,
             sample_col="sample",
-            fq_col="input_glob"
+            fq_col="input_glob",
+            fq_max_size_threshold=5.5
         )
 
 

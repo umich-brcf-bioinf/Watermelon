@@ -309,7 +309,7 @@ def validate_count_matrix(counts_fp):
         raise RuntimeError(msg)
 
 
-def validate_fastq_inputs(ss_df, sample_col, fq_col):
+def validate_fastq_inputs(ss_df, sample_col, fq_col, fq_max_size_threshold):
     if not sample_col in ss_df.columns:
         msg = "\n\nThe sample sheet must have a column labeled '{}'\n".format(sample_col)
         raise RuntimeError(msg)
@@ -319,18 +319,26 @@ def validate_fastq_inputs(ss_df, sample_col, fq_col):
 
     samples = ss_df[sample_col]
     fq_globs = ss_df[fq_col]
+    fastq_max_size = 0
     # fastq_dict = OrderedDict() # If wanted to store this info somewhere
     for sample, fqglob in zip(samples, fq_globs):
-            # The helper function assists/provides the following validations:
-            # * Fastq file(s) must be present
-            # * Can't mix gz and fastq files (must be all same type)
-            fastqs = helper.get_sample_fastq_paths(fqglob)
-            if not fastqs:
-                msg = "\n\nNo fastq files found in sample directory {}.\n"
-                raise RuntimeError(msg)
-            # else:
-            #     fastq_dict[sample] = fastqs
-            #     TODO: could easily write this to a file...
+        # The helper function also provides the following validations:
+        # * Fastq file(s) must be present
+        # * Can't mix gz and fastq files (must be all same type)
+        fastqs = helper.get_sample_fastq_paths(fqglob)
+        if not fastqs:
+            msg = "\n\nNo fastq files found in sample directory {}.\n"
+            raise RuntimeError(msg)
+        else:
+        #     fastq_dict[sample] = fastqs
+        #     TODO: could easily write this to a file...
+            curr_sample_max = max([(os.path.getsize(x) / 1073741824) for x in fastqs])
+            if curr_sample_max > fastq_max_size:
+                fastq_max_size = curr_sample_max
+
+    if fastq_max_size > fq_max_size_threshold:
+        msg = "Max FASTQ size detected: {:0.2f} GB, exceeds threshold of {} GB"
+        warnings.warn(msg.format(fastq_max_size, fq_max_size_threshold))
 
 
 def validate_genomes(ref_dict):
@@ -345,7 +353,7 @@ def validate_genomes(ref_dict):
         if not os.access(v, os.R_OK): # Test for read access
             cant_read.append(v)
     if cant_read:
-        msg = "\n\nCan't read references:\n{}\n"
+        msg = f"\n\nCan't read references:\n{cant_read}\n"
         raise RuntimeError(msg)
 
 
@@ -426,7 +434,7 @@ if __name__ == "__main__":
         validate_genomes(config_dict["references"])
     # Some validations depend on type of config
     if args.type == "align_qc":
-        validate_fastq_inputs(samplesheet_df, args.x_sample_col, args.x_input_col)
+        validate_fastq_inputs(samplesheet_df, args.x_sample_col, args.x_input_col, 5.5)  # FASTQ max size threshold 5.5GB
     elif args.type == "diffex":
         validate_count_matrix(config_dict["count_matrix"])
 

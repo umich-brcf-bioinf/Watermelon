@@ -1,5 +1,11 @@
 # Changelog
 
+2.8.2 (04/10/2024)
+------------------
+- Revert to generic cluster submission - snakemake's slurm executor is currently crippled
+- Disable lighthouse profiles for now - they will only do a dry-run. Recommend to only use Great Lakes profiles, at least until slurm executor is fixed
+- Adjust FASTQ input size warning threshold
+
 2.8.1 (04/03/2024)
 ------------------
 - Add warning for large input FASTQ sizes

@@ -434,7 +434,7 @@ if __name__ == "__main__":
         validate_genomes(config_dict["references"])
     # Some validations depend on type of config
     if args.type == "align_qc":
-        validate_fastq_inputs(samplesheet_df, args.x_sample_col, args.x_input_col, 5.5)  # FASTQ max size threshold 5.5GB
+        validate_fastq_inputs(samplesheet_df, args.x_sample_col, args.x_input_col, 7)  # FASTQ max size threshold 7GB
     elif args.type == "diffex":
         validate_count_matrix(config_dict["count_matrix"])
 

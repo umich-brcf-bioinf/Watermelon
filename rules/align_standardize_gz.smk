@@ -9,7 +9,7 @@ rule align_standardize_gz:
         ALIGNMENT_DIR + "02-gz_reads/{sample}_R{read}.fastq.gz",
     log:
         JOB_LOG_DIR + "align_standardize_gz_{sample}_R{read}.log"
-    resources: cpus_per_task=1, runtime=240
+    resources: cpus=1, time_min=240
     params:
         project_name = config['report_info']['project_name']
     run:

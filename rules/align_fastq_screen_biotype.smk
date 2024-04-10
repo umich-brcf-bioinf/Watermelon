@@ -7,7 +7,7 @@ rule align_fastq_screen_biotype:
     log:
         JOB_LOG_DIR + "align_fastq_screen_biotype_{sample}_R{read}_trimmed_screen.log"
     container: ENV_INFO['fastq_screen']['image_str']
-    resources: cpus_per_task=8, mem_mb=8000
+    resources: cpus=8, mem_mb=8000
     params:
         project_name = config['report_info']['project_name'],
         aligner = config['fastq_screen']['aligner'],
@@ -17,7 +17,7 @@ rule align_fastq_screen_biotype:
     shell:
         '''(fastq_screen --version
         fastq_screen \
-            --threads {resources.cpus_per_task} \
+            --threads {resources.cpus} \
             --subset {params.subset} \
             --conf {params.biotype_config_file} \
             --outdir {params.biotype_output_dir} \

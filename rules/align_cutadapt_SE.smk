@@ -24,10 +24,10 @@ rule align_cutadapt_SE:
         secondpass_cmd = build_secondpass_cmd if "secondpass_args" in config["trimming"] else ""
     log:
         JOB_LOG_DIR + "align_cutadapt_SE_{sample}_R{read}.log"
-    resources: runtime=300, cpus_per_task=8, mem_mb=4000
+    resources: time_min=300, cpus=8, mem_mb=4000
     container: ENV_INFO['cutadapt']['image_str']
     shell:
-        '''(cutadapt --cores {resources.cpus_per_task} \
+        '''(cutadapt --cores {resources.cpus} \
 {params.cutadapt_args} \
 -o {output}.tmp.gz \
 {input.raw_fastq} {params.secondpass_cmd} &&

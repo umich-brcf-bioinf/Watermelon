@@ -9,6 +9,6 @@ rule align_fastqc_trimmed_reads:
     params:
         project_name = config['report_info']['project_name'],
         fastqc_dir = ALIGNMENT_DIR + "03-fastqc_reads"
-    resources: runtime=240, cpus_per_task=2
+    resources: time_min=240, cpus=2
     shell:
         'fastqc {input} -o {params.fastqc_dir} 2>&1 | tee {log}'

@@ -7,7 +7,7 @@ rule align_fastq_screen_multi_species:
     log:
         JOB_LOG_DIR + "align_fastq_screen_multi_species_{sample}_R{read}.log"
     container: ENV_INFO['fastq_screen']['image_str']
-    resources: cpus_per_task=8, mem_mb=8000
+    resources: cpus=8, mem_mb=8000
     params:
         project_name = config['report_info']['project_name'],
         aligner = config['fastq_screen']['aligner'],
@@ -17,7 +17,7 @@ rule align_fastq_screen_multi_species:
     shell:
         '''(fastq_screen --version
         fastq_screen \
-            --threads {resources.cpus_per_task} \
+            --threads {resources.cpus} \
             --subset {params.subset} \
             --conf {params.multi_species_config_file} \
             --outdir {params.multi_species_output_dir} \

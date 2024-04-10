@@ -20,6 +20,7 @@ DELIVERABLES_DIR = os.path.join(_DIRS.get("deliverables", "deliverables"), "")
 REPORT_DIR = os.path.join(_DIRS.get("report", "report"), "")
 # Logging directories
 JOB_LOG_DIR = os.path.join(os.getcwd(), "job_logs", "")
+CLUSTER_LOG_DIR = os.path.join(os.getcwd(), "cluster_logs")
 
 #Load in samplesheet
 SAMPLESHEET = pd.read_csv(config["samplesheet"], comment='#', dtype='object') \
@@ -33,6 +34,25 @@ else:
 
 FASTQS_TO_CONCAT = helper.fastqs_to_concat(SAMPLESHEET, capture_regex)
 SAMPLE_BNAMES = helper.sample_bnames_from_filenames(SAMPLESHEET, capture_regex, '{}_R{}')
+
+# Determine if run in cluster environment
+# If so, make cluster_logs folder if it's missing
+if set(['-c', '--cluster']).intersection(set(sys.argv)):
+    if not os.path.exists(CLUSTER_LOG_DIR):
+        msg = "Cluster log folder {} not found. Creating it before running in a cluster environment."
+        logger.logger.info(msg.format(CLUSTER_LOG_DIR))
+        os.mkdir(CLUSTER_LOG_DIR)
+# May also need to parse the profile to see cluster argument
+elif '--profile' in sys.argv:
+    profile_idx = sys.argv.index('--profile') + 1
+    profile = sys.argv[profile_idx]
+    profile_config = snakemake.get_profile_file(profile, "config.yaml")
+    with open(profile_config) as fh:
+        profile_dict = yaml.load(fh, Loader=yaml.SafeLoader)
+        if 'cluster' in profile_dict and not os.path.exists(CLUSTER_LOG_DIR):
+            msg = "Cluster log folder {} not found. Creating it before running in a cluster environment."
+            logger.logger.info(msg.format(CLUSTER_LOG_DIR))
+            os.mkdir(CLUSTER_LOG_DIR)
 
 #Get config file (first need to grab index from argv)
 if '--configfile' in list(sys.argv):

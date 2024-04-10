@@ -28,7 +28,7 @@ rule align_deliverables_alignment:
             type=['FPKM', 'TPM', 'expected_count']),
         ribo_df = RSEQC_RIBO_DELIVERABLE,
         alignment_html = DELIVERABLES_DIR + "alignment/alignment_qc.html"
-    resources: mem_mb=4000, runtime=480
+    resources: mem_mb=4000, time_min=480
     params:
         project_name = config['report_info']['project_name'],
         trimmed_reads_input_dir = ALIGNMENT_DIR + "02-cutadapt",

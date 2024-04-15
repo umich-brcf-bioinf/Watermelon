@@ -1,5 +1,12 @@
 # Changelog
 
+2.8.3 (04/15/2024)
+------------------
+- Auto clean-up temp files from failed fastq_screen before rerunning
+- Slightly increase concurrent jobs on GL profiles
+- Add rerun-triggers mtime to GL profiles
+- Increase FASTQ warning threshold to 12G
+
 2.8.2 (04/10/2024)
 ------------------
 - Revert to generic cluster submission - snakemake's slurm executor is currently crippled

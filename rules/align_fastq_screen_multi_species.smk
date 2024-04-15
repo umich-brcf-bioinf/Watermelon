@@ -13,14 +13,19 @@ rule align_fastq_screen_multi_species:
         aligner = config['fastq_screen']['aligner'],
         subset = config['fastq_screen']['subset'],
         multi_species_output_dir = ALIGNMENT_DIR + "03-fastq_screen/multi_species",
-        multi_species_config_file = config['fastq_screen']['reference_basedir'] +"/multi_species.conf"
+        multi_species_config_file = config['fastq_screen']['reference_basedir'] +"/multi_species.conf",
+        temp_subset = ALIGNMENT_DIR + "03-fastq_screen/multi_species/{sample}_R{read}_trimmed.fastq.gz_temp_subset.fastq"
     shell:
-        '''(fastq_screen --version
-        fastq_screen \
-            --threads {resources.cpus} \
-            --subset {params.subset} \
-            --conf {params.multi_species_config_file} \
-            --outdir {params.multi_species_output_dir} \
-            --aligner {params.aligner} \
-            {input}
-        ) 2>&1 | tee {log}'''
+        '''(fastq_screen --version &&
+if [[ -f {params.temp_subset} ]]
+    then echo "Warning: {params.temp_subset} exists. Removing before calling fastq_screen..." &&
+    rm {params.temp_subset}
+fi &&
+fastq_screen \
+    --threads {resources.cpus} \
+    --subset {params.subset} \
+    --conf {params.multi_species_config_file} \
+    --outdir {params.multi_species_output_dir} \
+    --aligner {params.aligner} \
+    {input}
+) 2>&1 | tee {log}'''

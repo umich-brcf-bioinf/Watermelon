@@ -13,14 +13,19 @@ rule align_fastq_screen_biotype:
         aligner = config['fastq_screen']['aligner'],
         subset = config['fastq_screen']['subset'],
         biotype_output_dir = ALIGNMENT_DIR + "03-fastq_screen/biotype",
-        biotype_config_file = config['fastq_screen']['reference_basedir'] +'/' + config['fastq_screen']['species'] + '.conf'
+        biotype_config_file = config['fastq_screen']['reference_basedir'] +'/' + config['fastq_screen']['species'] + '.conf',
+        temp_subset = ALIGNMENT_DIR + "03-fastq_screen/biotype/{sample}_R{read}_trimmed.fastq.gz_temp_subset.fastq"
     shell:
-        '''(fastq_screen --version
-        fastq_screen \
-            --threads {resources.cpus} \
-            --subset {params.subset} \
-            --conf {params.biotype_config_file} \
-            --outdir {params.biotype_output_dir} \
-            --aligner {params.aligner} \
-            {input}
-        ) 2>&1 | tee {log}'''
+        '''(fastq_screen --version &&
+if [[ -f {params.temp_subset} ]]
+    then echo "Warning: {params.temp_subset} exists. Removing before calling fastq_screen..." &&
+    rm {params.temp_subset}
+fi &&
+fastq_screen \
+    --threads {resources.cpus} \
+    --subset {params.subset} \
+    --conf {params.biotype_config_file} \
+    --outdir {params.biotype_output_dir} \
+    --aligner {params.aligner} \
+    {input}
+) 2>&1 | tee {log}'''

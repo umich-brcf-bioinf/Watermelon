@@ -6,5 +6,6 @@ singularity-prefix: /nfs/turbo/umms-brcfpipeline/snakemake_singularity
 cluster: sbatch --job-name={params.project_name}_{rule}_{wildcards} --account=bfx_project99 --partition=standard --nodes=1 --cpus-per-task={resources.cpus} --mem={resources.mem_mb} --time={resources.time_min} --output=cluster_logs/%x-%j.log --parsable
 cluster-status: Watermelon/scripts/slurm_status.py
 default-resources: [cpus=1, mem_mb=2000, time_min=120]
+rerun-triggers: [mtime]
 latency-wait: 300
-jobs: 16
+jobs: 24

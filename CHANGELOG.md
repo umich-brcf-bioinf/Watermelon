@@ -1,5 +1,10 @@
 # Changelog
 
+2.8.4 (05/31/2024)
+------------------
+- Bugfix - updated control-flow of report/report_diffex.Rmd
+  - if statement was unhappy with vectorized results when they occurred
+
 2.8.3 (04/15/2024)
 ------------------
 - Auto clean-up temp files from failed fastq_screen before rerunning

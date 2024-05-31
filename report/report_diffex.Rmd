@@ -192,7 +192,8 @@ The sections that follow provide more detailed information about the differentia
         filter_fc = config[['diffex']][[model_name]][['linear_fold_change']]
 
         # If comps_list is a single value 'results', this indicates there are no comparisons, so no comparison table nor volcanoplot
-        if(comps_list != 'results'){
+        # Skip this section if comps_list is a single value equal to the string 'results'
+        if((length(comps_list) > 1) || (comps_list[[1]] != 'results')){
           case_smpls = sapply(X = comps_list, FUN = function(x){
               return(get_case_ctrl_samples(pdata_case_ctrl, factor_name, x, selection = 'case'))
           })

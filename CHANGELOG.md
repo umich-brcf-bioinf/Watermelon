@@ -1,5 +1,12 @@
 # Changelog
 
+2.9.0 (06/20/2024)
+------------------
+- Updated biocontainer images for cutadapt, fastq_screen, and multiQC
+- In reporting section of config, 'include_pct_dups: true' is currently non-functional
+  - Due to a change in MultiQC. AGC doesn't use this, so releasing as-is for now
+- Fix for test profile
+
 2.8.4 (05/31/2024)
 ------------------
 - Bugfix - updated control-flow of report/report_diffex.Rmd

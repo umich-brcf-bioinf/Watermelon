@@ -1,18 +1,18 @@
 cutadapt:
-    image_str: "docker://quay.io/biocontainers/cutadapt:2.3--py37h14c3975_0"
-    ver_str: "2.3"
+    image_str: "docker://quay.io/biocontainers/cutadapt:4.8--py310h7c593f9_1"
+    ver_str: "4.8"
 deeptools:
     image_str: "docker://quay.io/biocontainers/deeptools:3.5.1--pyhdfd78af_1"
     ver_str: "3.5.1"
 fastq_screen:
-    image_str: "docker://quay.io/biocontainers/fastq-screen:0.13.0--pl526_0"
-    ver_str: "0.13.0"
+    image_str: "docker://quay.io/biocontainers/fastq-screen:0.15.3--pl5321hdfd78af_0"
+    ver_str: "0.15.3"
 fastqc:
     image_str: "https://depot.galaxyproject.org/singularity/fastqc:0.11.8--2"
     ver_str: "0.11.8"
 multiqc:
-    image_str: "docker://quay.io/biocontainers/multiqc:1.7--py_3"
-    ver_str: "1.7"
+    image_str: "docker://quay.io/biocontainers/multiqc:1.20--pyhdfd78af_2"
+    ver_str: "1.20"
 rseqc:
     image_str: "https://depot.galaxyproject.org/singularity/rseqc:4.0.0--py38h4a8c8d9_1"
     ver_str: "4.0.0"

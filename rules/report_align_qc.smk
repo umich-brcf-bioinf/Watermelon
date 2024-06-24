@@ -18,7 +18,7 @@ rule report_align_qc:
         project_name = config['report_info']['project_name'],
         snakemake_rdata = REPORT_DIR + '.report_draft_snakemake.rda',
         report_dir = REPORT_DIR,
-        multiqc_gen_stats = ALIGNMENT_DIR + '07-qc/alignment_qc_data/multiqc_general_stats.txt',
+        multiqc_data_json = ALIGNMENT_DIR + '07-qc/alignment_qc_data/multiqc_data.json',
         mqc_plots_dir = ALIGNMENT_DIR + '07-qc/multiqc_plots/png/'
     script:
         '../scripts/report_rmd.R'

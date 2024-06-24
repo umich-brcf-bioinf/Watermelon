@@ -41,7 +41,7 @@ def test_wminit_snakemake_run_align_qc(tmp_path):
 
     rm_keys = ["email", "trimming"] # Unnecessary to trim the simulated data
     #Create modified config in this temp dir, using example config and just removing the email key
-    testing_utils.create_modified_config("config_test_align_qc.yaml", "config_test_align_qc.ready", {"rseqc": True, "report_info": {"include_pct_dups": False}}, rm_keys)
+    testing_utils.create_modified_config("config_test_align_qc.yaml", "config_test_align_qc.ready", {"rseqc": True}, rm_keys)
     command_fmt = "snakemake --snakefile {} --configfile {} --profile {}"
     # --singularity-args \'-B {}\'
     command = command_fmt.format(

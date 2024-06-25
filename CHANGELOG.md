@@ -1,5 +1,10 @@
 # Changelog
 
+2.10.0 (06/25/2024)
+------------------
+- Improved subsetting feature - select multiple values from one column, separated by ';'
+- Fixed align_qc reporting when include_pct_dups is True
+
 2.9.0 (06/20/2024)
 ------------------
 - Updated biocontainer images for cutadapt, fastq_screen, and multiQC

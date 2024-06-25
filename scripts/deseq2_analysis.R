@@ -403,6 +403,7 @@ if(!opt$no_analysis){
   pdata_subset_list = list()
 
   for (model_name in model_names) {
+    message(sprintf('Working on model %s', model_name))
     # Create directory structure for the results of this model
     if(length(config[['diffex']][[model_name]][['contrasts']]) == 0) {
       dir.create(file.path(DIFFEX_DIR, sprintf("diffex_%s", model_name)), mode="775")  # If contrasts not specified, don't create volcano plot dir
@@ -420,17 +421,27 @@ if(!opt$no_analysis){
       }
     }
     feature_subset = config[['diffex']][[model_name]][['subset']]
+    if (length(feature_subset) > 1) {
+      stop("Cannot list more than 1 subset.")
+    }
     if (!is.null(feature_subset) && feature_subset != "" && feature_subset != "all") {
       feature_subset_split = unlist(strsplit(feature_subset, '::'))
       feature_label = feature_subset_split[1]
-      feature_value = feature_subset_split[2]
-      pdata_keeprows = which(pdata_full[[feature_label]] == feature_value)
+      if(grepl(';', feature_subset_split[2])){  # If ; in string, multiple values are listed separated by ;
+        feature_values = unlist(strsplit(feature_subset_split[2], ';'))
+        message(sprintf('Subsetting multiple values from column %s. Values %s', feature_label, paste(feature_values, collapse=' ')))
+        pdata_keeprows = which(pdata_full[[feature_label]] %in% feature_values)
+      } else {
+        feature_value = feature_subset_split[2]
+        message(sprintf('Subsetting with value of %s from column %s', feature_value, feature_label))
+        pdata_keeprows = which(pdata_full[[feature_label]] == feature_value)
+      }
       pdata = pdata_full[pdata_keeprows,]
       pdata_subset_list[[model_name]] = pdata
       counts = counts_full[,as.character(pdata$sample)]
       subset_key = paste0('counts_raw_subset_', model_name)
       deliv_rows[[subset_key]] = list(obj_name = paste0('pdata_subset_list[[\'', model_name, '\']]'), file_name = file.path(COUNTS_DIR, paste0('deseq2_raw_counts_subset_', model_name, '.txt')), model_name = model_name, deliverable = FALSE)
-      write.table(counts,file=deliv_rows[[subset_key]][['file_name']], sep = '\t', col.names = TRUE, row.names = FALSE, quote = FALSE)
+      write.table(counts,file=deliv_rows[[subset_key]][['file_name']], sep = '\t', col.names = TRUE, row.names = TRUE, quote = FALSE)
     } else {
       pdata = pdata_full
       counts = counts_full

@@ -50,7 +50,7 @@ diffex:
         contrasts:  # Empty contrasts triggers different behavior
         set_ref_levels:
           - treatment::control
-        DESeq:
+        DESeq2:
             design: ~ batch + treatment
             DESeq:
                 test: LRT

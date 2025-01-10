@@ -1,5 +1,9 @@
 # Changelog
 
+2.11.0 (01/10/2025)
+------------------
+- Updated references with latest available - ENSEMBL 113
+
 2.10.0 (06/25/2024)
 ------------------
 - Improved subsetting feature - select multiple values from one column, separated by ';'
